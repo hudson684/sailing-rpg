@@ -1,5 +1,5 @@
 import * as Phaser from "phaser";
-import { TILE_SIZE } from "../config";
+import { TILE_SIZE } from "../constants";
 
 export type Heading = 0 | 1 | 2 | 3; // 0=N, 1=E, 2=S, 3=W
 
