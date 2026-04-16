@@ -1,10 +1,7 @@
 import * as Phaser from "phaser";
 import { BootScene } from "./scenes/BootScene";
 import { WorldScene } from "./scenes/WorldScene";
-
-export const TILE_SIZE = 32;
-export const VIEWPORT_W = 960;
-export const VIEWPORT_H = 640;
+import { VIEWPORT_W, VIEWPORT_H } from "./constants";
 
 export function createGameConfig(parent: HTMLElement): Phaser.Types.Core.GameConfig {
   return {

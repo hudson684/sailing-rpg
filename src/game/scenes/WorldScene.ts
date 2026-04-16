@@ -1,5 +1,5 @@
 import * as Phaser from "phaser";
-import { TILE_SIZE } from "../config";
+import { TILE_SIZE } from "../constants";
 import { bus } from "../bus";
 import { Player, PLAYER_SPEED, PLAYER_RADIUS } from "../entities/Player";
 import {
