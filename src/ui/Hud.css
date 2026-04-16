@@ -1,0 +1,87 @@
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  font-family: inherit;
+  color: #e8f0ff;
+}
+
+.hud-top {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  gap: 12px;
+}
+
+.hud-panel {
+  min-width: 110px;
+  padding: 8px 14px;
+  background: rgba(6, 14, 28, 0.7);
+  border: 1px solid rgba(120, 170, 220, 0.35);
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+
+.hud-label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8ba8c8;
+}
+
+.hud-value {
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.hud-prompt {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 18px;
+  background: rgba(6, 14, 28, 0.85);
+  border: 1px solid rgba(200, 220, 255, 0.5);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.hud-toast {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  background: rgba(14, 30, 56, 0.85);
+  border: 1px solid rgba(120, 170, 220, 0.5);
+  border-radius: 6px;
+  font-size: 13px;
+  animation: toast-in 180ms ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.hud-controls {
+  position: absolute;
+  bottom: 14px;
+  left: 16px;
+  display: flex;
+  gap: 18px;
+  font-size: 11px;
+  color: #7a96b6;
+}
