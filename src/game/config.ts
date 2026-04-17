@@ -7,8 +7,6 @@ export function createGameConfig(parent: HTMLElement): Phaser.Types.Core.GameCon
   return {
     type: Phaser.AUTO,
     parent,
-    width: VIEWPORT_W,
-    height: VIEWPORT_H,
     backgroundColor: "#0a1a2f",
     pixelArt: true,
     physics: {
@@ -19,8 +17,9 @@ export function createGameConfig(parent: HTMLElement): Phaser.Types.Core.GameCon
       },
     },
     scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
+      mode: Phaser.Scale.RESIZE,
+      width: VIEWPORT_W,
+      height: VIEWPORT_H,
     },
     scene: [BootScene, WorldScene],
   };

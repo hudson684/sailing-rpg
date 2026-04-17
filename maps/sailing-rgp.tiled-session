@@ -15,16 +15,16 @@
             "scale": 0.75,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 566.6666666666666,
-                "y": 565.3333333333334
+                "x": 532,
+                "y": 538.6666666666665
             }
         },
         "chunks/0_1.tmx": {
             "scale": 0.75,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 590.6666666666666,
-                "y": 390.6666666666667
+                "x": 537.3333333333333,
+                "y": 525.3333333333334
             }
         },
         "chunks/0_2.tmx": {
@@ -44,11 +44,14 @@
             }
         },
         "chunks/1_0.tmx": {
-            "scale": 0.75,
-            "selectedLayer": 8,
+            "expandedObjectLayers": [
+                6
+            ],
+            "scale": 1,
+            "selectedLayer": 9,
             "viewCenter": {
-                "x": 806.6666666666666,
-                "y": 604
+                "x": 850,
+                "y": 603
             }
         },
         "chunks/1_1.tmx": {
@@ -77,10 +80,10 @@
         },
         "chunks/2_0.tmx": {
             "scale": 0.8145507812499999,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 511.93861647284507,
-                "y": 511.93861647284496
+                "x": 223.43603884426335,
+                "y": 265.1768373096751
             }
         },
         "chunks/2_1.tmx": {
@@ -211,7 +214,7 @@
             "scaleInEditor": 1
         }
     },
-    "last.externalTilesetPath": "C:/dev/sailing-rpg/maps/themes/Sea Adventures/TiledMap Editor/Tilesets",
+    "last.externalTilesetPath": "C:/dev/sailing-rpg/maps/themes/Grass Land/TiledMap Editor/Tilesets",
     "last.imagePath": "C:/dev/sailing-rpg/maps/themes/sea/Tilesets",
     "openFiles": [
         "chunks/0_0.tmx",

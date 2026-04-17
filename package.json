@@ -7,13 +7,18 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "maps": "node tools/build-maps.mjs",
+    "maps:check": "node tools/build-maps.mjs --check",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "preview": "vite preview"
   },
   "dependencies": {
+    "idb-keyval": "^6.2.2",
     "phaser": "^4.0.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
@@ -21,6 +26,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "fast-xml-parser": "^5.6.0",
     "typescript": "^5.6.3",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vitest": "^2.1.9"
   }
 }

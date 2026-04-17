@@ -173,7 +173,8 @@ export class Ship {
 
   /**
    * Tile occupied by the helm (where the player stands to steer) in a docked pose.
-   * Currently tuned for the rowboat's 3×2 footprint — the player-interactive vessel.
+   * Tuned for the rowboat's 2×1 footprint — the player-interactive vessel. The helm
+   * is the stern tile (opposite the bow implied by `heading`).
    */
   static helmTile(pose: DockedPose, _dims: VesselDims = ROWBOAT_DIMS): { x: number; y: number } {
     const { tx, ty, heading } = pose;
@@ -181,19 +182,19 @@ export class Ship {
       case 0:
         return { x: tx, y: ty + 1 };
       case 1:
-        return { x: tx + 1, y: ty };
+        return { x: tx, y: ty };
       case 2:
-        return { x: tx + 1, y: ty + 1 };
+        return { x: tx, y: ty };
       case 3:
-        return { x: tx + 1, y: ty + 1 };
+        return { x: tx + 1, y: ty };
     }
   }
 
   /** World-pixel position of the helm, for parking the player while sailing/anchoring. */
   helmWorldPx(): { x: number; y: number } {
     const a = headingToRotation(this.heading);
-    const lx = 0;
-    const ly = -TILE_SIZE / 2;
+    const lx = -TILE_SIZE / 2;
+    const ly = 0;
     const c = Math.cos(a);
     const s = Math.sin(a);
     return {

@@ -34,8 +34,8 @@ export const VESSEL_TEMPLATES: Record<VesselTemplate["id"], VesselTemplate> = {
     frame: { width: 288, height: 256 },
     frames: { idle: 14, sailing: 14 },
     scale: 0.4,
-    tilesLong: 3,
-    tilesWide: 2,
+    tilesLong: 2,
+    tilesWide: 1,
     frameRate: 12,
   },
   galleon: {
