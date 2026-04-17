@@ -119,6 +119,22 @@ export function validateWorld(manifest, summaries) {
   if (docks.length !== 1) {
     errors.push(`Expected exactly 1 dock across world, found ${docks.length}${docks.length ? ` (chunks: ${docks.map((d) => d.key).join(", ")})` : ""}.`);
   }
+  // Every item_spawn must have a uid (pipeline normally stamps it, but a
+  // hand-authored TMX that slipped past would surface here too).
+  const allUids = new Map();
+  for (const s of summaries) {
+    for (const item of s.itemSpawns) {
+      if (!item.uid) {
+        errors.push(`Chunk ${s.key}: item_spawn at (${item.tx},${item.ty}) missing uid.`);
+        continue;
+      }
+      if (allUids.has(item.uid)) {
+        errors.push(`Duplicate uid '${item.uid}' in chunks ${allUids.get(item.uid)} and ${s.key}.`);
+      } else {
+        allUids.set(item.uid, s.key);
+      }
+    }
+  }
   // startChunk should reference an authored chunk.
   if (manifest.startChunk) {
     const startKey = `${manifest.startChunk.cx}_${manifest.startChunk.cy}`;
@@ -261,6 +277,7 @@ export function buildMap(tmxRelPath, outRelPath) {
         itemSpawns.push({
           tx,
           ty,
+          uid: String(props.uid ?? ""),
           itemId: String(props.itemId ?? ""),
           quantity: Number(props.quantity ?? 1),
         });
