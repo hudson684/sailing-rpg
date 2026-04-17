@@ -1,0 +1,49 @@
+- generic [ref=e3]:
+  - generic:
+    - generic:
+      - generic:
+        - generic: Mode
+        - generic: On foot
+      - generic:
+        - generic: Speed
+        - generic: 0 kt
+      - generic:
+        - generic: Heading
+        - generic: 0° E
+    - generic:
+      - generic: WASD / Arrows — move or steer
+      - generic: E — interact / take helm / drop anchor
+  - region "Inventory" [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]: Inventory
+      - button "Close inventory" [ref=e9] [cursor=pointer]: ×
+    - generic [ref=e10]:
+      - generic "Empty slot" [ref=e11]
+      - generic "Empty slot" [ref=e12]
+      - generic "Empty slot" [ref=e13]
+      - generic "Empty slot" [ref=e14]
+      - generic "Empty slot" [ref=e15]
+      - generic "Empty slot" [ref=e16]
+      - generic "Empty slot" [ref=e17]
+      - generic "Empty slot" [ref=e18]
+      - generic "Empty slot" [ref=e19]
+      - generic "Empty slot" [ref=e20]
+      - generic "Empty slot" [ref=e21]
+      - generic "Empty slot" [ref=e22]
+      - generic "Empty slot" [ref=e23]
+      - generic "Empty slot" [ref=e24]
+      - generic "Empty slot" [ref=e25]
+      - generic "Empty slot" [ref=e26]
+      - generic "Empty slot" [ref=e27]
+      - generic "Empty slot" [ref=e28]
+      - generic "Empty slot" [ref=e29]
+      - generic "Empty slot" [ref=e30]
+      - generic "Empty slot" [ref=e31]
+      - generic "Empty slot" [ref=e32]
+      - generic "Empty slot" [ref=e33]
+      - generic "Empty slot" [ref=e34]
+      - generic "Empty slot" [ref=e35]
+      - generic "Empty slot" [ref=e36]
+      - generic "Empty slot" [ref=e37]
+      - generic "Empty slot" [ref=e38]
+    - generic [ref=e39]: "G: grant debug item · I: toggle"

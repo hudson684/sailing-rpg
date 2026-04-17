@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git merge *)",
+      "Bash(git push *)",
+      "Bash(gh repo *)",
+      "Bash(mkdir -p C:/dev/sailing-rpg/public/assets)",
+      "Bash(cp \"C:/Users/hudso/Downloads/kenney_roguelike-rpg-pack/Spritesheet/roguelikeSheet_transparent.png\" C:/dev/sailing-rpg/public/assets/)",
+      "Bash(cp \"C:/Users/hudso/Downloads/kenney_roguelike-rpg-pack/Map/sample_map.tmx\" C:/dev/sailing-rpg/public/assets/)",
+      "Bash(npx tsc *)",
+      "Bash(npx vite *)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_console_messages",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_close",
+      "Bash(npm install *)",
+      "Bash(node tools/bootstrap-source.mjs)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:5179/)",
+      "Bash(awk -F'/' '{print $1\"/\"$2}')",
+      "Bash(cp -r \"C:/dev/sailing-rpg/assets-source/Grass Land/.\" \"C:/dev/sailing-rpg/maps/themes/grassland/\")",
+      "Bash(cp -r \"C:/dev/sailing-rpg/assets-source/The Village/.\" \"C:/dev/sailing-rpg/maps/themes/village/\")",
+      "Bash(cp -r \"C:/dev/sailing-rpg/assets-source/Sea Adventures/.\" \"C:/dev/sailing-rpg/maps/themes/sea/\")",
+      "Bash(rm -rf grassland/Characters grassland/Mockups village/NPCs village/mockups sea/Characters sea/mockups)",
+      "Bash(find . -type d -name \"*-sprites\" -exec rm -rf {} +)",
+      "Bash(find . -type d -name \"sheet*-sprites\" -exec rm -rf {} +)",
+      "Bash(find . -type f -name \"*.aseprite\" -delete)",
+      "Bash(node -e ' *)",
+      "Bash(git *)"
+    ]
+  }
+}

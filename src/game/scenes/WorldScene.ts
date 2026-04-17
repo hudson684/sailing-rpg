@@ -6,19 +6,16 @@ import { ALL_ITEM_IDS, ITEMS } from "../inventory/items";
 import { Player, PLAYER_SPEED, PLAYER_RADIUS } from "../entities/Player";
 import {
   Ship,
-  headingToRotation,
   normalizeAngle,
   type DockedPose,
 } from "../entities/Ship";
-import {
-  generateWorld,
-  type GroundItemSpawn,
-  type WorldMap,
-  MAP_W,
-  MAP_H,
-} from "../world/worldMap";
-import { TILE_COLORS, Tile, isWalkable as baseIsWalkable, type TileId } from "../world/tiles";
+import { VESSEL_TEMPLATES } from "../entities/vessels";
+import { loadWorld, type WorldMap } from "../world/worldMap";
+import type { ItemSpawn } from "../world/spawns";
+import type { WorldManifest } from "../world/chunkManager";
 import { findAnchorPose } from "../util/anchor";
+import { CHUNK_KEY_PREFIX, WORLD_MANIFEST_KEY } from "./BootScene";
+import { DebugOverlays, type OverlayName } from "../debug/DebugOverlays";
 
 type Mode = "OnFoot" | "AtHelm" | "Anchoring";
 
@@ -36,13 +33,14 @@ interface GroundItem {
 
 export class WorldScene extends Phaser.Scene {
   private world!: WorldMap;
-  private tileGfx!: Phaser.GameObjects.Graphics;
   private player!: Player;
   private ship!: Ship;
+  private decorativeVessels: Ship[] = [];
   private inventory = new Inventory();
   private groundItems = new Map<string, GroundItem>();
 
   private mode: Mode = "OnFoot";
+  private debug!: DebugOverlays;
 
   private keys!: {
     up: Phaser.Input.Keyboard.Key;
@@ -74,19 +72,42 @@ export class WorldScene extends Phaser.Scene {
   }
 
   create() {
-    this.world = generateWorld();
-    this.drawTiles();
+    const manifest = this.cache.json.get(WORLD_MANIFEST_KEY) as WorldManifest;
+    this.world = loadWorld({
+      scene: this,
+      manifest,
+      chunkKeyPrefix: CHUNK_KEY_PREFIX,
+    });
 
-    // Spawn player on the dock
+    const { ship: shipSpawn, dock, items } = this.world.spawns;
     const spawnPx = {
-      x: (this.world.dockTile.x + 0.5) * TILE_SIZE,
-      y: (this.world.dockTile.y + 0.5) * TILE_SIZE,
+      x: (dock.tileX + 0.5) * TILE_SIZE,
+      y: (dock.tileY + 0.5) * TILE_SIZE,
     };
     this.player = new Player(this, spawnPx.x, spawnPx.y);
-    this.ship = new Ship(this, this.world.shipSpawn as DockedPose);
-    this.spawnGroundItems(this.world.groundItems);
+    this.ship = new Ship(this, {
+      tx: shipSpawn.tileX,
+      ty: shipSpawn.tileY,
+      heading: shipSpawn.heading,
+    });
 
-    this.cameras.main.setBounds(0, 0, MAP_W * TILE_SIZE, MAP_H * TILE_SIZE);
+    // Decorative galleon moored east of the larger L-dock, south of the rowboat.
+    // Global-tile coords (chunk 1_0 starts at tile x=32).
+    this.decorativeVessels.push(
+      new Ship(this, { tx: 73, ty: 20, heading: 1 }, VESSEL_TEMPLATES.galleon),
+    );
+
+    this.spawnGroundItems(items);
+
+    // Ocean-blue backdrop for any viewport area outside authored chunks.
+    this.cameras.main.setBackgroundColor("#1f4d78");
+    const b = this.world.bounds;
+    this.cameras.main.setBounds(
+      b.minTx * TILE_SIZE,
+      b.minTy * TILE_SIZE,
+      (b.maxTx - b.minTx) * TILE_SIZE,
+      (b.maxTy - b.minTy) * TILE_SIZE,
+    );
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
     this.cameras.main.setZoom(1);
 
@@ -105,6 +126,31 @@ export class WorldScene extends Phaser.Scene {
 
     this.keys.interact.on("down", () => this.onInteract());
     this.keys.debugGrant.on("down", () => this.grantRandomItem());
+
+    // Cardinal-only helm input: tap A/D (or ←/→) to turn 90° port/starboard.
+    const turnPort = () => {
+      if (this.mode === "AtHelm") this.ship.turn(-1);
+    };
+    const turnStarboard = () => {
+      if (this.mode === "AtHelm") this.ship.turn(1);
+    };
+    this.keys.a.on("down", turnPort);
+    this.keys.left.on("down", turnPort);
+    this.keys.d.on("down", turnStarboard);
+    this.keys.right.on("down", turnStarboard);
+
+    this.debug = new DebugOverlays(this, this.world, {
+      getShipPose: () =>
+        this.ship ? { x: this.ship.x, y: this.ship.y, rotation: this.ship.rotation } : null,
+      isAtHelm: () => this.mode === "AtHelm",
+    });
+    const overlayKeys: Array<[Phaser.Input.Keyboard.Key, OverlayName]> = [
+      [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F1), "walkability"],
+      [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F2), "chunkGrid"],
+      [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F3), "spawns"],
+      [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F4), "anchorSearch"],
+    ];
+    for (const [key, name] of overlayKeys) key.on("down", () => this.debug.toggle(name));
 
     bus.onTyped("inventory:action", this.onInventoryAction);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -125,12 +171,14 @@ export class WorldScene extends Phaser.Scene {
 
   update(_time: number, dtMs: number) {
     const dt = dtMs / 1000;
+    this.world.manager.tick(dtMs);
     if (this.mode === "OnFoot") this.updateOnFoot(dt);
     else if (this.mode === "AtHelm") this.updateAtHelm(dt);
     else if (this.mode === "Anchoring") {
       // Tween drives the ship; nothing to do here.
     }
     this.emitHud();
+    this.debug.update();
   }
 
   // ─── Mode: OnFoot ────────────────────────────────────────────────
@@ -165,7 +213,7 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  private spawnGroundItems(spawns: GroundItemSpawn[]) {
+  private spawnGroundItems(spawns: ItemSpawn[]) {
     for (const s of spawns) {
       const def = ITEMS[s.itemId];
       const x = (s.tileX + 0.5) * TILE_SIZE;
@@ -246,22 +294,19 @@ export class WorldScene extends Phaser.Scene {
     this.ship.startSailing();
     this.mode = "AtHelm";
     this.cameras.main.startFollow(this.ship.container, true, 0.1, 0.1);
-    bus.emitTyped("hud:message", "W/S throttle, A/D rudder, E to drop anchor.", 4500);
+    bus.emitTyped("hud:message", "W/S throttle, A/D turn 90°, E to drop anchor.", 4500);
   }
 
   // ─── Mode: AtHelm ─────────────────────────────────────────────────
 
   private updateAtHelm(dt: number) {
-    // Throttle: W = more, S = less
+    // Throttle: W = more, S = less. Turning is a discrete 90° snap handled via
+    // keydown handlers (see create()), so there's no continuous rudder axis.
     if (this.keys.w.isDown || this.keys.up.isDown) {
       this.ship.targetThrottle = Math.min(1, this.ship.targetThrottle + 0.6 * dt);
     } else if (this.keys.s.isDown || this.keys.down.isDown) {
       this.ship.targetThrottle = Math.max(0, this.ship.targetThrottle - 0.6 * dt);
     }
-    // Rudder: A/D; returns to zero when neither held
-    if (this.keys.a.isDown || this.keys.left.isDown) this.ship.rudder = -1;
-    else if (this.keys.d.isDown || this.keys.right.isDown) this.ship.rudder = 1;
-    else this.ship.rudder = 0;
 
     this.ship.updateSailing(dt);
 
@@ -275,12 +320,10 @@ export class WorldScene extends Phaser.Scene {
 
   private beginAnchoring() {
     const target = findAnchorPose(
-      this.world.tiles,
-      this.world.width,
-      this.world.height,
+      (tx, ty) => this.world.manager.isWater(tx, ty),
       this.ship.x,
       this.ship.y,
-      this.ship.rotation,
+      this.ship.heading,
       TILE_SIZE,
     );
     if (!target) {
@@ -291,23 +334,21 @@ export class WorldScene extends Phaser.Scene {
     this.mode = "Anchoring";
     this.ship.mode = "anchoring";
     this.ship.targetThrottle = 0;
-    this.ship.rudder = 0;
 
     const targetCenter = Ship.bboxCenterPx(target);
-    const targetRot = shortestRotTarget(this.ship.rotation, headingToRotation(target.heading));
 
-    // Drift + pivot tween: position + rotation with smooth easing.
+    // Snap heading immediately (cardinal — no rotation tween needed), then
+    // drift the ship into place.
+    this.ship.setPose(this.ship.x, this.ship.y, target.heading);
+
     this.tweens.add({
       targets: this.ship,
       x: targetCenter.x,
       y: targetCenter.y,
-      rotation: targetRot,
-      duration: 1400,
+      duration: 1000,
       ease: "Cubic.easeOut",
       onUpdate: () => {
-        this.ship.container.setPosition(this.ship.x, this.ship.y);
-        this.ship.container.setRotation(this.ship.rotation);
-        // Keep player parked at helm during the drift
+        this.ship.setPose(this.ship.x, this.ship.y);
         const helm = this.ship.helmWorldPx();
         this.player.setPosition(helm.x, helm.y);
         this.player.sprite.setRotation(this.ship.rotation);
@@ -315,7 +356,7 @@ export class WorldScene extends Phaser.Scene {
       onComplete: () => this.finishAnchoring(target),
     });
 
-    bus.emitTyped("hud:message", "Dropping anchor…", 1600);
+    bus.emitTyped("hud:message", "Dropping anchor…", 1200);
   }
 
   private finishAnchoring(pose: DockedPose) {
@@ -355,41 +396,13 @@ export class WorldScene extends Phaser.Scene {
   private isPointWalkable(px: number, py: number): boolean {
     const tx = Math.floor(px / TILE_SIZE);
     const ty = Math.floor(py / TILE_SIZE);
-    if (tx < 0 || ty < 0 || tx >= this.world.width || ty >= this.world.height) return false;
-    const base: TileId = this.world.tiles[ty][tx];
-    if (baseIsWalkable(base)) return true;
+    if (this.world.manager.isLandWalkable(tx, ty)) return true;
     // Deck tiles: ship footprint is walkable when docked.
     if (this.ship && this.ship.mode === "docked") {
       const onDeck = Ship.footprint(this.ship.docked).some((t) => t.x === tx && t.y === ty);
       if (onDeck) return true;
     }
     return false;
-  }
-
-  // ─── HUD + tile rendering ────────────────────────────────────────
-
-  private drawTiles() {
-    this.tileGfx = this.add.graphics();
-    this.tileGfx.setDepth(0);
-    for (let y = 0; y < this.world.height; y++) {
-      for (let x = 0; x < this.world.width; x++) {
-        const id = this.world.tiles[y][x];
-        this.tileGfx.fillStyle(TILE_COLORS[id], 1);
-        this.tileGfx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        if (id === Tile.Water) {
-          // Light highlight rows for sea texture
-          if ((x + y) % 7 === 0) {
-            this.tileGfx.fillStyle(0x2d5a8a, 0.5);
-            this.tileGfx.fillRect(
-              x * TILE_SIZE + 4,
-              y * TILE_SIZE + TILE_SIZE / 2 - 1,
-              TILE_SIZE - 8,
-              2,
-            );
-          }
-        }
-      }
-    }
   }
 
   private emitHud() {
@@ -442,7 +455,3 @@ export class WorldScene extends Phaser.Scene {
   }
 }
 
-function shortestRotTarget(current: number, target: number): number {
-  const delta = normalizeAngle(target - current);
-  return current + delta;
-}

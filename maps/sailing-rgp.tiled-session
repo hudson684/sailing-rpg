@@ -1,0 +1,236 @@
+{
+    "activeFile": "chunks/0_0.tmx",
+    "expandedProjectPaths": [
+        "themes",
+        "tilesets",
+        "themes/grassland/TiledMap Editor",
+        "themes/grassland/TiledMap Editor/Tilesets",
+        "themes/grassland",
+        "chunks",
+        "."
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "chunks/0_0.tmx": {
+            "scale": 0.75,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 566.6666666666666,
+                "y": 565.3333333333334
+            }
+        },
+        "chunks/0_1.tmx": {
+            "scale": 0.75,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 590.6666666666666,
+                "y": 390.6666666666667
+            }
+        },
+        "chunks/0_2.tmx": {
+            "scale": 0.8145507812499999,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 511.93861647284507,
+                "y": 511.93861647284496
+            }
+        },
+        "chunks/0_3.tmx": {
+            "scale": 0.75,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 624,
+                "y": 536
+            }
+        },
+        "chunks/1_0.tmx": {
+            "scale": 0.75,
+            "selectedLayer": 8,
+            "viewCenter": {
+                "x": 806.6666666666666,
+                "y": 604
+            }
+        },
+        "chunks/1_1.tmx": {
+            "scale": 0.75,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 517.3333333333333,
+                "y": 513.3333333333334
+            }
+        },
+        "chunks/1_2.tmx": {
+            "scale": 0.8145507812499999,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 511.93861647284507,
+                "y": 511.93861647284496
+            }
+        },
+        "chunks/1_3.tmx": {
+            "scale": 0.8145507812499999,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 511.93861647284507,
+                "y": 511.93861647284496
+            }
+        },
+        "chunks/2_0.tmx": {
+            "scale": 0.8145507812499999,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 511.93861647284507,
+                "y": 511.93861647284496
+            }
+        },
+        "chunks/2_1.tmx": {
+            "scale": 0.8145507812499999,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 511.93861647284507,
+                "y": 511.93861647284496
+            }
+        },
+        "chunks/2_2.tmx": {
+            "scale": 0.8145507812499999,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 511.93861647284507,
+                "y": 511.93861647284496
+            }
+        },
+        "chunks/2_3.tmx": {
+            "scale": 0.8145507812499999,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 511.93861647284507,
+                "y": 511.93861647284496
+            }
+        },
+        "chunks/3_0.tmx": {
+            "scale": 0.8145507812499999,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 511.93861647284507,
+                "y": 511.93861647284496
+            }
+        },
+        "chunks/3_1.tmx": {
+            "scale": 0.8145507812499999,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 511.93861647284507,
+                "y": 511.93861647284496
+            }
+        },
+        "chunks/3_2.tmx": {
+            "scale": 0.8145507812499999,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 511.93861647284507,
+                "y": 511.93861647284496
+            }
+        },
+        "chunks/3_3.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 564,
+                "y": 516
+            }
+        },
+        "themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props-sprites.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 0.125
+        },
+        "themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx": {
+            "dynamicWrapping": false
+        },
+        "themes/Sea Adventures/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx": {
+            "dynamicWrapping": false
+        },
+        "themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass - coast.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/grassland/TiledMap Editor/Tilesets/Atlas-Props-sheet1.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "themes/grassland/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach - godot.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "themes/grassland/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "themes/sea/TiledMap Editor/Tilesets/Atlas-props-sprites.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1
+        },
+        "themes/sea/TiledMap Editor/Tilesets/Atlas-props.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        },
+        "themes/sea/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1
+        },
+        "themes/sea/TiledMap Editor/Tilesets/Tilesets-GL2SA.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/sea/TiledMap Editor/Tilesets/beach - with thick foam.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        },
+        "themes/sea/TiledMap Editor/Tilesets/deep sea.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        },
+        "themes/sea/TiledMap Editor/Tilesets/platform - grass - coast.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1
+        },
+        "themes/sea/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        },
+        "tilesets/beach - standard - with thick foam - spritesheet.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "tilesets/roguelike.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        }
+    },
+    "last.externalTilesetPath": "C:/dev/sailing-rpg/maps/themes/Sea Adventures/TiledMap Editor/Tilesets",
+    "last.imagePath": "C:/dev/sailing-rpg/maps/themes/sea/Tilesets",
+    "openFiles": [
+        "chunks/0_0.tmx",
+        "chunks/1_0.tmx",
+        "chunks/1_1.tmx"
+    ],
+    "project": "sailing-rgp.tiled-project",
+    "recentFiles": [
+        "chunks/1_0.tmx",
+        "chunks/1_1.tmx",
+        "chunks/0_0.tmx",
+        "tilesets/beach - standard - with thick foam - spritesheet.tsx",
+        "themes/grassland/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach - godot.tsx",
+        "themes/grassland/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx",
+        "themes/grassland/TiledMap Editor/Tilesets/Atlas-Props-sheet1.tsx",
+        "chunks/0_1.tmx",
+        "chunks/3_3.tmx",
+        "tilesets/roguelike.tsx"
+    ],
+    "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
+    "tileset.lastUsedFormat": "tsx"
+}

@@ -1,7 +1,7 @@
 import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
 
-export const PLAYER_SPEED = 140; // pixels / sec
+export const PLAYER_SPEED = 142; // pixels / sec
 export const PLAYER_RADIUS = 10;
 
 export class Player {

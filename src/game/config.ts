@@ -10,7 +10,7 @@ export function createGameConfig(parent: HTMLElement): Phaser.Types.Core.GameCon
     width: VIEWPORT_W,
     height: VIEWPORT_H,
     backgroundColor: "#0a1a2f",
-    pixelArt: false,
+    pixelArt: true,
     physics: {
       default: "arcade",
       arcade: {

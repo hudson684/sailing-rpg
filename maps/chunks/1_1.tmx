@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="8" nextobjectid="4">
+ <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
+ <layer id="7" name="ocean" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztwwEJAAAMBKHrn+4jrcdQcNVUVVXV1w8WeEAu
+  </data>
+ </layer>
+ <layer id="1" name="ground" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+  </data>
+ </layer>
+ <layer id="2" name="overlay" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+  </data>
+ </layer>
+ <layer id="3" name="props_low" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+  </data>
+ </layer>
+ <layer id="4" name="props_high" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+  </data>
+ </layer>
+ <layer id="5" name="roof" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+  </data>
+ </layer>
+ <objectgroup id="6" name="objects">
+  <object id="8" type="item_spawn" x="144" y="368">
+   <properties>
+    <property name="itemId" value="rope"/>
+    <property name="quantity" type="int" value="1"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="9" type="item_spawn" x="16" y="112">
+   <properties>
+    <property name="itemId" value="rope"/>
+    <property name="quantity" type="int" value="2"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="10" type="item_spawn" x="784" y="80">
+   <properties>
+    <property name="itemId" value="compass"/>
+    <property name="quantity" type="int" value="1"/>
+   </properties>
+   <point/>
+  </object>
+ </objectgroup>
+</map>

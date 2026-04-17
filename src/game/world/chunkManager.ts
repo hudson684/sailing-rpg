@@ -1,0 +1,256 @@
+import * as Phaser from "phaser";
+import { TILE_SIZE } from "../constants";
+import { TileRegistry } from "./tileRegistry";
+import { parseSpawns, type ParsedSpawns, type ShipSpawn, type DockSpawn, type ItemSpawn } from "./spawns";
+
+export interface WorldManifest {
+  chunkSize: number;
+  tileWidth: number;
+  tileHeight: number;
+  oceanGid: number;
+  tilesetSource: string;
+  startChunk: { cx: number; cy: number };
+  authoredChunks: string[];
+  /** Runtime-only: all tileset image paths referenced by any chunk, relative to
+   *  public/maps/. Populated by the map build; not authored by hand. */
+  tilesetImages?: string[];
+}
+
+export interface Chunk {
+  cx: number;
+  cy: number;
+  tilemap: Phaser.Tilemaps.Tilemap;
+  registry: TileRegistry;
+  layers: Phaser.Tilemaps.TilemapLayer[];
+}
+
+export interface ChunkManagerOptions {
+  scene: Phaser.Scene;
+  manifest: WorldManifest;
+  /** Phaser cache key prefix for each chunk's cached TMJ (e.g. "chunk_1_0"). */
+  chunkKeyPrefix: string;
+}
+
+/** Phaser cache key for a tileset image, derived from its TMJ-relative path. */
+export function tilesetImageKeyFor(imagePath: string): string {
+  return `tileset:${imagePath}`;
+}
+
+/**
+ * Owns all loaded authored chunks. Global tile queries dispatch to the chunk
+ * containing (gtx, gty); tiles outside any loaded/authored chunk default to
+ * open ocean — water, not blocked.
+ */
+interface AnimatedCell {
+  layer: Phaser.Tilemaps.TilemapLayer;
+  tileX: number;
+  tileY: number;
+  frames: number[]; // global gids
+  durations: number[];
+  totalMs: number;
+  lastFrame: number;
+}
+
+export class ChunkManager {
+  readonly manifest: WorldManifest;
+  private readonly scene: Phaser.Scene;
+  private readonly chunkKeyPrefix: string;
+  private readonly chunks = new Map<string, Chunk>();
+  private readonly animatedCells: AnimatedCell[] = [];
+  private elapsedMs = 0;
+
+  constructor(opts: ChunkManagerOptions) {
+    this.scene = opts.scene;
+    this.manifest = opts.manifest;
+    this.chunkKeyPrefix = opts.chunkKeyPrefix;
+  }
+
+  /** Advance animated tile frames. Call from the scene's update(). */
+  tick(dtMs: number): void {
+    this.elapsedMs += dtMs;
+    for (const a of this.animatedCells) {
+      const t = this.elapsedMs % a.totalMs;
+      let acc = 0;
+      let idx = 0;
+      for (let i = 0; i < a.durations.length; i++) {
+        acc += a.durations[i];
+        if (t < acc) {
+          idx = i;
+          break;
+        }
+      }
+      if (idx === a.lastFrame) continue;
+      a.lastFrame = idx;
+      const tile = a.layer.getTileAt(a.tileX, a.tileY);
+      if (tile) tile.index = a.frames[idx];
+    }
+  }
+
+  initialize(): ParsedSpawns {
+    let ship: ShipSpawn | null = null;
+    let dock: DockSpawn | null = null;
+    const items: ItemSpawn[] = [];
+
+    for (const key of this.manifest.authoredChunks) {
+      const [cxStr, cyStr] = key.split("_");
+      const cx = parseInt(cxStr, 10);
+      const cy = parseInt(cyStr, 10);
+      const chunk = this.instantiateChunk(cx, cy);
+
+      const spawns = parseSpawns(chunk.tilemap, {
+        offsetTx: cx * this.manifest.chunkSize,
+        offsetTy: cy * this.manifest.chunkSize,
+        requireShip: false,
+        requireDock: false,
+      });
+      if (spawns.ship) {
+        if (ship) throw new Error(`Multiple ship_spawn objects: chunks ${key} and prior`);
+        ship = spawns.ship;
+      }
+      if (spawns.dock) {
+        if (dock) throw new Error(`Multiple dock objects: chunks ${key} and prior`);
+        dock = spawns.dock;
+      }
+      items.push(...spawns.items);
+    }
+
+    if (!ship) throw new Error("No ship_spawn object in any authored chunk.");
+    if (!dock) throw new Error("No dock object in any authored chunk.");
+    return { ship, dock, items };
+  }
+
+  isWater(gtx: number, gty: number): boolean {
+    const chunk = this.chunkAtGlobalTile(gtx, gty);
+    if (!chunk) return true;
+    const s = this.manifest.chunkSize;
+    return chunk.registry.isWater(gtx - chunk.cx * s, gty - chunk.cy * s);
+  }
+
+  isBlocked(gtx: number, gty: number): boolean {
+    const chunk = this.chunkAtGlobalTile(gtx, gty);
+    if (!chunk) return false;
+    const s = this.manifest.chunkSize;
+    return chunk.registry.isBlocked(gtx - chunk.cx * s, gty - chunk.cy * s);
+  }
+
+  isLandWalkable(gtx: number, gty: number): boolean {
+    return !this.isWater(gtx, gty) && !this.isBlocked(gtx, gty);
+  }
+
+  authoredBoundsTiles(): { minTx: number; minTy: number; maxTx: number; maxTy: number } {
+    let minCx = Infinity;
+    let minCy = Infinity;
+    let maxCx = -Infinity;
+    let maxCy = -Infinity;
+    for (const key of this.manifest.authoredChunks) {
+      const [cxStr, cyStr] = key.split("_");
+      const cx = parseInt(cxStr, 10);
+      const cy = parseInt(cyStr, 10);
+      if (cx < minCx) minCx = cx;
+      if (cy < minCy) minCy = cy;
+      if (cx > maxCx) maxCx = cx;
+      if (cy > maxCy) maxCy = cy;
+    }
+    const s = this.manifest.chunkSize;
+    return { minTx: minCx * s, minTy: minCy * s, maxTx: (maxCx + 1) * s, maxTy: (maxCy + 1) * s };
+  }
+
+  private chunkAtGlobalTile(gtx: number, gty: number): Chunk | null {
+    const s = this.manifest.chunkSize;
+    const cx = Math.floor(gtx / s);
+    const cy = Math.floor(gty / s);
+    return this.chunks.get(`${cx}_${cy}`) ?? null;
+  }
+
+  private instantiateChunk(cx: number, cy: number): Chunk {
+    const cacheKey = `${this.chunkKeyPrefix}${cx}_${cy}`;
+    const tilemap = this.scene.make.tilemap({ key: cacheKey });
+
+    // Phaser's Tileset instances don't carry the raw `image` path string, so we
+    // read the image path for each tileset from the cached TMJ JSON, matching
+    // by tileset name.
+    const cached = this.scene.cache.tilemap.get(cacheKey) as
+      | { data?: { tilesets?: Array<{ name: string; image: string }> } }
+      | undefined;
+    const rawTilesets = cached?.data?.tilesets ?? [];
+    const imageByName = new Map(rawTilesets.map((t) => [t.name, t.image]));
+
+    // Bind every tileset declared in the chunk's TMJ to its preloaded image.
+    const boundTilesets: Phaser.Tilemaps.Tileset[] = [];
+    for (const tsDef of tilemap.tilesets) {
+      const imagePath = imageByName.get(tsDef.name) ?? "";
+      if (!imagePath) {
+        throw new Error(
+          `No image path for tileset '${tsDef.name}' in chunk ${cx},${cy}`,
+        );
+      }
+      const imageKey = tilesetImageKeyFor(imagePath);
+      const bound = tilemap.addTilesetImage(tsDef.name, imageKey);
+      if (!bound) {
+        throw new Error(
+          `Failed to bind tileset '${tsDef.name}' (image '${imagePath}', key '${imageKey}') for chunk ${cx},${cy}`,
+        );
+      }
+      boundTilesets.push(bound);
+    }
+
+    const renderScale = TILE_SIZE / tilemap.tileWidth;
+    const chunkPxX = cx * this.manifest.chunkSize * TILE_SIZE;
+    const chunkPxY = cy * this.manifest.chunkSize * TILE_SIZE;
+
+    const layers: Phaser.Tilemaps.TilemapLayer[] = [];
+    tilemap.layers.forEach((layerData, idx) => {
+      const layer = tilemap.createLayer(layerData.name, boundTilesets, chunkPxX, chunkPxY) as
+        | Phaser.Tilemaps.TilemapLayer
+        | null;
+      if (!layer) return;
+      if (renderScale !== 1) layer.setScale(renderScale);
+      layer.setDepth(idx);
+      layers.push(layer);
+    });
+
+    const chunk: Chunk = { cx, cy, tilemap, registry: new TileRegistry(tilemap), layers };
+    this.chunks.set(`${cx}_${cy}`, chunk);
+    this.collectAnimations(chunk);
+    return chunk;
+  }
+
+  /** Read per-tileset animation data and index every painted cell that uses
+   *  an animated tile's base frame, so tick() can advance them cheaply. */
+  private collectAnimations(chunk: Chunk): void {
+    type TileData = Record<
+      number,
+      { animation?: Array<{ tileid: number; duration: number }> }
+    >;
+    for (const ts of chunk.tilemap.tilesets) {
+      const tileData = (ts as unknown as { tileData?: TileData }).tileData;
+      if (!tileData) continue;
+      const firstgid = ts.firstgid;
+      for (const localIdStr of Object.keys(tileData)) {
+        const anim = tileData[parseInt(localIdStr, 10)]?.animation;
+        if (!anim || anim.length < 2) continue;
+        const frames = anim.map((a) => firstgid + a.tileid);
+        const durations = anim.map((a) => a.duration);
+        const totalMs = durations.reduce((a, b) => a + b, 0);
+        // Find every cell across every layer whose index matches any frame in
+        // this animation (author may have painted any frame as the "base").
+        const frameSet = new Set(frames);
+        for (const layer of chunk.layers) {
+          layer.forEachTile((tile) => {
+            if (frameSet.has(tile.index)) {
+              this.animatedCells.push({
+                layer,
+                tileX: tile.x,
+                tileY: tile.y,
+                frames,
+                durations,
+                totalMs,
+                lastFrame: -1,
+              });
+            }
+          });
+        }
+      }
+    }
+  }
+}
