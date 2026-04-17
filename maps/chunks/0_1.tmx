@@ -36,6 +36,7 @@
    <properties>
     <property name="itemId" value="coin"/>
     <property name="quantity" type="int" value="12"/>
+       <property name="uid" value="6e3abcbb-d976-4e2b-9e5b-cf235dd38689"/>
    </properties>
    <point/>
   </object>

@@ -52,6 +52,7 @@
    <properties>
     <property name="itemId" value="plank"/>
     <property name="quantity" type="int" value="3"/>
+       <property name="uid" value="b6c79dd1-c6f5-4641-94a2-7ad154f2fbb8"/>
    </properties>
    <point/>
   </object>
@@ -59,6 +60,7 @@
    <properties>
     <property name="itemId" value="fish"/>
     <property name="quantity" type="int" value="1"/>
+       <property name="uid" value="a9b9fdd3-e84b-4a13-9e6f-9ae6edd7b7cb"/>
    </properties>
    <point/>
   </object>
@@ -66,6 +68,7 @@
    <properties>
     <property name="itemId" value="coin"/>
     <property name="quantity" type="int" value="5"/>
+       <property name="uid" value="d894222c-e579-4e17-9315-19efaf189f41"/>
    </properties>
    <point/>
   </object>

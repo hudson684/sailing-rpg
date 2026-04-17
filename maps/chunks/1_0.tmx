@@ -103,6 +103,7 @@
    <properties>
     <property name="itemId" value="plank"/>
     <property name="quantity" type="int" value="1"/>
+       <property name="uid" value="b38fb007-d2b5-4241-8c45-35386dede976"/>
    </properties>
    <point/>
   </object>

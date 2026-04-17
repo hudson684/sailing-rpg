@@ -36,6 +36,7 @@
    <properties>
     <property name="itemId" value="rope"/>
     <property name="quantity" type="int" value="1"/>
+       <property name="uid" value="fba09f2b-c071-422a-9371-eae7b4286f83"/>
    </properties>
    <point/>
   </object>
@@ -43,6 +44,7 @@
    <properties>
     <property name="itemId" value="rope"/>
     <property name="quantity" type="int" value="2"/>
+       <property name="uid" value="fa521210-12a0-46a3-90e2-591b8f8cfa09"/>
    </properties>
    <point/>
   </object>
@@ -50,6 +52,7 @@
    <properties>
     <property name="itemId" value="compass"/>
     <property name="quantity" type="int" value="1"/>
+       <property name="uid" value="04ad340e-7023-4966-8b87-d0d999ef51f8"/>
    </properties>
    <point/>
   </object>
