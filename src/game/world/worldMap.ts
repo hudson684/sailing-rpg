@@ -1,7 +1,16 @@
 import { Tile, type TileId } from "./tiles";
+import type { ItemId } from "../inventory/items";
 
 export const MAP_W = 64;
 export const MAP_H = 48;
+
+export interface GroundItemSpawn {
+  id: string;
+  itemId: ItemId;
+  quantity: number;
+  tileX: number;
+  tileY: number;
+}
 
 export interface WorldMap {
   width: number;
@@ -9,6 +18,7 @@ export interface WorldMap {
   tiles: TileId[][];
   dockTile: { x: number; y: number };
   shipSpawn: { tx: number; ty: number; heading: 0 | 1 | 2 | 3 };
+  groundItems: GroundItemSpawn[];
 }
 
 /** Generate a hand-crafted island with a dock extending into water. */
@@ -77,5 +87,72 @@ export function generateWorld(): WorldMap {
     }
   }
 
-  return { width: MAP_W, height: MAP_H, tiles, dockTile, shipSpawn };
+  const groundItems = scatterItems(tiles, shipSpawn);
+
+  return { width: MAP_W, height: MAP_H, tiles, dockTile, shipSpawn, groundItems };
+}
+
+const ITEM_SPAWNS: Array<{ itemId: ItemId; quantity: number }> = [
+  { itemId: "rope", quantity: 1 },
+  { itemId: "rope", quantity: 2 },
+  { itemId: "plank", quantity: 1 },
+  { itemId: "plank", quantity: 3 },
+  { itemId: "fish", quantity: 1 },
+  { itemId: "coin", quantity: 5 },
+  { itemId: "coin", quantity: 12 },
+  { itemId: "compass", quantity: 1 },
+];
+
+function scatterItems(
+  tiles: TileId[][],
+  shipSpawn: { tx: number; ty: number },
+): GroundItemSpawn[] {
+  // Deterministic PRNG so items land in the same spots every load.
+  let seed = 1337;
+  const rand = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 0x100000000;
+  };
+
+  const shipTiles = new Set<string>();
+  for (let dx = 0; dx < 3; dx++) {
+    for (let dy = 0; dy < 2; dy++) {
+      shipTiles.add(`${shipSpawn.tx + dx},${shipSpawn.ty + dy}`);
+    }
+  }
+
+  const candidates: Array<{ x: number; y: number }> = [];
+  for (let y = 0; y < MAP_H; y++) {
+    for (let x = 0; x < MAP_W; x++) {
+      const t = tiles[y][x];
+      if (t !== Tile.Grass && t !== Tile.Sand) continue;
+      if (shipTiles.has(`${x},${y}`)) continue;
+      candidates.push({ x, y });
+    }
+  }
+
+  const results: GroundItemSpawn[] = [];
+  const used = new Set<string>();
+  for (let i = 0; i < ITEM_SPAWNS.length && candidates.length > 0; i++) {
+    let pick: { x: number; y: number } | null = null;
+    for (let tries = 0; tries < 20; tries++) {
+      const idx = Math.floor(rand() * candidates.length);
+      const c = candidates[idx];
+      if (!used.has(`${c.x},${c.y}`)) {
+        pick = c;
+        break;
+      }
+    }
+    if (!pick) continue;
+    used.add(`${pick.x},${pick.y}`);
+    const spawn = ITEM_SPAWNS[i];
+    results.push({
+      id: `gi_${i}`,
+      itemId: spawn.itemId,
+      quantity: spawn.quantity,
+      tileX: pick.x,
+      tileY: pick.y,
+    });
+  }
+  return results;
 }
