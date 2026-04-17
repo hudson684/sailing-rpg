@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import * as Phaser from "phaser";
 import { createGameConfig } from "./game/config";
 import { Hud } from "./ui/Hud";
+import { Inventory } from "./ui/Inventory";
 import "./App.css";
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
     <div className="app-root">
       <div ref={parentRef} className="game-canvas" />
       <Hud />
+      <Inventory />
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
-import { bus } from "../bus";
+import { bus, type InventoryAction } from "../bus";
+import { Inventory } from "../inventory/Inventory";
+import { ALL_ITEM_IDS, ITEMS } from "../inventory/items";
 import { Player, PLAYER_SPEED, PLAYER_RADIUS } from "../entities/Player";
 import {
   Ship,
@@ -26,6 +28,7 @@ export class WorldScene extends Phaser.Scene {
   private tileGfx!: Phaser.GameObjects.Graphics;
   private player!: Player;
   private ship!: Ship;
+  private inventory = new Inventory();
 
   private mode: Mode = "OnFoot";
 
@@ -39,6 +42,19 @@ export class WorldScene extends Phaser.Scene {
     s: Phaser.Input.Keyboard.Key;
     d: Phaser.Input.Keyboard.Key;
     interact: Phaser.Input.Keyboard.Key;
+    debugGrant: Phaser.Input.Keyboard.Key;
+  };
+
+  private onInventoryAction = (action: InventoryAction) => {
+    if (action.type === "move") {
+      if (this.inventory.move(action.from, action.to)) this.emitInventory();
+    } else if (action.type === "drop") {
+      const removed = this.inventory.removeAt(action.slot, Number.MAX_SAFE_INTEGER);
+      if (removed > 0) {
+        this.emitInventory();
+        bus.emitTyped("hud:message", `Dropped ${removed}.`, 1500);
+      }
+    }
   };
 
   constructor() {
@@ -71,9 +87,17 @@ export class WorldScene extends Phaser.Scene {
       s: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S),
       d: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D),
       interact: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E),
+      debugGrant: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.G),
     };
 
     this.keys.interact.on("down", () => this.onInteract());
+    this.keys.debugGrant.on("down", () => this.grantRandomItem());
+
+    bus.onTyped("inventory:action", this.onInventoryAction);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      bus.offTyped("inventory:action", this.onInventoryAction);
+    });
+    this.emitInventory();
 
     // Initial HUD state
     bus.emitTyped("hud:update", {
@@ -309,6 +333,23 @@ export class WorldScene extends Phaser.Scene {
       speed: this.ship ? Math.round(this.ship.speed) : 0,
       heading: this.ship ? normalizeAngle(this.ship.rotation) : 0,
     });
+  }
+
+  private emitInventory() {
+    bus.emitTyped("inventory:update", this.inventory.getSlots());
+  }
+
+  private grantRandomItem() {
+    const id = ALL_ITEM_IDS[Math.floor(Math.random() * ALL_ITEM_IDS.length)];
+    const qty = ITEMS[id].stackable ? 1 + Math.floor(Math.random() * 5) : 1;
+    const leftover = this.inventory.add(id, qty);
+    const added = qty - leftover;
+    this.emitInventory();
+    if (added > 0) {
+      bus.emitTyped("hud:message", `+${added} ${ITEMS[id].name}`, 1500);
+    } else {
+      bus.emitTyped("hud:message", "Inventory is full.", 1500);
+    }
   }
 }
 
