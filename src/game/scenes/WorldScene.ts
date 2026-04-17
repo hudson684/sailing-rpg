@@ -12,6 +12,7 @@ import {
 } from "../entities/Ship";
 import {
   generateWorld,
+  type GroundItemSpawn,
   type WorldMap,
   MAP_W,
   MAP_H,
@@ -22,6 +23,16 @@ import { findAnchorPose } from "../util/anchor";
 type Mode = "OnFoot" | "AtHelm" | "Anchoring";
 
 const HELM_INTERACT_RADIUS = TILE_SIZE * 0.7;
+const PICKUP_RADIUS = TILE_SIZE * 0.8;
+
+interface GroundItem {
+  id: string;
+  itemId: import("../inventory/items").ItemId;
+  quantity: number;
+  x: number;
+  y: number;
+  sprite: Phaser.GameObjects.Text;
+}
 
 export class WorldScene extends Phaser.Scene {
   private world!: WorldMap;
@@ -29,6 +40,7 @@ export class WorldScene extends Phaser.Scene {
   private player!: Player;
   private ship!: Ship;
   private inventory = new Inventory();
+  private groundItems = new Map<string, GroundItem>();
 
   private mode: Mode = "OnFoot";
 
@@ -72,6 +84,7 @@ export class WorldScene extends Phaser.Scene {
     };
     this.player = new Player(this, spawnPx.x, spawnPx.y);
     this.ship = new Ship(this, this.world.shipSpawn as DockedPose);
+    this.spawnGroundItems(this.world.groundItems);
 
     this.cameras.main.setBounds(0, 0, MAP_W * TILE_SIZE, MAP_H * TILE_SIZE);
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
@@ -141,10 +154,76 @@ export class WorldScene extends Phaser.Scene {
 
   private onInteract() {
     if (this.mode === "OnFoot") {
+      const pickup = this.nearestGroundItem();
+      if (pickup) {
+        this.pickUp(pickup);
+        return;
+      }
       if (this.isNearHelm()) this.takeHelm();
     } else if (this.mode === "AtHelm") {
       this.beginAnchoring();
     }
+  }
+
+  private spawnGroundItems(spawns: GroundItemSpawn[]) {
+    for (const s of spawns) {
+      const def = ITEMS[s.itemId];
+      const x = (s.tileX + 0.5) * TILE_SIZE;
+      const y = (s.tileY + 0.5) * TILE_SIZE;
+      const sprite = this.add
+        .text(x, y, def.icon, { fontSize: "20px" })
+        .setOrigin(0.5)
+        .setDepth(1)
+        .setShadow(0, 2, "rgba(0,0,0,0.5)", 3);
+      this.tweens.add({
+        targets: sprite,
+        y: y - 3,
+        duration: 900,
+        ease: "Sine.easeInOut",
+        yoyo: true,
+        repeat: -1,
+      });
+      this.groundItems.set(s.id, {
+        id: s.id,
+        itemId: s.itemId,
+        quantity: s.quantity,
+        x,
+        y,
+        sprite,
+      });
+    }
+  }
+
+  private nearestGroundItem(): GroundItem | null {
+    let best: GroundItem | null = null;
+    let bestDist = PICKUP_RADIUS;
+    for (const gi of this.groundItems.values()) {
+      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, gi.x, gi.y);
+      if (d <= bestDist) {
+        best = gi;
+        bestDist = d;
+      }
+    }
+    return best;
+  }
+
+  private pickUp(gi: GroundItem) {
+    const leftover = this.inventory.add(gi.itemId, gi.quantity);
+    const taken = gi.quantity - leftover;
+    if (taken <= 0) {
+      bus.emitTyped("hud:message", "Inventory is full.", 1500);
+      return;
+    }
+    const def = ITEMS[gi.itemId];
+    if (leftover > 0) {
+      gi.quantity = leftover;
+      bus.emitTyped("hud:message", `Picked up ${taken} ${def.name} (full).`, 1800);
+    } else {
+      gi.sprite.destroy();
+      this.groundItems.delete(gi.id);
+      bus.emitTyped("hud:message", `Picked up ${taken} ${def.name}.`, 1500);
+    }
+    this.emitInventory();
   }
 
   private isNearHelm(): boolean {
@@ -324,8 +403,18 @@ export class WorldScene extends Phaser.Scene {
             : "OnFoot";
 
     let prompt: string | null = null;
-    if (this.mode === "OnFoot" && this.isNearHelm()) prompt = "Press E to take the helm";
-    else if (this.mode === "AtHelm") prompt = "Press E to drop anchor";
+    if (this.mode === "OnFoot") {
+      const pickup = this.nearestGroundItem();
+      if (pickup) {
+        const def = ITEMS[pickup.itemId];
+        const qty = pickup.quantity > 1 ? ` ×${pickup.quantity}` : "";
+        prompt = `Press E to pick up ${def.name}${qty}`;
+      } else if (this.isNearHelm()) {
+        prompt = "Press E to take the helm";
+      }
+    } else if (this.mode === "AtHelm") {
+      prompt = "Press E to drop anchor";
+    }
 
     bus.emitTyped("hud:update", {
       mode: hudMode,
