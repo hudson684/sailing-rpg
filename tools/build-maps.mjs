@@ -7,10 +7,12 @@ import { inflateSync } from "node:zlib";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { XMLParser } from "fast-xml-parser";
+import { stampUidsInDir } from "./stamp-uids.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const mapsDir = path.join(repoRoot, "maps");
+const chunksDir = path.join(mapsDir, "chunks");
 const publicMapsDir = path.join(repoRoot, "public", "maps");
 
 export { mapsDir, publicMapsDir };
@@ -23,7 +25,8 @@ const parser = new XMLParser({
 
 // Run as CLI only when invoked directly (not when imported by the Vite plugin).
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
-  buildAll();
+  const check = process.argv.includes("--check");
+  buildAll({ check });
 }
 
 /** Read & parse maps/world.json. Throws if missing. */
@@ -43,7 +46,23 @@ function writeManifest(manifest, tilesetImages) {
   writeFileSync(outManifestPath, JSON.stringify(outManifest));
 }
 
-export function buildAll() {
+export function buildAll(opts = {}) {
+  const { check = false } = opts;
+
+  // Stamp uids (or verify they're all present) before reading TMX for TMJ emit.
+  // In --check mode this throws on any missing/duplicate uid; in normal mode
+  // it writes new uids back to source TMX.
+  const stampReports = stampUidsInDir(chunksDir, { check });
+  const stampedTotal = stampReports.reduce((n, r) => n + r.stamped, 0);
+  if (stampedTotal > 0) {
+    console.log(
+      `Stamped ${stampedTotal} uid(s) into source TMX:\n${stampReports
+        .filter((r) => r.stamped > 0)
+        .map((r) => `  - ${path.basename(r.file)}: +${r.stamped}`)
+        .join("\n")}`,
+    );
+  }
+
   const manifest = readManifest();
   const tilesetImages = new Set();
   const summaries = [];
