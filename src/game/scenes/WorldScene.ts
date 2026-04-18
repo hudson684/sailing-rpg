@@ -454,9 +454,26 @@ export class WorldScene extends Phaser.Scene {
       this.droppedExpiryAccum = 0;
       this.expireDroppedItems();
     }
+    this.syncPlayerShipDepth();
     this.updateZoom(dtMs);
     this.emitHud();
     this.debug.update();
+  }
+
+  /** Player rides above the hull whenever on the ship — the ship's container
+   *  depth uses the footprint bottom, which would otherwise cover the player. */
+  private syncPlayerShipDepth() {
+    if (!this.ship) {
+      this.player.depthOverride = null;
+      return;
+    }
+    const onShip =
+      this.sceneState.mode === "AtHelm" ||
+      this.sceneState.mode === "Anchoring" ||
+      (this.sceneState.mode === "OnFoot" &&
+        this.ship.isOnDeck(this.player.x, this.player.y));
+    this.player.depthOverride = onShip ? this.ship.sortY() + 1 : null;
+    this.player.sprite.setDepth(this.player.depthOverride ?? this.player.sortY());
   }
 
   // ─── Mode: OnFoot ────────────────────────────────────────────────

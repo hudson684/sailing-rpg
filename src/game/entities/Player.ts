@@ -173,7 +173,7 @@ export class Player {
 
   hydrate(data: { x: number; y: number; facing: Facing }): void {
     this.sprite.setPosition(data.x, data.y);
-    this.sprite.setDepth(this.sortY());
+    this.applyDepth();
     this._facing = data.facing;
     this._animState = "idle";
     this.applyAnim();
@@ -206,6 +206,10 @@ export class Player {
     return this.sprite.y;
   }
 
+  /** When set, overrides sortY-based depth — used while riding on a ship's
+   *  deck so the player renders above the hull sprite regardless of y. */
+  public depthOverride: number | null = null;
+
   /** Y-value used for depth sorting — the container's feet world-y. */
   sortY(): number {
     // Container origin is at (0,0); children sit with feet at child y=0
@@ -213,9 +217,13 @@ export class Player {
     return this.sprite.y;
   }
 
+  private applyDepth() {
+    this.sprite.setDepth(this.depthOverride ?? this.sortY());
+  }
+
   setPosition(x: number, y: number) {
     this.sprite.setPosition(x, y);
-    this.sprite.setDepth(this.sortY());
+    this.applyDepth();
   }
 
   setVisible(v: boolean) {
@@ -261,7 +269,7 @@ export class Player {
     const intended = facingFromDelta(dx, dy);
     if (intended) this._facing = intended;
     this.setAnimState(moved ? "walk" : "idle");
-    this.sprite.setDepth(this.sortY());
+    this.applyDepth();
   }
 
   /**
