@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { bus } from "../game/bus";
 import { useSettingsStore } from "../game/store/settingsStore";
+import { CF_FRAME_SIZE, type CfLayer } from "../game/entities/playerAnims";
 import {
-  PLAYER_ANIM_SHEETS,
-  type PlayerAnimDir,
-  type PlayerAnimState,
-} from "../game/entities/playerAnims";
+  CF_WARDROBE_LAYERS,
+  CF_WARDROBE_OPTIONS,
+  type CfWardrobe,
+} from "../game/entities/playerWardrobe";
 import {
   SKIN_PALETTES,
   SKIN_PALETTE_IDS,
@@ -14,44 +15,101 @@ import {
 } from "../game/entities/playerSkin";
 import "./CharacterCustomizer.css";
 
-const FACING_OPTIONS: { id: PlayerAnimDir; label: string; flipX: boolean }[] = [
-  { id: "down", label: "Down", flipX: false },
-  { id: "side", label: "Right", flipX: false },
-  { id: "up", label: "Up", flipX: false },
-  { id: "side", label: "Left", flipX: true },
+// Each CF frame is 64×64. The character pixels live in y=23..40 of each row;
+// crop tight to the body for a clearer swatch.
+const CHAR_CROP = { x: 16, y: 14, w: 32, h: 38 } as const;
+const PREVIEW_SCALE = 6;
+const SWATCH_SCALE = 3;
+
+// Layer draw order — must match `CF_LAYERS` in playerAnims.ts (back→front).
+const PREVIEW_LAYER_ORDER: CfLayer[] = [
+  "base",
+  "feet",
+  "legs",
+  "chest",
+  "hands",
+  "hair",
+  "accessory",
 ];
 
-const STATE_OPTIONS: PlayerAnimState[] = ["idle", "walk", "attack"];
-
-const PREVIEW_SCALE = 4;
-const SWATCH_SCALE = 1;
-
-function loadStateImage(state: PlayerAnimState): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`failed to load ${state}.png`));
-    img.src = `/sprites/character/${state}.png`;
-  });
+// Filename for a (layer, variant) sheet. Mirrors BootScene's loader.
+function sheetUrl(layer: CfLayer, variant: string): string {
+  if (layer === "base") return `/sprites/character/cf/base.png`;
+  return `/sprites/character/cf/${layer}-${variant}.png`;
 }
 
-/** Bake a single still frame into a canvas (for swatch buttons). */
-function makeSwatchCanvas(img: HTMLImageElement, paletteId: SkinPaletteId): HTMLCanvasElement {
-  const cfg = PLAYER_ANIM_SHEETS.idle;
-  const size = cfg.frameSize;
-  // Down-facing first frame: row index = cfg.rows.down, col 0.
-  const sx = 0;
-  const sy = cfg.rows.down * size;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d")!;
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size);
-  const data = ctx.getImageData(0, 0, size, size);
+const imageCache = new Map<string, Promise<HTMLImageElement>>();
+
+function loadSheet(layer: CfLayer, variant: string): Promise<HTMLImageElement> {
+  const key = `${layer}:${variant}`;
+  let p = imageCache.get(key);
+  if (!p) {
+    p = new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error(`failed to load ${key}`));
+      img.src = sheetUrl(layer, variant);
+    });
+    imageCache.set(key, p);
+  }
+  return p;
+}
+
+type PreviewLayers = Partial<Record<CfLayer, HTMLImageElement>> & {
+  base: HTMLImageElement;
+  hands: HTMLImageElement;
+};
+
+async function loadPreviewLayers(wardrobe: CfWardrobe): Promise<PreviewLayers> {
+  // Hands and base are not user-pickable today — fixed defaults.
+  const [base, hands] = await Promise.all([
+    loadSheet("base", "default"),
+    loadSheet("hands", "bare"),
+  ]);
+  const out: PreviewLayers = { base, hands };
+  for (const layer of CF_WARDROBE_LAYERS) {
+    const variant = wardrobe[layer];
+    if (!variant) continue;
+    out[layer] = await loadSheet(layer, variant);
+  }
+  return out;
+}
+
+/** Composite layered preview into a canvas at the chosen scale, recolored. */
+function paintLayered(
+  ctx: CanvasRenderingContext2D,
+  layers: PreviewLayers,
+  paletteId: SkinPaletteId,
+  scale: number,
+): void {
+  const work = document.createElement("canvas");
+  work.width = CF_FRAME_SIZE;
+  work.height = CF_FRAME_SIZE;
+  const wctx = work.getContext("2d")!;
+  wctx.imageSmoothingEnabled = false;
+  for (const layer of PREVIEW_LAYER_ORDER) {
+    const img = layers[layer];
+    if (!img) continue;
+    // Frame 0 of each sheet is at (0, 0, 64, 64) — idle/forward first frame.
+    wctx.drawImage(img, 0, 0, CF_FRAME_SIZE, CF_FRAME_SIZE, 0, 0, CF_FRAME_SIZE, CF_FRAME_SIZE);
+  }
+  // Skin recolor pass on the composited frame. recolorPixels handles both
+  // Hana and CF source palettes — only the CF skin pixels match here.
+  const data = wctx.getImageData(0, 0, CF_FRAME_SIZE, CF_FRAME_SIZE);
   recolorPixels(data.data, SKIN_PALETTES[paletteId]);
-  ctx.putImageData(data, 0, 0);
-  return canvas;
+  wctx.putImageData(data, 0, 0);
+
+  const dstW = CHAR_CROP.w * scale;
+  const dstH = CHAR_CROP.h * scale;
+  ctx.canvas.width = dstW;
+  ctx.canvas.height = dstH;
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, dstW, dstH);
+  ctx.drawImage(
+    work,
+    CHAR_CROP.x, CHAR_CROP.y, CHAR_CROP.w, CHAR_CROP.h,
+    0, 0, dstW, dstH,
+  );
 }
 
 export interface CharacterCustomizerProps {
@@ -62,157 +120,105 @@ export interface CharacterCustomizerProps {
 
 export function CharacterCustomizer({ mode, open, onClose }: CharacterCustomizerProps) {
   const savedTone = useSettingsStore((s) => s.skinTone);
+  const savedWardrobe = useSettingsStore((s) => s.wardrobe);
   const setSkinTone = useSettingsStore((s) => s.setSkinTone);
+  const setWardrobe = useSettingsStore((s) => s.setWardrobe);
   const setCharacterCreated = useSettingsStore((s) => s.setCharacterCreated);
 
   const [previewTone, setPreviewTone] = useState<SkinPaletteId>(savedTone);
-  const [stateIdx, setStateIdx] = useState(0);
-  const [facingIdx, setFacingIdx] = useState(0);
-
-  const [sheets, setSheets] = useState<Record<PlayerAnimState, HTMLImageElement> | null>(null);
-  const [swatches, setSwatches] = useState<Record<SkinPaletteId, string> | null>(null);
+  const [previewWardrobe, setPreviewWardrobe] = useState<CfWardrobe>(savedWardrobe);
 
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
-  const animRef = useRef<number | null>(null);
+  const [layers, setLayers] = useState<PreviewLayers | null>(null);
 
-  // Reset preview tone to saved when the panel opens fresh.
+  // Reset previews when re-opened.
   useEffect(() => {
-    if (open) setPreviewTone(savedTone);
-  }, [open, savedTone]);
+    if (open) {
+      setPreviewTone(savedTone);
+      setPreviewWardrobe(savedWardrobe);
+    }
+  }, [open, savedTone, savedWardrobe]);
 
-  // Load all sheet images + bake swatch data URLs once.
+  // Load every sheet ever needed for the swatches up front (small set).
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      try {
-        const loaded = await Promise.all(STATE_OPTIONS.map(loadStateImage));
-        if (cancelled) return;
-        const map = {} as Record<PlayerAnimState, HTMLImageElement>;
-        STATE_OPTIONS.forEach((s, i) => (map[s] = loaded[i]));
-        setSheets(map);
-        const sw = {} as Record<SkinPaletteId, string>;
-        for (const id of SKIN_PALETTE_IDS) {
-          sw[id] = makeSwatchCanvas(map.idle, id).toDataURL("image/png");
-        }
-        setSwatches(sw);
-      } catch {
-        // Non-fatal — UI degrades to label-only.
+      // Warm the cache for every variant in CF_WARDROBE_OPTIONS so swatch
+      // canvases render synchronously thereafter.
+      const tasks: Promise<unknown>[] = [
+        loadSheet("base", "default"),
+        loadSheet("hands", "bare"),
+      ];
+      for (const layer of CF_WARDROBE_LAYERS) {
+        const opts = CF_WARDROBE_OPTIONS[layer] ?? [];
+        for (const variant of opts) tasks.push(loadSheet(layer, variant));
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
+      await Promise.all(tasks);
+      if (!cancelled) {
+        // Trigger a render once images are warm (so swatches paint).
+        setLayers((prev) => prev ?? null);
+        setPreviewWardrobe((w) => ({ ...w }));
+      }
+    })().catch(() => { /* non-fatal */ });
+    return () => { cancelled = true; };
   }, []);
 
-  // Drive the preview animation.
+  // Reload composite layers whenever the preview wardrobe changes.
   useEffect(() => {
-    if (!sheets) return;
+    let cancelled = false;
+    void loadPreviewLayers(previewWardrobe)
+      .then((l) => { if (!cancelled) setLayers(l); })
+      .catch(() => { /* non-fatal */ });
+    return () => { cancelled = true; };
+  }, [previewWardrobe]);
+
+  // Repaint preview when layers or skin tone change.
+  useEffect(() => {
     const canvas = previewCanvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !layers) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    paintLayered(ctx, layers, previewTone, PREVIEW_SCALE);
+  }, [layers, previewTone]);
 
-    const state = STATE_OPTIONS[stateIdx];
-    const facing = FACING_OPTIONS[facingIdx];
-    const cfg = PLAYER_ANIM_SHEETS[state];
-    const size = cfg.frameSize;
-    const cols = cfg.cols;
-    const row = cfg.rows[facing.id];
-    const fps = cfg.frameRate;
-
-    canvas.width = size * PREVIEW_SCALE;
-    canvas.height = size * PREVIEW_SCALE;
-    ctx.imageSmoothingEnabled = false;
-
-    // Pre-bake the row's frames into one strip canvas with the chosen tone,
-    // then sample from it each tick — recolor cost is paid once per change.
-    const strip = document.createElement("canvas");
-    strip.width = size * cols;
-    strip.height = size;
-    const sctx = strip.getContext("2d")!;
-    sctx.imageSmoothingEnabled = false;
-    sctx.drawImage(sheets[state], 0, row * size, size * cols, size, 0, 0, size * cols, size);
-    const data = sctx.getImageData(0, 0, size * cols, size);
-    recolorPixels(data.data, SKIN_PALETTES[previewTone]);
-    sctx.putImageData(data, 0, 0);
-
-    const startedAt = performance.now();
-    const totalFrames = cols;
-    const frameMs = 1000 / fps;
-    // Attack plays once and holds the last frame; idle/walk loop.
-    const loop = cfg.repeat !== 0;
-
-    const tick = (now: number) => {
-      const elapsed = now - startedAt;
-      let frame = Math.floor(elapsed / frameMs);
-      frame = loop ? frame % totalFrames : Math.min(frame, totalFrames - 1);
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.save();
-      if (facing.flipX) {
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-      }
-      ctx.drawImage(
-        strip,
-        frame * size, 0, size, size,
-        0, 0, size * PREVIEW_SCALE, size * PREVIEW_SCALE,
-      );
-      ctx.restore();
-
-      animRef.current = requestAnimationFrame(tick);
-    };
-    animRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      if (animRef.current !== null) cancelAnimationFrame(animRef.current);
-      animRef.current = null;
-    };
-  }, [sheets, stateIdx, facingIdx, previewTone]);
-
-  // Hotkey + ESC to cancel.
+  // ESC closes (edit mode only — create mode forces a confirm).
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        if (mode === "edit") onClose();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, mode]);
 
-  const dirty = previewTone !== savedTone;
+  const dirty =
+    previewTone !== savedTone ||
+    CF_WARDROBE_LAYERS.some((l) => previewWardrobe[l] !== savedWardrobe[l]);
 
   const onApply = () => {
-    setSkinTone(previewTone);
-    bus.emitTyped("skin:apply", previewTone);
+    if (previewTone !== savedTone) {
+      setSkinTone(previewTone);
+      bus.emitTyped("skin:apply", previewTone);
+    }
+    setWardrobe(previewWardrobe);
     if (mode === "create") setCharacterCreated(true);
     onClose();
   };
 
   const onCancel = () => {
-    if (mode === "create") {
-      // First-run: still need to commit *something*; default tone is fine.
-      setCharacterCreated(true);
-    }
+    if (mode === "create") setCharacterCreated(true);
     onClose();
   };
 
-  const previewSizePx = useMemo(
-    () => PLAYER_ANIM_SHEETS.idle.frameSize * PREVIEW_SCALE,
-    [],
-  );
-  const swatchSizePx = useMemo(
-    () => PLAYER_ANIM_SHEETS.idle.frameSize * SWATCH_SCALE,
+  const previewSize = useMemo(
+    () => ({ w: CHAR_CROP.w * PREVIEW_SCALE, h: CHAR_CROP.h * PREVIEW_SCALE }),
     [],
   );
 
   if (!open) return null;
-
-  const stateLabel = STATE_OPTIONS[stateIdx];
-  const facingLabel = FACING_OPTIONS[facingIdx].label;
 
   return (
     <div className="cust-backdrop" onClick={mode === "edit" ? onCancel : undefined}>
@@ -228,34 +234,11 @@ export function CharacterCustomizer({ mode, open, onClose }: CharacterCustomizer
 
         <div className="cust-body">
           <div className="cust-preview-col">
-            <div className="cust-stage" style={{ width: previewSizePx, height: previewSizePx }}>
+            <div
+              className="cust-stage"
+              style={{ width: previewSize.w + 24, height: previewSize.h + 24 }}
+            >
               <canvas ref={previewCanvasRef} className="cust-preview-canvas" />
-            </div>
-            <div className="cust-stepper">
-              <button
-                className="cust-arrow"
-                onClick={() => setStateIdx((i) => (i - 1 + STATE_OPTIONS.length) % STATE_OPTIONS.length)}
-                aria-label="Previous state"
-              >‹</button>
-              <span className="cust-stepper-label">{stateLabel}</span>
-              <button
-                className="cust-arrow"
-                onClick={() => setStateIdx((i) => (i + 1) % STATE_OPTIONS.length)}
-                aria-label="Next state"
-              >›</button>
-            </div>
-            <div className="cust-stepper">
-              <button
-                className="cust-arrow"
-                onClick={() => setFacingIdx((i) => (i - 1 + FACING_OPTIONS.length) % FACING_OPTIONS.length)}
-                aria-label="Previous facing"
-              >‹</button>
-              <span className="cust-stepper-label">{facingLabel}</span>
-              <button
-                className="cust-arrow"
-                onClick={() => setFacingIdx((i) => (i + 1) % FACING_OPTIONS.length)}
-                aria-label="Next facing"
-              >›</button>
             </div>
           </div>
 
@@ -264,7 +247,6 @@ export function CharacterCustomizer({ mode, open, onClose }: CharacterCustomizer
               <div className="cust-section-title">Skin Tone</div>
               <div className="cust-swatch-grid">
                 {SKIN_PALETTE_IDS.map((id) => {
-                  const src = swatches?.[id];
                   const active = id === previewTone;
                   return (
                     <button
@@ -272,13 +254,8 @@ export function CharacterCustomizer({ mode, open, onClose }: CharacterCustomizer
                       className={`px-slot cust-swatch${active ? " px-slot-target" : ""}`}
                       onClick={() => setPreviewTone(id)}
                       title={id}
-                      style={{ width: swatchSizePx + 20, height: swatchSizePx + 20 }}
                     >
-                      {src ? (
-                        <img src={src} width={swatchSizePx} height={swatchSizePx} alt={id} />
-                      ) : (
-                        <div className="cust-swatch-empty" style={{ width: swatchSizePx, height: swatchSizePx }} />
-                      )}
+                      <ToneChip palette={id} />
                       <span className="cust-swatch-label">{id}</span>
                     </button>
                   );
@@ -286,10 +263,50 @@ export function CharacterCustomizer({ mode, open, onClose }: CharacterCustomizer
               </div>
             </div>
 
-            <div className="cust-section cust-section-muted">
-              <div className="cust-section-title">Hair</div>
-              <div className="cust-section-coming">Coming soon</div>
-            </div>
+            {CF_WARDROBE_LAYERS.map((layer) => {
+              const opts = CF_WARDROBE_OPTIONS[layer] ?? [];
+              if (opts.length === 0) return null;
+              const current = previewWardrobe[layer] ?? null;
+              const optional = layer === "accessory";
+              return (
+                <div key={layer} className="cust-section">
+                  <div className="cust-section-title">{layer}</div>
+                  <div className="cust-swatch-grid">
+                    {optional && (
+                      <button
+                        className={`px-slot cust-swatch${current === null ? " px-slot-target" : ""}`}
+                        onClick={() => setPreviewWardrobe((w) => ({ ...w, [layer]: null }))}
+                        title="None"
+                      >
+                        <div
+                          className="cust-swatch-empty"
+                          style={{ width: CHAR_CROP.w * SWATCH_SCALE, height: CHAR_CROP.h * SWATCH_SCALE }}
+                        />
+                        <span className="cust-swatch-label">none</span>
+                      </button>
+                    )}
+                    {opts.map((variant) => {
+                      const active = current === variant;
+                      return (
+                        <button
+                          key={variant}
+                          className={`px-slot cust-swatch${active ? " px-slot-target" : ""}`}
+                          onClick={() => setPreviewWardrobe((w) => ({ ...w, [layer]: variant }))}
+                          title={variant}
+                        >
+                          <VariantChip
+                            layer={layer}
+                            variant={variant}
+                            tone={previewTone}
+                          />
+                          <span className="cust-swatch-label">{variant}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -311,4 +328,52 @@ export function CharacterCustomizer({ mode, open, onClose }: CharacterCustomizer
       </div>
     </div>
   );
+}
+
+/** Tiny canvas chip showing the bare base + chosen tone — for skin swatch. */
+function ToneChip({ palette }: { palette: SkinPaletteId }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const c = ref.current;
+    if (!c) return;
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    void Promise.all([loadSheet("base", "default"), loadSheet("hands", "bare")])
+      .then(([base, hands]) => {
+        paintLayered(ctx, { base, hands }, palette, SWATCH_SCALE);
+      })
+      .catch(() => { /* non-fatal */ });
+  }, [palette]);
+  return <canvas ref={ref} />;
+}
+
+/** Tiny canvas chip showing base + this single layer/variant. */
+function VariantChip({
+  layer,
+  variant,
+  tone,
+}: {
+  layer: CfLayer;
+  variant: string;
+  tone: SkinPaletteId;
+}) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const c = ref.current;
+    if (!c) return;
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    void Promise.all([
+      loadSheet("base", "default"),
+      loadSheet("hands", "bare"),
+      loadSheet(layer, variant),
+    ])
+      .then(([base, hands, sheet]) => {
+        const layers: PreviewLayers = { base, hands };
+        layers[layer] = sheet;
+        paintLayered(ctx, layers, tone, SWATCH_SCALE);
+      })
+      .catch(() => { /* non-fatal */ });
+  }, [layer, variant, tone]);
+  return <canvas ref={ref} />;
 }

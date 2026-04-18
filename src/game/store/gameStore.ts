@@ -9,11 +9,13 @@ import {
   removeFromSlot,
 } from "../inventory/operations";
 import {
+  computeEquippedStats,
   equipFromInventory as equipFromInventoryOp,
   hydrateEquipped,
   unequip as unequipOp,
   type Equipped,
 } from "../equipment/operations";
+import { ITEMS } from "../inventory/items";
 import type { JobId } from "../jobs/jobs";
 import { JOBS } from "../jobs/jobs";
 import {
@@ -43,6 +45,14 @@ export interface JobsSlice {
   xp: JobXp;
 }
 
+export interface HealthSlice {
+  /** Current HP. Max is derived from BASE_MAX_HP + equipped maxHp stats. */
+  current: number;
+}
+
+/** Base max HP before equipment bonuses. */
+export const BASE_MAX_HP = 40;
+
 export type EquipOutcome =
   | { ok: true }
   | { ok: false; reason: "not_equippable" | "inventory_full" | "empty" };
@@ -51,6 +61,7 @@ export interface GameState {
   inventory: InventorySlice;
   equipment: EquipmentSlice;
   jobs: JobsSlice;
+  health: HealthSlice;
 
   inventoryAdd: (itemId: ItemId, qty: number) => number;
   inventoryRemoveAt: (index: number, qty: number) => number;
@@ -66,12 +77,27 @@ export interface GameState {
   jobsAddXp: (jobId: JobId, amount: number) => void;
   jobsHydrate: (data: Partial<Record<string, number>>) => void;
   jobsReset: () => void;
+
+  /** Apply damage. Returns the actual damage taken (clamped to current). */
+  healthDamage: (amount: number) => number;
+  /** Heal up to maxHp. Returns amount actually restored. */
+  healthHeal: (amount: number) => number;
+  /** Consume one unit of the item at `index` if it's a consumable. */
+  useConsumable: (index: number) => { ok: boolean; reason?: "empty" | "not_consumable" | "no_effect" };
+  healthHydrate: (data: { current: number }) => void;
+  healthReset: () => void;
+}
+
+/** Max HP given the currently equipped items. */
+export function computeMaxHp(equipped: Equipped): number {
+  return BASE_MAX_HP + computeEquippedStats(equipped).maxHp;
 }
 
 export const useGameStore = create<GameState>()((set, get) => ({
   inventory: { slots: emptySlots() },
   equipment: { equipped: {} },
   jobs: { xp: emptyJobXp() },
+  health: { current: BASE_MAX_HP },
 
   inventoryAdd: (itemId, qty) => {
     const { slots, leftover } = addToSlots(get().inventory.slots, itemId, qty);
@@ -103,6 +129,9 @@ export const useGameStore = create<GameState>()((set, get) => ({
       inventory: { slots: result.inventory },
       equipment: { equipped: result.equipped },
     });
+    // Equipment changed → max HP may have shrunk; clamp current.
+    const maxHp = computeMaxHp(result.equipped);
+    if (get().health.current > maxHp) set({ health: { current: maxHp } });
     return { ok: true };
   },
 
@@ -114,6 +143,8 @@ export const useGameStore = create<GameState>()((set, get) => ({
       inventory: { slots: result.inventory },
       equipment: { equipped: result.equipped },
     });
+    const maxHp = computeMaxHp(result.equipped);
+    if (get().health.current > maxHp) set({ health: { current: maxHp } });
     return { ok: true };
   },
 
@@ -128,13 +159,54 @@ export const useGameStore = create<GameState>()((set, get) => ({
     set({ jobs: { xp: nextXp } });
     if (nextLevel > prevLevel) {
       const def = JOBS[jobId];
-      showToast(`${def.icon} ${def.name} level ${nextLevel}!`, 2500, "success");
+      showToast(`${def.name} level ${nextLevel}!`, 2500, "success");
     }
   },
 
   jobsHydrate: (data) => set({ jobs: { xp: hydrateJobXp(data) } }),
 
   jobsReset: () => set({ jobs: { xp: emptyJobXp() } }),
+
+  healthDamage: (amount) => {
+    if (amount <= 0) return 0;
+    const cur = get().health.current;
+    const next = Math.max(0, cur - amount);
+    set({ health: { current: next } });
+    return cur - next;
+  },
+
+  healthHeal: (amount) => {
+    if (amount <= 0) return 0;
+    const cur = get().health.current;
+    const max = computeMaxHp(get().equipment.equipped);
+    const next = Math.min(max, cur + amount);
+    set({ health: { current: next } });
+    return next - cur;
+  },
+
+  useConsumable: (index) => {
+    const slot = get().inventory.slots[index];
+    if (!slot) return { ok: false, reason: "empty" };
+    const def = ITEMS[slot.itemId];
+    if (!def?.consumable) return { ok: false, reason: "not_consumable" };
+    const heal = def.consumable.healHp ?? 0;
+    if (heal > 0) {
+      const max = computeMaxHp(get().equipment.equipped);
+      if (get().health.current >= max) return { ok: false, reason: "no_effect" };
+      get().healthHeal(heal);
+    }
+    const removed = removeFromSlot(get().inventory.slots, index, 1);
+    if (removed.removed > 0) set({ inventory: { slots: removed.slots } });
+    return { ok: true };
+  },
+
+  healthHydrate: (data) => {
+    const max = computeMaxHp(get().equipment.equipped);
+    const current = Math.max(0, Math.min(max, Math.floor(data.current)));
+    set({ health: { current } });
+  },
+
+  healthReset: () => set({ health: { current: computeMaxHp(get().equipment.equipped) } }),
 }));
 
 // ── Selectors ────────────────────────────────────────────────────────────
@@ -144,6 +216,10 @@ export const useGameStore = create<GameState>()((set, get) => ({
 export const selectInventorySlots = (s: GameState) => s.inventory.slots;
 export const selectEquipped = (s: GameState) => s.equipment.equipped;
 export const selectJobXp = (s: GameState) => s.jobs.xp;
+export const selectHealth = (s: GameState) => ({
+  current: s.health.current,
+  max: computeMaxHp(s.equipment.equipped),
+});
 
 export { INVENTORY_SIZE };
 export type { Slot, Equipped };

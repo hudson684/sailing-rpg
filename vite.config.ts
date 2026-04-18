@@ -8,6 +8,14 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    watch: {
+      ignored: [
+        "**/assets-source/**",
+        "**/tmp-ui-probe/**",
+        "**/.git/**",
+        "**/node_modules/**",
+      ],
+    },
   },
   build: {
     target: "es2022",

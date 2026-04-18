@@ -1,0 +1,54 @@
+/* Pixel-art context menu — small tan popup with inset item rows. */
+
+.ctx-menu {
+  position: fixed;
+  z-index: 1100;
+  min-width: 140px;
+  padding: 6px;
+  color: var(--pixel-ink);
+  font-family: var(--pixel-font);
+  font-size: 15px;
+  border-style: solid;
+  border-width: 16px;
+  border-image-source: url("/ui/panel-tan.png");
+  border-image-slice: 16 fill;
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.4));
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.ctx-menu-item {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 6px 10px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}
+
+.ctx-menu-item:hover:not(:disabled) {
+  background: rgba(42, 27, 23, 0.12);
+  color: var(--pixel-ink);
+}
+
+.ctx-menu-item:disabled {
+  color: var(--pixel-ink-soft);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ctx-menu-item.is-danger {
+  color: var(--pixel-accent-red);
+}
+.ctx-menu-item.is-danger:hover:not(:disabled) {
+  background: rgba(201, 78, 78, 0.15);
+}

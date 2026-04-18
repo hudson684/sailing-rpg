@@ -1,0 +1,98 @@
+{
+  "defs": [
+    {
+      "id": "slime_small_green",
+      "name": "Green Slime",
+      "sprite": {
+        "sheet": "sprites/enemies/slime-small-green.png",
+        "frameWidth": 16,
+        "frameHeight": 16,
+        "sheetCols": 8,
+        "anims": {
+          "idle":   { "row": 0, "frames": 4, "frameRate": 5 },
+          "move":   { "row": 1, "frames": 8, "frameRate": 10 },
+          "attack": { "row": 2, "frames": 5, "frameRate": 10, "repeat": 0 },
+          "death":  { "row": 3, "frames": 5, "frameRate": 10, "repeat": 0 }
+        }
+      },
+      "display": { "scale": 1.6, "originY": 0.95 },
+      "hp": 3,
+      "respawnSec": 25,
+      "hurtRadiusPx": 22,
+      "dropTable": "slime_small",
+      "xpSkill": "combat",
+      "xpPerKill": 12,
+      "movement": { "type": "wander", "radiusTiles": 6, "moveSpeed": 32, "pauseMs": 1200, "stepMs": 1800 },
+      "combat": {
+        "attackRangePx": 24, "aggroRadiusPx": 80, "leashRadiusPx": 160,
+        "chaseSpeedPx": 50, "regenPerSec": 0.5,
+        "damageMin": 0, "damageMax": 2, "cooldownMs": 1500
+      }
+    },
+    {
+      "id": "slime_small_blue",
+      "name": "Blue Slime",
+      "sprite": {
+        "sheet": "sprites/enemies/slime-small-blue.png",
+        "frameWidth": 16,
+        "frameHeight": 16,
+        "sheetCols": 8,
+        "anims": {
+          "idle":   { "row": 0, "frames": 4, "frameRate": 5 },
+          "move":   { "row": 1, "frames": 8, "frameRate": 10 },
+          "attack": { "row": 2, "frames": 5, "frameRate": 10, "repeat": 0 },
+          "death":  { "row": 3, "frames": 5, "frameRate": 10, "repeat": 0 }
+        }
+      },
+      "display": { "scale": 1.6, "originY": 0.95 },
+      "hp": 4,
+      "respawnSec": 30,
+      "hurtRadiusPx": 22,
+      "dropTable": "slime_small",
+      "xpSkill": "combat",
+      "xpPerKill": 14,
+      "movement": { "type": "wander", "radiusTiles": 7, "moveSpeed": 28, "pauseMs": 1400, "stepMs": 2000 },
+      "combat": {
+        "attackRangePx": 24, "aggroRadiusPx": 96, "leashRadiusPx": 192,
+        "chaseSpeedPx": 44, "regenPerSec": 0.6,
+        "damageMin": 0, "damageMax": 3, "cooldownMs": 1500
+      }
+    },
+    {
+      "id": "slime_medium_red",
+      "name": "Red Slime",
+      "sprite": {
+        "sheet": "sprites/enemies/slime-medium-red.png",
+        "frameWidth": 32,
+        "frameHeight": 32,
+        "sheetCols": 8,
+        "anims": {
+          "idle":   { "row": 0, "frames": 4, "frameRate": 5 },
+          "move":   { "row": 1, "frames": 8, "frameRate": 10 },
+          "attack": { "row": 2, "frames": 5, "frameRate": 10, "repeat": 0 },
+          "death":  { "row": 3, "frames": 5, "frameRate": 10, "repeat": 0 }
+        }
+      },
+      "display": { "scale": 1.4, "originY": 0.9 },
+      "hp": 8,
+      "respawnSec": 60,
+      "hurtRadiusPx": 28,
+      "dropTable": "slime_medium",
+      "xpSkill": "combat",
+      "xpPerKill": 30,
+      "movement": { "type": "wander", "radiusTiles": 8, "moveSpeed": 24, "pauseMs": 1600, "stepMs": 2200 },
+      "combat": {
+        "attackRangePx": 32, "aggroRadiusPx": 112, "leashRadiusPx": 224,
+        "chaseSpeedPx": 40, "regenPerSec": 1.0,
+        "damageMin": 1, "damageMax": 3, "cooldownMs": 1700
+      }
+    }
+  ],
+  "instances": [
+    { "id": "e_slime_1", "defId": "slime_small_green", "tileX": 48, "tileY": 8 },
+    { "id": "e_slime_2", "defId": "slime_small_green", "tileX": 52, "tileY": 7 },
+    { "id": "e_slime_3", "defId": "slime_small_blue",  "tileX": 56, "tileY": 9 },
+    { "id": "e_slime_4", "defId": "slime_small_blue",  "tileX": 45, "tileY": 10 },
+    { "id": "e_slime_5", "defId": "slime_medium_red",  "tileX": 54, "tileY": 6 }
+  ]
+}

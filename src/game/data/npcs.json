@@ -4,9 +4,10 @@
       "id": "brom_blacksmith",
       "name": "Brom the Blacksmith",
       "sprite": {
-        "idle": { "sheet": "sprites/npcs/blacksmith-idle.png", "frameWidth": 160, "frameHeight": 160, "start": 0, "end": 7, "frameRate": 6 }
+        "idle": { "sheet": "sprites/npcs/blacksmith-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
+        "walk": { "sheet": "sprites/npcs/blacksmith-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
       },
-      "display": { "scale": 1, "originY": 0.82 },
+      "display": { "scale": 1.7, "originY": 0.506 },
       "spawn": { "tileX": 46, "tileY": 13 },
       "facing": "right",
       "movement": { "type": "static" },
@@ -16,71 +17,50 @@
       "id": "mera_vendor",
       "name": "Mera, General Vendor",
       "sprite": {
-        "idle": { "sheet": "sprites/npcs/vendor-idle.png", "frameWidth": 160, "frameHeight": 160, "start": 0, "end": 7, "frameRate": 6 }
+        "idle": { "sheet": "sprites/npcs/merchant-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
+        "walk": { "sheet": "sprites/npcs/merchant-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
       },
-      "display": { "scale": 1, "originY": 0.82 },
+      "display": { "scale": 1.7, "originY": 0.506 },
       "spawn": { "tileX": 50, "tileY": 19 },
       "facing": "right",
       "movement": { "type": "static" },
-      "dialogue": "mera_vendor"
+      "dialogue": "mera_vendor",
+      "shopId": "mera_general"
     },
     {
-      "id": "finn_fish_vendor",
-      "name": "Finn the Fishmonger",
+      "id": "garra_chef",
+      "name": "Garra the Chef",
       "sprite": {
-        "idle": { "sheet": "sprites/npcs/fish-vendor-idle.png", "frameWidth": 192, "frameHeight": 160, "start": 0, "end": 9, "frameRate": 6 }
+        "idle": { "sheet": "sprites/npcs/chef-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
+        "walk": { "sheet": "sprites/npcs/chef-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
       },
-      "display": { "scale": 1, "originY": 0.82 },
+      "display": { "scale": 1.7, "originY": 0.506 },
       "spawn": { "tileX": 55, "tileY": 20 },
       "facing": "right",
       "movement": { "type": "static" },
-      "dialogue": "finn_fish_vendor"
+      "dialogue": "garra_chef"
     },
     {
       "id": "old_salt_fisherman",
       "name": "Old Salt",
       "sprite": {
-        "idle": { "sheet": "sprites/npcs/fisherman-idle.png", "frameWidth": 192, "frameHeight": 192, "start": 0, "end": 9, "frameRate": 6 },
-        "walk": { "sheet": "sprites/npcs/fisherman-walk.png", "frameWidth": 192, "frameHeight": 192, "start": 0, "end": 9, "frameRate": 10 }
+        "idle": { "sheet": "sprites/npcs/angler-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
+        "walk": { "sheet": "sprites/npcs/angler-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
       },
-      "display": { "scale": 1, "originY": 0.85 },
+      "display": { "scale": 1.7, "originY": 0.506 },
       "spawn": { "tileX": 44, "tileY": 14 },
       "facing": "right",
       "movement": { "type": "wander", "radiusTiles": 2, "moveSpeed": 40, "pauseMs": 2000, "stepMs": 1500 },
       "dialogue": "old_salt_fisherman"
     },
     {
-      "id": "alric_wizard",
-      "name": "Alric the Wise",
+      "id": "jory_miner",
+      "name": "Jory the Miner",
       "sprite": {
-        "idle": { "sheet": "sprites/npcs/wizard-idle.png", "frameWidth": 160, "frameHeight": 160, "start": 0, "end": 9, "frameRate": 5 }
+        "idle": { "sheet": "sprites/npcs/miner-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
+        "walk": { "sheet": "sprites/npcs/miner-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
       },
-      "display": { "scale": 1, "originY": 0.82 },
-      "spawn": { "tileX": 46, "tileY": 22 },
-      "facing": "right",
-      "movement": { "type": "static" },
-      "dialogue": "alric_wizard"
-    },
-    {
-      "id": "tessa_skill_master",
-      "name": "Tessa the Skill Master",
-      "sprite": {
-        "idle": { "sheet": "sprites/npcs/skill-master-idle.png", "frameWidth": 160, "frameHeight": 160, "start": 0, "end": 3, "frameRate": 5 }
-      },
-      "display": { "scale": 1, "originY": 0.82 },
-      "spawn": { "tileX": 52, "tileY": 25 },
-      "facing": "left",
-      "movement": { "type": "static" },
-      "dialogue": "tessa_skill_master"
-    },
-    {
-      "id": "jory_villager",
-      "name": "Jory",
-      "sprite": {
-        "idle": { "sheet": "sprites/npcs/villager-male-idle.png", "frameWidth": 160, "frameHeight": 160, "start": 0, "end": 9, "frameRate": 6 },
-        "walk": { "sheet": "sprites/npcs/villager-male-walk.png", "frameWidth": 160, "frameHeight": 160, "start": 0, "end": 9, "frameRate": 10 }
-      },
-      "display": { "scale": 1, "originY": 0.85 },
+      "display": { "scale": 1.7, "originY": 0.506 },
       "spawn": { "tileX": 46, "tileY": 24 },
       "facing": "right",
       "movement": {
@@ -94,20 +74,46 @@
         "moveSpeed": 50,
         "pauseMs": 1500
       },
-      "dialogue": "jory_villager"
+      "dialogue": "jory_miner"
     },
     {
-      "id": "elin_villager",
-      "name": "Elin",
+      "id": "elin_innkeeper",
+      "name": "Elin the Innkeeper",
       "sprite": {
-        "idle": { "sheet": "sprites/npcs/villager-female-idle.png", "frameWidth": 160, "frameHeight": 160, "start": 0, "end": 9, "frameRate": 6 },
-        "walk": { "sheet": "sprites/npcs/villager-female-walk.png", "frameWidth": 160, "frameHeight": 160, "start": 0, "end": 9, "frameRate": 10 }
+        "idle": { "sheet": "sprites/npcs/inn-keeper-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
+        "walk": { "sheet": "sprites/npcs/inn-keeper-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
       },
-      "display": { "scale": 1, "originY": 0.85 },
+      "display": { "scale": 1.7, "originY": 0.506 },
       "spawn": { "tileX": 50, "tileY": 22 },
       "facing": "left",
       "movement": { "type": "wander", "radiusTiles": 3, "moveSpeed": 45, "pauseMs": 1800, "stepMs": 1500 },
-      "dialogue": "elin_villager"
+      "dialogue": "elin_innkeeper"
+    },
+    {
+      "id": "tomas_farmer",
+      "name": "Tomas the Farmer",
+      "sprite": {
+        "idle": { "sheet": "sprites/npcs/farmer-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
+        "walk": { "sheet": "sprites/npcs/farmer-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
+      },
+      "display": { "scale": 1.7, "originY": 0.506 },
+      "spawn": { "tileX": 46, "tileY": 22 },
+      "facing": "right",
+      "movement": { "type": "static" },
+      "dialogue": "tomas_farmer"
+    },
+    {
+      "id": "lilan_florist",
+      "name": "Lilan the Florist",
+      "sprite": {
+        "idle": { "sheet": "sprites/npcs/florist-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
+        "walk": { "sheet": "sprites/npcs/florist-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
+      },
+      "display": { "scale": 1.7, "originY": 0.506 },
+      "spawn": { "tileX": 52, "tileY": 25 },
+      "facing": "left",
+      "movement": { "type": "static" },
+      "dialogue": "lilan_florist"
     }
   ],
   "dialogues": {
@@ -126,11 +132,12 @@
         "Coin talks louder than weather, friend. What'll it be?"
       ]
     },
-    "finn_fish_vendor": {
-      "speaker": "Finn",
+    "garra_chef": {
+      "speaker": "Garra",
       "pages": [
-        "Fresh catch! Pulled 'em in this morning, still arguing with the net.",
-        "A cod a day keeps the scurvy away. Old sailor's wisdom."
+        "Smell that? Butter, salt, and fish fresh off the dock — that's the taste of the coast.",
+        "Bring me a good catch and I'll turn it into a meal worth remembering.",
+        "A full belly makes the sea a kinder place, friend."
       ]
     },
     "old_salt_fisherman": {
@@ -140,33 +147,36 @@
         "I once hooked a creature bigger than my boat. Tell you the tale another time."
       ]
     },
-    "alric_wizard": {
-      "speaker": "Alric",
-      "pages": [
-        "Ah — a traveller with salt on their boots. The sea has given you passage.",
-        "Mind the isles to the east. Not all of them are on any chart.",
-        "When the stars over the cove burn blue, return to me. There is work afoot."
-      ]
-    },
-    "tessa_skill_master": {
-      "speaker": "Tessa",
-      "pages": [
-        "You carry yourself like someone who's learned a thing or two.",
-        "Train with me when you're ready. A sharp mind beats a sharp sword most days."
-      ]
-    },
-    "jory_villager": {
+    "jory_miner": {
       "speaker": "Jory",
       "pages": [
-        "Morning! Just on my rounds. The village never sleeps, nor do its errands.",
-        "If you see my goat, tell her I'm not angry. Just disappointed."
+        "Mornin'. Just back from the tunnels — dust in my lungs, coin in my pocket.",
+        "The deep veins run rich past the old shaft, if you've the nerve for the dark.",
+        "If you see my pickaxe, tell her I'm not angry. Just disappointed."
       ]
     },
-    "elin_villager": {
+    "elin_innkeeper": {
       "speaker": "Elin",
       "pages": [
-        "Oh — hello! I didn't see you there.",
+        "Oh — hello! Room for the night, or just passing through?",
+        "The stew's on, the beds are dry, and the roof only leaks when it's honest about it.",
         "My father says strangers bring either news or trouble. Which are you?"
+      ]
+    },
+    "tomas_farmer": {
+      "speaker": "Tomas",
+      "pages": [
+        "Soil's good this year — rains came when they were meant to, for once.",
+        "If you're headed inland, mind the fences. The goats are clever and the gates are not.",
+        "A field tended is a field that feeds you. That's all the wisdom I've got."
+      ]
+    },
+    "lilan_florist": {
+      "speaker": "Lilan",
+      "pages": [
+        "Careful where you step — the seedlings are braver than they look.",
+        "Salt air makes for stubborn blooms. These ones had to earn their petals.",
+        "Bring someone flowers. It works more often than it has any right to."
       ]
     }
   }

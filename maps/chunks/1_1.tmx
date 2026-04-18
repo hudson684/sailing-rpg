@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="8" nextobjectid="4">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
+ <tileset firstgid="226" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass to water - godot.tsx"/>
+ <tileset firstgid="874" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2.tsx"/>
  <layer id="7" name="ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMBKHrn+4jrcdQcNVUVVXV1w8WeEAu
@@ -8,7 +10,7 @@
  </layer>
  <layer id="1" name="ground" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJztVrFRAzEQlC4gJCB0QEgBFEAJhASEDhwSEBI4JPiQAijAAQVQAI3Y/9+DI+7w7WhfEEkaB4x2Zkf/p7dWe7rTOISOjo7/iE0M4VF5H8+jt1WdF0l81vdZ47fSXudB13yS02hcu95B50fn3sebSv1NTBpr8gWd2bVm58Fpz5PyuiL/pm160Jp87Skkf9CZKQb/Fi/N/9a1sTYI7X1IPkeaxxxipf6H+DuvrIs88DlwHP7vCv2vJPnBunjOc8J5wDxYqv+p/j9i8si5gA7yjP3k2hf6+2OZ/A+GuKyr/Lz5PEYaW2gbLmWpnfcW9wPvp4W2YSVLj5xnzscUljXR4s5D/+X1x7pcn6gRY+2dZxhi0kQ/8T449zxv+yiteYPdeXyfc4/n5N7DdzbW+BdJ68Mr3y38nt+FVndvUld76Pu/9sC1Br/ox1Y1jz18Oc3PzvmqfJdTfCfpG4tfnel/RkdHRxt8A4Cv2CA=
   </data>
  </layer>
  <layer id="2" name="overlay" width="32" height="32">
@@ -18,12 +20,12 @@
  </layer>
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJztzbcNwgAQRuGr7RHIMAzBhGHIMAzBhEGgM5lBKE2GtwC44Rp0T/qqk+4XsSzLsqzoFo7I0vl8D77cftEp4n+ovB9zReJIIIkU0sggi5yru5/nfwFFlOChjAqqqCnv1/nfQBMttNFBFz30lfcH/B9ihDF8TDDFDHPl/YD/K6yxwRY77HHAUXk/5P8ZF1xxwx0PPPFS3rcsy7L+ozcbxyR7
   </data>
  </layer>
  <layer id="4" name="props_high" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJztzcENgCAUwNB/Zv+RRIRpUJGzHcETiUlf0nMjJEn6ZksRmXYqdFClltb8O5+TLrpp0ENz0V+SJOnPXsuNDKM=
   </data>
  </layer>
  <layer id="5" name="roof" width="32" height="32">
@@ -36,7 +38,7 @@
    <properties>
     <property name="itemId" value="rope"/>
     <property name="quantity" type="int" value="1"/>
-       <property name="uid" value="fba09f2b-c071-422a-9371-eae7b4286f83"/>
+    <property name="uid" value="fba09f2b-c071-422a-9371-eae7b4286f83"/>
    </properties>
    <point/>
   </object>
@@ -44,7 +46,7 @@
    <properties>
     <property name="itemId" value="rope"/>
     <property name="quantity" type="int" value="2"/>
-       <property name="uid" value="fa521210-12a0-46a3-90e2-591b8f8cfa09"/>
+    <property name="uid" value="fa521210-12a0-46a3-90e2-591b8f8cfa09"/>
    </properties>
    <point/>
   </object>
@@ -52,7 +54,7 @@
    <properties>
     <property name="itemId" value="compass"/>
     <property name="quantity" type="int" value="1"/>
-       <property name="uid" value="04ad340e-7023-4966-8b87-d0d999ef51f8"/>
+    <property name="uid" value="04ad340e-7023-4966-8b87-d0d999ef51f8"/>
    </properties>
    <point/>
   </object>

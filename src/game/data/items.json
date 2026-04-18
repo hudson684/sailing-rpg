@@ -1,0 +1,200 @@
+{
+  "items": [
+    {
+      "id": "health_potion",
+      "name": "Health Potion",
+      "color": "#d04848",
+      "stackable": true,
+      "maxStack": 20,
+      "description": "Restores 25 HP. Use from the hotbar.",
+      "type": "consumable",
+      "consumable": { "healHp": 25 },
+      "value": 30
+    },
+    {
+      "id": "slime_goo",
+      "name": "Slime Goo",
+      "color": "#7ad06b",
+      "stackable": true,
+      "maxStack": 50,
+      "description": "Sticky residue from a vanquished slime.",
+      "type": "resource",
+      "value": 3
+    },
+    {
+      "id": "rope",
+      "name": "Rope",
+      "color": "#c8a36a",
+      "stackable": true,
+      "maxStack": 50,
+      "description": "A coil of sturdy hemp rope.",
+      "type": "resource",
+      "value": 2
+    },
+    {
+      "id": "plank",
+      "name": "Plank",
+      "color": "#8b5a2b",
+      "stackable": true,
+      "maxStack": 50,
+      "description": "A length of weathered timber.",
+      "type": "resource",
+      "value": 3
+    },
+    {
+      "id": "fish",
+      "name": "Fish",
+      "color": "#6bb7d6",
+      "stackable": true,
+      "maxStack": 20,
+      "description": "Fresh from the sea.",
+      "type": "consumable",
+      "value": 4
+    },
+    {
+      "id": "coin",
+      "name": "Gold Coin",
+      "color": "#e5c14a",
+      "stackable": true,
+      "maxStack": 1000,
+      "description": "A doubloon bearing a weathered crest.",
+      "type": "resource",
+      "value": 1
+    },
+    {
+      "id": "compass",
+      "name": "Compass",
+      "color": "#b4c3d4",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "Points true north, mostly.",
+      "type": "tool",
+      "value": 50
+    },
+    {
+      "id": "tricorn",
+      "name": "Tricorn Hat",
+      "color": "#2a2030",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "Battered three-cornered hat. Makes you look the part.",
+      "type": "armor",
+      "slot": "head",
+      "stats": { "defense": 1 },
+      "visualLayer": { "layer": "accessory", "variant": "farmer-hat" },
+      "value": 40
+    },
+    {
+      "id": "sailors_coat",
+      "name": "Sailor's Coat",
+      "color": "#345c7a",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "Salt-stained wool. Warmer than it looks.",
+      "type": "armor",
+      "slot": "body",
+      "stats": { "maxHp": 5, "defense": 2 },
+      "visualLayer": { "layer": "chest", "variant": "royal-blue" },
+      "value": 120
+    },
+    {
+      "id": "leather_boots",
+      "name": "Leather Boots",
+      "color": "#6b4a2a",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "Sturdy boots with good tread for wet decks.",
+      "type": "armor",
+      "slot": "legs",
+      "stats": { "moveSpeed": 12 },
+      "visualLayer": { "layer": "feet", "variant": "black" },
+      "value": 60
+    },
+    {
+      "id": "cutlass",
+      "name": "Cutlass",
+      "color": "#c0c0c0",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "A curved sword, well-balanced for close quarters.",
+      "type": "weapon",
+      "slot": "mainHand",
+      "stats": { "attack": 5 },
+      "visualLayer": { "layer": "tool", "variant": "iron-sword" },
+      "value": 200
+    },
+    {
+      "id": "sword",
+      "name": "Sword",
+      "color": "#c0c0c0",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "A plain iron sword. Equip, then press Q to swing.",
+      "type": "weapon",
+      "slot": "mainHand",
+      "stats": { "attack": 3 },
+      "visualLayer": { "layer": "tool", "variant": "iron-sword" },
+      "value": 80
+    },
+    {
+      "id": "pickaxe",
+      "name": "Pickaxe",
+      "color": "#8a6a3d",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "A sturdy pickaxe. Equip, then press Q to mine.",
+      "type": "tool",
+      "slot": "mainHand",
+      "visualLayer": { "layer": "tool", "variant": "iron-pickaxe" },
+      "value": 3
+    },
+    {
+      "id": "axe",
+      "name": "Axe",
+      "color": "#7a5a2a",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "A felling axe. Equip, then press Q to chop trees.",
+      "type": "tool",
+      "slot": "mainHand",
+      "skill": "lumberjack",
+      "visualLayer": { "layer": "tool", "variant": "iron-axe" },
+      "value": 3
+    },
+    {
+      "id": "fishing_rod",
+      "name": "Fishing Rod",
+      "color": "#a07050",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "A bamboo rod and line. Equip, then press Q at a fishing spot.",
+      "type": "tool",
+      "slot": "mainHand",
+      "skill": "fishing",
+      "visualLayer": { "layer": "tool", "variant": "wooden-fishing-rod" },
+      "value": 3
+    },
+    {
+      "id": "hopeite_ore",
+      "name": "Hopeite Ore",
+      "color": "#b07a3a",
+      "stackable": true,
+      "maxStack": 50,
+      "description": "Raw chunks of hopeite-bearing rock.",
+      "type": "resource",
+      "value": 6
+    },
+    {
+      "id": "signet_ring",
+      "name": "Captain's Signet",
+      "color": "#e5c14a",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "Bronze ring bearing an unfamiliar crest. Feels lucky.",
+      "type": "armor",
+      "slot": "ring",
+      "stats": { "sailSpeed": 6, "maxHp": 2 },
+      "value": 500
+    }
+  ]
+}

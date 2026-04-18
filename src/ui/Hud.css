@@ -7,34 +7,67 @@
   color: #e8f0ff;
 }
 
-.hud-top {
+/* Hotbar lives at top:16 / left:16 and is 120*4 = 480px wide.
+   Place the health pill just to its right, vertically centered against
+   the hotbar's 30*4 = 120px height. */
+.hud-health {
   position: absolute;
   top: 16px;
-  left: 16px;
+  left: calc(16px + 480px + 12px);
+  height: 120px;
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+  font-family: var(--pixel-font);
+  color: var(--pixel-ink);
 }
 
-.hud-panel {
-  min-width: 110px;
-  padding: 8px 14px;
-  background: rgba(6, 14, 28, 0.7);
-  border: 1px solid rgba(120, 170, 220, 0.35);
-  border-radius: 8px;
-  backdrop-filter: blur(4px);
+.hud-health-icon {
+  font-size: 28px;
+  line-height: 1;
+  color: var(--pixel-accent-red, #c0392b);
+  text-shadow:
+    1px 0 0 var(--pixel-ink),
+    -1px 0 0 var(--pixel-ink),
+    0 1px 0 var(--pixel-ink),
+    0 -1px 0 var(--pixel-ink);
 }
 
-.hud-label {
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #8ba8c8;
+.hud-health-bar {
+  position: relative;
+  width: 220px;
+  height: 28px;
+  background: var(--pixel-tan, #d9b382);
+  border: 4px solid var(--pixel-ink, #2b1d12);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 3px 0 var(--pixel-parchment, #f3e3c2),
+    inset 0 -3px 0 var(--pixel-tan-dark, #a87d4a),
+    0 3px 0 rgba(0, 0, 0, 0.4);
 }
-
-.hud-value {
-  font-size: 18px;
-  font-weight: 600;
-  margin-top: 2px;
+.hud-health-fill {
+  height: 100%;
+  background: linear-gradient(180deg, #e85a5a 0%, #b02a2a 50%, #7a1818 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25);
+  transition: width 160ms ease-out;
+}
+.hud-health-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  color: var(--pixel-parchment, #f3e3c2);
+  text-shadow:
+    1px 0 0 var(--pixel-ink, #2b1d12),
+    -1px 0 0 var(--pixel-ink, #2b1d12),
+    0 1px 0 var(--pixel-ink, #2b1d12),
+    0 -1px 0 var(--pixel-ink, #2b1d12);
+  pointer-events: none;
 }
 
 .hud-prompt {
@@ -94,12 +127,3 @@
   }
 }
 
-.hud-controls {
-  position: absolute;
-  bottom: 14px;
-  left: 16px;
-  display: flex;
-  gap: 18px;
-  font-size: 11px;
-  color: #7a96b6;
-}

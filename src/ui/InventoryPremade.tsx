@@ -6,14 +6,24 @@ import {
   slotsForFamily,
   type EquipSlot,
 } from "../game/inventory/items";
-import type { Slot } from "../game/inventory/types";
+import { HOTBAR_SIZE, type Slot } from "../game/inventory/types";
 import {
   selectEquipped,
   selectInventorySlots,
   useGameStore,
 } from "../game/store/gameStore";
+import { Hotbar } from "./Hotbar";
+import { selectDragSource, useDragStore } from "./store/dragStore";
 import { showToast } from "./store/ui";
+import {
+  InventoryContextMenu,
+  type ContextMenuItem,
+} from "./InventoryContextMenu";
 import "./InventoryPremade.css";
+
+type CtxMenuState =
+  | { kind: "inv"; index: number; x: number; y: number }
+  | { kind: "equip"; slot: EquipSlot; x: number; y: number };
 
 /**
  * Inventory + Equipment panel built on sliced pieces of UI_Premade.png.
@@ -66,7 +76,6 @@ const EQUIP_LABELS: Record<EquipSlot, string> = {
 // Inventory grid: 5 cols × 5 rows, slot top-left src coords.
 const INV_COLS = [78, 101, 124, 147, 170];
 const INV_ROWS = [6, 29, 52, 75, 98];
-const HOTBAR_ROW_Y = 132;
 
 // Bounding box of the whole assembled layout (for positioning the root).
 const TOTAL_W = Math.max(
@@ -85,10 +94,12 @@ const TOTAL_H = Math.max(
 export function InventoryPremade() {
   const slots = useGameStore(selectInventorySlots);
   const equipped = useGameStore(selectEquipped);
+  const dragSource = useDragStore(selectDragSource);
+  const setDragSource = useDragStore((s) => s.setSource);
   const [open, setOpen] = useState(true);
   const [infoOpen, setInfoOpen] = useState(true);
-  const [dragFrom, setDragFrom] = useState<DragSource | null>(null);
   const [hoverTo, setHoverTo] = useState<DropTarget | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<CtxMenuState | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -118,12 +129,12 @@ export function InventoryPremade() {
   if (!open) return null;
 
   const handleDrop = (to: DropTarget) => {
-    if (!dragFrom) return;
-    if (dragFrom.kind === "inv" && to.kind === "inv") {
-      if (dragFrom.index === to.index) return;
-      bus.emitTyped("inventory:action", { type: "move", from: dragFrom.index, to: to.index });
-    } else if (dragFrom.kind === "inv" && to.kind === "equip") {
-      useGameStore.getState().equipFromInventory(dragFrom.index);
+    if (dragSource === null) return;
+    if (to.kind === "inv") {
+      if (dragSource === to.index) return;
+      bus.emitTyped("inventory:action", { type: "move", from: dragSource, to: to.index });
+    } else {
+      useGameStore.getState().equipFromInventory(dragSource);
     }
   };
 
@@ -132,6 +143,42 @@ export function InventoryPremade() {
     if (!res.ok && res.reason === "inventory_full") {
       showToast("Inventory full", 2000, "warn");
     }
+  };
+
+  const handleQuickEquip = (index: number) => {
+    const slot = slots[index];
+    if (!slot) return;
+    const def = ITEMS[slot.itemId];
+    if (!def?.slot) return;
+    const res = useGameStore.getState().equipFromInventory(index);
+    if (!res.ok && res.reason === "inventory_full") {
+      showToast("Inventory full", 2000, "warn");
+    }
+  };
+
+  const handleDropSlot = (index: number) => {
+    bus.emitTyped("inventory:action", { type: "drop", slot: index });
+  };
+
+  const buildInvMenu = (index: number): ContextMenuItem[] => {
+    const slot = slots[index];
+    if (!slot) return [];
+    const def = ITEMS[slot.itemId];
+    const items: ContextMenuItem[] = [];
+    if (def?.slot) {
+      items.push({ label: "Equip", onSelect: () => handleQuickEquip(index) });
+    }
+    items.push({
+      label: slot.quantity > 1 ? `Drop all (×${slot.quantity})` : "Drop",
+      onSelect: () => handleDropSlot(index),
+      variant: "danger",
+    });
+    return items;
+  };
+
+  const buildEquipMenu = (slot: EquipSlot): ContextMenuItem[] => {
+    if (!equipped[slot]) return [];
+    return [{ label: "Unequip", onSelect: () => handleUnequip(slot) }];
   };
 
   return (
@@ -159,8 +206,8 @@ export function InventoryPremade() {
           const pos = EQUIP_POS[slot];
           const id = equipped[slot];
           const def = id ? ITEMS[id] : null;
-          const dragDef = dragFrom?.kind === "inv" ? slots[dragFrom.index] : null;
-          const dragFamily = dragDef ? ITEMS[dragDef.itemId].slot : undefined;
+          const dragSlot = dragSource !== null ? slots[dragSource] : null;
+          const dragFamily = dragSlot ? ITEMS[dragSlot.itemId].slot : undefined;
           const fits =
             dragFamily !== undefined && slotsForFamily(dragFamily).includes(slot);
           const isTarget = hoverTo?.kind === "equip" && hoverTo.slot === slot && fits;
@@ -171,6 +218,11 @@ export function InventoryPremade() {
               className={"inv-premade-slot" + (def ? " is-filled" : "") + (isTarget ? " is-target" : "")}
               style={innerCellStyle(pos.x - EQUIP_PANEL.x, pos.y - EQUIP_PANEL.y)}
               onClick={() => def && handleUnequip(slot)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                if (!def) return;
+                setCtxMenu({ kind: "equip", slot, x: e.clientX, y: e.clientY });
+              }}
               onDragOver={(e) => {
                 if (!fits) return;
                 e.preventDefault();
@@ -190,9 +242,12 @@ export function InventoryPremade() {
               aria-label={def ? `${def.name} equipped in ${EQUIP_LABELS[slot]}` : `${EQUIP_LABELS[slot]} (empty)`}
             >
               {def && (
-                <span className="inv-premade-icon" style={{ color: def.color }}>
-                  {def.icon}
-                </span>
+                <img
+                  className="inv-premade-icon"
+                  src={def.icon}
+                  alt=""
+                  draggable={false}
+                />
               )}
             </button>
           );
@@ -226,56 +281,78 @@ export function InventoryPremade() {
         </div>
       )}
 
-      {/* Inventory grid 5×5 */}
+      {/* Backpack grid 5×5 — absolute slot indices [HOTBAR_SIZE, HOTBAR_SIZE+25). */}
       <div className="inv-premade-panel" style={panelStyle(INV_GRID, "/ui/premade-inv-grid.png")}>
-        {slots.map((slot, i) => {
-          const col = i % 5;
-          const row = Math.floor(i / 5);
-          if (row >= INV_ROWS.length) return null;
-          return (
-            <InvCell
-              key={i}
-              index={i}
-              slot={slot}
-              x={INV_COLS[col] - INV_GRID.x}
-              y={INV_ROWS[row] - INV_GRID.y}
-              isDragging={dragFrom?.kind === "inv" && dragFrom.index === i}
-              isHoverTarget={
-                hoverTo?.kind === "inv" &&
-                hoverTo.index === i &&
-                dragFrom?.kind === "inv" &&
-                dragFrom.index !== i
-              }
-              onDragStart={() => setDragFrom({ kind: "inv", index: i })}
-              onDragEnd={() => {
-                setDragFrom(null);
-                setHoverTo(null);
-              }}
-              onDragEnter={() => setHoverTo({ kind: "inv", index: i })}
-              onDragLeave={() =>
-                setHoverTo((cur) =>
-                  cur?.kind === "inv" && cur.index === i ? null : cur,
-                )
-              }
-              onDrop={() => handleDrop({ kind: "inv", index: i })}
-            />
-          );
-        })}
+        {INV_ROWS.map((rowY, row) =>
+          INV_COLS.map((colX, col) => {
+            const i = HOTBAR_SIZE + row * 5 + col;
+            const slot = slots[i] ?? null;
+            return (
+              <InvCell
+                key={i}
+                index={i}
+                slot={slot}
+                x={colX - INV_GRID.x}
+                y={rowY - INV_GRID.y}
+                isDragging={dragSource === i}
+                isHoverTarget={
+                  hoverTo?.kind === "inv" &&
+                  hoverTo.index === i &&
+                  dragSource !== null &&
+                  dragSource !== i
+                }
+                onDragStart={() => setDragSource(i)}
+                onDragEnd={() => {
+                  setDragSource(null);
+                  setHoverTo(null);
+                }}
+                onDragEnter={() => setHoverTo({ kind: "inv", index: i })}
+                onDragLeave={() =>
+                  setHoverTo((cur) =>
+                    cur?.kind === "inv" && cur.index === i ? null : cur,
+                  )
+                }
+                onDrop={() => handleDrop({ kind: "inv", index: i })}
+                onDoubleClick={() => handleQuickEquip(i)}
+                onContextMenu={(x, y) => {
+                  if (!slot) return;
+                  setCtxMenu({ kind: "inv", index: i, x, y });
+                }}
+              />
+            );
+          }),
+        )}
       </div>
 
-      {/* Hotbar (decorative placeholder) */}
-      <div className="inv-premade-panel" style={panelStyle(HOTBAR, "/ui/premade-hotbar.png")}>
-        {INV_COLS.map((x, i) => (
-          <div
-            key={`hot-${i}`}
-            className="inv-premade-slot is-hotbar"
-            style={innerCellStyle(x - HOTBAR.x, HOTBAR_ROW_Y - HOTBAR.y)}
-            aria-label={`Hotbar ${i + 1}`}
-          />
-        ))}
+      {/* Hotbar — mirrors slots[0..HOTBAR_SIZE) shown in the HUD. */}
+      <div
+        className="inv-premade-hotbar-mount"
+        style={{
+          left: `calc(${HOTBAR.x}px * var(--scale))`,
+          top: `calc(${HOTBAR.y}px * var(--scale))`,
+          width: `calc(${HOTBAR.w}px * var(--scale))`,
+          height: `calc(${HOTBAR.h}px * var(--scale))`,
+        }}
+      >
+        <Hotbar variant="embedded" scale={SCALE} />
       </div>
 
-      <div className="inv-premade-hint">I: toggle · drag to move · click equip slot to unequip</div>
+      <div className="inv-premade-hint">
+        I: toggle · drag or double-click to equip · right-click for options · 1-5 hotbar
+      </div>
+
+      {ctxMenu && (
+        <InventoryContextMenu
+          x={ctxMenu.x}
+          y={ctxMenu.y}
+          items={
+            ctxMenu.kind === "inv"
+              ? buildInvMenu(ctxMenu.index)
+              : buildEquipMenu(ctxMenu.slot)
+          }
+          onClose={() => setCtxMenu(null)}
+        />
+      )}
     </div>
   );
 }
@@ -302,7 +379,6 @@ function innerCellStyle(x: number, y: number): React.CSSProperties {
   };
 }
 
-type DragSource = { kind: "inv"; index: number };
 type DropTarget = { kind: "inv"; index: number } | { kind: "equip"; slot: EquipSlot };
 
 interface InvCellProps {
@@ -317,6 +393,8 @@ interface InvCellProps {
   onDragEnter: () => void;
   onDragLeave: () => void;
   onDrop: () => void;
+  onDoubleClick?: () => void;
+  onContextMenu?: (x: number, y: number) => void;
 }
 
 function InvCell(props: InvCellProps) {
@@ -350,14 +428,22 @@ function InvCell(props: InvCellProps) {
         e.preventDefault();
         props.onDrop();
       }}
+      onDoubleClick={props.onDoubleClick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        props.onContextMenu?.(e.clientX, e.clientY);
+      }}
       data-tip={def ? `${def.name}${def.description ? " · " + def.description : ""}` : undefined}
       aria-label={def ? `${def.name} ×${slot!.quantity}` : "Empty slot"}
     >
       {def && slot && (
         <>
-          <span className="inv-premade-icon" style={{ color: def.color }}>
-            {def.icon}
-          </span>
+          <img
+            className="inv-premade-icon"
+            src={def.icon}
+            alt=""
+            draggable={false}
+          />
           {slot.quantity > 1 && (
             <span className="inv-premade-qty">{formatQty(slot.quantity)}</span>
           )}

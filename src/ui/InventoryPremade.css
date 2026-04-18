@@ -90,10 +90,22 @@
 
 .inv-premade-slot.is-hotbar { pointer-events: none; }
 
+/* Mount point that positions the shared Hotbar inside the inventory layout. */
+.inv-premade-hotbar-mount {
+  position: absolute;
+}
+.inv-premade-hotbar-mount .hotbar-root {
+  position: absolute;
+  inset: 0;
+  filter: none; /* inventory layout has its own drop-shadow per panel */
+}
+
 .inv-premade-icon {
-  font-size: 32px;
-  line-height: 1;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
   filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.4));
+  pointer-events: none;
 }
 
 .inv-premade-qty {

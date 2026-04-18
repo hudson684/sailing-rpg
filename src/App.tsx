@@ -6,6 +6,7 @@ import { InventoryPremade } from "./ui/InventoryPremade";
 import { Jobs } from "./ui/Jobs";
 import { PauseMenu } from "./ui/PauseMenu";
 import { Dialogue } from "./ui/Dialogue";
+import { Shop } from "./ui/Shop";
 import { CharacterCreator } from "./ui/CharacterCreator";
 import { CharacterCustomizer } from "./ui/CharacterCustomizer";
 import { useSettingsStore } from "./game/store/settingsStore";
@@ -56,6 +57,7 @@ export default function App() {
           <Jobs />
           <PauseMenu />
           <Dialogue />
+          <Shop />
           <CharacterCustomizer
             mode="edit"
             open={customizerOpen}

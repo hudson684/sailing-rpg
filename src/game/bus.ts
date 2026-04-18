@@ -44,6 +44,16 @@ export type DialogueAction =
   | { type: "close" };
 
 import type { SkinPaletteId } from "./entities/playerSkin";
+import type { CfLayer } from "./entities/playerAnims";
+
+export interface ShopOpenRequest {
+  shopId: string;
+}
+
+export interface WardrobeApply {
+  layer: CfLayer;
+  variant: string | null;
+}
 
 type Events = {
   "inventory:action": (action: InventoryAction) => void;
@@ -53,6 +63,9 @@ type Events = {
   "dialogue:update": (state: DialogueState) => void;
   "dialogue:action": (action: DialogueAction) => void;
   "skin:apply": (paletteId: SkinPaletteId) => void;
+  "wardrobe:apply": (change: WardrobeApply) => void;
+  "shop:open": (request: ShopOpenRequest) => void;
+  "shop:close": () => void;
 };
 
 class TypedEmitter extends Phaser.Events.EventEmitter {

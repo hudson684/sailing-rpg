@@ -55,7 +55,7 @@ function JobRow({ jobId, totalXp }: { jobId: keyof typeof JOBS; totalXp: number 
   return (
     <div className="jobs-row" title={def.description}>
       <div className="jobs-row-top">
-        <span className="jobs-icon" style={{ color: def.color }}>{def.icon}</span>
+        <img className="jobs-icon" src={def.icon} alt="" draggable={false} />
         <span className="jobs-name">{def.name}</span>
         <span className="jobs-level">Lv {level}</span>
       </div>

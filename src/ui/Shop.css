@@ -1,0 +1,154 @@
+/* Shop modal — centered pixel-art panel layered over a dim backdrop. */
+
+.shop-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.shop-panel {
+  position: relative; /* override px-panel absolute */
+  width: min(720px, 92vw);
+  max-height: min(85vh, 720px);
+  display: flex;
+  flex-direction: column;
+}
+
+.shop-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  color: var(--pixel-ink-soft);
+  margin-bottom: 6px;
+  padding: 0 2px;
+}
+
+.shop-gold {
+  color: var(--pixel-ink);
+}
+.shop-gold strong {
+  color: var(--pixel-gold);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.shop-restock {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.shop-greeting {
+  font-style: italic;
+  color: var(--pixel-ink-soft);
+  margin: 0 0 10px;
+  padding: 0 2px;
+  font-size: 14px;
+}
+
+.shop-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.shop-tab {
+  padding: 6px 10px 8px;
+  min-width: 72px;
+  font-size: 15px;
+  border-width: 16px;
+}
+.shop-tab.is-active {
+  filter: brightness(1.15);
+  outline: 2px solid var(--pixel-gold);
+  outline-offset: -12px;
+}
+
+.shop-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+}
+
+.shop-row {
+  display: grid;
+  grid-template-columns: 56px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  background: rgba(255, 228, 196, 0.15);
+  border: 2px solid rgba(42, 27, 23, 0.2);
+}
+
+.shop-row-slot {
+  min-width: 48px;
+  min-height: 48px;
+  width: 48px;
+  height: 48px;
+}
+
+.shop-row-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.shop-row-info {
+  min-width: 0;
+}
+
+.shop-row-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--pixel-ink);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.shop-row-sub {
+  font-size: 12px;
+  color: var(--pixel-ink-soft);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.shop-row-price {
+  font-size: 15px;
+  font-weight: 600;
+  padding: 0 8px;
+  min-width: 58px;
+  text-align: right;
+}
+
+.shop-row-coin-buy {
+  color: var(--pixel-accent-red);
+}
+.shop-row-coin-sell {
+  color: var(--pixel-accent-green);
+}
+
+.shop-row-btn {
+  padding: 4px 8px 6px;
+  font-size: 14px;
+  min-width: 76px;
+  border-width: 16px;
+}
+
+.shop-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--pixel-ink-soft);
+  font-style: italic;
+}

@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { SkinPaletteId } from "../entities/playerSkin";
+import type { CfLayer } from "../entities/playerAnims";
+import { DEFAULT_WARDROBE, type CfWardrobe } from "../entities/playerWardrobe";
 
 /**
  * User preferences — persisted to localStorage, independent of save slots.
@@ -16,11 +18,14 @@ export interface SettingsState {
   zoom: number;
   masterVolume: number;
   skinTone: SkinPaletteId;
+  wardrobe: CfWardrobe;
   characterCreated: boolean;
 
   setZoom: (z: number) => void;
   setMasterVolume: (v: number) => void;
   setSkinTone: (id: SkinPaletteId) => void;
+  setWardrobeLayer: (layer: CfLayer, variant: string | null) => void;
+  setWardrobe: (wardrobe: CfWardrobe) => void;
   setCharacterCreated: (v: boolean) => void;
 }
 
@@ -30,6 +35,7 @@ export const useSettingsStore = create<SettingsState>()(
       zoom: 1,
       masterVolume: 1,
       skinTone: "default" as SkinPaletteId,
+      wardrobe: { ...DEFAULT_WARDROBE },
       characterCreated: false,
 
       setZoom: (z) =>
@@ -37,12 +43,23 @@ export const useSettingsStore = create<SettingsState>()(
       setMasterVolume: (v) =>
         set({ masterVolume: Math.min(1, Math.max(0, v)) }),
       setSkinTone: (id) => set({ skinTone: id }),
+      setWardrobeLayer: (layer, variant) =>
+        set((s) => ({ wardrobe: { ...s.wardrobe, [layer]: variant } })),
+      setWardrobe: (wardrobe) => set({ wardrobe: { ...wardrobe } }),
       setCharacterCreated: (v) => set({ characterCreated: v }),
     }),
     {
       name: "sailing-rpg:settings",
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => localStorage),
+      // Old saves without `wardrobe` get the default outfit. No data loss.
+      migrate: (persisted: unknown, version: number) => {
+        const state = (persisted ?? {}) as Partial<SettingsState>;
+        if (version < 4 || !state.wardrobe) {
+          state.wardrobe = { ...DEFAULT_WARDROBE };
+        }
+        return state as SettingsState;
+      },
     },
   ),
 );

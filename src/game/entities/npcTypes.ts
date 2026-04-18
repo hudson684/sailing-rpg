@@ -44,6 +44,8 @@ export interface NpcDef {
   facing: NpcFacing;
   movement: NpcMovement;
   dialogue: string;
+  /** If set, right-clicking this NPC opens the referenced shop. */
+  shopId?: string;
 }
 
 export interface DialogueDef {

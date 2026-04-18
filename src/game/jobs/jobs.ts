@@ -1,4 +1,7 @@
 import { createRegistry } from "../data/createRegistry";
+import iconSailor from "../../ui/icons/jobs/job_sailor.png";
+import iconFisher from "../../ui/icons/jobs/job_fisher.png";
+import iconWarrior from "../../ui/icons/jobs/job_warrior.png";
 
 /**
  * Jobs are per-skill progression tracks. Each has an XP bucket and a derived
@@ -9,7 +12,8 @@ export type JobId =
   | "sailing"
   | "fishing"
   | "combat"
-  | "exploration";
+  | "orecheologist"
+  | "lumberjack";
 
 export type JobCategory = "seafaring" | "gathering" | "combat";
 
@@ -26,7 +30,7 @@ const DEFS: ReadonlyArray<JobDef> = [
   {
     id: "sailing",
     name: "Sailing",
-    icon: "⛵",
+    icon: iconSailor,
     color: "#6bb7d6",
     category: "seafaring",
     description: "Your skill at the helm. Gained by time spent under sail.",
@@ -34,26 +38,34 @@ const DEFS: ReadonlyArray<JobDef> = [
   {
     id: "fishing",
     name: "Fishing",
-    icon: "🎣",
+    icon: iconFisher,
     color: "#4a90a4",
     category: "gathering",
     description: "Patience, line, and knowing where the deep runs cold.",
   },
   {
+    id: "orecheologist",
+    name: "Orecheologist",
+    icon: iconWarrior,
+    color: "#b07a3a",
+    category: "gathering",
+    description: "Student of stone and seam. Gained by swinging a pickaxe.",
+  },
+  {
+    id: "lumberjack",
+    name: "Lumberjack",
+    icon: iconWarrior,
+    color: "#5a8a3a",
+    category: "gathering",
+    description: "Felling timber. Gained by swinging an axe at trees.",
+  },
+  {
     id: "combat",
     name: "Combat",
-    icon: "⚔️",
+    icon: iconWarrior,
     color: "#c94e4e",
     category: "combat",
     description: "Swordplay, boarding actions, and staying alive.",
-  },
-  {
-    id: "exploration",
-    name: "Exploration",
-    icon: "🧭",
-    color: "#b4c3d4",
-    category: "seafaring",
-    description: "Charting the unknown. Rewards seeing new shores.",
   },
 ];
 

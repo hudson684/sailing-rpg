@@ -1,17 +1,20 @@
 import { createRegistry } from "../data/createRegistry";
+import itemData from "../data/items.json";
+import { iconForItem } from "./itemIcons";
+import type { JobId } from "../jobs/jobs";
 
-export type ItemId =
-  | "rope"
-  | "plank"
-  | "fish"
-  | "coin"
-  | "compass"
-  // equippables
-  | "tricorn"
-  | "sailors_coat"
-  | "leather_boots"
-  | "cutlass"
-  | "signet_ring";
+/**
+ * Items are authored in `src/game/data/items.json` and resolved to fully-
+ * formed `ItemDef` records at module load. Icons are bundler-imported in
+ * `itemIcons.ts` and looked up by id — keeping this split lets designers
+ * edit item metadata as data without touching TypeScript.
+ *
+ * `ItemId` is a runtime string — validity is guaranteed by the registry,
+ * not the type system. If you need a literal union, `ALL_ITEM_IDS` is the
+ * canonical source at runtime.
+ */
+
+export type ItemId = string;
 
 /**
  * Nine concrete equipment slots, matching the paper-doll in UI_Premade.
@@ -76,6 +79,23 @@ export interface ItemStats {
   sailSpeed?: number;
 }
 
+/**
+ * Optional paper-doll layer this equippable contributes to. The Player reads
+ * this when an item is equipped/unequipped and calls `setLayer(layer, variant)`
+ * to swap the corresponding CF sprite sheet. `layer` must match a `CfLayer`
+ * (base / feet / legs / chest / hands / hair / accessory / tool) and `variant`
+ * must match the file basename loaded as `cf-<layer>-<variant>.png`.
+ */
+export interface VisualLayer {
+  layer: "feet" | "legs" | "chest" | "hands" | "hair" | "accessory" | "tool";
+  variant: string;
+}
+
+export interface ConsumableEffect {
+  /** HP restored when the player uses this item. */
+  healHp?: number;
+}
+
 export interface ItemDef {
   id: ItemId;
   name: string;
@@ -87,129 +107,54 @@ export interface ItemDef {
   type: ItemType;
   slot?: SlotFamily;
   stats?: ItemStats;
+  /** Job this item trains when used (gathering tools, weapons). */
+  skill?: JobId;
+  /** Paper-doll appearance — what to render on the player when equipped. */
+  visualLayer?: VisualLayer;
+  /** Effect applied when the player uses this item from the hotbar. */
+  consumable?: ConsumableEffect;
+  /** Buy price at a shop. Sell price is floor(value / 2). */
+  value: number;
 }
 
-const DEFS: ReadonlyArray<ItemDef> = [
-  // ─── Resources / pickups ─────────────────────────────────────────
-  {
-    id: "rope",
-    name: "Rope",
-    icon: "🪢",
-    color: "#c8a36a",
-    stackable: true,
-    maxStack: 50,
-    description: "A coil of sturdy hemp rope.",
-    type: "resource",
-  },
-  {
-    id: "plank",
-    name: "Plank",
-    icon: "🪵",
-    color: "#8b5a2b",
-    stackable: true,
-    maxStack: 50,
-    description: "A length of weathered timber.",
-    type: "resource",
-  },
-  {
-    id: "fish",
-    name: "Fish",
-    icon: "🐟",
-    color: "#6bb7d6",
-    stackable: true,
-    maxStack: 20,
-    description: "Fresh from the sea.",
-    type: "consumable",
-  },
-  {
-    id: "coin",
-    name: "Gold Coin",
-    icon: "🪙",
-    color: "#e5c14a",
-    stackable: true,
-    maxStack: 1000,
-    description: "A doubloon bearing a weathered crest.",
-    type: "resource",
-  },
-  {
-    id: "compass",
-    name: "Compass",
-    icon: "🧭",
-    color: "#b4c3d4",
-    stackable: false,
-    maxStack: 1,
-    description: "Points true north, mostly.",
-    type: "tool",
-  },
+interface RawItem {
+  id: string;
+  name: string;
+  color: string;
+  stackable: boolean;
+  maxStack: number;
+  description: string;
+  type: ItemType;
+  slot?: SlotFamily;
+  stats?: ItemStats;
+  skill?: JobId;
+  visualLayer?: VisualLayer;
+  consumable?: ConsumableEffect;
+  value: number;
+}
 
-  // ─── Equipment ───────────────────────────────────────────────────
-  {
-    id: "tricorn",
-    name: "Tricorn Hat",
-    icon: "🎩",
-    color: "#2a2030",
-    stackable: false,
-    maxStack: 1,
-    description: "Battered three-cornered hat. Makes you look the part.",
-    type: "armor",
-    slot: "head",
-    stats: { defense: 1 },
-  },
-  {
-    id: "sailors_coat",
-    name: "Sailor's Coat",
-    icon: "🧥",
-    color: "#345c7a",
-    stackable: false,
-    maxStack: 1,
-    description: "Salt-stained wool. Warmer than it looks.",
-    type: "armor",
-    slot: "body",
-    stats: { maxHp: 5, defense: 2 },
-  },
-  {
-    id: "leather_boots",
-    name: "Leather Boots",
-    icon: "🥾",
-    color: "#6b4a2a",
-    stackable: false,
-    maxStack: 1,
-    description: "Sturdy boots with good tread for wet decks.",
-    type: "armor",
-    slot: "legs",
-    stats: { moveSpeed: 12 },
-  },
-  {
-    id: "cutlass",
-    name: "Cutlass",
-    icon: "⚔️",
-    color: "#c0c0c0",
-    stackable: false,
-    maxStack: 1,
-    description: "A curved sword, well-balanced for close quarters.",
-    type: "weapon",
-    slot: "mainHand",
-    stats: { attack: 5 },
-  },
-  {
-    id: "signet_ring",
-    name: "Captain's Signet",
-    icon: "💍",
-    color: "#e5c14a",
-    stackable: false,
-    maxStack: 1,
-    description: "Bronze ring bearing an unfamiliar crest. Feels lucky.",
-    type: "armor",
-    slot: "ring",
-    stats: { sailSpeed: 6, maxHp: 2 },
-  },
-];
+const RAW = (itemData as unknown as { items: RawItem[] }).items;
+
+const DEFS: ReadonlyArray<ItemDef> = RAW.map((r) => ({
+  ...r,
+  icon: iconForItem(r.id),
+}));
 
 export const items = createRegistry<ItemDef>(DEFS, { label: "item" });
 
 /** Record view for ergonomic lookup by literal id. Equivalent to `items.get(id)`. */
 export const ITEMS: Record<ItemId, ItemDef> = Object.fromEntries(
   DEFS.map((d) => [d.id, d]),
-) as Record<ItemId, ItemDef>;
+);
 
 export const ALL_ITEM_IDS: ItemId[] = DEFS.map((d) => d.id);
+
+/** Sell price a shop pays the player for one unit. */
+export function itemSellPrice(id: ItemId): number {
+  const def = items.tryGet(id);
+  if (!def) return 0;
+  return Math.floor(def.value / 2);
+}
+
+/** Currency item id. Kept in one place so every buy/sell reads the same. */
+export const CURRENCY_ITEM_ID: ItemId = "coin";

@@ -1,0 +1,61 @@
+{
+  "defs": [
+    {
+      "id": "tree_palm",
+      "name": "Palm Tree",
+      "kind": "tree",
+      "color": "#3a6b2a",
+      "outlineColor": "#1f3d18",
+      "width": 22,
+      "height": 28,
+      "hp": 3,
+      "respawnSec": 30,
+      "requiredTool": "axe",
+      "skill": "lumberjack",
+      "xpPerHit": 4,
+      "drop": { "itemId": "plank", "quantity": 2 },
+      "blocks": true
+    },
+    {
+      "id": "ore_hopeite",
+      "name": "Hopeite Ore Vein",
+      "kind": "ore",
+      "color": "#7a6a55",
+      "outlineColor": "#4a3a25",
+      "width": 24,
+      "height": 22,
+      "hp": 4,
+      "respawnSec": 30,
+      "requiredTool": "pickaxe",
+      "skill": "orecheologist",
+      "xpPerHit": 5,
+      "drop": { "itemId": "hopeite_ore", "quantity": 1 },
+      "blocks": true
+    },
+    {
+      "id": "fishing_spot",
+      "name": "Fishing Spot",
+      "kind": "fish",
+      "color": "#5fa8c7",
+      "outlineColor": "#1f4d78",
+      "width": 24,
+      "height": 24,
+      "hp": 3,
+      "respawnSec": 30,
+      "requiredTool": "fishing_rod",
+      "skill": "fishing",
+      "xpPerHit": 6,
+      "drop": { "itemId": "fish", "quantity": 1 },
+      "blocks": false
+    }
+  ],
+  "instances": [
+    { "id": "n_tree_1", "defId": "tree_palm", "tileX": 50, "tileY": 18 },
+    { "id": "n_tree_2", "defId": "tree_palm", "tileX": 52, "tileY": 19 },
+    { "id": "n_tree_3", "defId": "tree_palm", "tileX": 48, "tileY": 21 },
+    { "id": "n_ore_1",  "defId": "ore_hopeite", "tileX": 47, "tileY": 17 },
+    { "id": "n_ore_2",  "defId": "ore_hopeite", "tileX": 51, "tileY": 22 },
+    { "id": "n_fish_1", "defId": "fishing_spot", "tileX": 56, "tileY": 16 },
+    { "id": "n_fish_2", "defId": "fishing_spot", "tileX": 58, "tileY": 25 }
+  ]
+}
