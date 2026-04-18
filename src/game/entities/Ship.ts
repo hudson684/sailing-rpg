@@ -190,17 +190,14 @@ export class Ship {
     }
   }
 
-  /** World-pixel position of the helm, for parking the player while sailing/anchoring. */
+  /**
+   * World-pixel position of the helm, for parking the player while sailing/anchoring.
+   * Tuned to the visible stern of the rowboat artwork — the sprite isn't centered in
+   * its 288×256 frame, so we use per-heading offsets instead of a single rotated vector.
+   */
   helmWorldPx(): { x: number; y: number } {
-    const a = headingToRotation(this.heading);
-    const lx = -TILE_SIZE / 2;
-    const ly = 0;
-    const c = Math.cos(a);
-    const s = Math.sin(a);
-    return {
-      x: this.x + lx * c - ly * s,
-      y: this.y + lx * s + ly * c,
-    };
+    const offset = HELM_OFFSET_PX[this.vessel.id][this.heading];
+    return { x: this.x + offset.dx, y: this.y + offset.dy };
   }
 
   /** Whether a player-center pixel is on a deck tile of this ship (docked only). */
@@ -289,6 +286,27 @@ export class Ship {
     this.updateVisual();
   }
 }
+
+/**
+ * Per-vessel visual helm offsets (in world px, post-scale). The helm sits on
+ * the stern deck of the rendered sprite — not at the footprint's bbox center —
+ * so we compensate for both (a) the sprite's off-centre position inside its
+ * frame and (b) the visible hull extending well beyond the 2×1 tile footprint.
+ */
+const HELM_OFFSET_PX: Record<VesselTemplate["id"], Record<Heading, { dx: number; dy: number }>> = {
+  rowboat: {
+    0: { dx: -2, dy: 22 },  // bow N → helm S (stern)
+    1: { dx: -20, dy: 9 },  // bow E → helm W
+    2: { dx: -2, dy: -14 }, // bow S → helm N
+    3: { dx: 20, dy: 9 },   // bow W → helm E
+  },
+  galleon: {
+    0: { dx: 0, dy: 40 },
+    1: { dx: -40, dy: 0 },
+    2: { dx: 0, dy: -40 },
+    3: { dx: 40, dy: 0 },
+  },
+};
 
 export function headingToRotation(h: Heading): number {
   return (h - 1) * (Math.PI / 2);

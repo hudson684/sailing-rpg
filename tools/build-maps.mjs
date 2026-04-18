@@ -321,6 +321,7 @@ function loadExternalTsx(tsxPath) {
     const id = int(tAttrs["@_id"]);
     const propsEntry = t.tile.find((x) => x.properties);
     const animEntry = t.tile.find((x) => x.animation);
+    const ogEntry = t.tile.find((x) => x.objectgroup);
     const tileOut = { id };
     if (propsEntry) {
       const properties = [];
@@ -344,7 +345,21 @@ function loadExternalTsx(tsxPath) {
       }
       if (animation.length > 0) tileOut.animation = animation;
     }
-    if (tileOut.properties || tileOut.animation) tiles.push(tileOut);
+    if (ogEntry) {
+      const ogAttrs = ogEntry[":@"] ?? {};
+      const objects = [];
+      for (const child of ogEntry.objectgroup) {
+        if (child.object === undefined) continue;
+        objects.push(objectToTiled(child[":@"], child.object));
+      }
+      if (objects.length > 0) {
+        tileOut.objectgroup = {
+          draworder: ogAttrs["@_draworder"] ?? "index",
+          objects,
+        };
+      }
+    }
+    if (tileOut.properties || tileOut.animation || tileOut.objectgroup) tiles.push(tileOut);
   }
 
   return {
@@ -385,6 +400,10 @@ function objectToTiled(attrs, children) {
   const childArr = children ?? [];
   if (childArr.some((c) => c.point !== undefined)) obj.point = true;
   if (childArr.some((c) => c.ellipse !== undefined)) obj.ellipse = true;
+  const polyEntry = childArr.find((c) => c.polygon !== undefined);
+  if (polyEntry) obj.polygon = parsePoints(polyEntry[":@"]?.["@_points"]);
+  const polylineEntry = childArr.find((c) => c.polyline !== undefined);
+  if (polylineEntry) obj.polyline = parsePoints(polylineEntry[":@"]?.["@_points"]);
   const propsEntry = childArr.find((c) => c.properties);
   if (propsEntry) {
     obj.properties = [];
@@ -399,6 +418,18 @@ function objectToTiled(attrs, children) {
     }
   }
   return obj;
+}
+
+/** Parse Tiled's `points="x1,y1 x2,y2 …"` into `[{x,y}, …]`. */
+function parsePoints(s) {
+  if (!s) return [];
+  return s
+    .trim()
+    .split(/\s+/)
+    .map((pair) => {
+      const [x, y] = pair.split(",").map(Number);
+      return { x, y };
+    });
 }
 
 function coerce(type, value) {

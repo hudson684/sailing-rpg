@@ -9,7 +9,14 @@ import {
 } from "./playerAnims";
 
 export const PLAYER_SPEED = 142; // pixels / sec
-export const PLAYER_RADIUS = 10;
+// Collision footprint at the feet. Wider than tall and offset down from
+// `player.y` (the sprite origin, which sits around the waist) so the hitbox
+// hugs the shoes. Tune in this file, not in the sampler.
+export const PLAYER_FEET_WIDTH = 12;
+export const PLAYER_FEET_HEIGHT = 4;
+// Offset from `player.y` (sprite origin, at the bottom of the shoes) to the
+// rect CENTER. Negative so the rect's bottom edge lands at the origin.
+export const PLAYER_FEET_OFFSET_Y = -PLAYER_FEET_HEIGHT / 2;
 
 // The visible character is ~13px wide inside a 79×79 frame; scale so it
 // reads at roughly the previous on-screen size (~22px).

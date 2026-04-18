@@ -1,20 +1,38 @@
 import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
-import { bus, type InventoryAction } from "../bus";
+import { bus, type DialogueAction, type InventoryAction } from "../bus";
 import { Inventory } from "../inventory/Inventory";
 import { ALL_ITEM_IDS, ITEMS } from "../inventory/items";
-import { Player, PLAYER_SPEED, PLAYER_RADIUS } from "../entities/Player";
+import {
+  Player,
+  PLAYER_SPEED,
+  PLAYER_FEET_WIDTH,
+  PLAYER_FEET_HEIGHT,
+  PLAYER_FEET_OFFSET_Y,
+  type Facing,
+} from "../entities/Player";
 import {
   Ship,
   normalizeAngle,
   type DockedPose,
+  type Heading,
 } from "../entities/Ship";
+
+const HEADING_TO_FACING: Record<Heading, Facing> = {
+  0: "up",
+  1: "right",
+  2: "down",
+  3: "left",
+};
 import { VESSEL_TEMPLATES } from "../entities/vessels";
 import { loadWorld, type WorldMap } from "../world/worldMap";
 import type { ItemSpawn } from "../world/spawns";
 import type { WorldManifest } from "../world/chunkManager";
 import { findAnchorPose } from "../util/anchor";
 import { CHUNK_KEY_PREFIX, WORLD_MANIFEST_KEY } from "./BootScene";
+import { Npc, NPC_INTERACT_RADIUS, registerNpcAnimations } from "../entities/Npc";
+import type { NpcData, DialogueDef } from "../entities/npcTypes";
+import npcDataRaw from "../data/npcs.json";
 import { DebugOverlays, type OverlayName } from "../debug/DebugOverlays";
 import { GroundItemsState } from "../world/groundItemsState";
 import {
@@ -66,6 +84,8 @@ interface GroundItem {
   sprite: Phaser.GameObjects.Text;
 }
 
+let activeWorldScene: WorldScene | null = null;
+
 export class WorldScene extends Phaser.Scene {
   private world!: WorldMap;
   private player!: Player;
@@ -80,12 +100,19 @@ export class WorldScene extends Phaser.Scene {
     canAutosave: () => this.sceneState.mode !== "Anchoring",
   });
   private groundItems = new Map<string, GroundItem>();
+  private npcs: Npc[] = [];
+  private dialogues: Record<string, DialogueDef> = {};
+  private activeDialogue: { speaker: string; pages: string[]; page: number } | null = null;
 
   private zoomTarget = loadZoom();
   private wheelZoomDir: 1 | -1 | 0 = 0;
   private lastWheelAt = 0;
 
   private debug!: DebugOverlays;
+
+  /** Source object for the overhead bitmap mask — a filled circle that
+   *  follows the player so roofs/canopies "cut out" around the character. */
+  private overheadMaskSource!: Phaser.GameObjects.Graphics;
 
   private keys!: {
     up: Phaser.Input.Keyboard.Key;
@@ -100,6 +127,21 @@ export class WorldScene extends Phaser.Scene {
     debugGrant: Phaser.Input.Keyboard.Key;
     quicksave: Phaser.Input.Keyboard.Key;
     quickload: Phaser.Input.Keyboard.Key;
+  };
+
+  private onDialogueAction = (action: DialogueAction) => {
+    if (!this.activeDialogue) return;
+    if (action.type === "close") {
+      this.closeDialogue();
+      return;
+    }
+    // advance
+    this.activeDialogue.page += 1;
+    if (this.activeDialogue.page >= this.activeDialogue.pages.length) {
+      this.closeDialogue();
+    } else {
+      this.emitDialogue();
+    }
   };
 
   private onInventoryAction = (action: InventoryAction) => {
@@ -144,6 +186,7 @@ export class WorldScene extends Phaser.Scene {
     );
 
     this.respawnGroundItems(items);
+    this.spawnNpcs();
 
     // Ocean-blue backdrop for any viewport area outside authored chunks.
     this.cameras.main.setBackgroundColor("#1f4d78");
@@ -156,6 +199,8 @@ export class WorldScene extends Phaser.Scene {
     );
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
     this.cameras.main.setZoom(this.zoomTarget);
+
+    this.setupOverheadMask();
 
     this.keys = {
       up: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
@@ -216,18 +261,33 @@ export class WorldScene extends Phaser.Scene {
       getShipPose: () =>
         this.ship ? { x: this.ship.x, y: this.ship.y, rotation: this.ship.rotation } : null,
       isAtHelm: () => this.sceneState.mode === "AtHelm",
+      getPlayerHitbox: () =>
+        this.player
+          ? {
+              cx: this.player.x,
+              cy: this.player.y + PLAYER_FEET_OFFSET_Y,
+              w: PLAYER_FEET_WIDTH,
+              h: PLAYER_FEET_HEIGHT,
+              originY: this.player.y,
+            }
+          : null,
     });
     const overlayKeys: Array<[Phaser.Input.Keyboard.Key, OverlayName]> = [
       [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F1), "walkability"],
       [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F2), "chunkGrid"],
       [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F3), "spawns"],
       [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F4), "anchorSearch"],
+      [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F6), "hitbox"],
     ];
     for (const [key, name] of overlayKeys) key.on("down", () => this.debug.toggle(name));
 
     bus.onTyped("inventory:action", this.onInventoryAction);
+    bus.onTyped("dialogue:action", this.onDialogueAction);
+    activeWorldScene = this;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       bus.offTyped("inventory:action", this.onInventoryAction);
+      bus.offTyped("dialogue:action", this.onDialogueAction);
+      if (activeWorldScene === this) activeWorldScene = null;
       this.saveController.shutdown();
     });
     this.emitInventory();
@@ -261,17 +321,41 @@ export class WorldScene extends Phaser.Scene {
     const dt = dtMs / 1000;
     this.world.manager.tick(dtMs);
     this.saveController.playtime.tick();
-    if (this.sceneState.mode === "OnFoot") this.updateOnFoot(dt);
+    if (this.sceneState.mode === "OnFoot" && !this.activeDialogue) this.updateOnFoot(dt);
     else if (this.sceneState.mode === "AtHelm") this.updateAtHelm(dt);
     else if (this.sceneState.mode === "Anchoring") {
       // Tween drives the ship; nothing to do here.
     }
+    for (const npc of this.npcs) npc.update(dtMs, (x, y) => this.isWalkablePx(x, y));
+    this.overheadMaskSource.setPosition(this.player.x, this.player.y);
     this.updateZoom(dtMs);
     this.emitHud();
     this.debug.update();
   }
 
   // ─── Mode: OnFoot ────────────────────────────────────────────────
+
+  /** Stamp a soft-ish circle into a Graphics and register an inverted mask
+   *  filter on every overhead layer. The circle follows the player each
+   *  frame, so roofs/canopies "cut out" around the character. */
+  private setupOverheadMask(): void {
+    // Concentric circles fake a soft edge (Graphics doesn't support gradients).
+    const gfx = this.add.graphics({ x: 0, y: 0 });
+    gfx.setVisible(false); // not drawn to the scene; used only as mask source.
+    const steps = 6;
+    const maxRadius = 40;
+    for (let i = steps; i >= 1; i--) {
+      const r = (maxRadius * i) / steps;
+      const a = i / steps; // 1 at center, fading out
+      gfx.fillStyle(0xffffff, a);
+      gfx.fillCircle(0, 0, r);
+    }
+    this.overheadMaskSource = gfx;
+    const cam = this.cameras.main;
+    this.world.manager.setOverheadFilter((layer) => {
+      layer.filters!.internal.addMask(gfx, true, cam, "world");
+    });
+  }
 
   private updateOnFoot(dt: number) {
     let dx = 0;
@@ -291,7 +375,17 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private onInteract() {
+    if (this.activeDialogue) {
+      // Let the dialogue UI handle advance via its own keybind; E here advances too.
+      this.onDialogueAction({ type: "advance" });
+      return;
+    }
     if (this.sceneState.mode === "OnFoot") {
+      const npc = this.nearestNpc();
+      if (npc) {
+        this.openDialogueWith(npc);
+        return;
+      }
       const pickup = this.nearestGroundItem();
       if (pickup) {
         this.pickUp(pickup);
@@ -301,6 +395,69 @@ export class WorldScene extends Phaser.Scene {
     } else if (this.sceneState.mode === "AtHelm") {
       this.beginAnchoring();
     }
+  }
+
+  private spawnNpcs(data: NpcData = npcDataRaw as NpcData) {
+    this.dialogues = data.dialogues ?? {};
+    for (const def of data.npcs) {
+      registerNpcAnimations(this, def);
+      this.npcs.push(new Npc(this, def));
+    }
+  }
+
+  reloadNpcs(data: NpcData) {
+    for (const npc of this.npcs) npc.sprite.destroy();
+    this.npcs = [];
+    if (this.activeDialogue) this.closeDialogue();
+    this.spawnNpcs(data);
+  }
+
+  private nearestNpc(): Npc | null {
+    let best: Npc | null = null;
+    let bestDist = NPC_INTERACT_RADIUS;
+    for (const npc of this.npcs) {
+      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.x, npc.y);
+      if (d <= bestDist) {
+        best = npc;
+        bestDist = d;
+      }
+    }
+    return best;
+  }
+
+  private openDialogueWith(npc: Npc) {
+    const dialogue = this.dialogues[npc.def.dialogue];
+    if (!dialogue) {
+      bus.emitTyped("hud:message", `${npc.def.name} has nothing to say.`, 1500);
+      return;
+    }
+    npc.faceToward(this.player.x, this.player.y);
+    this.activeDialogue = {
+      speaker: dialogue.speaker || npc.def.name,
+      pages: dialogue.pages.slice(),
+      page: 0,
+    };
+    this.emitDialogue();
+  }
+
+  private closeDialogue() {
+    this.activeDialogue = null;
+    bus.emitTyped("dialogue:update", {
+      visible: false,
+      speaker: "",
+      pages: [],
+      page: 0,
+    });
+  }
+
+  private emitDialogue() {
+    if (!this.activeDialogue) return;
+    bus.emitTyped("dialogue:update", {
+      visible: true,
+      speaker: this.activeDialogue.speaker,
+      pages: this.activeDialogue.pages,
+      page: this.activeDialogue.page,
+    });
   }
 
   /** (Re)spawn ground items from authored data, filtered by the picked-up set. */
@@ -407,17 +564,19 @@ export class WorldScene extends Phaser.Scene {
 
     const helm = this.ship.helmWorldPx();
     this.player.setPosition(helm.x, helm.y);
-    this.player.sprite.setRotation(this.ship.rotation);
+    this.player.sprite.setRotation(0);
+    this.player.setFacing(HEADING_TO_FACING[this.ship.heading]);
   }
 
   // ─── Transition: AtHelm → Anchoring → OnFoot ──────────────────────
 
   private beginAnchoring() {
     const target = findAnchorPose(
-      (tx, ty) => this.world.manager.isWater(tx, ty),
+      (tx, ty) => this.world.manager.isAnchorable(tx, ty),
       this.ship.x,
       this.ship.y,
       this.ship.heading,
+      this.ship.dims,
       TILE_SIZE,
     );
     if (!target) {
@@ -442,7 +601,8 @@ export class WorldScene extends Phaser.Scene {
         this.ship.setPose(this.ship.x, this.ship.y);
         const helm = this.ship.helmWorldPx();
         this.player.setPosition(helm.x, helm.y);
-        this.player.sprite.setRotation(this.ship.rotation);
+        this.player.sprite.setRotation(0);
+        this.player.setFacing(HEADING_TO_FACING[this.ship.heading]);
       },
       onComplete: () => this.finishAnchoring(target),
     });
@@ -501,7 +661,8 @@ export class WorldScene extends Phaser.Scene {
       this.ship.mode = "sailing";
       const helm = this.ship.helmWorldPx();
       this.player.setPosition(helm.x, helm.y);
-      this.player.sprite.setRotation(this.ship.rotation);
+      this.player.sprite.setRotation(0);
+      this.player.setFacing(HEADING_TO_FACING[this.ship.heading]);
       this.cameras.main.startFollow(this.ship.container, true, 0.1, 0.1);
     } else {
       // Anchoring mid-save is degraded to OnFoot on load.
@@ -515,13 +676,16 @@ export class WorldScene extends Phaser.Scene {
   // ─── Walkability ─────────────────────────────────────────────────
 
   private isWalkablePx(px: number, py: number): boolean {
-    const r = PLAYER_RADIUS - 2;
+    // Feet hitbox: axis-aligned rectangle centered on (px, py + offsetY).
+    const hw = PLAYER_FEET_WIDTH / 2;
+    const hh = PLAYER_FEET_HEIGHT / 2;
+    const cy = py + PLAYER_FEET_OFFSET_Y;
     const samples: [number, number][] = [
-      [px, py],
-      [px + r, py],
-      [px - r, py],
-      [px, py + r],
-      [px, py - r],
+      [px, cy],
+      [px + hw, cy + hh],
+      [px - hw, cy + hh],
+      [px + hw, cy - hh],
+      [px - hw, cy - hh],
     ];
     for (const [sx, sy] of samples) {
       if (!this.isPointWalkable(sx, sy)) return false;
@@ -532,12 +696,15 @@ export class WorldScene extends Phaser.Scene {
   private isPointWalkable(px: number, py: number): boolean {
     const tx = Math.floor(px / TILE_SIZE);
     const ty = Math.floor(py / TILE_SIZE);
-    if (this.world.manager.isLandWalkable(tx, ty)) return true;
-    if (this.ship && this.ship.mode === "docked") {
-      const onDeck = Ship.footprint(this.ship.docked).some((t) => t.x === tx && t.y === ty);
-      if (onDeck) return true;
-    }
-    return false;
+    const onDeck =
+      this.ship &&
+      this.ship.mode === "docked" &&
+      Ship.footprint(this.ship.docked).some((t) => t.x === tx && t.y === ty);
+    // Water blocks only when the player isn't standing on a docked ship's deck.
+    if (!onDeck && this.world.manager.isWater(tx, ty)) return false;
+    // Tile-level `collides: true` + sub-tile shape collision (poles, etc.).
+    if (this.world.manager.isBlockedPx(px, py)) return false;
+    return true;
   }
 
   private stepZoomKeyboard(dir: 1 | -1) {
@@ -601,14 +768,19 @@ export class WorldScene extends Phaser.Scene {
             : "OnFoot";
 
     let prompt: string | null = null;
-    if (this.sceneState.mode === "OnFoot") {
-      const pickup = this.nearestGroundItem();
-      if (pickup) {
-        const def = ITEMS[pickup.itemId];
-        const qty = pickup.quantity > 1 ? ` ×${pickup.quantity}` : "";
-        prompt = `Press E to pick up ${def.name}${qty}`;
-      } else if (this.isNearHelm()) {
-        prompt = "Press E to take the helm";
+    if (this.sceneState.mode === "OnFoot" && !this.activeDialogue) {
+      const npc = this.nearestNpc();
+      if (npc) {
+        prompt = `Press E to talk to ${npc.def.name}`;
+      } else {
+        const pickup = this.nearestGroundItem();
+        if (pickup) {
+          const def = ITEMS[pickup.itemId];
+          const qty = pickup.quantity > 1 ? ` ×${pickup.quantity}` : "";
+          prompt = `Press E to pick up ${def.name}${qty}`;
+        } else if (this.isNearHelm()) {
+          prompt = "Press E to take the helm";
+        }
       }
     } else if (this.sceneState.mode === "AtHelm") {
       prompt = "Press E to drop anchor";
@@ -638,4 +810,17 @@ export class WorldScene extends Phaser.Scene {
       bus.emitTyped("hud:message", "Inventory is full.", 1500);
     }
   }
+}
+
+// Vite HMR: when src/game/data/npcs.json changes, respawn NPCs in the
+// running scene without reloading the page. Sprite sheets already in the
+// Phaser texture cache are reused; new sheet references would need a full
+// reload.
+if (import.meta.hot) {
+  import.meta.hot.accept("../data/npcs.json", (mod) => {
+    if (!mod || !activeWorldScene) return;
+    const data = ((mod as unknown) as { default?: NpcData }).default ?? ((mod as unknown) as NpcData);
+    activeWorldScene.reloadNpcs(data);
+    bus.emitTyped("hud:message", "NPCs reloaded.", 1200);
+  });
 }

@@ -1,4 +1,4 @@
-import { Ship, type DockedPose, type Heading } from "../entities/Ship";
+import { Ship, type DockedPose, type Heading, type VesselDims } from "../entities/Ship";
 
 const SEARCH_RADIUS = 6;
 
@@ -8,6 +8,7 @@ export function findAnchorPose(
   shipX: number,
   shipY: number,
   currentHeading: Heading,
+  dims: VesselDims,
   tileSize: number,
 ): DockedPose | null {
   const cx = shipX / tileSize;
@@ -18,15 +19,16 @@ export function findAnchorPose(
   for (let dy = -SEARCH_RADIUS; dy <= SEARCH_RADIUS; dy++) {
     for (let dx = -SEARCH_RADIUS; dx <= SEARCH_RADIUS; dx++) {
       for (let heading = 0 as Heading; heading < 4; heading = (heading + 1) as Heading) {
-        const bboxW = heading === 1 || heading === 3 ? 3 : 2;
-        const bboxH = heading === 1 || heading === 3 ? 2 : 3;
+        const eastWest = heading === 1 || heading === 3;
+        const bboxW = eastWest ? dims.tilesLong : dims.tilesWide;
+        const bboxH = eastWest ? dims.tilesWide : dims.tilesLong;
         const txGuess = Math.round(cx + dx - bboxW / 2);
         const tyGuess = Math.round(cy + dy - bboxH / 2);
         const pose: DockedPose = { tx: txGuess, ty: tyGuess, heading };
 
-        if (!isFootprintClear(pose, isAnchorable)) continue;
+        if (!isFootprintClear(pose, isAnchorable, dims)) continue;
 
-        const center = Ship.bboxCenterPx(pose);
+        const center = Ship.bboxCenterPx(pose, dims);
         const dpx = center.x - shipX;
         const dpy = center.y - shipY;
         const distSq = dpx * dpx + dpy * dpy;
@@ -46,8 +48,9 @@ export function findAnchorPose(
 function isFootprintClear(
   pose: DockedPose,
   isAnchorable: (tx: number, ty: number) => boolean,
+  dims: VesselDims,
 ): boolean {
-  const fp = Ship.footprint(pose);
+  const fp = Ship.footprint(pose, dims);
   for (const { x, y } of fp) {
     if (!isAnchorable(x, y)) return false;
   }

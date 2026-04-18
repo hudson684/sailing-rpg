@@ -4,6 +4,7 @@ import { createGameConfig } from "./game/config";
 import { Hud } from "./ui/Hud";
 import { Inventory } from "./ui/Inventory";
 import { PauseMenu } from "./ui/PauseMenu";
+import { Dialogue } from "./ui/Dialogue";
 import "./App.css";
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
       <Hud />
       <Inventory />
       <PauseMenu />
+      <Dialogue />
     </div>
   );
 }

@@ -33,6 +33,17 @@ export interface PauseMenuState {
   slots: PauseMenuSlot[];
 }
 
+export interface DialogueState {
+  visible: boolean;
+  speaker: string;
+  pages: string[];
+  page: number;
+}
+
+export type DialogueAction =
+  | { type: "advance" }
+  | { type: "close" };
+
 type Events = {
   "hud:update": (state: Partial<HudState>) => void;
   "hud:message": (text: string, ttlMs?: number) => void;
@@ -41,6 +52,8 @@ type Events = {
   "save:request": (request: SaveRequest) => void;
   "pause:update": (state: PauseMenuState) => void;
   "pause:toggle": () => void;
+  "dialogue:update": (state: DialogueState) => void;
+  "dialogue:action": (action: DialogueAction) => void;
 };
 
 class TypedEmitter extends Phaser.Events.EventEmitter {

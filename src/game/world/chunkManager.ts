@@ -2,6 +2,7 @@ import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
 import { TileRegistry } from "./tileRegistry";
 import { parseSpawns, type ParsedSpawns, type ShipSpawn, type DockSpawn, type ItemSpawn } from "./spawns";
+import { ShapeCollider } from "./shapeCollision";
 
 export interface WorldManifest {
   chunkSize: number;
@@ -22,6 +23,7 @@ export interface Chunk {
   tilemap: Phaser.Tilemaps.Tilemap;
   registry: TileRegistry;
   layers: Phaser.Tilemaps.TilemapLayer[];
+  shapes: ShapeCollider;
 }
 
 export interface ChunkManagerOptions {
@@ -35,6 +37,12 @@ export interface ChunkManagerOptions {
 export function tilesetImageKeyFor(imagePath: string): string {
   return `tileset:${imagePath}`;
 }
+
+/** Layer names that render above the player. Matched case-insensitively. */
+const OVERHEAD_LAYERS = new Set(["props_high", "roof"]);
+/** Base depth for overhead layers. Player is at 50; this comfortably clears it
+ *  while preserving the TMJ-index ordering among overhead layers themselves. */
+const OVERHEAD_DEPTH_BASE = 100;
 
 /**
  * Owns all loaded authored chunks. Global tile queries dispatch to the chunk
@@ -57,7 +65,20 @@ export class ChunkManager {
   private readonly chunkKeyPrefix: string;
   private readonly chunks = new Map<string, Chunk>();
   private readonly animatedCells: AnimatedCell[] = [];
+  private readonly overheadLayers: Phaser.Tilemaps.TilemapLayer[] = [];
+  /** Function that applies a filter (e.g. an inverted mask) to an overhead
+   *  layer. Stored so chunks loaded AFTER registration also get the effect. */
+  private overheadFilter: ((layer: Phaser.Tilemaps.TilemapLayer) => void) | null = null;
   private elapsedMs = 0;
+
+  /** Register a filter setup callback that's applied to every overhead layer
+   *  (current and future). Typical use: attach an inverted mask filter so
+   *  the roof cuts a hole around the player. */
+  setOverheadFilter(apply: ((layer: Phaser.Tilemaps.TilemapLayer) => void) | null): void {
+    this.overheadFilter = apply;
+    if (!apply) return;
+    for (const layer of this.overheadLayers) apply(layer);
+  }
 
   constructor(opts: ChunkManagerOptions) {
     this.scene = opts.scene;
@@ -144,6 +165,23 @@ export class ChunkManager {
     return !this.isWater(gtx, gty) && !this.isBlocked(gtx, gty);
   }
 
+  /**
+   * Pixel-precise blocking test. True if the tile at (gpx, gpy) has
+   * `collides: true`, OR any per-tile / chunk-level collision shape covers
+   * this pixel. Water is not considered here — walkability wraps both.
+   */
+  isBlockedPx(gpx: number, gpy: number): boolean {
+    const gtx = Math.floor(gpx / TILE_SIZE);
+    const gty = Math.floor(gpy / TILE_SIZE);
+    const chunk = this.chunkAtGlobalTile(gtx, gty);
+    if (!chunk) return false;
+    const s = this.manifest.chunkSize;
+    if (chunk.registry.isBlocked(gtx - chunk.cx * s, gty - chunk.cy * s)) return true;
+    const chunkPxX = chunk.cx * s * TILE_SIZE;
+    const chunkPxY = chunk.cy * s * TILE_SIZE;
+    return chunk.shapes.isBlockedAtLocalPx(gpx - chunkPxX, gpy - chunkPxY);
+  }
+
   authoredBoundsTiles(): { minTx: number; minTy: number; maxTx: number; maxTy: number } {
     let minCx = Infinity;
     let minCy = Infinity;
@@ -160,6 +198,34 @@ export class ChunkManager {
     }
     const s = this.manifest.chunkSize;
     return { minTx: minCx * s, minTy: minCy * s, maxTx: (maxCx + 1) * s, maxTy: (maxCy + 1) * s };
+  }
+
+  /** Chunks overlapping the given global-tile rectangle, with precomputed
+   *  top-left world-pixel offsets. Used by debug overlays. */
+  chunksInTileRect(
+    tx0: number,
+    ty0: number,
+    tx1: number,
+    ty1: number,
+  ): Array<{ chunk: Chunk; chunkPxX: number; chunkPxY: number }> {
+    const s = this.manifest.chunkSize;
+    const cx0 = Math.floor(tx0 / s);
+    const cy0 = Math.floor(ty0 / s);
+    const cx1 = Math.floor((tx1 - 1) / s);
+    const cy1 = Math.floor((ty1 - 1) / s);
+    const out: Array<{ chunk: Chunk; chunkPxX: number; chunkPxY: number }> = [];
+    for (let cy = cy0; cy <= cy1; cy++) {
+      for (let cx = cx0; cx <= cx1; cx++) {
+        const chunk = this.chunks.get(`${cx}_${cy}`);
+        if (!chunk) continue;
+        out.push({
+          chunk,
+          chunkPxX: cx * s * TILE_SIZE,
+          chunkPxY: cy * s * TILE_SIZE,
+        });
+      }
+    }
+    return out;
   }
 
   private chunkAtGlobalTile(gtx: number, gty: number): Chunk | null {
@@ -212,11 +278,32 @@ export class ChunkManager {
         | null;
       if (!layer) return;
       if (renderScale !== 1) layer.setScale(renderScale);
-      layer.setDepth(idx);
+      // Overhead layers render above the player (depth 50 in Player.ts) so the
+      // character passes under roofs, tree canopies, etc. All other layers keep
+      // their TMJ index as depth.
+      const overhead = OVERHEAD_LAYERS.has(layerData.name.toLowerCase());
+      layer.setDepth(overhead ? OVERHEAD_DEPTH_BASE + idx : idx);
+      if (overhead) {
+        this.overheadLayers.push(layer);
+        if (this.overheadFilter) this.overheadFilter(layer);
+      }
       layers.push(layer);
     });
 
-    const chunk: Chunk = { cx, cy, tilemap, registry: new TileRegistry(tilemap), layers };
+    const shapes = new ShapeCollider({
+      tilemap,
+      tileLayers: layers,
+      chunkRawTmj: cached?.data,
+      renderScale,
+    });
+    const chunk: Chunk = {
+      cx,
+      cy,
+      tilemap,
+      registry: new TileRegistry(tilemap),
+      layers,
+      shapes,
+    };
     this.chunks.set(`${cx}_${cy}`, chunk);
     this.collectAnimations(chunk);
     return chunk;

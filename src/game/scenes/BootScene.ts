@@ -16,9 +16,13 @@ import {
   playerAnimKey,
   playerTextureKey,
 } from "../entities/playerAnims";
+import { npcTextureKey, type NpcData } from "../entities/npcTypes";
+import npcDataRaw from "../data/npcs.json";
 
 export const WORLD_MANIFEST_KEY = "worldManifest";
 export const CHUNK_KEY_PREFIX = "chunk_";
+
+const npcData = npcDataRaw as NpcData;
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -54,6 +58,21 @@ export class BootScene extends Phaser.Scene {
         frameWidth: PLAYER_FRAME_SIZE,
         frameHeight: PLAYER_FRAME_SIZE,
       });
+    }
+
+    for (const npc of npcData.npcs) {
+      const idle = npc.sprite.idle;
+      this.load.spritesheet(npcTextureKey(npc.id, "idle"), idle.sheet, {
+        frameWidth: idle.frameWidth,
+        frameHeight: idle.frameHeight,
+      });
+      if (npc.sprite.walk) {
+        const walk = npc.sprite.walk;
+        this.load.spritesheet(npcTextureKey(npc.id, "walk"), walk.sheet, {
+          frameWidth: walk.frameWidth,
+          frameHeight: walk.frameHeight,
+        });
+      }
     }
   }
 

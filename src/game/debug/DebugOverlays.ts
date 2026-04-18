@@ -3,7 +3,7 @@ import { TILE_SIZE } from "../constants";
 import type { WorldMap } from "../world/worldMap";
 import { Ship, type DockedPose, type Heading, headingToRotation, normalizeAngle } from "../entities/Ship";
 
-export type OverlayName = "walkability" | "chunkGrid" | "spawns" | "anchorSearch";
+export type OverlayName = "walkability" | "chunkGrid" | "spawns" | "anchorSearch" | "hitbox";
 
 const OVERLAY_DEPTH = 10000;
 const ANCHOR_SEARCH_RADIUS = 6;
@@ -13,6 +13,11 @@ export interface DebugOverlayHooks {
   getShipPose: () => { x: number; y: number; rotation: number } | null;
   /** True when the player is at the helm (controls whether anchorSearch shows). */
   isAtHelm: () => boolean;
+  /** Player feet hitbox (axis-aligned rect centered on cx,cy) + sprite origin
+   *  Y (for a reference dot). */
+  getPlayerHitbox: () =>
+    | { cx: number; cy: number; w: number; h: number; originY: number }
+    | null;
 }
 
 export class DebugOverlays {
@@ -25,6 +30,7 @@ export class DebugOverlays {
     chunkGrid: false,
     spawns: false,
     anchorSearch: false,
+    hitbox: false,
   };
   private readonly hud: Phaser.GameObjects.Text;
   private readonly spawnLabels: Phaser.GameObjects.Text[] = [];
@@ -40,6 +46,7 @@ export class DebugOverlays {
       chunkGrid: scene.add.graphics().setDepth(OVERLAY_DEPTH + 1).setVisible(false),
       spawns: scene.add.graphics().setDepth(OVERLAY_DEPTH + 2).setVisible(false),
       anchorSearch: scene.add.graphics().setDepth(OVERLAY_DEPTH + 3).setVisible(false),
+      hitbox: scene.add.graphics().setDepth(OVERLAY_DEPTH + 4).setVisible(false),
     };
 
     this.hud = scene.add
@@ -66,6 +73,96 @@ export class DebugOverlays {
     if (this.active.chunkGrid) this.drawChunkGrid();
     if (this.active.spawns) this.drawSpawns();
     if (this.active.anchorSearch) this.drawAnchorSearch();
+    if (this.active.hitbox) this.drawHitbox();
+  }
+
+  // ── hitbox ────────────────────────────────────────────────────
+
+  private drawHitbox(): void {
+    const g = this.gfx.hitbox;
+    g.clear();
+    this.drawCollisionShapes(g);
+    const hb = this.hooks.getPlayerHitbox();
+    if (!hb) return;
+    const { cx, cy, w, h, originY } = hb;
+    const hw = w / 2;
+    const hh = h / 2;
+    const samples: [number, number][] = [
+      [cx, cy],
+      [cx + hw, cy + hh],
+      [cx - hw, cy + hh],
+      [cx + hw, cy - hh],
+      [cx - hw, cy - hh],
+    ];
+    const mgr = this.world.manager;
+    g.lineStyle(1, 0x00ffaa, 0.9);
+    g.strokeRect(cx - hw, cy - hh, w, h);
+    for (const [sx, sy] of samples) {
+      const blocked =
+        mgr.isBlockedPx(sx, sy) ||
+        mgr.isWater(Math.floor(sx / TILE_SIZE), Math.floor(sy / TILE_SIZE));
+      g.fillStyle(blocked ? 0xff3030 : 0x00ffaa, 0.9);
+      g.fillCircle(sx, sy, 1.5);
+    }
+    // Yellow dot at the sprite origin (player.y) for visual reference.
+    g.lineStyle(1, 0xffff00, 1);
+    g.strokeCircle(cx, originY, 1);
+  }
+
+  /** Render every per-tile and chunk-level collision shape in the view. */
+  private drawCollisionShapes(g: Phaser.GameObjects.Graphics): void {
+    const view = this.cameraTileRect();
+    const chunks = this.world.manager.chunksInTileRect(view.tx0, view.ty0, view.tx1, view.ty1);
+    g.lineStyle(1, 0xff66cc, 0.9);
+    g.fillStyle(0xff66cc, 0.25);
+    for (const { chunk, chunkPxX, chunkPxY } of chunks) {
+      const scale = chunk.shapes.renderScaleFactor;
+
+      // Chunk-level shapes (option 3).
+      for (const s of chunk.shapes.debugChunkShapes()) {
+        this.drawShape(g, s, chunkPxX, chunkPxY, scale);
+      }
+
+      // Per-tile shapes (option 2): iterate painted tiles across layers and
+      // draw each template at that tile's origin.
+      const tileMap = chunk.shapes.debugTileShapes();
+      if (tileMap.size === 0) continue;
+      const authoredTs = chunk.shapes.authoredTileSizePx;
+      for (const layer of chunk.layers) {
+        layer.forEachTile((tile) => {
+          const shapes = tileMap.get(tile.index);
+          if (!shapes) return;
+          const ox = chunkPxX + tile.x * authoredTs * scale;
+          const oy = chunkPxY + tile.y * authoredTs * scale;
+          for (const s of shapes) this.drawShape(g, s, ox, oy, scale);
+        });
+      }
+    }
+  }
+
+  private drawShape(
+    g: Phaser.GameObjects.Graphics,
+    s: import("../world/shapeCollision").CollisionShape,
+    ox: number,
+    oy: number,
+    scale: number,
+  ): void {
+    switch (s.kind) {
+      case "rect":
+        g.fillRect(ox + s.x * scale, oy + s.y * scale, s.w * scale, s.h * scale);
+        g.strokeRect(ox + s.x * scale, oy + s.y * scale, s.w * scale, s.h * scale);
+        break;
+      case "ellipse":
+        g.fillEllipse(ox + s.cx * scale, oy + s.cy * scale, s.rx * 2 * scale, s.ry * 2 * scale);
+        g.strokeEllipse(ox + s.cx * scale, oy + s.cy * scale, s.rx * 2 * scale, s.ry * 2 * scale);
+        break;
+      case "polygon": {
+        const pts = s.points.map((p) => new Phaser.Math.Vector2(ox + p.x * scale, oy + p.y * scale));
+        g.fillPoints(pts, true, true);
+        g.strokePoints(pts, true, true);
+        break;
+      }
+    }
   }
 
   // ── walkability ────────────────────────────────────────────────
@@ -255,7 +352,7 @@ export class DebugOverlays {
       this.hud.setVisible(false);
       return;
     }
-    this.hud.setText(`debug: ${on.join(", ")}  [F1 walk, F2 grid, F3 spawns, F4 anchor]`);
+    this.hud.setText(`debug: ${on.join(", ")}  [F1 walk, F2 grid, F3 spawns, F4 anchor, F6 hitbox]`);
     this.hud.setVisible(true);
   }
 }

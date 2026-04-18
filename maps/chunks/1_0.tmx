@@ -1,56 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="14" nextobjectid="5">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="16" nextobjectid="10">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
  <tileset firstgid="226" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <tileset firstgid="736" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
  <tileset firstgid="4832" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Tilesets-GL2SA.tsx"/>
  <tileset firstgid="5536" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet1.tsx"/>
- <tileset firstgid="9695" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2.tsx"/>
- <tileset firstgid="13512" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet3.tsx"/>
- <tileset firstgid="14850" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet4.tsx"/>
- <tileset firstgid="15784" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - no thick foam - Godot.tsx"/>
- <tileset firstgid="16202" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - no thick foam.tsx"/>
- <tileset firstgid="16712" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - with thick foam - Godot.tsx"/>
- <tileset firstgid="17130" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
- <tileset firstgid="17640" source="../themes/Grass Land/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach - godot.tsx"/>
- <tileset firstgid="17900" source="../themes/Grass Land/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx"/>
- <tileset firstgid="18160" source="../themes/Grass Land/TiledMap Editor/Tilesets/fence-curved.tsx"/>
- <tileset firstgid="18208" source="../themes/Grass Land/TiledMap Editor/Tilesets/fence-straight.tsx"/>
- <tileset firstgid="18256" source="../themes/Grass Land/TiledMap Editor/Tilesets/fertilized soil.tsx"/>
- <tileset firstgid="18396" source="../themes/Grass Land/TiledMap Editor/Tilesets/gl2-Tileset - wall 1-3tiles.tsx"/>
- <tileset firstgid="18652" source="../themes/Grass Land/TiledMap Editor/Tilesets/gl2-Tileset - wall 1-3tiles-transp.tsx"/>
- <tileset firstgid="18908" source="../themes/Grass Land/TiledMap Editor/Tilesets/hole1.tsx"/>
- <tileset firstgid="19148" source="../themes/Grass Land/TiledMap Editor/Tilesets/hole2.tsx"/>
- <tileset firstgid="19388" source="../themes/Grass Land/TiledMap Editor/Tilesets/hole3.tsx"/>
- <tileset firstgid="19628" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass - coast - godot.tsx"/>
- <tileset firstgid="20274" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass - coast.tsx"/>
- <tileset firstgid="21260" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass to water - godot.tsx"/>
- <tileset firstgid="21908" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass to water.tsx"/>
- <tileset firstgid="22778" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx"/>
- <tileset firstgid="23764" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass(transparency) - coast-godot.tsx"/>
- <tileset firstgid="24410" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass(transparency) to water - godot.tsx"/>
- <tileset firstgid="25058" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass(transparency) to water.tsx"/>
- <tileset firstgid="25928" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass - river orientation.tsx"/>
- <tileset firstgid="26798" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass - river orientation-godot.tsx"/>
- <tileset firstgid="27506" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass(transparency) - river orientation.tsx"/>
- <tileset firstgid="28376" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass(transparency) - river orientation-godot.tsx"/>
- <tileset firstgid="29084" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset - wall1 - transparency.tsx"/>
- <tileset firstgid="29324" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset - wall1.tsx"/>
- <tileset firstgid="29564" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass - transparency.tsx"/>
- <tileset firstgid="33524" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx"/>
+ <tileset firstgid="9056" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2.tsx"/>
+ <tileset firstgid="12576" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet3.tsx"/>
+ <tileset firstgid="13720" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet4.tsx"/>
+ <tileset firstgid="14332" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - no thick foam - Godot.tsx"/>
+ <tileset firstgid="14750" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - no thick foam.tsx"/>
+ <tileset firstgid="15260" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - with thick foam - Godot.tsx"/>
+ <tileset firstgid="15678" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
+ <tileset firstgid="16188" source="../themes/Grass Land/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach - godot.tsx"/>
+ <tileset firstgid="16448" source="../themes/Grass Land/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx"/>
+ <tileset firstgid="16708" source="../themes/Grass Land/TiledMap Editor/Tilesets/fence-curved.tsx"/>
+ <tileset firstgid="16756" source="../themes/Grass Land/TiledMap Editor/Tilesets/fence-straight.tsx"/>
+ <tileset firstgid="16804" source="../themes/Grass Land/TiledMap Editor/Tilesets/fertilized soil.tsx"/>
+ <tileset firstgid="16944" source="../themes/Grass Land/TiledMap Editor/Tilesets/gl2-Tileset - wall 1-3tiles.tsx"/>
+ <tileset firstgid="17200" source="../themes/Grass Land/TiledMap Editor/Tilesets/gl2-Tileset - wall 1-3tiles-transp.tsx"/>
+ <tileset firstgid="17456" source="../themes/Grass Land/TiledMap Editor/Tilesets/hole1.tsx"/>
+ <tileset firstgid="17696" source="../themes/Grass Land/TiledMap Editor/Tilesets/hole2.tsx"/>
+ <tileset firstgid="17936" source="../themes/Grass Land/TiledMap Editor/Tilesets/hole3.tsx"/>
+ <tileset firstgid="18176" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass - coast - godot.tsx"/>
+ <tileset firstgid="18822" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass - coast.tsx"/>
+ <tileset firstgid="19808" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass to water - godot.tsx"/>
+ <tileset firstgid="20456" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass to water.tsx"/>
+ <tileset firstgid="21326" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx"/>
+ <tileset firstgid="22312" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass(transparency) - coast-godot.tsx"/>
+ <tileset firstgid="22958" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass(transparency) to water - godot.tsx"/>
+ <tileset firstgid="23606" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass(transparency) to water.tsx"/>
+ <tileset firstgid="24476" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass - river orientation.tsx"/>
+ <tileset firstgid="25346" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass - river orientation-godot.tsx"/>
+ <tileset firstgid="26054" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass(transparency) - river orientation.tsx"/>
+ <tileset firstgid="26924" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass(transparency) - river orientation-godot.tsx"/>
+ <tileset firstgid="27632" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset - wall1 - transparency.tsx"/>
+ <tileset firstgid="27872" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset - wall1.tsx"/>
+ <tileset firstgid="28112" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass - transparency.tsx"/>
+ <tileset firstgid="32072" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx"/>
  <layer id="13" name="shallow water" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwwEJAAAMA6B1WpD3b7MeR8FeUlVVVfX1AdftCB8=
+   eJztwwEJAAAMA6DVe7LVXo+jYC+pqqqq+voA8lpALg==
   </data>
  </layer>
  <layer id="7" name="ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztlysOgDAQRHsrLBaLxWKxWM5Qi8ViuUePxG7CJk2zfFKgY3aS50jeZFtKCc65itiI2l1nPp7TWIiQQfXA+yRrZp/mA7eWdFZnff7yp/FgP89Dm0EpP2dVOpT0ax1K+znxXkD45V1dQH6JN7/5zQ/1d0QP9KPOQPOb3/wY/0gMxATyp3dxPgNboF86DIV6aPfwP3vIesfI2p8hPd58m9J9loP0yOHOy//eOyXNhBM=
-  </data>
- </layer>
- <layer id="12" name="ocean top" width="32" height="32">
-  <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
   </data>
  </layer>
  <layer id="1" name="beach" width="32" height="32">
@@ -75,7 +70,7 @@
  </layer>
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzUkOglAUBdE3/gM/INIIK9IElR5lRbBpag2GhITcSs64zJRS6r8ezuzpjvsvvNcD/0qdvUtk5hEgRIQrYty8WYIUGXLcUaD0+/wrPi+88UGNBi06Hj0GjJjwxQ/zTn+llFLqbG3m1An1
+   eJztzUkKwlAUBdE3zsAfozF2K1Kwi72uSME+JlEXa61BPgTkFpxxmSml1G8NArNhUN3/wPtY4V+pf68WmTmEqCNCA03EzqyFBG100EUPfefnP+IzxgRTzJBijgWPJVZYY4Mtdth7+p/4nHHBFTfc8UDG44kcBUq88MbH018ppZTy3RdRbBOm
   </data>
  </layer>
  <layer id="4" name="props_high" width="32" height="32">
@@ -99,7 +94,7 @@
    <properties>
     <property name="itemId" value="plank"/>
     <property name="quantity" type="int" value="1"/>
-       <property name="uid" value="b38fb007-d2b5-4241-8c45-35386dede976"/>
+    <property name="uid" value="b38fb007-d2b5-4241-8c45-35386dede976"/>
    </properties>
    <point/>
   </object>
@@ -108,5 +103,12 @@
     <property name="heading" value="E"/>
    </properties>
   </object>
+ </objectgroup>
+ <objectgroup id="15" name="COLLISION">
+  <object id="5" x="771.25" y="687.25" width="117.25" height="16.75"/>
+  <object id="6" x="810.25" y="672.5" width="9.75" height="14.75"/>
+  <object id="7" x="842.5" y="670" width="8.25" height="18"/>
+  <object id="8" x="808.75" y="575" width="119" height="15.5"/>
+  <object id="9" x="864.5" y="614.5" width="62.75" height="10"/>
  </objectgroup>
 </map>
