@@ -72,7 +72,7 @@ export class Ship {
     // Cardinal-only sailing: the container never rotates — headings are discrete
     // and every art sheet is pre-drawn per direction.
     this.container = scene.add.container(this.x, this.y);
-    this.container.setDepth(30);
+    this.container.setDepth(this.sortY());
 
     const longPx = TILE_SIZE * this.dims.tilesLong;
     const widePx = TILE_SIZE * this.dims.tilesWide;
@@ -130,6 +130,16 @@ export class Ship {
   /** Derived angle — some callers (player sprite, debug) still want a radian value. */
   get rotation(): number {
     return headingToRotation(this.heading);
+  }
+
+  /** Y-value used for depth sorting — bottom of the footprint in world pixels.
+   *  Chosen over the visual sprite bottom because vessel art frames include tall
+   *  masts/sails extending well above the hull; sorting by the footprint keeps
+   *  the player drawing correctly relative to the hull (the walkable reference). */
+  sortY(): number {
+    const eastWest = this.heading === 1 || this.heading === 3;
+    const hTiles = eastWest ? this.dims.tilesWide : this.dims.tilesLong;
+    return this.y + (hTiles / 2) * TILE_SIZE;
   }
 
   private updateVisual() {
@@ -226,6 +236,7 @@ export class Ship {
     this.y += Math.sin(a) * this.speed * dtSec;
 
     this.container.setPosition(this.x, this.y);
+    this.container.setDepth(this.sortY());
   }
 
   /** Set position (and optionally heading) — used by anchoring drift tween. */
@@ -233,6 +244,7 @@ export class Ship {
     this.x = x;
     this.y = y;
     this.container.setPosition(x, y);
+    this.container.setDepth(this.sortY());
     if (heading !== undefined && heading !== this.heading) {
       this.heading = heading;
       this.updateVisual();

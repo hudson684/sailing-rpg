@@ -43,6 +43,8 @@ export type DialogueAction =
   | { type: "advance" }
   | { type: "close" };
 
+import type { SkinPaletteId } from "./entities/playerSkin";
+
 type Events = {
   "inventory:action": (action: InventoryAction) => void;
   "save:request": (request: SaveRequest) => void;
@@ -50,6 +52,7 @@ type Events = {
   "pause:toggle": () => void;
   "dialogue:update": (state: DialogueState) => void;
   "dialogue:action": (action: DialogueAction) => void;
+  "skin:apply": (paletteId: SkinPaletteId) => void;
 };
 
 class TypedEmitter extends Phaser.Events.EventEmitter {

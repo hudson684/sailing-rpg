@@ -8,12 +8,13 @@ const MAX_LEVEL = 100;
 const MAX_XP = 10_000_000;
 const RATIO = 1.1;
 
-const XP_TABLE: number[] = [0];
+// XP_TABLE[level] = total XP required to be that level. Level 1 = 0 XP.
+const XP_TABLE: number[] = [0, 0];
 
 {
   const C = (MAX_XP * (RATIO - 1)) / (Math.pow(RATIO, MAX_LEVEL - 1) - 1);
-  for (let level = 1; level < MAX_LEVEL; level++) {
-    const xp = Math.floor((C * (Math.pow(RATIO, level) - 1)) / (RATIO - 1));
+  for (let level = 2; level < MAX_LEVEL; level++) {
+    const xp = Math.floor((C * (Math.pow(RATIO, level - 1) - 1)) / (RATIO - 1));
     XP_TABLE.push(xp);
   }
   XP_TABLE.push(MAX_XP);

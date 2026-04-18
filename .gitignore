@@ -44,6 +44,7 @@ coverage
 
 # Project-specific
 assets-source
+maps/icons/
 
 # Claude Code / agent tooling local state
 .claude/

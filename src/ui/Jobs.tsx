@@ -3,7 +3,6 @@ import { ALL_JOB_IDS, JOBS } from "../game/jobs/jobs";
 import {
   MAX_LEVEL,
   levelFromXp,
-  xpForLevel,
   xpInCurrentLevel,
   xpToNextLevel,
 } from "../game/jobs/xpTable";
@@ -28,10 +27,10 @@ export function Jobs() {
   if (!open) return null;
 
   return (
-    <div className="jobs-panel" role="region" aria-label="Jobs">
-      <div className="jobs-header">
-        <span>Jobs</span>
-        <button className="jobs-close" onClick={() => setOpen(false)} aria-label="Close jobs">
+    <div className="px-panel jobs-panel" role="region" aria-label="Jobs">
+      <div className="px-header">
+        <span className="px-header-title">Skills</span>
+        <button className="px-close" onClick={() => setOpen(false)} aria-label="Close jobs">
           ×
         </button>
       </div>
@@ -40,7 +39,7 @@ export function Jobs() {
           <JobRow key={id} jobId={id} totalXp={xp[id] ?? 0} />
         ))}
       </div>
-      <div className="jobs-footer">J: toggle</div>
+      <div className="px-footer">J: toggle</div>
     </div>
   );
 }
@@ -60,20 +59,17 @@ function JobRow({ jobId, totalXp }: { jobId: keyof typeof JOBS; totalXp: number 
         <span className="jobs-name">{def.name}</span>
         <span className="jobs-level">Lv {level}</span>
       </div>
-      <div className="jobs-bar">
+      <div className="px-bar">
         <div
-          className="jobs-bar-fill"
+          className="px-bar-fill"
           style={{ width: `${pct}%`, background: def.color }}
         />
       </div>
       <div className="jobs-xp">
         {atMax ? (
-          <span>MAX — {fmt(totalXp)} XP</span>
+          <span>MAX · {fmt(totalXp)} XP</span>
         ) : (
-          <span>
-            {fmt(intoLevel)} / {fmt(needed)} XP
-            <span className="jobs-xp-total"> · {fmt(totalXp - xpForLevel(level))} into lv</span>
-          </span>
+          <span>{fmt(intoLevel)} / {fmt(needed)} XP</span>
         )}
       </div>
     </div>

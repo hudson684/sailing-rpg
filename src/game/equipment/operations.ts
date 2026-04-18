@@ -1,4 +1,4 @@
-import { ITEMS, type EquipSlot, type ItemId, type ItemStats } from "../inventory/items";
+import { ITEMS, slotsForFamily, type EquipSlot, type ItemId, type ItemStats } from "../inventory/items";
 import { addToSlots } from "../inventory/operations";
 import type { Slot } from "../inventory/types";
 
@@ -29,7 +29,10 @@ export function equipFromInventory(
   const def = ITEMS[slot.itemId];
   if (!def.slot) return fail(inventory, equipped, "not_equippable");
 
-  const equipSlot = def.slot;
+  // Pick the first empty slot in the family; fall back to the first (swap).
+  const candidates = slotsForFamily(def.slot);
+  const empty = candidates.find((s) => !equipped[s]);
+  const equipSlot: EquipSlot = empty ?? candidates[0];
   const previous = equipped[equipSlot];
 
   // Clone both collections.
@@ -101,7 +104,8 @@ export function hydrateEquipped(data: Equipped): Equipped {
   for (const [slot, id] of Object.entries(data) as [EquipSlot, ItemId | undefined][]) {
     if (!id) continue;
     const def = ITEMS[id];
-    if (!def || def.slot !== slot) continue;
+    if (!def || !def.slot) continue;
+    if (!slotsForFamily(def.slot).includes(slot)) continue;
     next[slot] = id;
   }
   return next;

@@ -35,7 +35,7 @@ export class Npc {
     this.sprite = scene.add.sprite(x, y, npcTextureKey(def.id, "idle"), def.sprite.idle.start);
     this.sprite.setScale(def.display.scale);
     this.sprite.setOrigin(0.5, def.display.originY);
-    this.sprite.setDepth(40);
+    this.sprite.setDepth(this.sortY());
     this.applyAnim();
 
     // Randomize initial pause so NPCs don't tick in lockstep.
@@ -47,6 +47,12 @@ export class Npc {
   }
   get y(): number {
     return this.sprite.y;
+  }
+
+  /** Y-value used for depth sorting — the sprite's visible bottom edge (feet). */
+  sortY(): number {
+    const { display, sprite } = this.def;
+    return this.sprite.y + (1 - display.originY) * sprite.idle.frameHeight * display.scale;
   }
 
   setFacing(f: NpcFacing) {
@@ -131,6 +137,7 @@ export class Npc {
 
     if (Math.abs(dx) > 1) this.setFacing(dx < 0 ? "left" : "right");
     this.setAnimState(this.def.sprite.walk ? "walk" : "idle");
+    this.sprite.setDepth(this.sortY());
   }
 
   private enterPause(ms: number) {

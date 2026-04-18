@@ -8,7 +8,7 @@ import {
   type PlayerAnimState,
 } from "./playerAnims";
 
-export const PLAYER_SPEED = 142; // pixels / sec
+export const PLAYER_SPEED = 199; // pixels / sec
 // Collision footprint at the feet. Wider than tall and offset down from
 // `player.y` (the sprite origin, which sits around the waist) so the hitbox
 // hugs the shoes. Tune in this file, not in the sampler.
@@ -85,7 +85,29 @@ export class Player {
   public readonly sprite: Phaser.GameObjects.Sprite;
   private _facing: Facing = "down";
   private _animState: PlayerAnimState = "idle";
+  private _attacking = false;
   public frozen = false;
+
+  get attacking(): boolean {
+    return this._attacking;
+  }
+
+  /**
+   * Start a primary attack in the current facing. Plays the attack animation
+   * once, then reverts to idle. No-op if already attacking or frozen.
+   */
+  attack(): boolean {
+    if (this._attacking || this.frozen) return false;
+    this._attacking = true;
+    this._animState = "attack";
+    this.applyAnim();
+    this.sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      this._attacking = false;
+      this._animState = "idle";
+      this.applyAnim();
+    });
+    return true;
+  }
 
   get facing(): Facing {
     return this._facing;
@@ -102,6 +124,7 @@ export class Player {
 
   hydrate(data: { x: number; y: number; facing: Facing }): void {
     this.sprite.setPosition(data.x, data.y);
+    this.sprite.setDepth(this.sortY());
     this._facing = data.facing;
     this._animState = "idle";
     this.applyAnim();
@@ -111,7 +134,7 @@ export class Player {
     this.sprite = scene.add.sprite(x, y, playerTextureKey("idle"), 0);
     this.sprite.setScale(PLAYER_SPRITE_SCALE);
     this.sprite.setOrigin(0.5, PLAYER_ORIGIN_Y);
-    this.sprite.setDepth(50);
+    this.sprite.setDepth(this.sortY());
     this.applyAnim();
   }
 
@@ -122,8 +145,14 @@ export class Player {
     return this.sprite.y;
   }
 
+  /** Y-value used for depth sorting — the sprite's visible bottom edge (feet). */
+  sortY(): number {
+    return this.sprite.y + (1 - PLAYER_ORIGIN_Y) * PLAYER_FRAME_SIZE * PLAYER_SPRITE_SCALE;
+  }
+
   setPosition(x: number, y: number) {
     this.sprite.setPosition(x, y);
+    this.sprite.setDepth(this.sortY());
   }
 
   setVisible(v: boolean) {
@@ -147,6 +176,10 @@ export class Player {
       this.setAnimState("idle");
       return;
     }
+    if (this._attacking) {
+      // Movement locked during the swing; facing/anim already set.
+      return;
+    }
     let moved = false;
     if (dx !== 0) {
       const nx = this.sprite.x + dx;
@@ -165,6 +198,7 @@ export class Player {
     const intended = facingFromDelta(dx, dy);
     if (intended) this._facing = intended;
     this.setAnimState(moved ? "walk" : "idle");
+    this.sprite.setDepth(this.sortY());
   }
 
   private setAnimState(state: PlayerAnimState) {

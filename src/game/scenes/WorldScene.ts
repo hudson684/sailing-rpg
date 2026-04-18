@@ -34,6 +34,7 @@ import type { WorldManifest } from "../world/chunkManager";
 import { findAnchorPose } from "../util/anchor";
 import { CHUNK_KEY_PREFIX, WORLD_MANIFEST_KEY } from "./BootScene";
 import { Npc, NPC_INTERACT_RADIUS, registerNpcAnimations } from "../entities/Npc";
+import { SKIN_PALETTES, bakePlayerSkin, type SkinPaletteId } from "../entities/playerSkin";
 import type { NpcData, DialogueDef } from "../entities/npcTypes";
 import npcDataRaw from "../data/npcs.json";
 import { DebugOverlays, type OverlayName } from "../debug/DebugOverlays";
@@ -101,6 +102,7 @@ export class WorldScene extends Phaser.Scene {
     s: Phaser.Input.Keyboard.Key;
     d: Phaser.Input.Keyboard.Key;
     interact: Phaser.Input.Keyboard.Key;
+    attack: Phaser.Input.Keyboard.Key;
     debugGrant: Phaser.Input.Keyboard.Key;
     debugXp: Phaser.Input.Keyboard.Key;
     quicksave: Phaser.Input.Keyboard.Key;
@@ -122,6 +124,10 @@ export class WorldScene extends Phaser.Scene {
     } else {
       this.emitDialogue();
     }
+  };
+
+  private onSkinApply = (paletteId: SkinPaletteId) => {
+    bakePlayerSkin(this.textures, SKIN_PALETTES[paletteId] ?? SKIN_PALETTES.default);
   };
 
   private onInventoryAction = (action: InventoryAction) => {
@@ -190,6 +196,7 @@ export class WorldScene extends Phaser.Scene {
       s: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S),
       d: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D),
       interact: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E),
+      attack: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.Q),
       debugGrant: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.G),
       debugXp: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.X),
       quicksave: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F5),
@@ -197,6 +204,7 @@ export class WorldScene extends Phaser.Scene {
     };
 
     this.keys.interact.on("down", () => this.onInteract());
+    this.keys.attack.on("down", () => this.onAttack());
     this.keys.debugGrant.on("down", () => this.grantRandomItem());
     this.keys.debugXp.on("down", () => this.grantDebugXp());
     this.keys.quicksave.on("down", () => void this.saveController.save("quicksave"));
@@ -263,10 +271,12 @@ export class WorldScene extends Phaser.Scene {
 
     bus.onTyped("inventory:action", this.onInventoryAction);
     bus.onTyped("dialogue:action", this.onDialogueAction);
+    bus.onTyped("skin:apply", this.onSkinApply);
     activeWorldScene = this;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       bus.offTyped("inventory:action", this.onInventoryAction);
       bus.offTyped("dialogue:action", this.onDialogueAction);
+      bus.offTyped("skin:apply", this.onSkinApply);
       if (activeWorldScene === this) activeWorldScene = null;
       this.saveController.shutdown();
     });
@@ -332,6 +342,12 @@ export class WorldScene extends Phaser.Scene {
     this.player.tryMove(dx * PLAYER_SPEED * dt, dy * PLAYER_SPEED * dt, (px, py) =>
       this.isWalkablePx(px, py),
     );
+  }
+
+  private onAttack() {
+    if (this.activeDialogue) return;
+    if (this.sceneState.mode !== "OnFoot") return;
+    this.player.attack();
   }
 
   private onInteract() {

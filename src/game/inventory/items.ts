@@ -14,25 +14,51 @@ export type ItemId =
   | "signet_ring";
 
 /**
- * Six equipment slots, picked to fit sailing + light swashbuckling combat.
- * Each equippable item pins itself to exactly one slot.
+ * Nine concrete equipment slots, matching the paper-doll in UI_Premade.
+ * Rings and trinkets come in pairs; items target them via the `ring` /
+ * `trinket` families (see SlotFamily below).
  */
 export type EquipSlot =
-  | "weapon"
   | "head"
   | "body"
-  | "hands"
-  | "feet"
-  | "trinket";
+  | "legs"
+  | "mainHand"
+  | "offHand"
+  | "ringL"
+  | "ringR"
+  | "trinketL"
+  | "trinketR";
 
 export const EQUIP_SLOTS: readonly EquipSlot[] = [
-  "weapon",
   "head",
   "body",
-  "hands",
-  "feet",
-  "trinket",
+  "legs",
+  "mainHand",
+  "offHand",
+  "ringL",
+  "ringR",
+  "trinketL",
+  "trinketR",
 ] as const;
+
+/**
+ * What kind of slot an item fits into. Singletons map 1:1 to an EquipSlot;
+ * `ring` and `trinket` can go in either of two positions.
+ */
+export type SlotFamily =
+  | "head"
+  | "body"
+  | "legs"
+  | "mainHand"
+  | "offHand"
+  | "ring"
+  | "trinket";
+
+export function slotsForFamily(family: SlotFamily): readonly EquipSlot[] {
+  if (family === "ring") return ["ringL", "ringR"] as const;
+  if (family === "trinket") return ["trinketL", "trinketR"] as const;
+  return [family] as const;
+}
 
 export type ItemType = "resource" | "weapon" | "armor" | "tool" | "consumable";
 
@@ -59,7 +85,7 @@ export interface ItemDef {
   maxStack: number;
   description: string;
   type: ItemType;
-  slot?: EquipSlot;
+  slot?: SlotFamily;
   stats?: ItemStats;
 }
 
@@ -150,7 +176,7 @@ const DEFS: ReadonlyArray<ItemDef> = [
     maxStack: 1,
     description: "Sturdy boots with good tread for wet decks.",
     type: "armor",
-    slot: "feet",
+    slot: "legs",
     stats: { moveSpeed: 12 },
   },
   {
@@ -162,7 +188,7 @@ const DEFS: ReadonlyArray<ItemDef> = [
     maxStack: 1,
     description: "A curved sword, well-balanced for close quarters.",
     type: "weapon",
-    slot: "weapon",
+    slot: "mainHand",
     stats: { attack: 5 },
   },
   {
@@ -174,7 +200,7 @@ const DEFS: ReadonlyArray<ItemDef> = [
     maxStack: 1,
     description: "Bronze ring bearing an unfamiliar crest. Feels lucky.",
     type: "armor",
-    slot: "trinket",
+    slot: "ring",
     stats: { sailSpeed: 6, maxHp: 2 },
   },
 ];

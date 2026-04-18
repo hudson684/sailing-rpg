@@ -1,0 +1,222 @@
+/* ── Pixel UI primitives ────────────────────────────────────────────────
+ *
+ * All panels in the game (except HUD + Dialogue) share this look:
+ * tan wooden frames with pixel-art 9-slice borders, rendered with the
+ * CuteFantasy bitmap font. One class system so every window feels like
+ * one interface.
+ *
+ * Source art: ui assets/UI/UI_Frames.png, UI_Bars.png, UI_Selectors.png,
+ * UI_Icons.png. Sliced into public/ui/.
+ *
+ * Scale choice: source frames are 48×48 with ~16px pixel-art corners.
+ * We render borders at 32px on screen (≈2× integer upscale). That's
+ * chunky enough to read as pixel art without dominating panels.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=block");
+
+:root {
+  --pixel-scale: 2;
+  --pixel-font: "Pixelify Sans", "Courier New", monospace;
+  --pixel-display-font: "Pixelify Sans", "Courier New", monospace;
+
+  /* Warm pixel palette pulled from the asset pack */
+  --pixel-tan: #e1a878;
+  --pixel-tan-dark: #a66a3a;
+  --pixel-parchment: #f1d6ac;
+  --pixel-ink: #2a1b17;
+  --pixel-ink-soft: #6a4a3a;
+  --pixel-gold: #ffd166;
+  --pixel-accent-green: #4c9a5c;
+  --pixel-accent-red: #c94e4e;
+  --pixel-accent-blue: #3d7fb8;
+  --pixel-accent-orange: #d88539;
+  --pixel-accent-purple: #8a4c8a;
+}
+
+/* ── Base panel frame ─────────────────────────────────────────────── */
+
+.px-panel {
+  position: absolute;
+  color: var(--pixel-ink);
+  font-family: var(--pixel-font);
+  font-size: 18px;
+  line-height: 1.25;
+  pointer-events: auto;
+  user-select: none;
+  image-rendering: pixelated;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  font-smooth: never;
+  text-rendering: geometricPrecision;
+
+  padding: 10px 12px 14px;
+  border-style: solid;
+  border-width: 24px;
+  border-image-source: url("/ui/panel-tan.png");
+  border-image-slice: 16 fill;
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.35));
+}
+
+.px-panel img { image-rendering: pixelated; }
+
+/* Color variants — swap only the border source */
+.px-panel-grey   { border-image-source: url("/ui/panel-grey.png"); }
+.px-panel-green  { border-image-source: url("/ui/panel-green.png"); color: #1a2a1a; }
+.px-panel-blue   { border-image-source: url("/ui/panel-blue.png"); color: #0d1e30; }
+.px-panel-orange { border-image-source: url("/ui/panel-orange.png"); }
+.px-panel-red    { border-image-source: url("/ui/panel-red.png"); color: #2a0d0d; }
+.px-panel-purple { border-image-source: url("/ui/panel-purple.png"); color: #1a0a1a; }
+
+/* ── Panel header (ribbon / label) ────────────────────────────────── */
+
+.px-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--pixel-display-font);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--pixel-ink);
+  margin: -4px 0 10px;
+  padding: 0 4px;
+  text-transform: uppercase;
+}
+
+.px-header-title {
+  flex: 1;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.px-close {
+  background: transparent;
+  border: none;
+  font-family: var(--pixel-display-font);
+  font-size: 22px;
+  color: var(--pixel-ink);
+  cursor: pointer;
+  padding: 0 6px;
+  line-height: 1;
+}
+.px-close:hover { color: var(--pixel-accent-red); }
+
+/* ── Inventory slot ───────────────────────────────────────────────── */
+
+.px-slot {
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 44px;
+  min-height: 44px;
+  border-style: solid;
+  border-width: 10px;
+  border-image-source: url("/ui/slot-tan.png");
+  border-image-slice: 10 fill;
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  background-clip: padding-box;
+  image-rendering: pixelated;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.px-slot-filled { cursor: grab; }
+.px-slot-filled:active { cursor: grabbing; }
+
+.px-slot-dragging { opacity: 0.4; }
+
+/* Hover / selected — bracket corners drawn via ::before using selectors sheet */
+.px-slot-hover,
+.px-slot-target {
+  outline: 2px solid var(--pixel-gold);
+  outline-offset: -14px;
+}
+
+.px-slot .px-slot-icon {
+  font-size: 24px;
+  line-height: 1;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.45));
+}
+
+.px-slot .px-slot-qty {
+  position: absolute;
+  bottom: -2px;
+  right: 2px;
+  font-size: 13px;
+  color: var(--pixel-parchment);
+  text-shadow:
+    1px 0 0 var(--pixel-ink),
+    -1px 0 0 var(--pixel-ink),
+    0 1px 0 var(--pixel-ink),
+    0 -1px 0 var(--pixel-ink);
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────── */
+
+.px-btn {
+  position: relative;
+  font-family: var(--pixel-display-font);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pixel-ink);
+  background: none;
+  cursor: pointer;
+  padding: 10px 14px 12px;
+  border-style: solid;
+  border-width: 20px;
+  border-image-source: url("/ui/panel-tan.png");
+  border-image-slice: 16 fill;
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  image-rendering: pixelated;
+  min-width: 88px;
+  transition: transform 60ms ease-out, filter 60ms ease-out;
+}
+
+.px-btn:hover  { filter: brightness(1.08); }
+.px-btn:active { transform: translateY(1px); filter: brightness(0.92); }
+.px-btn:disabled {
+  filter: grayscale(0.5) brightness(0.85);
+  cursor: not-allowed;
+}
+
+.px-btn-green  { border-image-source: url("/ui/panel-green.png");  color: #f0ffe8; }
+.px-btn-red    { border-image-source: url("/ui/panel-red.png");    color: #fff0e8; }
+.px-btn-blue   { border-image-source: url("/ui/panel-blue.png");   color: #eaf4ff; }
+.px-btn-orange { border-image-source: url("/ui/panel-orange.png"); color: #2a1b17; }
+.px-btn-grey   { border-image-source: url("/ui/panel-grey.png");   color: #2a1b17; }
+
+/* ── Progress / XP bar ────────────────────────────────────────────── */
+
+.px-bar {
+  position: relative;
+  height: 20px;
+  background: var(--pixel-ink);
+  border: 2px solid var(--pixel-ink);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  image-rendering: pixelated;
+}
+
+.px-bar-fill {
+  height: 100%;
+  background: var(--pixel-gold);
+  transition: width 180ms ease-out;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* ── Footer hint ──────────────────────────────────────────────────── */
+
+.px-footer {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--pixel-ink-soft);
+  text-align: center;
+  letter-spacing: 0.05em;
+}

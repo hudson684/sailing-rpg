@@ -179,9 +179,9 @@ function floodFillLayer(
   }
   return out;
 }
-/** Base depth for overhead layers. Player is at 50; this comfortably clears it
- *  while preserving the TMJ-index ordering among overhead layers themselves. */
-const OVERHEAD_DEPTH_BASE = 100;
+/** Base depth for overhead layers. Entities y-sort by their world y (pixels),
+ *  so this sits well above any plausible y to keep roofs/canopies on top. */
+const OVERHEAD_DEPTH_BASE = 1_000_000;
 
 /**
  * Owns all loaded authored chunks. Global tile queries dispatch to the chunk

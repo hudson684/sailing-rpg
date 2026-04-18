@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="18" nextobjectid="21">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="18" nextobjectid="28">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
  <tileset firstgid="226" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <tileset firstgid="736" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
@@ -70,20 +70,20 @@
  </layer>
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJzt0TcOwkAQRuGpjYS9a86FExlOBBJOZLgT6TZUvI4KqpURaJ701f9II6JpmvabzT2RhfftK/4/34gEMLAITbP7EXsxEqTIGt7P2StQokLd8P6ZvQuuuOH+Zv/RenFV2/J/BDCwCNGx7jY+1WUnQowEKTL00PdFBhhihDEmmGLmu9lfspOjQIkKNVZYs7HBFjvsccARJ0f7mqZpmua6J/8bHvg=
+   eJztzjkKAkEYROGKZ4Sx+1oaqODuiRTcd72RBupxjHyBYCKYtIhQD76s+asl55z7z4aZNMp+/QvnvtspSBdcccM5vH93z19SlkepjICIUkx7/1MV9mqoo4Hqc79ZSC200UEXPfQxKNJsj9maYIoZ5lhgiRUba2ywxQ57HHBMtO+cc86l7gH4LxgN
   </data>
  </layer>
  <layer id="2" name="overlay" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzcEJACEQBMGBMy7P/INSNwVfIlRBvzsBAHjP/JJVpd359/r+1bj0B4BTG/3zAtE=
+   eJztzjEKwCAQRNGBBDanMnbm/geKbhVUbCw0zX8wxcDCrAQAADBm1vbLxnerpG7vqfp7SNmjc+tLn+C7tyf+tA8AwKwCXMEDiw==
   </data>
  </layer>
  <layer id="4" name="props_high" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzz0Kg0AYhOEp3RWMGz2XiT+XMkIqT+MNVEjlgTJWabQR2QUzD7zN1wwfICJHtBHwYl0UZn/k7sTmQPvGAJbFJsz+arL834bb/weJA24sZY7dWcZy52e/4M6DPVnJKlazxtP+e2en37gP8a+zfHb2F0//i4iIyLV8AUC9DwI=
+   eJztz0sOAUEYReF/WI8EhXVp3WwKifdq7ECJPTlGJkxEqpJ2T/KNb66ZUuqbVs5sjY2rs39lN+NWad97s4Do6+w/y4H/od7+PzRIZkOMkDDGBNNUZn/GToM5WnRYYFlof8vODnsccMQJ5zf7l/jyq/KHn/dC/5VSSinVrx7IqRIh
   </data>
  </layer>
- <layer id="5" name="roof" width="32" height="32" visible="0">
+ <layer id="5" name="roof" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJzt0bcNwlAYReG3gIHGYGzPRBSZmYgiOMxEdgIPw6kpkJDsJ4r/Sl99iquUTCaT/e9aNaXa6KCLHvo1ff0FrSVWWGOD7Uf/YCh1hAcfAUKjmP6J1hkXXHHDHQ9ENGIkSJHhiRfygvrfZlaUqqMBC03YcOBWyu8PaAwxwhgTTDHDXEN/R2OPA47w4CNAqKEf0YiRIEWGJ17INfTNKv+jAQtN2HDgVsvvy2QymUwm+31vjp8pTQ==
   </data>
@@ -122,6 +122,8 @@
   <object id="9" x="864.5" y="614.5" width="62.75" height="10"/>
   <object id="10" x="562.727" y="552.909" width="70.9091" height="44.3636"/>
   <object id="12" x="640.333" y="479.583" width="94.6667" height="29.0833"/>
-  <object id="16" x="321.5" y="386.5" width="158" height="172"/>
+  <object id="16" x="319.25" y="383" width="160.25" height="175.5"/>
+  <object id="25" x="449.273" y="558.727" width="28.9091" height="14.9091"/>
+  <object id="26" x="321.091" y="557.455" width="30.3636" height="16.7273"/>
  </objectgroup>
 </map>

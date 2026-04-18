@@ -48,10 +48,10 @@ export function PauseMenu() {
 
   return (
     <div className="pause-backdrop" role="dialog" aria-modal="true" aria-label="Pause menu">
-      <div className="pause-panel">
-        <div className="pause-header">
-          <span>Paused</span>
-          <button className="pause-close" onClick={resume} aria-label="Resume">×</button>
+      <div className="px-panel pause-panel">
+        <div className="px-header pause-header">
+          <span className="px-header-title">Paused</span>
+          <button className="px-close" onClick={resume} aria-label="Resume">×</button>
         </div>
         <div className="pause-slots">
           {rows.map((row) => (
@@ -59,10 +59,19 @@ export function PauseMenu() {
           ))}
         </div>
         <div className="pause-actions">
-          <button className="pause-btn pause-btn-primary" onClick={resume}>Resume</button>
-          <button className="pause-btn pause-btn-danger" onClick={newGame}>New Game</button>
+          <button className="px-btn px-btn-green" onClick={resume}>Resume</button>
+          <button
+            className="px-btn px-btn-orange"
+            onClick={() => {
+              bus.emitTyped("pause:toggle");
+              window.dispatchEvent(new CustomEvent("character:open"));
+            }}
+          >
+            Customize
+          </button>
+          <button className="px-btn px-btn-red" onClick={newGame}>New Game</button>
         </div>
-        <div className="pause-footer">ESC: toggle · F5: quicksave · F9: quickload</div>
+        <div className="px-footer">ESC: toggle · F5: quicksave · F9: quickload</div>
       </div>
     </div>
   );
@@ -89,9 +98,9 @@ function SlotRow({ row }: { row: PauseMenuSlot }) {
         {envelope ? <SlotMeta env={envelope} /> : <span className="pause-empty">— empty —</span>}
       </div>
       <div className="pause-slot-actions">
-        <button className="pause-btn" disabled={!canSave} onClick={onSave}>Save</button>
-        <button className="pause-btn" disabled={!canLoad} onClick={onLoad}>Load</button>
-        <button className="pause-btn pause-btn-danger" disabled={!canDelete} onClick={onDelete}>Delete</button>
+        <button className="px-btn px-btn-grey" disabled={!canSave} onClick={onSave}>Save</button>
+        <button className="px-btn px-btn-blue" disabled={!canLoad} onClick={onLoad}>Load</button>
+        <button className="px-btn px-btn-red" disabled={!canDelete} onClick={onDelete}>Delete</button>
       </div>
     </div>
   );

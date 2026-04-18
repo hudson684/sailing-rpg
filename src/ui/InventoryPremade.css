@@ -1,0 +1,224 @@
+.inv-premade-root {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+  pointer-events: auto;
+  user-select: none;
+  font-family: var(--pixel-font);
+  color: var(--pixel-ink);
+  z-index: 20;
+}
+
+/* Each sliced panel is positioned absolutely and paints its own sprite. */
+.inv-premade-panel {
+  position: absolute;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.3));
+}
+
+/* ── Round close button ──────────────────────────────────────────── */
+
+.inv-premade-close {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 48px;
+  height: 48px;
+  background: var(--pixel-tan);
+  border: 4px solid var(--pixel-ink);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 -3px 0 var(--pixel-tan-dark),
+    inset 0 3px 0 var(--pixel-parchment),
+    0 3px 0 rgba(0, 0, 0, 0.4);
+  font-family: var(--pixel-display-font);
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--pixel-ink);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 60ms ease-out, background 60ms ease-out;
+  z-index: 2;
+}
+.inv-premade-close:hover {
+  background: var(--pixel-accent-red);
+  color: #fff1ea;
+  box-shadow:
+    inset 0 -3px 0 #8a2a2a,
+    inset 0 3px 0 #e57878,
+    0 3px 0 rgba(0, 0, 0, 0.4);
+}
+.inv-premade-close:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 -3px 0 #8a2a2a,
+    inset 0 3px 0 #e57878,
+    0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* ── Slot overlays (equipment + inventory + hotbar) ───────────────── */
+
+.inv-premade-slot {
+  position: absolute;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  image-rendering: pixelated;
+}
+
+.inv-premade-slot.is-filled { cursor: grab; }
+.inv-premade-slot.is-filled:active { cursor: grabbing; }
+.inv-premade-slot.is-dragging { opacity: 0.4; }
+.inv-premade-slot.is-target {
+  outline: 3px solid var(--pixel-gold);
+  outline-offset: -4px;
+  border-radius: 4px;
+}
+
+.inv-premade-slot.is-hotbar { pointer-events: none; }
+
+.inv-premade-icon {
+  font-size: 32px;
+  line-height: 1;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.4));
+}
+
+.inv-premade-qty {
+  position: absolute;
+  right: 4px;
+  bottom: 0;
+  font-size: 16px;
+  color: var(--pixel-parchment);
+  text-shadow:
+    1px 0 0 var(--pixel-ink),
+    -1px 0 0 var(--pixel-ink),
+    0 1px 0 var(--pixel-ink),
+    0 -1px 0 var(--pixel-ink);
+}
+
+/* ── Info-panel overlays (gold count + weapon/offhand names) ─────── */
+
+.inv-premade-info-text {
+  position: absolute;
+  font-family: var(--pixel-display-font);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--pixel-ink);
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Source coords (relative to INFO panel origin at y=82):
+   gold row center ~y=13 (src), x=30 past coin icon
+   main row center ~y=29, x=30 past sword icon
+   off  row center ~y=45, x=30 past shield icon */
+.inv-premade-info-gold { left: calc(30px * var(--scale)); top: calc(8px * var(--scale)); }
+.inv-premade-info-main { left: calc(30px * var(--scale)); top: calc(24px * var(--scale)); }
+.inv-premade-info-off  { left: calc(30px * var(--scale)); top: calc(40px * var(--scale)); }
+
+/* ── Info-panel collapse toggle ──────────────────────────────────── */
+
+.inv-premade-info-toggle {
+  position: absolute;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 3;
+}
+/* Subtle highlight on hover so the arrow feels interactive */
+.inv-premade-info-toggle:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+}
+
+/* ── Pixel tooltip ───────────────────────────────────────────────── */
+
+.inv-premade-slot[data-tip],
+.inv-premade-info-toggle[data-tip] { position: absolute; }
+
+.inv-premade-slot[data-tip]::after,
+.inv-premade-info-toggle[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  background: var(--pixel-parchment);
+  color: var(--pixel-ink);
+  font-family: var(--pixel-font);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  line-height: 1.25;
+  padding: 5px 9px 6px;
+  border: 3px solid var(--pixel-ink);
+  box-shadow:
+    inset 0 -2px 0 var(--pixel-tan-dark),
+    inset 0 2px 0 #fbe8c8,
+    0 3px 0 rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 80ms ease-out 100ms, transform 80ms ease-out 100ms;
+  z-index: 5;
+}
+
+.inv-premade-slot[data-tip]:hover::after,
+.inv-premade-slot[data-tip]:focus-visible::after,
+.inv-premade-info-toggle[data-tip]:hover::after,
+.inv-premade-info-toggle[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.inv-premade-slot[data-tip]::before,
+.inv-premade-info-toggle[data-tip]::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  width: 8px;
+  height: 8px;
+  background: var(--pixel-parchment);
+  border-right: 3px solid var(--pixel-ink);
+  border-bottom: 3px solid var(--pixel-ink);
+  transform: translateX(-50%) rotate(45deg);
+  opacity: 0;
+  transition: opacity 80ms ease-out 100ms;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.inv-premade-slot[data-tip]:hover::before,
+.inv-premade-slot[data-tip]:focus-visible::before,
+.inv-premade-info-toggle[data-tip]:hover::before,
+.inv-premade-info-toggle[data-tip]:focus-visible::before {
+  opacity: 1;
+}
+
+.inv-premade-hint {
+  position: absolute;
+  bottom: -28px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.04em;
+}
