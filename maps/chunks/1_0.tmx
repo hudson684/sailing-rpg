@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="18" nextobjectid="13">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="18" nextobjectid="21">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
  <tileset firstgid="226" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <tileset firstgid="736" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
@@ -60,7 +60,7 @@
  </layer>
  <layer id="17" name="building_floor" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFo2AUjIJRMApGAalAQ4SBQQuINdFoENYWob39LkA7PHFgbzrY74FmZxYU08v+DDR7kXE2HezvANrRCcVdUAxjd9PB/lEwCkbBKBgFo4AcAAA9hxC4
+   eJxjYBgFo2AUjIJRMApGAamARYSBgRUNM0Exswjt7e8F2qEKxZ5ArISElelkvycSzoJiEDtVmH72Z2HB9LB/LdCeTijugmIYu5sO4T8KRsEoGAWjYBSQAwCtUA+P
   </data>
  </layer>
  <layer id="9" name="dock" width="32" height="32">
@@ -70,7 +70,7 @@
  </layer>
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzkkKwlAURNE3TsBvvq5LTeybFSlojH2zEpfmyAsOMnP0IAh14YyrzJRS6j9bJ2abpOkXSn17pbUmeqc1r1rRLKCNDBEddKPfxq967PQxQI4CQ4wwDmYTTDHDHAsssQo++1t2diixR4UDjjixccYFV9xwxwNPp32llFLKuw8Xhhcf
+   eJzt0TcOwkAQRuGpjYS9a86FExlOBBJOZLgT6TZUvI4KqpURaJ701f9II6JpmvabzT2RhfftK/4/34gEMLAITbP7EXsxEqTIGt7P2StQokLd8P6ZvQuuuOH+Zv/RenFV2/J/BDCwCNGx7jY+1WUnQowEKTL00PdFBhhihDEmmGLmu9lfspOjQIkKNVZYs7HBFjvsccARJ0f7mqZpmua6J/8bHvg=
   </data>
  </layer>
  <layer id="2" name="overlay" width="32" height="32">
@@ -78,14 +78,14 @@
    eJztzcEJACEQBMGBMy7P/INSNwVfIlRBvzsBAHjP/JJVpd359/r+1bj0B4BTG/3zAtE=
   </data>
  </layer>
- <layer id="4" name="props_high" width="32" height="32" visible="0">
+ <layer id="4" name="props_high" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztz8EJgDAQRNE5JvGU6qxJrcwIKmpBji0Isgj/wT/PrgTgjSFJo5tSzP7s3eaWoP2cpeK6HLP/aMX/l7h94GtrlTa3u94d7nRXjb4MAAD80Q27lgvD
+   eJztzz0Kg0AYhOEp3RWMGz2XiT+XMkIqT+MNVEjlgTJWabQR2QUzD7zN1wwfICJHtBHwYl0UZn/k7sTmQPvGAJbFJsz+arL834bb/weJA24sZY7dWcZy52e/4M6DPVnJKlazxtP+e2en37gP8a+zfHb2F0//i4iIyLV8AUC9DwI=
   </data>
  </layer>
  <layer id="5" name="roof" width="32" height="32" visible="0">
   <data encoding="base64" compression="zlib">
-   eJzt0bdNg1EAhdG3gBNgHGdyJOOZHAHHmcjOHoZTUyAh/VgU70qn/oobQlxcXNz/XS0bQp0GTVq0s8frd7V69BkwZPStP06FMGHKjDmLVDL9Z60XXnnjnQ8+WWqsWLNhy449h4T66VwIGbLkOOGUM/LpEM4pUKREmQrVdDL9mk6dBk1atLngUuOKa2645Y57Ogn1uzo9+gwYMuKBR40nxkyYMmPOIqH+T1tqrFizYcuOPYcj9PMZ/1OgSIkyFaqZv+/HxcXFxcXF/X5frVExVw==
+   eJzt0bcNwlAYReG3gIHGYGzPRBSZmYgiOMxEdgIPw6kpkJDsJ4r/Sl99iquUTCaT/e9aNaXa6KCLHvo1ff0FrSVWWGOD7Uf/YCh1hAcfAUKjmP6J1hkXXHHDHQ9ENGIkSJHhiRfygvrfZlaUqqMBC03YcOBWyu8PaAwxwhgTTDHDXEN/R2OPA47w4CNAqKEf0YiRIEWGJ17INfTNKv+jAQtN2HDgVsvvy2QymUwm+31vjp8pTQ==
   </data>
  </layer>
  <layer id="16" name="shadows" width="32" height="32">
@@ -121,5 +121,7 @@
   <object id="8" x="808.75" y="575" width="119" height="15.5"/>
   <object id="9" x="864.5" y="614.5" width="62.75" height="10"/>
   <object id="10" x="562.727" y="552.909" width="70.9091" height="44.3636"/>
+  <object id="12" x="640.333" y="479.583" width="94.6667" height="29.0833"/>
+  <object id="16" x="321.5" y="386.5" width="158" height="172"/>
  </objectgroup>
 </map>

@@ -2,6 +2,7 @@ import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
 import { bus, type DialogueAction, type InventoryAction } from "../bus";
 import { ALL_ITEM_IDS, ITEMS } from "../inventory/items";
+import { ALL_JOB_IDS } from "../jobs/jobs";
 import { useGameStore } from "../store/gameStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { setHud, showToast } from "../../ui/store/ui";
@@ -101,9 +102,12 @@ export class WorldScene extends Phaser.Scene {
     d: Phaser.Input.Keyboard.Key;
     interact: Phaser.Input.Keyboard.Key;
     debugGrant: Phaser.Input.Keyboard.Key;
+    debugXp: Phaser.Input.Keyboard.Key;
     quicksave: Phaser.Input.Keyboard.Key;
     quickload: Phaser.Input.Keyboard.Key;
   };
+
+  private sailingXpAccum = 0;
 
   private onDialogueAction = (action: DialogueAction) => {
     if (!this.activeDialogue) return;
@@ -187,12 +191,14 @@ export class WorldScene extends Phaser.Scene {
       d: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D),
       interact: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E),
       debugGrant: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.G),
+      debugXp: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.X),
       quicksave: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F5),
       quickload: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F9),
     };
 
     this.keys.interact.on("down", () => this.onInteract());
     this.keys.debugGrant.on("down", () => this.grantRandomItem());
+    this.keys.debugXp.on("down", () => this.grantDebugXp());
     this.keys.quicksave.on("down", () => void this.saveController.save("quicksave"));
     this.keys.quickload.on("down", () => void this.saveController.load("quicksave"));
 
@@ -281,6 +287,8 @@ export class WorldScene extends Phaser.Scene {
     await this.saveController.init();
     this.saveController.registerSystems([
       saveSystems.inventorySaveable(),
+      saveSystems.equipmentSaveable(),
+      saveSystems.jobsSaveable(),
       saveSystems.playerSaveable(this.player),
       saveSystems.shipSaveable(this.ship),
       saveSystems.groundItemsSaveable(this.groundItemsState),
@@ -512,6 +520,7 @@ export class WorldScene extends Phaser.Scene {
     }
 
     this.ship.updateSailing(dt);
+    this.accrueSailingXp(dt);
 
     const helm = this.ship.helmWorldPx();
     this.player.setPosition(helm.x, helm.y);
@@ -742,6 +751,29 @@ export class WorldScene extends Phaser.Scene {
       speed: this.ship ? Math.round(this.ship.speed) : 0,
       heading: this.ship ? normalizeAngle(this.ship.rotation) : 0,
     });
+  }
+
+  /**
+   * Accrue Sailing XP proportional to distance covered under sail.
+   * 1 XP per ~8 pixels of travel — a comfortable pace for early levels
+   * without trivialising the curve.
+   */
+  private accrueSailingXp(dt: number) {
+    const traveled = Math.abs(this.ship.speed) * dt;
+    if (traveled <= 0) return;
+    this.sailingXpAccum += traveled / 8;
+    if (this.sailingXpAccum >= 1) {
+      const whole = Math.floor(this.sailingXpAccum);
+      this.sailingXpAccum -= whole;
+      useGameStore.getState().jobsAddXp("sailing", whole);
+    }
+  }
+
+  private grantDebugXp() {
+    const id = ALL_JOB_IDS[Math.floor(Math.random() * ALL_JOB_IDS.length)];
+    const amount = 250 + Math.floor(Math.random() * 750);
+    useGameStore.getState().jobsAddXp(id, amount);
+    showToast(`+${amount} ${id} XP`, 1200);
   }
 
   private grantRandomItem() {

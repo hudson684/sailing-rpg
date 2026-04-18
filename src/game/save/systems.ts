@@ -4,8 +4,9 @@ import type { Player } from "../entities/Player";
 import type { Ship } from "../entities/Ship";
 import type { GroundItemsState } from "../world/groundItemsState";
 import type { SceneState } from "./sceneState";
-import { ALL_ITEM_IDS } from "../inventory/items";
+import { ALL_ITEM_IDS, EQUIP_SLOTS } from "../inventory/items";
 import { useGameStore } from "../store/gameStore";
+import type { Equipped } from "../equipment/operations";
 
 // ─── Inventory ────────────────────────────────────────────────────────────
 
@@ -25,6 +26,37 @@ export function inventorySaveable(): Saveable<z.infer<typeof InventoryDataSchema
     serialize: () =>
       useGameStore.getState().inventory.slots as z.infer<typeof InventoryDataSchema>,
     hydrate: (data) => useGameStore.getState().inventoryHydrate(data as never),
+  };
+}
+
+// ─── Equipment ────────────────────────────────────────────────────────────
+
+const EquipSlotSchema = z.enum(EQUIP_SLOTS as unknown as [string, ...string[]]);
+const EquippedSchema = z.record(EquipSlotSchema, ItemIdSchema);
+
+export function equipmentSaveable(): Saveable<z.infer<typeof EquippedSchema>> {
+  return {
+    id: "equipment",
+    version: 1,
+    schema: EquippedSchema,
+    serialize: () =>
+      useGameStore.getState().equipment.equipped as z.infer<typeof EquippedSchema>,
+    hydrate: (data) => useGameStore.getState().equipmentHydrate(data as Equipped),
+  };
+}
+
+// ─── Jobs (XP) ────────────────────────────────────────────────────────────
+
+const JobsDataSchema = z.record(z.string(), z.number().nonnegative());
+
+export function jobsSaveable(): Saveable<z.infer<typeof JobsDataSchema>> {
+  return {
+    id: "jobs",
+    version: 1,
+    schema: JobsDataSchema,
+    serialize: () =>
+      useGameStore.getState().jobs.xp as z.infer<typeof JobsDataSchema>,
+    hydrate: (data) => useGameStore.getState().jobsHydrate(data),
   };
 }
 

@@ -40,6 +40,10 @@ export function tilesetImageKeyFor(imagePath: string): string {
 
 /** Layer names that render above the player. Matched case-insensitively. */
 const OVERHEAD_LAYERS = new Set(["props_high", "roof"]);
+/** Subset of overhead layers that also fade when the player walks under them.
+ *  props_high (e.g. lanterns, signs) renders above the player but shouldn't
+ *  dim — you just pass behind it. Only solid coverings like roofs fade. */
+const FADABLE_OVERHEAD_LAYERS = new Set(["roof"]);
 
 /** Edge order: [right, left, down, up]. A tile edge is "opaque" if it has any
  *  non-transparent pixels. Two tiles only connect across a shared edge if BOTH
@@ -480,7 +484,7 @@ export class ChunkManager {
       // their TMJ index as depth.
       const overhead = OVERHEAD_LAYERS.has(layerData.name.toLowerCase());
       layer.setDepth(overhead ? OVERHEAD_DEPTH_BASE + idx : idx);
-      if (overhead) {
+      if (overhead && FADABLE_OVERHEAD_LAYERS.has(layerData.name.toLowerCase())) {
         this.overheadLayers.push(layer);
       }
       layers.push(layer);
