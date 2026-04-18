@@ -1,13 +1,12 @@
-import { createStore, get, set, del, keys } from "idb-keyval";
+import { get, set, del, keys } from "idb-keyval";
 import { SaveEnvelopeSchema, isSlotKey, type SaveEnvelope } from "../envelope";
+import { kvStore } from "./idbShared";
 import type { SaveStore } from "./SaveStore";
 
-const DB_NAME = "sailing-rpg";
-const STORE_NAME = "saves";
 const TEMP_SUFFIX = ":tmp";
 
 export class IDBSaveStore implements SaveStore {
-  private readonly store = createStore(DB_NAME, STORE_NAME);
+  private readonly store = kvStore;
 
   async get(key: string): Promise<SaveEnvelope | null> {
     const raw = await get(key, this.store);
@@ -32,6 +31,7 @@ export class IDBSaveStore implements SaveStore {
     const parsed = SaveEnvelopeSchema.safeParse(readback);
     if (!parsed.success) {
       await del(tmp, this.store).catch(() => {});
+      console.warn(`[save] verification failed for '${key}':`, parsed.error.issues);
       throw new Error(`Save verification failed for '${key}'`);
     }
     await set(key, parsed.data, this.store);

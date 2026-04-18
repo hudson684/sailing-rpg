@@ -5,13 +5,9 @@
  <tileset firstgid="736" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
  <tileset firstgid="4832" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Tilesets-GL2SA.tsx"/>
  <tileset firstgid="5536" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet1.tsx"/>
- <tileset firstgid="9056" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet1-sprites.tsx"/>
  <tileset firstgid="9695" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2.tsx"/>
- <tileset firstgid="13215" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2-sprites.tsx"/>
  <tileset firstgid="13512" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet3.tsx"/>
- <tileset firstgid="14656" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-props-sheet3-sprites.tsx"/>
  <tileset firstgid="14850" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet4.tsx"/>
- <tileset firstgid="15462" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet4-sprites.tsx"/>
  <tileset firstgid="15784" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - no thick foam - Godot.tsx"/>
  <tileset firstgid="16202" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - no thick foam.tsx"/>
  <tileset firstgid="16712" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - with thick foam - Godot.tsx"/>

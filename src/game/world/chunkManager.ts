@@ -133,6 +133,13 @@ export class ChunkManager {
     return chunk.registry.isBlocked(gtx - chunk.cx * s, gty - chunk.cy * s);
   }
 
+  isAnchorable(gtx: number, gty: number): boolean {
+    const chunk = this.chunkAtGlobalTile(gtx, gty);
+    if (!chunk) return true;
+    const s = this.manifest.chunkSize;
+    return chunk.registry.isAnchorable(gtx - chunk.cx * s, gty - chunk.cy * s);
+  }
+
   isLandWalkable(gtx: number, gty: number): boolean {
     return !this.isWater(gtx, gty) && !this.isBlocked(gtx, gty);
   }

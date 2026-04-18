@@ -3,6 +3,7 @@ import * as Phaser from "phaser";
 import { createGameConfig } from "./game/config";
 import { Hud } from "./ui/Hud";
 import { Inventory } from "./ui/Inventory";
+import { PauseMenu } from "./ui/PauseMenu";
 import "./App.css";
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
       <div ref={parentRef} className="game-canvas" />
       <Hud />
       <Inventory />
+      <PauseMenu />
     </div>
   );
 }

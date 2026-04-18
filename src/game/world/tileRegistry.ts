@@ -36,9 +36,10 @@ export class TileRegistry {
   }
 
   isWater(tileX: number, tileY: number): boolean {
-    // The `ocean` layer is the base of every authored chunk. A cell is water
-    // iff ocean is present AND nothing is painted above it on any other tile
-    // layer — beach, dock, grass, props, etc. all imply "not water". Outside
+    // "Deep water" — blocks on-foot movement. The `ocean` layer is the base of
+    // every authored chunk. A cell is deep water iff ocean is present AND
+    // nothing is painted above it on any other tile layer (including
+    // `shallow water`, which is wadeable and handled by isAnchorable). Outside
     // authored chunks, callers (ChunkManager) default to open ocean anyway.
     if (this.tilemap.getTileAt(tileX, tileY, false, "ocean")) {
       for (const layerName of this.tileLayerNames) {
@@ -50,6 +51,22 @@ export class TileRegistry {
     // No ocean tile here — fall back to per-tile `water: true` property for
     // explicit water tiles painted above non-ocean terrain (e.g. inland pools).
     return this.anyLayerHasProp(tileX, tileY, "water");
+  }
+
+  /**
+   * Can a ship sit here? True if `ocean` or `shallow water` is painted AND
+   * nothing else (land, dock, props) is stacked above. Shallow water is both
+   * anchorable AND walkable — the player can wade around the hull.
+   */
+  isAnchorable(tileX: number, tileY: number): boolean {
+    const hasOcean = !!this.tilemap.getTileAt(tileX, tileY, false, "ocean");
+    const hasShallow = !!this.tilemap.getTileAt(tileX, tileY, false, "shallow water");
+    if (!hasOcean && !hasShallow) return false;
+    for (const layerName of this.tileLayerNames) {
+      if (layerName === "ocean" || layerName === "shallow water") continue;
+      if (this.tilemap.getTileAt(tileX, tileY, false, layerName)) return false;
+    }
+    return true;
   }
 
   isBlocked(tileX: number, tileY: number): boolean {

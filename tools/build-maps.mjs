@@ -26,7 +26,15 @@ const parser = new XMLParser({
 // Run as CLI only when invoked directly (not when imported by the Vite plugin).
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const check = process.argv.includes("--check");
-  buildAll({ check });
+  if (check) {
+    // Fast CI mode: verify every spawn object has a uid and there are no
+    // duplicates. Skips the TMX→TMJ emit so CI can run this cheaply.
+    const reports = stampUidsInDir(chunksDir, { check: true });
+    const total = reports.reduce((n, r) => n + r.existingUids.length, 0);
+    console.log(`maps:check ok — ${total} uid(s) across ${reports.length} chunk(s).`);
+  } else {
+    buildAll();
+  }
 }
 
 /** Read & parse maps/world.json. Throws if missing. */
@@ -46,13 +54,11 @@ function writeManifest(manifest, tilesetImages) {
   writeFileSync(outManifestPath, JSON.stringify(outManifest));
 }
 
-export function buildAll(opts = {}) {
-  const { check = false } = opts;
-
-  // Stamp uids (or verify they're all present) before reading TMX for TMJ emit.
-  // In --check mode this throws on any missing/duplicate uid; in normal mode
-  // it writes new uids back to source TMX.
-  const stampReports = stampUidsInDir(chunksDir, { check });
+export function buildAll() {
+  // Stamp any missing uids into source TMX before reading for TMJ emit. New
+  // uids land in the working tree — commit them alongside the Tiled changes
+  // that introduced the objects.
+  const stampReports = stampUidsInDir(chunksDir, { check: false });
   const stampedTotal = stampReports.reduce((n, r) => n + r.stamped, 0);
   if (stampedTotal > 0) {
     console.log(

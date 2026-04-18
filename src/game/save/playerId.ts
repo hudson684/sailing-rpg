@@ -1,10 +1,7 @@
-import { createStore, get, set } from "idb-keyval";
+import { get, set } from "idb-keyval";
+import { metaStore } from "./store/idbShared";
 
-const DB_NAME = "sailing-rpg";
-const STORE_NAME = "meta";
-const KEY = "playerId";
-
-const store = createStore(DB_NAME, STORE_NAME);
+const KEY = "meta:playerId";
 
 /**
  * PlayerId is generated on first run and persisted outside any save slot. It's
@@ -12,10 +9,10 @@ const store = createStore(DB_NAME, STORE_NAME);
  * accounts / sync land, this is the local id a server-side user can claim.
  */
 export async function getOrCreatePlayerId(): Promise<string> {
-  const existing = await get<string>(KEY, store);
+  const existing = await get<string>(KEY, metaStore);
   if (existing && typeof existing === "string" && existing.length > 0) return existing;
   const fresh = randomUuid();
-  await set(KEY, fresh, store);
+  await set(KEY, fresh, metaStore);
   return fresh;
 }
 

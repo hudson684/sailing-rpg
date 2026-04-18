@@ -251,6 +251,43 @@ export class Ship {
     this.targetThrottle = 0;
     this.updateVisual();
   }
+
+  serialize(): {
+    x: number;
+    y: number;
+    heading: Heading;
+    mode: ShipMode;
+    speed: number;
+    targetThrottle: number;
+    docked: DockedPose;
+  } {
+    return {
+      x: this.x,
+      y: this.y,
+      heading: this.heading,
+      mode: this.mode,
+      speed: this.speed,
+      targetThrottle: this.targetThrottle,
+      docked: { ...this.docked },
+    };
+  }
+
+  hydrate(data: {
+    x: number;
+    y: number;
+    heading: Heading;
+    mode: ShipMode;
+    speed: number;
+    targetThrottle: number;
+    docked: DockedPose;
+  }): void {
+    this.docked = { ...data.docked };
+    this.mode = data.mode;
+    this.speed = data.speed;
+    this.targetThrottle = data.targetThrottle;
+    this.setPose(data.x, data.y, data.heading);
+    this.updateVisual();
+  }
 }
 
 export function headingToRotation(h: Heading): number {

@@ -186,7 +186,7 @@ export class DebugOverlays {
           const tx = Math.round(cx + dx - bboxW / 2);
           const ty = Math.round(cy + dy - bboxH / 2);
           const cand: DockedPose = { tx, ty, heading: h };
-          const clear = Ship.footprint(cand).every((t) => mgr.isWater(t.x, t.y));
+          const clear = Ship.footprint(cand).every((t) => mgr.isAnchorable(t.x, t.y));
           const center = Ship.bboxCenterPx(cand);
           const dpx = center.x - pose.x;
           const dpy = center.y - pose.y;

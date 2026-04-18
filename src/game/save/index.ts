@@ -1,6 +1,9 @@
 export { SaveManager, type SaveManagerOptions } from "./SaveManager";
+export { SaveController } from "./SaveController";
+export { SceneState, type SceneMode } from "./sceneState";
 export type { Saveable } from "./Saveable";
 export { migrateTo } from "./Saveable";
+export * as systems from "./systems";
 export {
   ENVELOPE_VERSION,
   SLOT_IDS,

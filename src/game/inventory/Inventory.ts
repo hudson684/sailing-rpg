@@ -16,6 +16,24 @@ export class Inventory {
     return this.slots.map((s) => (s ? { ...s } : null));
   }
 
+  /** Serialize to a plain array — null for empty slots, cloned contents otherwise. */
+  serialize(): (Slot | null)[] {
+    return this.slots.map((s) => (s ? { itemId: s.itemId, quantity: s.quantity } : null));
+  }
+
+  /** Replace contents with `data` (must match INVENTORY_SIZE). */
+  hydrate(data: ReadonlyArray<Slot | null>): void {
+    const next: (Slot | null)[] = new Array(INVENTORY_SIZE).fill(null);
+    const len = Math.min(data.length, INVENTORY_SIZE);
+    for (let i = 0; i < len; i++) {
+      const s = data[i];
+      if (s && s.quantity > 0 && ITEMS[s.itemId]) {
+        next[i] = { itemId: s.itemId, quantity: s.quantity };
+      }
+    }
+    this.slots = next;
+  }
+
   /** Adds qty of itemId. Fills existing stacks first, then empty slots. Returns leftover qty. */
   add(itemId: ItemId, qty: number): number {
     if (qty <= 0) return 0;

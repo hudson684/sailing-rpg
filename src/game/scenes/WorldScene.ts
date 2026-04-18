@@ -16,14 +16,49 @@ import type { WorldManifest } from "../world/chunkManager";
 import { findAnchorPose } from "../util/anchor";
 import { CHUNK_KEY_PREFIX, WORLD_MANIFEST_KEY } from "./BootScene";
 import { DebugOverlays, type OverlayName } from "../debug/DebugOverlays";
-
-type Mode = "OnFoot" | "AtHelm" | "Anchoring";
+import { GroundItemsState } from "../world/groundItemsState";
+import {
+  SaveController,
+  SceneState,
+  systems as saveSystems,
+  type SaveEnvelope,
+} from "../save";
 
 const HELM_INTERACT_RADIUS = TILE_SIZE * 0.7;
 const PICKUP_RADIUS = TILE_SIZE * 0.8;
 
+const ZOOM_STEPS = [0.5, 1, 1.5, 2, 3] as const;
+const MIN_ZOOM = ZOOM_STEPS[0];
+const MAX_ZOOM = ZOOM_STEPS[ZOOM_STEPS.length - 1];
+const DEFAULT_ZOOM = 1;
+const ZOOM_STORAGE_KEY = "sailing-rpg:zoom";
+
+function loadZoom(): number {
+  try {
+    const raw = localStorage.getItem(ZOOM_STORAGE_KEY);
+    if (raw == null) return DEFAULT_ZOOM;
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return DEFAULT_ZOOM;
+    return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, n));
+  } catch {
+    return DEFAULT_ZOOM;
+  }
+}
+
+function saveZoom(z: number): void {
+  try {
+    localStorage.setItem(ZOOM_STORAGE_KEY, String(z));
+  } catch {
+    // localStorage unavailable (private mode, quota); silently ignore.
+  }
+}
+const WHEEL_ZOOM_SENSITIVITY = 0.0015;
+const ZOOM_SMOOTH_RATE = 12;
+const ZOOM_SNAP_EPSILON = 0.001;
+const WHEEL_SETTLE_MS = 140;
+
 interface GroundItem {
-  id: string;
+  uid: string;
   itemId: import("../inventory/items").ItemId;
   quantity: number;
   x: number;
@@ -37,9 +72,19 @@ export class WorldScene extends Phaser.Scene {
   private ship!: Ship;
   private decorativeVessels: Ship[] = [];
   private inventory = new Inventory();
+  private readonly groundItemsState = new GroundItemsState();
+  private readonly sceneState = new SceneState();
+  private readonly saveController = new SaveController({
+    getSceneKey: () => "World",
+    onApplied: (env) => this.applyAfterLoad(env),
+    canAutosave: () => this.sceneState.mode !== "Anchoring",
+  });
   private groundItems = new Map<string, GroundItem>();
 
-  private mode: Mode = "OnFoot";
+  private zoomTarget = loadZoom();
+  private wheelZoomDir: 1 | -1 | 0 = 0;
+  private lastWheelAt = 0;
+
   private debug!: DebugOverlays;
 
   private keys!: {
@@ -53,6 +98,8 @@ export class WorldScene extends Phaser.Scene {
     d: Phaser.Input.Keyboard.Key;
     interact: Phaser.Input.Keyboard.Key;
     debugGrant: Phaser.Input.Keyboard.Key;
+    quicksave: Phaser.Input.Keyboard.Key;
+    quickload: Phaser.Input.Keyboard.Key;
   };
 
   private onInventoryAction = (action: InventoryAction) => {
@@ -92,12 +139,11 @@ export class WorldScene extends Phaser.Scene {
     });
 
     // Decorative galleon moored east of the larger L-dock, south of the rowboat.
-    // Global-tile coords (chunk 1_0 starts at tile x=32).
     this.decorativeVessels.push(
       new Ship(this, { tx: 73, ty: 20, heading: 1 }, VESSEL_TEMPLATES.galleon),
     );
 
-    this.spawnGroundItems(items);
+    this.respawnGroundItems(items);
 
     // Ocean-blue backdrop for any viewport area outside authored chunks.
     this.cameras.main.setBackgroundColor("#1f4d78");
@@ -109,7 +155,7 @@ export class WorldScene extends Phaser.Scene {
       (b.maxTy - b.minTy) * TILE_SIZE,
     );
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
-    this.cameras.main.setZoom(1);
+    this.cameras.main.setZoom(this.zoomTarget);
 
     this.keys = {
       up: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
@@ -122,17 +168,44 @@ export class WorldScene extends Phaser.Scene {
       d: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D),
       interact: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E),
       debugGrant: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.G),
+      quicksave: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F5),
+      quickload: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F9),
     };
 
     this.keys.interact.on("down", () => this.onInteract());
     this.keys.debugGrant.on("down", () => this.grantRandomItem());
+    this.keys.quicksave.on("down", () => void this.saveController.save("quicksave"));
+    this.keys.quickload.on("down", () => void this.saveController.load("quicksave"));
+
+    // Camera zoom: mouse wheel + `+`/`=` and `-` keys.
+    const zoomInPlus = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.PLUS);
+    const zoomInEq = this.input.keyboard!.addKey("=");
+    const zoomOut = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.MINUS);
+    zoomInPlus.on("down", () => this.stepZoomKeyboard(+1));
+    zoomInEq.on("down", () => this.stepZoomKeyboard(+1));
+    zoomOut.on("down", () => this.stepZoomKeyboard(-1));
+    this.input.on(
+      "wheel",
+      (_p: unknown, _o: unknown, _dx: number, dy: number) => {
+        if (dy === 0) return;
+        const factor = Math.exp(-dy * WHEEL_ZOOM_SENSITIVITY);
+        this.zoomTarget = Phaser.Math.Clamp(
+          this.zoomTarget * factor,
+          MIN_ZOOM,
+          MAX_ZOOM,
+        );
+        saveZoom(this.zoomTarget);
+        this.wheelZoomDir = dy < 0 ? 1 : -1;
+        this.lastWheelAt = this.time.now;
+      },
+    );
 
     // Cardinal-only helm input: tap A/D (or ←/→) to turn 90° port/starboard.
     const turnPort = () => {
-      if (this.mode === "AtHelm") this.ship.turn(-1);
+      if (this.sceneState.mode === "AtHelm") this.ship.turn(-1);
     };
     const turnStarboard = () => {
-      if (this.mode === "AtHelm") this.ship.turn(1);
+      if (this.sceneState.mode === "AtHelm") this.ship.turn(1);
     };
     this.keys.a.on("down", turnPort);
     this.keys.left.on("down", turnPort);
@@ -142,7 +215,7 @@ export class WorldScene extends Phaser.Scene {
     this.debug = new DebugOverlays(this, this.world, {
       getShipPose: () =>
         this.ship ? { x: this.ship.x, y: this.ship.y, rotation: this.ship.rotation } : null,
-      isAtHelm: () => this.mode === "AtHelm",
+      isAtHelm: () => this.sceneState.mode === "AtHelm",
     });
     const overlayKeys: Array<[Phaser.Input.Keyboard.Key, OverlayName]> = [
       [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F1), "walkability"],
@@ -155,10 +228,10 @@ export class WorldScene extends Phaser.Scene {
     bus.onTyped("inventory:action", this.onInventoryAction);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       bus.offTyped("inventory:action", this.onInventoryAction);
+      this.saveController.shutdown();
     });
     this.emitInventory();
 
-    // Initial HUD state
     bus.emitTyped("hud:update", {
       mode: "OnFoot",
       prompt: null,
@@ -166,17 +239,34 @@ export class WorldScene extends Phaser.Scene {
       heading: 0,
       message: null,
     });
-    bus.emitTyped("hud:message", "WASD/Arrows to move. E to interact.", 4000);
+    bus.emitTyped("hud:message", "WASD/Arrows to move. E interact. ESC menu.", 4000);
+
+    void this.initSave();
+  }
+
+  private async initSave(): Promise<void> {
+    await this.saveController.init();
+    this.saveController.registerSystems([
+      saveSystems.inventorySaveable(this.inventory),
+      saveSystems.playerSaveable(this.player),
+      saveSystems.shipSaveable(this.ship),
+      saveSystems.groundItemsSaveable(this.groundItemsState),
+      saveSystems.sceneSaveable(this.sceneState),
+    ]);
+    await this.saveController.refreshMenu();
+    await this.saveController.loadLatest();
   }
 
   update(_time: number, dtMs: number) {
     const dt = dtMs / 1000;
     this.world.manager.tick(dtMs);
-    if (this.mode === "OnFoot") this.updateOnFoot(dt);
-    else if (this.mode === "AtHelm") this.updateAtHelm(dt);
-    else if (this.mode === "Anchoring") {
+    this.saveController.playtime.tick();
+    if (this.sceneState.mode === "OnFoot") this.updateOnFoot(dt);
+    else if (this.sceneState.mode === "AtHelm") this.updateAtHelm(dt);
+    else if (this.sceneState.mode === "Anchoring") {
       // Tween drives the ship; nothing to do here.
     }
+    this.updateZoom(dtMs);
     this.emitHud();
     this.debug.update();
   }
@@ -201,20 +291,25 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private onInteract() {
-    if (this.mode === "OnFoot") {
+    if (this.sceneState.mode === "OnFoot") {
       const pickup = this.nearestGroundItem();
       if (pickup) {
         this.pickUp(pickup);
         return;
       }
       if (this.isNearHelm()) this.takeHelm();
-    } else if (this.mode === "AtHelm") {
+    } else if (this.sceneState.mode === "AtHelm") {
       this.beginAnchoring();
     }
   }
 
-  private spawnGroundItems(spawns: ItemSpawn[]) {
+  /** (Re)spawn ground items from authored data, filtered by the picked-up set. */
+  private respawnGroundItems(spawns: ItemSpawn[]) {
+    for (const gi of this.groundItems.values()) gi.sprite.destroy();
+    this.groundItems.clear();
+
     for (const s of spawns) {
+      if (this.groundItemsState.isPickedUp(s.uid)) continue;
       const def = ITEMS[s.itemId];
       const x = (s.tileX + 0.5) * TILE_SIZE;
       const y = (s.tileY + 0.5) * TILE_SIZE;
@@ -231,8 +326,8 @@ export class WorldScene extends Phaser.Scene {
         yoyo: true,
         repeat: -1,
       });
-      this.groundItems.set(s.id, {
-        id: s.id,
+      this.groundItems.set(s.uid, {
+        uid: s.uid,
         itemId: s.itemId,
         quantity: s.quantity,
         x,
@@ -268,7 +363,8 @@ export class WorldScene extends Phaser.Scene {
       bus.emitTyped("hud:message", `Picked up ${taken} ${def.name} (full).`, 1800);
     } else {
       gi.sprite.destroy();
-      this.groundItems.delete(gi.id);
+      this.groundItems.delete(gi.uid);
+      this.groundItemsState.markPickedUp(gi.uid);
       bus.emitTyped("hud:message", `Picked up ${taken} ${def.name}.`, 1500);
     }
     this.emitInventory();
@@ -292,16 +388,15 @@ export class WorldScene extends Phaser.Scene {
     this.player.setPosition(helm.x, helm.y);
     this.player.frozen = true;
     this.ship.startSailing();
-    this.mode = "AtHelm";
+    this.sceneState.mode = "AtHelm";
     this.cameras.main.startFollow(this.ship.container, true, 0.1, 0.1);
     bus.emitTyped("hud:message", "W/S throttle, A/D turn 90°, E to drop anchor.", 4500);
+    void this.saveController.autosave();
   }
 
   // ─── Mode: AtHelm ─────────────────────────────────────────────────
 
   private updateAtHelm(dt: number) {
-    // Throttle: W = more, S = less. Turning is a discrete 90° snap handled via
-    // keydown handlers (see create()), so there's no continuous rudder axis.
     if (this.keys.w.isDown || this.keys.up.isDown) {
       this.ship.targetThrottle = Math.min(1, this.ship.targetThrottle + 0.6 * dt);
     } else if (this.keys.s.isDown || this.keys.down.isDown) {
@@ -310,7 +405,6 @@ export class WorldScene extends Phaser.Scene {
 
     this.ship.updateSailing(dt);
 
-    // Keep the player parked at the helm
     const helm = this.ship.helmWorldPx();
     this.player.setPosition(helm.x, helm.y);
     this.player.sprite.setRotation(this.ship.rotation);
@@ -331,14 +425,11 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
 
-    this.mode = "Anchoring";
+    this.sceneState.mode = "Anchoring";
     this.ship.mode = "anchoring";
     this.ship.targetThrottle = 0;
 
     const targetCenter = Ship.bboxCenterPx(target);
-
-    // Snap heading immediately (cardinal — no rotation tween needed), then
-    // drift the ship into place.
     this.ship.setPose(this.ship.x, this.ship.y, target.heading);
 
     this.tweens.add({
@@ -361,7 +452,6 @@ export class WorldScene extends Phaser.Scene {
 
   private finishAnchoring(pose: DockedPose) {
     this.ship.finalizeDock(pose);
-    // Player stands on the helm tile, unfrozen.
     const helmTile = Ship.helmTile(pose);
     this.player.setPosition(
       (helmTile.x + 0.5) * TILE_SIZE,
@@ -369,16 +459,62 @@ export class WorldScene extends Phaser.Scene {
     );
     this.player.sprite.setRotation(0);
     this.player.frozen = false;
-    this.mode = "OnFoot";
+    this.sceneState.mode = "OnFoot";
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
     bus.emitTyped("hud:message", "Anchored. Walk around or step off the ship.", 3000);
+    void this.saveController.autosave();
+  }
+
+  // ─── Save / load application ─────────────────────────────────────
+
+  /**
+   * Called after SaveManager hydrates registered systems (or with env=null
+   * for New Game). Resets scene-level side effects — ground item sprites,
+   * camera follow, player-frozen — so they agree with the restored state.
+   */
+  private applyAfterLoad(env: SaveEnvelope | null) {
+    if (!env) {
+      this.inventory.hydrate([]);
+      this.groundItemsState.reset();
+      this.sceneState.mode = "OnFoot";
+      this.player.setPosition(
+        (this.world.spawns.dock.tileX + 0.5) * TILE_SIZE,
+        (this.world.spawns.dock.tileY + 0.5) * TILE_SIZE,
+      );
+      this.ship.finalizeDock({
+        tx: this.world.spawns.ship.tileX,
+        ty: this.world.spawns.ship.tileY,
+        heading: this.world.spawns.ship.heading,
+      });
+    }
+
+    this.respawnGroundItems(this.world.spawns.items);
+    this.applySceneMode();
+    this.emitInventory();
+    this.emitHud();
+  }
+
+  /** Re-enter the current scene mode to fix up camera, freeze, helm parking. */
+  private applySceneMode() {
+    if (this.sceneState.mode === "AtHelm") {
+      this.player.frozen = true;
+      this.ship.mode = "sailing";
+      const helm = this.ship.helmWorldPx();
+      this.player.setPosition(helm.x, helm.y);
+      this.player.sprite.setRotation(this.ship.rotation);
+      this.cameras.main.startFollow(this.ship.container, true, 0.1, 0.1);
+    } else {
+      // Anchoring mid-save is degraded to OnFoot on load.
+      if (this.sceneState.mode === "Anchoring") this.sceneState.mode = "OnFoot";
+      this.player.frozen = false;
+      this.player.sprite.setRotation(0);
+      this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
+    }
   }
 
   // ─── Walkability ─────────────────────────────────────────────────
 
   private isWalkablePx(px: number, py: number): boolean {
-    // Sample the player's body at a handful of points so small rocks don't
-    // let the player slip through. We test the 4 cardinal edges + center.
     const r = PLAYER_RADIUS - 2;
     const samples: [number, number][] = [
       [px, py],
@@ -397,7 +533,6 @@ export class WorldScene extends Phaser.Scene {
     const tx = Math.floor(px / TILE_SIZE);
     const ty = Math.floor(py / TILE_SIZE);
     if (this.world.manager.isLandWalkable(tx, ty)) return true;
-    // Deck tiles: ship footprint is walkable when docked.
     if (this.ship && this.ship.mode === "docked") {
       const onDeck = Ship.footprint(this.ship.docked).some((t) => t.x === tx && t.y === ty);
       if (onDeck) return true;
@@ -405,18 +540,68 @@ export class WorldScene extends Phaser.Scene {
     return false;
   }
 
+  private stepZoomKeyboard(dir: 1 | -1) {
+    const cur = this.zoomTarget;
+    let target: number;
+    if (dir > 0) {
+      const next = ZOOM_STEPS.find((s) => s > cur + ZOOM_SNAP_EPSILON);
+      target = next ?? MAX_ZOOM;
+    } else {
+      let prev: number = MIN_ZOOM;
+      for (const s of ZOOM_STEPS) {
+        if (s < cur - ZOOM_SNAP_EPSILON) prev = s;
+        else break;
+      }
+      target = prev;
+    }
+    this.zoomTarget = Phaser.Math.Clamp(target, MIN_ZOOM, MAX_ZOOM);
+    saveZoom(this.zoomTarget);
+  }
+
+  private updateZoom(dtMs: number) {
+    if (
+      this.wheelZoomDir !== 0 &&
+      this.time.now - this.lastWheelAt >= WHEEL_SETTLE_MS
+    ) {
+      const cur = this.zoomTarget;
+      let snapped: number;
+      if (this.wheelZoomDir > 0) {
+        const next = ZOOM_STEPS.find((s) => s >= cur - ZOOM_SNAP_EPSILON);
+        snapped = next ?? MAX_ZOOM;
+      } else {
+        let prev: number = MIN_ZOOM;
+        for (const s of ZOOM_STEPS) {
+          if (s <= cur + ZOOM_SNAP_EPSILON) prev = s;
+          else break;
+        }
+        snapped = prev;
+      }
+      this.zoomTarget = Phaser.Math.Clamp(snapped, MIN_ZOOM, MAX_ZOOM);
+      saveZoom(this.zoomTarget);
+      this.wheelZoomDir = 0;
+    }
+    const cam = this.cameras.main;
+    const diff = this.zoomTarget - cam.zoom;
+    if (Math.abs(diff) < ZOOM_SNAP_EPSILON) {
+      if (cam.zoom !== this.zoomTarget) cam.setZoom(this.zoomTarget);
+      return;
+    }
+    const t = 1 - Math.exp(-ZOOM_SMOOTH_RATE * (dtMs / 1000));
+    cam.setZoom(cam.zoom + diff * t);
+  }
+
   private emitHud() {
     const hudMode =
-      this.mode === "AtHelm"
+      this.sceneState.mode === "AtHelm"
         ? "AtHelm"
-        : this.mode === "Anchoring"
+        : this.sceneState.mode === "Anchoring"
           ? "Anchoring"
           : this.ship && this.ship.isOnDeck(this.player.x, this.player.y)
             ? "OnDeck"
             : "OnFoot";
 
     let prompt: string | null = null;
-    if (this.mode === "OnFoot") {
+    if (this.sceneState.mode === "OnFoot") {
       const pickup = this.nearestGroundItem();
       if (pickup) {
         const def = ITEMS[pickup.itemId];
@@ -425,7 +610,7 @@ export class WorldScene extends Phaser.Scene {
       } else if (this.isNearHelm()) {
         prompt = "Press E to take the helm";
       }
-    } else if (this.mode === "AtHelm") {
+    } else if (this.sceneState.mode === "AtHelm") {
       prompt = "Press E to drop anchor";
     }
 
@@ -454,4 +639,3 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 }
-

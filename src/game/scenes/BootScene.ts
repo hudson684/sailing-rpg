@@ -7,6 +7,15 @@ import {
   vesselAnimKey,
   vesselTextureKey,
 } from "../entities/vessels";
+import {
+  PLAYER_ANIM_COLS,
+  PLAYER_ANIM_DIRS,
+  PLAYER_ANIM_STATES,
+  PLAYER_FRAME_SIZE,
+  PLAYER_ROW_FOR_DIR,
+  playerAnimKey,
+  playerTextureKey,
+} from "../entities/playerAnims";
 
 export const WORLD_MANIFEST_KEY = "worldManifest";
 export const CHUNK_KEY_PREFIX = "chunk_";
@@ -39,6 +48,13 @@ export class BootScene extends Phaser.Scene {
         }
       }
     }
+
+    for (const state of PLAYER_ANIM_STATES) {
+      this.load.spritesheet(playerTextureKey(state), `sprites/character/${state}.png`, {
+        frameWidth: PLAYER_FRAME_SIZE,
+        frameHeight: PLAYER_FRAME_SIZE,
+      });
+    }
   }
 
   create() {
@@ -60,6 +76,25 @@ export class BootScene extends Phaser.Scene {
         }
       }
     }
+
+    for (const state of PLAYER_ANIM_STATES) {
+      const cols = PLAYER_ANIM_COLS[state];
+      for (const dir of PLAYER_ANIM_DIRS) {
+        const key = playerAnimKey(state, dir);
+        if (this.anims.exists(key)) continue;
+        const rowStart = PLAYER_ROW_FOR_DIR[dir] * cols;
+        this.anims.create({
+          key,
+          frames: this.anims.generateFrameNumbers(playerTextureKey(state), {
+            start: rowStart,
+            end: rowStart + cols - 1,
+          }),
+          frameRate: state === "idle" ? 4 : 8,
+          repeat: -1,
+        });
+      }
+    }
+
     this.scene.start("World");
   }
 }

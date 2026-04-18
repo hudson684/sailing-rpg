@@ -17,7 +17,9 @@ export interface DockSpawn {
 
 export interface ItemSpawn {
   kind: "item_spawn";
-  id: string;
+  /** Stable cross-session identity. Stamped into source TMX by the map
+   *  build pipeline — never reassign. */
+  uid: string;
   tileX: number;
   tileY: number;
   itemId: ItemId;
@@ -82,10 +84,16 @@ export function parseSpawns(
         case "item_spawn": {
           const itemId = String(props.itemId ?? "") as ItemId;
           const quantity = Number(props.quantity ?? 1);
+          const uid = String(props.uid ?? "");
           if (!itemId) throw new Error(`item_spawn at (${tileX},${tileY}) missing itemId`);
+          if (!uid) {
+            throw new Error(
+              `item_spawn at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+            );
+          }
           items.push({
             kind: "item_spawn",
-            id: `obj_${offsetTx}_${offsetTy}_${raw.id}`,
+            uid,
             tileX,
             tileY,
             itemId,

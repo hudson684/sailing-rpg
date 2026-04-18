@@ -2,9 +2,9 @@ import { Ship, type DockedPose, type Heading } from "../entities/Ship";
 
 const SEARCH_RADIUS = 6;
 
-/** Find the best (closest) docked pose whose footprint is entirely water. */
+/** Find the best (closest) docked pose whose footprint is entirely anchorable. */
 export function findAnchorPose(
-  isWater: (tx: number, ty: number) => boolean,
+  isAnchorable: (tx: number, ty: number) => boolean,
   shipX: number,
   shipY: number,
   currentHeading: Heading,
@@ -24,7 +24,7 @@ export function findAnchorPose(
         const tyGuess = Math.round(cy + dy - bboxH / 2);
         const pose: DockedPose = { tx: txGuess, ty: tyGuess, heading };
 
-        if (!isFootprintClear(pose, isWater)) continue;
+        if (!isFootprintClear(pose, isAnchorable)) continue;
 
         const center = Ship.bboxCenterPx(pose);
         const dpx = center.x - shipX;
@@ -45,11 +45,11 @@ export function findAnchorPose(
 
 function isFootprintClear(
   pose: DockedPose,
-  isWater: (tx: number, ty: number) => boolean,
+  isAnchorable: (tx: number, ty: number) => boolean,
 ): boolean {
   const fp = Ship.footprint(pose);
   for (const { x, y } of fp) {
-    if (!isWater(x, y)) return false;
+    if (!isAnchorable(x, y)) return false;
   }
   return true;
 }
