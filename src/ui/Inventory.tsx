@@ -1,25 +1,17 @@
 import { useEffect, useState } from "react";
 import { bus } from "../game/bus";
-import { INVENTORY_SIZE, type Slots, type Slot } from "../game/inventory/Inventory";
 import { ITEMS } from "../game/inventory/items";
+import type { Slot } from "../game/inventory/types";
+import { selectInventorySlots, useGameStore } from "../game/store/gameStore";
 import "./Inventory.css";
 
-const EMPTY: Slots = new Array(INVENTORY_SIZE).fill(null);
 const DRAG_MIME = "application/x-sailing-rpg-slot";
 
 export function Inventory() {
-  const [slots, setSlots] = useState<Slots>(EMPTY);
+  const slots = useGameStore(selectInventorySlots);
   const [open, setOpen] = useState(true);
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   const [hoverTo, setHoverTo] = useState<number | null>(null);
-
-  useEffect(() => {
-    const onUpdate = (next: Slots) => setSlots(next);
-    bus.onTyped("inventory:update", onUpdate);
-    return () => {
-      bus.offTyped("inventory:update", onUpdate);
-    };
-  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

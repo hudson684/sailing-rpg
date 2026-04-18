@@ -1,3 +1,5 @@
+import { createRegistry } from "../data/createRegistry";
+
 export type ItemId = "rope" | "plank" | "fish" | "coin" | "compass";
 
 export interface ItemDef {
@@ -10,8 +12,8 @@ export interface ItemDef {
   description: string;
 }
 
-export const ITEMS: Record<ItemId, ItemDef> = {
-  rope: {
+const DEFS: ReadonlyArray<ItemDef> = [
+  {
     id: "rope",
     name: "Rope",
     icon: "🪢",
@@ -20,7 +22,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     maxStack: 50,
     description: "A coil of sturdy hemp rope.",
   },
-  plank: {
+  {
     id: "plank",
     name: "Plank",
     icon: "🪵",
@@ -29,7 +31,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     maxStack: 50,
     description: "A length of weathered timber.",
   },
-  fish: {
+  {
     id: "fish",
     name: "Fish",
     icon: "🐟",
@@ -38,7 +40,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     maxStack: 20,
     description: "Fresh from the sea.",
   },
-  coin: {
+  {
     id: "coin",
     name: "Gold Coin",
     icon: "🪙",
@@ -47,7 +49,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     maxStack: 1000,
     description: "A doubloon bearing a weathered crest.",
   },
-  compass: {
+  {
     id: "compass",
     name: "Compass",
     icon: "🧭",
@@ -56,6 +58,13 @@ export const ITEMS: Record<ItemId, ItemDef> = {
     maxStack: 1,
     description: "Points true north, mostly.",
   },
-};
+];
 
-export const ALL_ITEM_IDS: ItemId[] = Object.keys(ITEMS) as ItemId[];
+export const items = createRegistry<ItemDef>(DEFS, { label: "item" });
+
+/** Record view for ergonomic lookup by literal id. Equivalent to `items.get(id)`. */
+export const ITEMS: Record<ItemId, ItemDef> = Object.fromEntries(
+  DEFS.map((d) => [d.id, d]),
+) as Record<ItemId, ItemDef>;
+
+export const ALL_ITEM_IDS: ItemId[] = DEFS.map((d) => d.id);

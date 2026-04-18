@@ -1,5 +1,4 @@
 import * as Phaser from "phaser";
-import type { Slots } from "./inventory/Inventory";
 import type { SaveEnvelope, SlotId } from "./save";
 
 export type PlayerMode = "OnFoot" | "Boarding" | "OnDeck" | "AtHelm" | "Anchoring";
@@ -45,9 +44,6 @@ export type DialogueAction =
   | { type: "close" };
 
 type Events = {
-  "hud:update": (state: Partial<HudState>) => void;
-  "hud:message": (text: string, ttlMs?: number) => void;
-  "inventory:update": (slots: Slots) => void;
   "inventory:action": (action: InventoryAction) => void;
   "save:request": (request: SaveRequest) => void;
   "pause:update": (state: PauseMenuState) => void;

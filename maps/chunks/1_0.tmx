@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="16" nextobjectid="10">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="18" nextobjectid="13">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
  <tileset firstgid="226" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <tileset firstgid="736" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
@@ -58,29 +58,39 @@
    eJztVm1OwkAQ7R22mgreQn/YyiWUmCCeQo2K9SKIx1ATUI+hBovH8IcFf/hG3oSR8IOGDdWESV62H5t9rzNvdhsEq1jFJHouCB6AR1cO/yd4c+AqLIe/A94R+I9K4tfv/yqY/5+6hYvXLcYaDaBWcK0U8ythcd2zQnIga90UqEEbc3vApoe66Vq7JXngr0Uf9Xia4Ye+ei6c/d5XiLcyN/ak8sketcNelX6RsYhf5gndC9/chCenN4ccK0aDD+/baJJHvv0WiICE98Kreqq4Tjx5X6LHenfdeC8Qvj3gAoiBezfWNWReBszTu6fv1/4fMPfCcww8A+fAC3AHrFHLyPndszvhpMaa/y3cOyAEDqhFrlNyy3xf/BHruWH8JaPk4ASoAx/AIevxSg01z30YU0PG9SUH24TkooFnp9SQmH7w2QcRNeSmzrnRIjr2pzRIHnx5sW88mJlaa/+pL+qmN3LnT0OHPJn7PVaNR1TDGZ43qTVnXy6qIeZZmJixC1zT65HRIPVY57wGfbuM/7jU7JN6BrSo83IJ/PrPWF0S33To+ej7/Jk32sz16n/p/8U3Se6W4A==
   </data>
  </layer>
+ <layer id="17" name="building_floor" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApGAalAQ4SBQQuINdFoENYWob39LkA7PHFgbzrY74FmZxYU08v+DDR7kXE2HezvANrRCcVdUAxjd9PB/lEwCkbBKBgFo4AcAAA9hxC4
+  </data>
+ </layer>
  <layer id="9" name="dock" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztlLENgCAUBX+CdmojTGDs1EnUKdwUnUQH8dERS4uPwXfJ1ZfAAxFCCCEkLyorUsMGFq1I2er2Z3QXuMId7UO5T9Ly3J/2Bgd0RzhBHzZodTcY9094Wb12IH5/xuH8nW7/C6Te4PMP5D/4DpPg7mI6dDfY/7TvM93uDR//FEQ=
   </data>
  </layer>
- <layer id="2" name="overlay" width="32" height="32">
-  <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
-  </data>
- </layer>
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzUkKwlAUBdE3zsAfozF2K1Kwi72uSME+JlEXa61BPgTkFpxxmSml1G8NArNhUN3/wPtY4V+pf68WmTmEqCNCA03EzqyFBG100EUPfefnP+IzxgRTzJBijgWPJVZYY4Mtdth7+p/4nHHBFTfc8UDG44kcBUq88MbH018ppZTy3RdRbBOm
+   eJztzkkKwlAURNE3TsBvvq5LTeybFSlojH2zEpfmyAsOMnP0IAh14YyrzJRS6j9bJ2abpOkXSn17pbUmeqc1r1rRLKCNDBEddKPfxq967PQxQI4CQ4wwDmYTTDHDHAsssQo++1t2diixR4UDjjixccYFV9xwxwNPp32llFLKuw8Xhhcf
   </data>
  </layer>
- <layer id="4" name="props_high" width="32" height="32">
+ <layer id="2" name="overlay" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJzt0LsNwCAMRVG30Hk6dgaJRIGBeDPQWIR7pFv7YwZgV02x83OOnR+t6v52+Q/wb93NHvWqoj411PTozQAAwIkWnOEIRQ==
+   eJztzcEJACEQBMGBMy7P/INSNwVfIlRBvzsBAHjP/JJVpd359/r+1bj0B4BTG/3zAtE=
   </data>
  </layer>
- <layer id="5" name="roof" width="32" height="32">
+ <layer id="4" name="props_high" width="32" height="32" visible="0">
   <data encoding="base64" compression="zlib">
-   eJztzVtuQWEUQOH9RiJOD6pVOhKMwb1FdSQG4X5nJGUMitb1GEl5sEbQB/kRyV7J97xENE07py+XyBgT123+f3wPON7oH3WLxBB3X/aTsEWSSCGNDLKIevgj7rnsv8KrihrqaKCJMt+2V6SDLnroY4AhRl4z/ymvb8wwxwI/+MWSxwprbLDFDg72hv6WT+QBNnzwI4BHBC2RJzwjhBeEEcGrZeaf4JNECmlkkEUObzzekUcBRXyghE9D/wqfKmqoo4EmWmjz6KCLHvoYYIiRof9/LXmssMYGW+zgYH+Fv6ZpmqZp99cJ6Ns4zA==
+   eJztz8EJgDAQRNE5JvGU6qxJrcwIKmpBji0Isgj/wT/PrgTgjSFJo5tSzP7s3eaWoP2cpeK6HLP/aMX/l7h94GtrlTa3u94d7nRXjb4MAAD80Q27lgvD
+  </data>
+ </layer>
+ <layer id="5" name="roof" width="32" height="32" visible="0">
+  <data encoding="base64" compression="zlib">
+   eJzt0bdNg1EAhdG3gBNgHGdyJOOZHAHHmcjOHoZTUyAh/VgU70qn/oobQlxcXNz/XS0bQp0GTVq0s8frd7V69BkwZPStP06FMGHKjDmLVDL9Z60XXnnjnQ8+WWqsWLNhy449h4T66VwIGbLkOOGUM/LpEM4pUKREmQrVdDL9mk6dBk1atLngUuOKa2645Y57Ogn1uzo9+gwYMuKBR40nxkyYMmPOIqH+T1tqrFizYcuOPYcj9PMZ/1OgSIkyFaqZv+/HxcXFxcXF/X5frVExVw==
+  </data>
+ </layer>
+ <layer id="16" name="shadows" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztzbEJACAMAMH02UidTB3erGAlwh18/REA/2kZ0auRb/6zvqvaj/4AAHDrAC00AmU=
   </data>
  </layer>
  <objectgroup id="6" name="objects">
@@ -110,5 +120,6 @@
   <object id="7" x="842.5" y="670" width="8.25" height="18"/>
   <object id="8" x="808.75" y="575" width="119" height="15.5"/>
   <object id="9" x="864.5" y="614.5" width="62.75" height="10"/>
+  <object id="10" x="562.727" y="552.909" width="70.9091" height="44.3636"/>
  </objectgroup>
 </map>

@@ -1,5 +1,10 @@
-import { describe, it, expect } from "vitest";
-import { Inventory } from "../inventory/Inventory";
+import { describe, it, expect, beforeEach } from "vitest";
+import {
+  addToSlots,
+  emptySlots,
+  hydrateSlots,
+} from "../inventory/operations";
+import { useGameStore } from "../store/gameStore";
 import { GroundItemsState } from "../world/groundItemsState";
 import { SceneState } from "./sceneState";
 import {
@@ -29,19 +34,22 @@ class MemStore implements SaveStore {
   }
 }
 
-describe("Saveable round-trip", () => {
-  it("Inventory → serialize → hydrate preserves slot contents", () => {
-    const a = new Inventory();
-    a.add("rope", 10);
-    a.add("plank", 3);
-    a.add("compass", 1);
-    const snap = a.serialize();
+beforeEach(() => {
+  useGameStore.getState().inventoryReset();
+});
 
-    const b = new Inventory();
-    b.hydrate(snap);
-    expect(b.serialize()).toEqual(snap);
+describe("Inventory operations", () => {
+  it("addToSlots → hydrateSlots preserves slot contents", () => {
+    let slots: ReadonlyArray<import("../inventory/types").Slot | null> = emptySlots();
+    slots = addToSlots(slots, "rope", 10).slots;
+    slots = addToSlots(slots, "plank", 3).slots;
+    slots = addToSlots(slots, "compass", 1).slots;
+    const rehydrated = hydrateSlots(slots);
+    expect(rehydrated).toEqual(slots);
   });
+});
 
+describe("Saveable round-trip", () => {
   it("GroundItemsState round-trip is stable and sorted", () => {
     const a = new GroundItemsState();
     a.markPickedUp("z-last");
@@ -70,15 +78,13 @@ describe("Saveable round-trip", () => {
 
 describe("Saveable schemas reject bad data", () => {
   it("inventorySaveable schema rejects unknown item id", () => {
-    const inv = new Inventory();
-    const sv = inventorySaveable(inv);
+    const sv = inventorySaveable();
     const bad = [{ itemId: "laser", quantity: 1 }, ...new Array(27).fill(null)];
     expect(sv.schema.safeParse(bad).success).toBe(false);
   });
 
   it("inventorySaveable schema rejects non-positive quantity", () => {
-    const inv = new Inventory();
-    const sv = inventorySaveable(inv);
+    const sv = inventorySaveable();
     const bad = [{ itemId: "rope", quantity: 0 }, ...new Array(27).fill(null)];
     expect(sv.schema.safeParse(bad).success).toBe(false);
   });
@@ -86,7 +92,6 @@ describe("Saveable schemas reject bad data", () => {
 
 describe("SaveManager", () => {
   function makeManager() {
-    const inv = new Inventory();
     const ground = new GroundItemsState();
     const scene = new SceneState();
     const store = new MemStore();
@@ -97,15 +102,15 @@ describe("SaveManager", () => {
       getSceneKey: () => "world:5,5",
       getPlaytimeMs: () => 12_345,
     });
-    mgr.register(inventorySaveable(inv));
+    mgr.register(inventorySaveable());
     mgr.register(groundItemsSaveable(ground));
     mgr.register(sceneSaveable(scene));
-    return { mgr, inv, ground, scene, store };
+    return { mgr, ground, scene, store };
   }
 
   it("save builds a schema-valid envelope and round-trips through load", async () => {
-    const { mgr, inv, ground, scene } = makeManager();
-    inv.add("fish", 5);
+    const { mgr, ground, scene } = makeManager();
+    useGameStore.getState().inventoryAdd("fish", 5);
     ground.markPickedUp("uid-1");
     scene.mode = "AtHelm";
 
@@ -117,13 +122,14 @@ describe("SaveManager", () => {
     expect(env.systems.inventory.version).toBe(1);
     expect(env.systems.scene.data).toEqual({ mode: "AtHelm" });
 
-    inv.hydrate(new Array(28).fill(null));
+    useGameStore.getState().inventoryReset();
     ground.reset();
     scene.mode = "OnFoot";
 
     const loaded = await mgr.load("slot1");
     expect(loaded).not.toBeNull();
-    expect(inv.serialize().find((s) => s?.itemId === "fish")?.quantity).toBe(5);
+    const slots = useGameStore.getState().inventory.slots;
+    expect(slots.find((s) => s?.itemId === "fish")?.quantity).toBe(5);
     expect(ground.isPickedUp("uid-1")).toBe(true);
     expect(scene.mode).toBe("AtHelm");
   });
@@ -134,8 +140,8 @@ describe("SaveManager", () => {
   });
 
   it("hydrate preserves fresh state for systems absent from the save", async () => {
-    const { mgr, inv } = makeManager();
-    inv.add("rope", 7);
+    const { mgr } = makeManager();
+    useGameStore.getState().inventoryAdd("rope", 7);
     const env = await mgr.save("autosave");
 
     // Manually drop inventory from the envelope to simulate a save made before
@@ -143,12 +149,12 @@ describe("SaveManager", () => {
     const trimmed = structuredClone(env);
     delete (trimmed.systems as Record<string, unknown>).inventory;
 
-    inv.hydrate(new Array(28).fill(null));
-    inv.add("plank", 2);
+    useGameStore.getState().inventoryReset();
+    useGameStore.getState().inventoryAdd("plank", 2);
     mgr.hydrateFrom(trimmed);
-    // Inventory retained its current contents, not reset from save.
-    expect(inv.serialize().find((s) => s?.itemId === "plank")?.quantity).toBe(2);
-    expect(inv.serialize().find((s) => s?.itemId === "rope")).toBeUndefined();
+    const slots = useGameStore.getState().inventory.slots;
+    expect(slots.find((s) => s?.itemId === "plank")?.quantity).toBe(2);
+    expect(slots.find((s) => s?.itemId === "rope")).toBeUndefined();
   });
 
   it("hydrate ignores unknown systems in the save envelope", async () => {
@@ -156,7 +162,6 @@ describe("SaveManager", () => {
     const env = await mgr.save("autosave");
     const mutated = structuredClone(env);
     mutated.systems.futureFeature = { version: 42, data: { whatever: true } };
-    // Must not throw:
     expect(() => mgr.hydrateFrom(mutated)).not.toThrow();
   });
 
@@ -196,7 +201,6 @@ describe("SaveManager", () => {
     mgr.register(sv);
 
     const env = await mgr.save("slot1");
-    // Simulate a save written by v1:
     env.systems.demo = { version: 1, data: { score: 99 } };
     mgr.hydrateFrom(env);
     expect(current).toEqual({ score: 99, bonus: 0 });

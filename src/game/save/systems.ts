@@ -1,11 +1,11 @@
 import { z } from "zod";
 import type { Saveable } from "./Saveable";
-import type { Inventory } from "../inventory/Inventory";
 import type { Player } from "../entities/Player";
 import type { Ship } from "../entities/Ship";
 import type { GroundItemsState } from "../world/groundItemsState";
 import type { SceneState } from "./sceneState";
 import { ALL_ITEM_IDS } from "../inventory/items";
+import { useGameStore } from "../store/gameStore";
 
 // ─── Inventory ────────────────────────────────────────────────────────────
 
@@ -17,13 +17,14 @@ const SlotSchema = z
 
 const InventoryDataSchema = z.array(SlotSchema);
 
-export function inventorySaveable(inv: Inventory): Saveable<z.infer<typeof InventoryDataSchema>> {
+export function inventorySaveable(): Saveable<z.infer<typeof InventoryDataSchema>> {
   return {
     id: "inventory",
     version: 1,
     schema: InventoryDataSchema,
-    serialize: () => inv.serialize() as z.infer<typeof InventoryDataSchema>,
-    hydrate: (data) => inv.hydrate(data as never),
+    serialize: () =>
+      useGameStore.getState().inventory.slots as z.infer<typeof InventoryDataSchema>,
+    hydrate: (data) => useGameStore.getState().inventoryHydrate(data as never),
   };
 }
 

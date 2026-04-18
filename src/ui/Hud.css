@@ -52,11 +52,19 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
-.hud-toast {
+.hud-toasts {
   position: absolute;
   top: 90px;
   left: 50%;
   transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  pointer-events: none;
+}
+
+.hud-toast {
   padding: 8px 16px;
   background: rgba(14, 30, 56, 0.85);
   border: 1px solid rgba(120, 170, 220, 0.5);
@@ -65,14 +73,24 @@
   animation: toast-in 180ms ease-out;
 }
 
+.hud-toast-success {
+  border-color: rgba(120, 210, 140, 0.6);
+}
+.hud-toast-warn {
+  border-color: rgba(230, 200, 110, 0.6);
+}
+.hud-toast-error {
+  border-color: rgba(230, 120, 120, 0.6);
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -6px);
+    transform: translateY(-6px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translateY(0);
   }
 }
 

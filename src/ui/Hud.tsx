@@ -1,40 +1,10 @@
-import { useEffect, useState } from "react";
-import { bus, type HudState } from "../game/bus";
+import type { HudState } from "../game/bus";
+import { selectHud, selectToasts, useUIStore } from "./store/uiStore";
 import "./Hud.css";
 
-const INITIAL: HudState = {
-  mode: "OnFoot",
-  prompt: null,
-  speed: 0,
-  heading: 0,
-  message: null,
-};
-
 export function Hud() {
-  const [state, setState] = useState<HudState>(INITIAL);
-  const [message, setMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    let pendingTimer: number | null = null;
-    const onUpdate = (patch: Partial<HudState>) => {
-      setState((prev) => ({ ...prev, ...patch }));
-    };
-    const onMessage = (text: string, ttlMs = 2500) => {
-      if (pendingTimer !== null) window.clearTimeout(pendingTimer);
-      setMessage(text);
-      pendingTimer = window.setTimeout(() => {
-        setMessage(null);
-        pendingTimer = null;
-      }, ttlMs);
-    };
-    bus.onTyped("hud:update", onUpdate);
-    bus.onTyped("hud:message", onMessage);
-    return () => {
-      bus.offTyped("hud:update", onUpdate);
-      bus.offTyped("hud:message", onMessage);
-      if (pendingTimer !== null) window.clearTimeout(pendingTimer);
-    };
-  }, []);
+  const state = useUIStore(selectHud);
+  const toasts = useUIStore(selectToasts);
 
   const headingDeg = ((state.heading * 180) / Math.PI + 360) % 360;
   const compass = compassLabel(headingDeg);
@@ -59,7 +29,16 @@ export function Hud() {
       </div>
 
       {state.prompt && <div className="hud-prompt">{state.prompt}</div>}
-      {message && <div className="hud-toast">{message}</div>}
+
+      {toasts.length > 0 && (
+        <div className="hud-toasts">
+          {toasts.map((t) => (
+            <div key={t.id} className={`hud-toast hud-toast-${t.kind}`}>
+              {t.text}
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="hud-controls">
         <span>WASD / Arrows — move or steer</span>

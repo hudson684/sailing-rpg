@@ -40,6 +40,141 @@ export function tilesetImageKeyFor(imagePath: string): string {
 
 /** Layer names that render above the player. Matched case-insensitively. */
 const OVERHEAD_LAYERS = new Set(["props_high", "roof"]);
+
+/** Edge order: [right, left, down, up]. A tile edge is "opaque" if it has any
+ *  non-transparent pixels. Two tiles only connect across a shared edge if BOTH
+ *  of their facing edges are opaque — this prevents flood fills from crossing
+ *  through transparent gutters (e.g. one roof tile's right half is empty and
+ *  the next roof tile's left half is empty, even though the cells are adjacent). */
+type EdgeOpacity = [boolean, boolean, boolean, boolean];
+const edgeCache = new Map<number, EdgeOpacity>(); // key: gid
+const tilesetImageData = new WeakMap<Phaser.Tilemaps.Tileset, ImageData | null>();
+const ALPHA_THRESHOLD = 32;
+const EDGE_OPAQUE_FRACTION = 0.1;
+
+function getTilesetImageData(ts: Phaser.Tilemaps.Tileset): ImageData | null {
+  if (tilesetImageData.has(ts)) return tilesetImageData.get(ts) ?? null;
+  const img = ts.image?.getSourceImage?.() as
+    | HTMLImageElement
+    | HTMLCanvasElement
+    | undefined;
+  if (!img) {
+    tilesetImageData.set(ts, null);
+    return null;
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    tilesetImageData.set(ts, null);
+    return null;
+  }
+  ctx.drawImage(img as CanvasImageSource, 0, 0);
+  try {
+    const data = ctx.getImageData(0, 0, img.width, img.height);
+    tilesetImageData.set(ts, data);
+    return data;
+  } catch {
+    tilesetImageData.set(ts, null);
+    return null; // CORS — fall back to treating all edges as opaque
+  }
+}
+
+function computeEdgeOpacity(
+  tilemap: Phaser.Tilemaps.Tilemap,
+  gid: number,
+): EdgeOpacity | null {
+  const cached = edgeCache.get(gid);
+  if (cached) return cached;
+  for (const ts of tilemap.tilesets) {
+    if (gid < ts.firstgid || gid >= ts.firstgid + ts.total) continue;
+    const imgData = getTilesetImageData(ts);
+    if (!imgData) return null;
+    const coords = ts.getTileTextureCoordinates(gid) as
+      | { x: number; y: number }
+      | null;
+    if (!coords) return null;
+    const tw = ts.tileWidth;
+    const th = ts.tileHeight;
+    const W = imgData.width;
+    const data = imgData.data;
+    let right = 0;
+    let left = 0;
+    let down = 0;
+    let up = 0;
+    for (let i = 0; i < th; i++) {
+      const y = coords.y + i;
+      const aL = data[(y * W + coords.x) * 4 + 3];
+      const aR = data[(y * W + coords.x + tw - 1) * 4 + 3];
+      if (aL >= ALPHA_THRESHOLD) left++;
+      if (aR >= ALPHA_THRESHOLD) right++;
+    }
+    for (let j = 0; j < tw; j++) {
+      const x = coords.x + j;
+      const aU = data[(coords.y * W + x) * 4 + 3];
+      const aD = data[((coords.y + th - 1) * W + x) * 4 + 3];
+      if (aU >= ALPHA_THRESHOLD) up++;
+      if (aD >= ALPHA_THRESHOLD) down++;
+    }
+    const minH = Math.max(1, Math.floor(tw * EDGE_OPAQUE_FRACTION));
+    const minV = Math.max(1, Math.floor(th * EDGE_OPAQUE_FRACTION));
+    const edges: EdgeOpacity = [
+      right >= minV,
+      left >= minV,
+      down >= minH,
+      up >= minH,
+    ];
+    edgeCache.set(gid, edges);
+    return edges;
+  }
+  return null;
+}
+
+/** 4-connected BFS across non-empty cells of `layer`, starting at (sx, sy).
+ *  Only crosses a shared edge if both tiles have opaque pixels along it.
+ *  Capped to avoid pathological layer-spanning fills. */
+function floodFillLayer(
+  layer: Phaser.Tilemaps.TilemapLayer,
+  sx: number,
+  sy: number,
+  cap: number,
+): Set<string> {
+  const out = new Set<string>();
+  const start = layer.getTileAt(sx, sy);
+  if (!start) return out;
+  out.add(`${sx},${sy}`);
+  const queue: Array<[number, number]> = [[sx, sy]];
+  // [dx, dy, currentEdgeIdx, neighborEdgeIdx] — indices into EdgeOpacity.
+  const dirs: Array<[number, number, number, number]> = [
+    [1, 0, 0, 1], // move right: need current.right AND neighbor.left
+    [-1, 0, 1, 0], // move left:  need current.left  AND neighbor.right
+    [0, 1, 2, 3], // move down:  need current.down  AND neighbor.up
+    [0, -1, 3, 2], // move up:    need current.up    AND neighbor.down
+  ];
+  while (queue.length > 0 && out.size < cap) {
+    const [x, y] = queue.shift()!;
+    const current = layer.getTileAt(x, y);
+    if (!current) continue;
+    const curEdges = computeEdgeOpacity(layer.tilemap, current.index);
+    for (const [dx, dy, ce, ne] of dirs) {
+      const nx = x + dx;
+      const ny = y + dy;
+      const key = `${nx},${ny}`;
+      if (out.has(key)) continue;
+      const neighbor = layer.getTileAt(nx, ny);
+      if (!neighbor) continue;
+      const neighborEdges = computeEdgeOpacity(layer.tilemap, neighbor.index);
+      // If edge data is unavailable (CORS, missing source), fall back to
+      // treating the connection as valid so we don't break existing maps.
+      if (curEdges && !curEdges[ce]) continue;
+      if (neighborEdges && !neighborEdges[ne]) continue;
+      out.add(key);
+      queue.push([nx, ny]);
+    }
+  }
+  return out;
+}
 /** Base depth for overhead layers. Player is at 50; this comfortably clears it
  *  while preserving the TMJ-index ordering among overhead layers themselves. */
 const OVERHEAD_DEPTH_BASE = 100;
@@ -66,18 +201,80 @@ export class ChunkManager {
   private readonly chunks = new Map<string, Chunk>();
   private readonly animatedCells: AnimatedCell[] = [];
   private readonly overheadLayers: Phaser.Tilemaps.TilemapLayer[] = [];
-  /** Function that applies a filter (e.g. an inverted mask) to an overhead
-   *  layer. Stored so chunks loaded AFTER registration also get the effect. */
-  private overheadFilter: ((layer: Phaser.Tilemaps.TilemapLayer) => void) | null = null;
+  /** Per-layer fade bookkeeping. `targetKeys` = tiles that should be faded this
+   *  frame (the connected region under the player). `trackedKeys` = all tiles
+   *  we're currently easing (target ∪ tiles easing back to 1). Anchor caches
+   *  the last flood-fill root so we don't recompute while the player stands
+   *  still on the same roof tile. */
+  private readonly overheadFade = new WeakMap<
+    Phaser.Tilemaps.TilemapLayer,
+    {
+      anchor: { lx: number; ly: number } | null;
+      targetKeys: Set<string>;
+      trackedKeys: Set<string>;
+    }
+  >();
   private elapsedMs = 0;
 
-  /** Register a filter setup callback that's applied to every overhead layer
-   *  (current and future). Typical use: attach an inverted mask filter so
-   *  the roof cuts a hole around the player. */
-  setOverheadFilter(apply: ((layer: Phaser.Tilemaps.TilemapLayer) => void) | null): void {
-    this.overheadFilter = apply;
-    if (!apply) return;
-    for (const layer of this.overheadLayers) apply(layer);
+  /** Per-frame: for each overhead layer, fade only the connected region of
+   *  tiles under the player (BFS from the player's cell on that layer).
+   *  Tiles outside the region ease back to full opacity. */
+  updateOverheadFade(playerGtx: number, playerGty: number, dtMs: number): void {
+    const FADED_ALPHA = 0.3;
+    const FADE_RATE = 8; // e-folds per second
+    const t = 1 - Math.exp(-FADE_RATE * (dtMs / 1000));
+    const s = this.manifest.chunkSize;
+    const cx = Math.floor(playerGtx / s);
+    const cy = Math.floor(playerGty / s);
+    const ownerChunk = this.chunks.get(`${cx}_${cy}`) ?? null;
+    const lx = playerGtx - cx * s;
+    const ly = playerGty - cy * s;
+
+    for (const layer of this.overheadLayers) {
+      let state = this.overheadFade.get(layer);
+      if (!state) {
+        state = { anchor: null, targetKeys: new Set(), trackedKeys: new Set() };
+        this.overheadFade.set(layer, state);
+      }
+
+      const onThisLayer =
+        ownerChunk != null &&
+        layer.tilemap === ownerChunk.tilemap &&
+        !!layer.getTileAt(lx, ly);
+
+      if (!onThisLayer) {
+        state.anchor = null;
+        state.targetKeys = new Set();
+      } else if (
+        !state.anchor ||
+        state.anchor.lx !== lx ||
+        state.anchor.ly !== ly
+      ) {
+        state.anchor = { lx, ly };
+        state.targetKeys = floodFillLayer(layer, lx, ly, 600);
+      }
+
+      // Union target into tracked so newly entered tiles get eased.
+      for (const k of state.targetKeys) state.trackedKeys.add(k);
+
+      if (state.trackedKeys.size === 0) continue;
+
+      const done: string[] = [];
+      for (const key of state.trackedKeys) {
+        const target = state.targetKeys.has(key) ? FADED_ALPHA : 1;
+        const [txStr, tyStr] = key.split(",");
+        const tile = layer.getTileAt(parseInt(txStr, 10), parseInt(tyStr, 10));
+        if (!tile) {
+          done.push(key);
+          continue;
+        }
+        const next = tile.alpha + (target - tile.alpha) * t;
+        const settled = Math.abs(next - target) < 0.002;
+        tile.setAlpha(settled ? target : next);
+        if (settled && target === 1) done.push(key);
+      }
+      for (const k of done) state.trackedKeys.delete(k);
+    }
   }
 
   constructor(opts: ChunkManagerOptions) {
@@ -285,7 +482,6 @@ export class ChunkManager {
       layer.setDepth(overhead ? OVERHEAD_DEPTH_BASE + idx : idx);
       if (overhead) {
         this.overheadLayers.push(layer);
-        if (this.overheadFilter) this.overheadFilter(layer);
       }
       layers.push(layer);
     });

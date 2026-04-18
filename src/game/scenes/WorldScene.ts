@@ -1,8 +1,10 @@
 import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
 import { bus, type DialogueAction, type InventoryAction } from "../bus";
-import { Inventory } from "../inventory/Inventory";
 import { ALL_ITEM_IDS, ITEMS } from "../inventory/items";
+import { useGameStore } from "../store/gameStore";
+import { useSettingsStore } from "../store/settingsStore";
+import { setHud, showToast } from "../../ui/store/ui";
 import {
   Player,
   PLAYER_SPEED,
@@ -48,28 +50,7 @@ const PICKUP_RADIUS = TILE_SIZE * 0.8;
 const ZOOM_STEPS = [0.5, 1, 1.5, 2, 3] as const;
 const MIN_ZOOM = ZOOM_STEPS[0];
 const MAX_ZOOM = ZOOM_STEPS[ZOOM_STEPS.length - 1];
-const DEFAULT_ZOOM = 1;
-const ZOOM_STORAGE_KEY = "sailing-rpg:zoom";
 
-function loadZoom(): number {
-  try {
-    const raw = localStorage.getItem(ZOOM_STORAGE_KEY);
-    if (raw == null) return DEFAULT_ZOOM;
-    const n = Number(raw);
-    if (!Number.isFinite(n)) return DEFAULT_ZOOM;
-    return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, n));
-  } catch {
-    return DEFAULT_ZOOM;
-  }
-}
-
-function saveZoom(z: number): void {
-  try {
-    localStorage.setItem(ZOOM_STORAGE_KEY, String(z));
-  } catch {
-    // localStorage unavailable (private mode, quota); silently ignore.
-  }
-}
 const WHEEL_ZOOM_SENSITIVITY = 0.0015;
 const ZOOM_SMOOTH_RATE = 12;
 const ZOOM_SNAP_EPSILON = 0.001;
@@ -91,7 +72,6 @@ export class WorldScene extends Phaser.Scene {
   private player!: Player;
   private ship!: Ship;
   private decorativeVessels: Ship[] = [];
-  private inventory = new Inventory();
   private readonly groundItemsState = new GroundItemsState();
   private readonly sceneState = new SceneState();
   private readonly saveController = new SaveController({
@@ -104,15 +84,11 @@ export class WorldScene extends Phaser.Scene {
   private dialogues: Record<string, DialogueDef> = {};
   private activeDialogue: { speaker: string; pages: string[]; page: number } | null = null;
 
-  private zoomTarget = loadZoom();
+  private zoomTarget = useSettingsStore.getState().zoom;
   private wheelZoomDir: 1 | -1 | 0 = 0;
   private lastWheelAt = 0;
 
   private debug!: DebugOverlays;
-
-  /** Source object for the overhead bitmap mask — a filled circle that
-   *  follows the player so roofs/canopies "cut out" around the character. */
-  private overheadMaskSource!: Phaser.GameObjects.Graphics;
 
   private keys!: {
     up: Phaser.Input.Keyboard.Key;
@@ -145,13 +121,13 @@ export class WorldScene extends Phaser.Scene {
   };
 
   private onInventoryAction = (action: InventoryAction) => {
+    const store = useGameStore.getState();
     if (action.type === "move") {
-      if (this.inventory.move(action.from, action.to)) this.emitInventory();
+      store.inventoryMove(action.from, action.to);
     } else if (action.type === "drop") {
-      const removed = this.inventory.removeAt(action.slot, Number.MAX_SAFE_INTEGER);
+      const removed = store.inventoryRemoveAt(action.slot, Number.MAX_SAFE_INTEGER);
       if (removed > 0) {
-        this.emitInventory();
-        bus.emitTyped("hud:message", `Dropped ${removed}.`, 1500);
+        showToast(`Dropped ${removed}.`, 1500);
       }
     }
   };
@@ -200,8 +176,6 @@ export class WorldScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
     this.cameras.main.setZoom(this.zoomTarget);
 
-    this.setupOverheadMask();
-
     this.keys = {
       up: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
       down: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),
@@ -239,7 +213,7 @@ export class WorldScene extends Phaser.Scene {
           MIN_ZOOM,
           MAX_ZOOM,
         );
-        saveZoom(this.zoomTarget);
+        useSettingsStore.getState().setZoom(this.zoomTarget);
         this.wheelZoomDir = dy < 0 ? 1 : -1;
         this.lastWheelAt = this.time.now;
       },
@@ -290,16 +264,15 @@ export class WorldScene extends Phaser.Scene {
       if (activeWorldScene === this) activeWorldScene = null;
       this.saveController.shutdown();
     });
-    this.emitInventory();
 
-    bus.emitTyped("hud:update", {
+    setHud({
       mode: "OnFoot",
       prompt: null,
       speed: 0,
       heading: 0,
       message: null,
     });
-    bus.emitTyped("hud:message", "WASD/Arrows to move. E interact. ESC menu.", 4000);
+    showToast("WASD/Arrows to move. E interact. ESC menu.", 4000);
 
     void this.initSave();
   }
@@ -307,7 +280,7 @@ export class WorldScene extends Phaser.Scene {
   private async initSave(): Promise<void> {
     await this.saveController.init();
     this.saveController.registerSystems([
-      saveSystems.inventorySaveable(this.inventory),
+      saveSystems.inventorySaveable(),
       saveSystems.playerSaveable(this.player),
       saveSystems.shipSaveable(this.ship),
       saveSystems.groundItemsSaveable(this.groundItemsState),
@@ -327,35 +300,14 @@ export class WorldScene extends Phaser.Scene {
       // Tween drives the ship; nothing to do here.
     }
     for (const npc of this.npcs) npc.update(dtMs, (x, y) => this.isWalkablePx(x, y));
-    this.overheadMaskSource.setPosition(this.player.x, this.player.y);
+    const pTile = this.player.tile();
+    this.world.manager.updateOverheadFade(pTile.x, pTile.y, dtMs);
     this.updateZoom(dtMs);
     this.emitHud();
     this.debug.update();
   }
 
   // ─── Mode: OnFoot ────────────────────────────────────────────────
-
-  /** Stamp a soft-ish circle into a Graphics and register an inverted mask
-   *  filter on every overhead layer. The circle follows the player each
-   *  frame, so roofs/canopies "cut out" around the character. */
-  private setupOverheadMask(): void {
-    // Concentric circles fake a soft edge (Graphics doesn't support gradients).
-    const gfx = this.add.graphics({ x: 0, y: 0 });
-    gfx.setVisible(false); // not drawn to the scene; used only as mask source.
-    const steps = 6;
-    const maxRadius = 40;
-    for (let i = steps; i >= 1; i--) {
-      const r = (maxRadius * i) / steps;
-      const a = i / steps; // 1 at center, fading out
-      gfx.fillStyle(0xffffff, a);
-      gfx.fillCircle(0, 0, r);
-    }
-    this.overheadMaskSource = gfx;
-    const cam = this.cameras.main;
-    this.world.manager.setOverheadFilter((layer) => {
-      layer.filters!.internal.addMask(gfx, true, cam, "world");
-    });
-  }
 
   private updateOnFoot(dt: number) {
     let dx = 0;
@@ -428,7 +380,7 @@ export class WorldScene extends Phaser.Scene {
   private openDialogueWith(npc: Npc) {
     const dialogue = this.dialogues[npc.def.dialogue];
     if (!dialogue) {
-      bus.emitTyped("hud:message", `${npc.def.name} has nothing to say.`, 1500);
+      showToast(`${npc.def.name} has nothing to say.`, 1500);
       return;
     }
     npc.faceToward(this.player.x, this.player.y);
@@ -508,23 +460,22 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private pickUp(gi: GroundItem) {
-    const leftover = this.inventory.add(gi.itemId, gi.quantity);
+    const leftover = useGameStore.getState().inventoryAdd(gi.itemId, gi.quantity);
     const taken = gi.quantity - leftover;
     if (taken <= 0) {
-      bus.emitTyped("hud:message", "Inventory is full.", 1500);
+      showToast("Inventory is full.", 1500);
       return;
     }
     const def = ITEMS[gi.itemId];
     if (leftover > 0) {
       gi.quantity = leftover;
-      bus.emitTyped("hud:message", `Picked up ${taken} ${def.name} (full).`, 1800);
+      showToast(`Picked up ${taken} ${def.name} (full).`, 1800);
     } else {
       gi.sprite.destroy();
       this.groundItems.delete(gi.uid);
       this.groundItemsState.markPickedUp(gi.uid);
-      bus.emitTyped("hud:message", `Picked up ${taken} ${def.name}.`, 1500);
+      showToast(`Picked up ${taken} ${def.name}.`, 1500);
     }
-    this.emitInventory();
   }
 
   private isNearHelm(): boolean {
@@ -547,7 +498,7 @@ export class WorldScene extends Phaser.Scene {
     this.ship.startSailing();
     this.sceneState.mode = "AtHelm";
     this.cameras.main.startFollow(this.ship.container, true, 0.1, 0.1);
-    bus.emitTyped("hud:message", "W/S throttle, A/D turn 90°, E to drop anchor.", 4500);
+    showToast("W/S throttle, A/D turn 90°, E to drop anchor.", 4500);
     void this.saveController.autosave();
   }
 
@@ -580,7 +531,7 @@ export class WorldScene extends Phaser.Scene {
       TILE_SIZE,
     );
     if (!target) {
-      bus.emitTyped("hud:message", "No clear water to anchor. Steer away from land.", 2500);
+      showToast("No clear water to anchor. Steer away from land.", 2500);
       return;
     }
 
@@ -607,7 +558,7 @@ export class WorldScene extends Phaser.Scene {
       onComplete: () => this.finishAnchoring(target),
     });
 
-    bus.emitTyped("hud:message", "Dropping anchor…", 1200);
+    showToast("Dropping anchor…", 1200);
   }
 
   private finishAnchoring(pose: DockedPose) {
@@ -621,7 +572,7 @@ export class WorldScene extends Phaser.Scene {
     this.player.frozen = false;
     this.sceneState.mode = "OnFoot";
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
-    bus.emitTyped("hud:message", "Anchored. Walk around or step off the ship.", 3000);
+    showToast("Anchored. Walk around or step off the ship.", 3000);
     void this.saveController.autosave();
   }
 
@@ -634,7 +585,7 @@ export class WorldScene extends Phaser.Scene {
    */
   private applyAfterLoad(env: SaveEnvelope | null) {
     if (!env) {
-      this.inventory.hydrate([]);
+      useGameStore.getState().inventoryReset();
       this.groundItemsState.reset();
       this.sceneState.mode = "OnFoot";
       this.player.setPosition(
@@ -650,7 +601,6 @@ export class WorldScene extends Phaser.Scene {
 
     this.respawnGroundItems(this.world.spawns.items);
     this.applySceneMode();
-    this.emitInventory();
     this.emitHud();
   }
 
@@ -722,7 +672,7 @@ export class WorldScene extends Phaser.Scene {
       target = prev;
     }
     this.zoomTarget = Phaser.Math.Clamp(target, MIN_ZOOM, MAX_ZOOM);
-    saveZoom(this.zoomTarget);
+    useSettingsStore.getState().setZoom(this.zoomTarget);
   }
 
   private updateZoom(dtMs: number) {
@@ -744,7 +694,7 @@ export class WorldScene extends Phaser.Scene {
         snapped = prev;
       }
       this.zoomTarget = Phaser.Math.Clamp(snapped, MIN_ZOOM, MAX_ZOOM);
-      saveZoom(this.zoomTarget);
+      useSettingsStore.getState().setZoom(this.zoomTarget);
       this.wheelZoomDir = 0;
     }
     const cam = this.cameras.main;
@@ -786,7 +736,7 @@ export class WorldScene extends Phaser.Scene {
       prompt = "Press E to drop anchor";
     }
 
-    bus.emitTyped("hud:update", {
+    setHud({
       mode: hudMode,
       prompt,
       speed: this.ship ? Math.round(this.ship.speed) : 0,
@@ -794,20 +744,15 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
-  private emitInventory() {
-    bus.emitTyped("inventory:update", this.inventory.getSlots());
-  }
-
   private grantRandomItem() {
     const id = ALL_ITEM_IDS[Math.floor(Math.random() * ALL_ITEM_IDS.length)];
     const qty = ITEMS[id].stackable ? 1 + Math.floor(Math.random() * 5) : 1;
-    const leftover = this.inventory.add(id, qty);
+    const leftover = useGameStore.getState().inventoryAdd(id, qty);
     const added = qty - leftover;
-    this.emitInventory();
     if (added > 0) {
-      bus.emitTyped("hud:message", `+${added} ${ITEMS[id].name}`, 1500);
+      showToast(`+${added} ${ITEMS[id].name}`, 1500);
     } else {
-      bus.emitTyped("hud:message", "Inventory is full.", 1500);
+      showToast("Inventory is full.", 1500);
     }
   }
 }
@@ -821,6 +766,6 @@ if (import.meta.hot) {
     if (!mod || !activeWorldScene) return;
     const data = ((mod as unknown) as { default?: NpcData }).default ?? ((mod as unknown) as NpcData);
     activeWorldScene.reloadNpcs(data);
-    bus.emitTyped("hud:message", "NPCs reloaded.", 1200);
+    showToast("NPCs reloaded.", 1200);
   });
 }

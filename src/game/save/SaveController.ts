@@ -1,4 +1,5 @@
 import { bus, type SaveRequest } from "../bus";
+import { showToast } from "../../ui/store/ui";
 import { SaveManager, type SaveManagerOptions } from "./SaveManager";
 import { IDBSaveStore } from "./store/IDBSaveStore";
 import { getOrCreatePlayerId } from "./playerId";
@@ -110,30 +111,30 @@ export class SaveController {
     if (!this.manager) return;
     await this.manager.save(slot);
     const name = slot === "autosave" ? "Autosaved" : slot === "quicksave" ? "Quicksaved" : `Saved to ${slotLabel(slot)}`;
-    bus.emitTyped("hud:message", `${name}.`, 1500);
+    showToast(`${name}.`, 1500);
   }
 
   async load(slot: SlotId): Promise<void> {
     if (!this.manager) return;
     const env = await this.manager.load(slot);
     if (!env) {
-      bus.emitTyped("hud:message", `No save in ${slotLabel(slot)}.`, 1800);
+      showToast(`No save in ${slotLabel(slot)}.`, 1800);
       return;
     }
     this.opts.onApplied(env);
-    bus.emitTyped("hud:message", `Loaded ${slotLabel(slot)}.`, 1500);
+    showToast(`Loaded ${slotLabel(slot)}.`, 1500);
     this.setMenuVisible(false);
   }
 
   async deleteSlot(slot: SlotId): Promise<void> {
     if (!this.manager) return;
     await this.manager.delete(slot);
-    bus.emitTyped("hud:message", `Deleted ${slotLabel(slot)}.`, 1500);
+    showToast(`Deleted ${slotLabel(slot)}.`, 1500);
   }
 
   async newGame(): Promise<void> {
     this.opts.onApplied(null);
-    bus.emitTyped("hud:message", "New game.", 1500);
+    showToast("New game.", 1500);
     this.setMenuVisible(false);
   }
 
