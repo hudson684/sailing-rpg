@@ -29,6 +29,7 @@ import {
 import { useSettingsStore } from "../store/settingsStore";
 import { ALL_ITEM_IDS, ITEMS } from "../inventory/items";
 import { CF_TOOLS, CF_TOOL_SHEETS, cfToolAnimKey } from "../entities/playerTools";
+import { CF_WARDROBE_OPTIONS } from "../entities/playerWardrobe";
 
 export const itemIconTextureKey = (id: string) => `item_icon_${id}`;
 
@@ -85,6 +86,11 @@ export class BootScene extends Phaser.Scene {
       addSheet("legs", "og-brown");
       addSheet("feet", "brown");
       addSheet("hands", "bare");
+      // Eagerly load every wardrobe variant so the customizer's "Apply" can
+      // swap textures without waiting on a download.
+      for (const [layer, variants] of Object.entries(CF_WARDROBE_OPTIONS) as [CfLayer, readonly string[]][]) {
+        for (const variant of variants) addSheet(layer, variant);
+      }
       // Eagerly load every variant referenced by an item's visualLayer so
       // equipping never has to wait on a download. Cheap with our handful of
       // items today; if the catalog grows, switch this to lazy on equip.

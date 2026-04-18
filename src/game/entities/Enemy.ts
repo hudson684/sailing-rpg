@@ -9,7 +9,15 @@ import {
   type EnemyInstanceData,
 } from "./enemyTypes";
 
-type EnemyState = "idle" | "chase" | "attack" | "returning" | "dying" | "dead";
+type EnemyState = "idle" | "chase" | "attack" | "hurt" | "returning" | "dying" | "dead";
+
+/** Total stun after taking a hit — player is guaranteed this much free time. */
+const HURT_STUN_MS = 250;
+/** Portion of the stun during which the knockback impulse is applied. */
+const HURT_KNOCKBACK_MS = 180;
+/** Initial knockback speed (px/s); decays to 0 by the end of KNOCKBACK_MS. */
+const HURT_KNOCKBACK_SPEED = 240;
+const HURT_TINT = 0xff6a6a;
 type Facing = "left" | "right";
 
 interface PlayerRef {
@@ -39,6 +47,11 @@ export class Enemy {
   private attackCooldownMs = 0;
   /** Player attack set this — forces transition to chase regardless of aggro radius. */
   private forceAggro = false;
+
+  private hurtTimer = 0;
+  private kbTimer = 0;
+  private kbVx = 0;
+  private kbVy = 0;
 
   private readonly hpBarBg: Phaser.GameObjects.Rectangle;
   private readonly hpBar: Phaser.GameObjects.Rectangle;
@@ -94,16 +107,17 @@ export class Enemy {
   }
 
   /** Apply 1 hit. Returns true on the killing blow. */
-  hit(scene: Phaser.Scene, damage = 1): boolean {
+  hit(scene: Phaser.Scene, damage = 1, attackerX?: number, attackerY?: number): boolean {
     if (!this.isAlive()) return false;
     this.hpFloat -= damage;
-    this.flash(scene);
     this.updateHpBar();
     if (this.hpFloat <= 0) {
       this.die();
       return true;
     }
     if (this.def.combat) this.forceAggro = true;
+    this.enterHurt(attackerX, attackerY);
+    void scene;
     return false;
   }
 
@@ -116,19 +130,13 @@ export class Enemy {
     this.hpBar.width = fullW * pct;
   }
 
-  private flash(scene: Phaser.Scene) {
-    scene.tweens.add({
-      targets: this.sprite,
-      alpha: 0.3,
-      duration: 70,
-      yoyo: true,
-    });
-  }
-
   private die() {
     this.state = "dying";
     this.targetPx = null;
     this.forceAggro = false;
+    this.hurtTimer = 0;
+    this.kbTimer = 0;
+    this.sprite.clearTint();
     this.hpBar.setVisible(false);
     this.hpBarBg.setVisible(false);
     this.setAnimState("death");
@@ -166,6 +174,9 @@ export class Enemy {
         return;
       case "attack":
         // Attack is driven by the ANIMATION_COMPLETE callback; no per-tick work.
+        return;
+      case "hurt":
+        this.updateHurt(dtMs, isWalkablePx);
         return;
       case "returning":
         this.updateReturning(dtMs, isWalkablePx);
@@ -255,6 +266,55 @@ export class Enemy {
     this.targetPx = null;
     this.forceAggro = false;
     this.setAnimState("move");
+  }
+
+  private enterHurt(attackerX?: number, attackerY?: number) {
+    this.state = "hurt";
+    this.hurtTimer = HURT_STUN_MS;
+    this.kbTimer = HURT_KNOCKBACK_MS;
+    this.targetPx = null;
+    if (attackerX != null && attackerY != null) {
+      const dx = this.sprite.x - attackerX;
+      const dy = this.sprite.y - attackerY;
+      const len = Math.hypot(dx, dy) || 1;
+      this.kbVx = (dx / len) * HURT_KNOCKBACK_SPEED;
+      this.kbVy = (dy / len) * HURT_KNOCKBACK_SPEED;
+      this.setFacing(dx < 0 ? "right" : "left");
+    } else {
+      this.kbVx = 0;
+      this.kbVy = 0;
+    }
+    this.sprite.setTint(HURT_TINT);
+    // No dedicated hurt frame in the sheets; freeze on idle + tint communicates the state.
+    this.setAnimState("idle");
+  }
+
+  private updateHurt(
+    dtMs: number,
+    isWalkablePx: (x: number, y: number) => boolean,
+  ) {
+    this.hurtTimer -= dtMs;
+
+    if (this.kbTimer > 0) {
+      // Linear decay to 0 over the knockback window so the push eases out.
+      const prevFrac = Math.max(0, this.kbTimer) / HURT_KNOCKBACK_MS;
+      this.kbTimer -= dtMs;
+      const nextFrac = Math.max(0, this.kbTimer) / HURT_KNOCKBACK_MS;
+      const avgFrac = (prevFrac + nextFrac) / 2;
+      const dt = dtMs / 1000;
+      const nx = this.sprite.x + this.kbVx * avgFrac * dt;
+      const ny = this.sprite.y + this.kbVy * avgFrac * dt;
+      if (isWalkablePx(nx, this.sprite.y)) this.sprite.x = nx;
+      if (isWalkablePx(this.sprite.x, ny)) this.sprite.y = ny;
+      this.syncOverlayPositions();
+      this.sprite.setDepth(this.sortY());
+    }
+
+    if (this.hurtTimer <= 0) {
+      this.sprite.clearTint();
+      if (this.def.combat) this.enterChase();
+      else this.enterIdle(400);
+    }
   }
 
   private shouldAggro(player: PlayerRef | undefined): boolean {
@@ -370,6 +430,8 @@ export class Enemy {
     this.setAnimState("attack");
     this.sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
       if (!this.isAlive()) return;
+      // The attack was interrupted (e.g. we took a hit) — don't land damage or override the new state.
+      if (this.state !== "attack") return;
       // Recheck range on landing — a dodging player avoids damage.
       const d = Math.hypot(player.x - this.sprite.x, player.y - this.sprite.y);
       if (d <= combat.attackRangePx * 1.1) {
@@ -388,6 +450,9 @@ export class Enemy {
     this.state = "idle";
     this.hpFloat = this.def.hp;
     this.forceAggro = false;
+    this.hurtTimer = 0;
+    this.kbTimer = 0;
+    this.sprite.clearTint();
     this.sprite.setPosition(this.homePx.x, this.homePx.y);
     this.sprite.setAlpha(1);
     this.sprite.setVisible(true);

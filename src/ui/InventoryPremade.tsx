@@ -96,7 +96,7 @@ export function InventoryPremade() {
   const equipped = useGameStore(selectEquipped);
   const dragSource = useDragStore(selectDragSource);
   const setDragSource = useDragStore((s) => s.setSource);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(true);
   const [hoverTo, setHoverTo] = useState<DropTarget | null>(null);
   const [ctxMenu, setCtxMenu] = useState<CtxMenuState | null>(null);

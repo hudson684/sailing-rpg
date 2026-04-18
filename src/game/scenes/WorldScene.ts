@@ -69,8 +69,12 @@ import {
 const HELM_INTERACT_RADIUS = TILE_SIZE * 0.7;
 const PICKUP_RADIUS = TILE_SIZE * 0.8;
 const SHOP_CLICK_RADIUS = TILE_SIZE * 1.5;
+/** Time after last damage before player HP regen kicks in. */
+const PLAYER_OUT_OF_COMBAT_MS = 6000;
+/** HP per second regenerated while out of combat (fractional ok). */
+const PLAYER_REGEN_PER_SEC = 1.0;
 
-const ZOOM_STEPS = [0.5, 1, 1.5, 2, 3] as const;
+const ZOOM_STEPS = [0.5, 1, 1.5, 2, 3, 4, 6, 8] as const;
 const MIN_ZOOM = ZOOM_STEPS[0];
 const MAX_ZOOM = ZOOM_STEPS[ZOOM_STEPS.length - 1];
 
@@ -109,6 +113,8 @@ export class WorldScene extends Phaser.Scene {
   private groundItems = new Map<string, GroundItem>();
   private nodes: GatheringNode[] = [];
   private enemies: Enemy[] = [];
+  private lastPlayerDamagedAt = 0;
+  private playerRegenAccum = 0;
   private dropTables = new Map<string, DropTable>();
   private npcs: Npc[] = [];
   private dialogues: Record<string, DialogueDef> = {};
@@ -440,6 +446,7 @@ export class WorldScene extends Phaser.Scene {
         );
       }
     }
+    this.tickPlayerRegen(dtMs);
     const pTile = this.player.tile();
     this.world.manager.updateOverheadFade(pTile.x, pTile.y, dtMs);
     this.droppedExpiryAccum += dtMs;
@@ -530,11 +537,26 @@ export class WorldScene extends Phaser.Scene {
     if (damage <= 0) return;
     const taken = useGameStore.getState().healthDamage(damage);
     if (taken <= 0) return;
+    this.lastPlayerDamagedAt = this.time.now;
+    this.playerRegenAccum = 0;
     this.flashPlayer();
     spawnFloatingNumber(this, this.player.x, this.player.y - 22, taken, {
       kind: "damage-player",
     });
     if (useGameStore.getState().health.current <= 0) this.handlePlayerDeath();
+  }
+
+  private tickPlayerRegen(dtMs: number) {
+    if (this.time.now - this.lastPlayerDamagedAt < PLAYER_OUT_OF_COMBAT_MS) return;
+    const store = useGameStore.getState();
+    const { current } = store.health;
+    if (current <= 0) return;
+    this.playerRegenAccum += PLAYER_REGEN_PER_SEC * (dtMs / 1000);
+    if (this.playerRegenAccum < 1) return;
+    const whole = Math.floor(this.playerRegenAccum);
+    const healed = store.healthHeal(whole);
+    this.playerRegenAccum -= whole;
+    if (healed === 0) this.playerRegenAccum = 0; // already full; don't stockpile
   }
 
   private flashPlayer() {
@@ -590,7 +612,7 @@ export class WorldScene extends Phaser.Scene {
         useGameStore.getState().jobsAddXp("combat", 5);
         if (!target || !target.isAlive()) return;
         const swordDmg = 1;
-        const killed = target.hit(this, swordDmg);
+        const killed = target.hit(this, swordDmg, this.player.x, this.player.y);
         const enemyHeadY =
           target.sprite.y - (target.def.sprite.frameHeight * target.def.display.scale) / 2 - 4;
         spawnFloatingNumber(this, target.sprite.x, enemyHeadY, swordDmg, {
@@ -1115,9 +1137,12 @@ export class WorldScene extends Phaser.Scene {
     for (const node of this.nodes) {
       if (node.blocksPx(px, py)) return false;
     }
-    for (const enemy of this.enemies) {
-      if (enemy === ignoreEnemy) continue;
-      if (enemy.blocksPx(px, py)) return false;
+    // Enemies only collide with each other — players and enemies pass through freely.
+    if (ignoreEnemy) {
+      for (const enemy of this.enemies) {
+        if (enemy === ignoreEnemy) continue;
+        if (enemy.blocksPx(px, py)) return false;
+      }
     }
     return true;
   }

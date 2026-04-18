@@ -12,7 +12,7 @@ import { DEFAULT_WARDROBE, type CfWardrobe } from "../entities/playerWardrobe";
  */
 
 const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 3;
+const MAX_ZOOM = 8;
 
 export interface SettingsState {
   zoom: number;

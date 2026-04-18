@@ -11,7 +11,14 @@ import type { CfLayer } from "./playerAnims";
  * controlled by what the player has equipped, not the customizer.
  */
 export const CF_WARDROBE_OPTIONS: Partial<Record<CfLayer, readonly string[]>> = {
-  hair: ["1-brown", "1-blonde"],
+  hair: [
+    "1-black", "1-blonde", "1-brown", "1-ginger", "1-grey",
+    "2-black", "2-blonde", "2-brown", "2-ginger", "2-grey",
+    "3-black", "3-blonde", "3-brown", "3-ginger", "3-grey",
+    "4-black", "4-blonde", "4-brown", "4-ginger", "4-grey",
+    "5-black", "5-blonde", "5-brown", "5-ginger", "5-grey",
+    "6-black", "6-blonde", "6-brown", "6-ginger", "6-grey",
+  ],
   chest: ["og-blue", "royal-blue", "plate-iron"],
   legs: ["og-brown"],
   feet: ["brown", "black"],

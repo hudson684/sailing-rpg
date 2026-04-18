@@ -26,7 +26,7 @@ export const PLAYER_FEET_OFFSET_Y = -PLAYER_FEET_HEIGHT / 2;
 // near y=40, expressed as a normalized origin so the sprite anchors at the
 // feet for depth sorting.
 const CF_ORIGIN_Y = 40 / CF_FRAME_SIZE;
-const CF_SPRITE_SCALE = 2.0;
+const CF_SPRITE_SCALE = 1.5;
 
 export type Facing =
   | "up"
@@ -55,16 +55,16 @@ export const FACING_VALUES: readonly Facing[] = [
 function facingToCfDir(f: Facing): { dir: CfDir; flipX: boolean } {
   switch (f) {
     case "up":
-    case "up-left":
-    case "up-right":
       return { dir: "back", flipX: false };
     case "down":
-    case "down-left":
-    case "down-right":
       return { dir: "forward", flipX: false };
     case "right":
+    case "up-right":
+    case "down-right":
       return { dir: "right", flipX: false };
     case "left":
+    case "up-left":
+    case "down-left":
       return { dir: "right", flipX: true };
   }
 }

@@ -63,14 +63,15 @@ export const CF_TOOL_SHEETS: Record<string, CfToolSheet> = {
 };
 
 export const CF_TOOLS: Record<string, CfToolDef> = {
-  // 256×576 → 4 cols × 9 rows. Rows 0-2 = slash right hand (forward/right/back),
-  // matching CF_ANIMS.attack which uses base rows 6/9/12.
+  // 256×576 → 4 cols × 9 rows. Sheet mirrors the base's 3-variants-per-facing
+  // layout: rows 0-2 forward (slash-RH, slash-LH, thrust-RH), 3-5 right, 6-8
+  // back. We want slash-right-hand, matching CF_ANIMS.attack (base rows 6/9/12).
   "iron-sword": {
     id: "iron-sword",
     textureKey: CF_TOOL_SHEETS.ironSword.textureKey,
     actionState: "attack",
     cols: 4,
-    rows: { forward: 0, right: 1, back: 2 },
+    rows: { forward: 0, right: 3, back: 6 },
     fps: 14,
   },
   // Iron_Tools: 12 rows × 6 cols. Verified in-game: axe lives in rows 0-2,
