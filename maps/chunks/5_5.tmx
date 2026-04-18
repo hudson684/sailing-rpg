@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="4">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="1">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
  <tileset firstgid="4097" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <tileset firstgid="4607" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx"/>
@@ -7,7 +7,7 @@
  <tileset firstgid="5092" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass - coast.tsx"/>
  <tileset firstgid="6078" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx"/>
  <tileset firstgid="7064" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Tilesets-GL2SA.tsx"/>
- <layer id="7" name="ocean" width="32" height="32">
+ <layer id="7" name="Ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMA6B1eP9SS7QeR8FeUlVVVfX1AZnYlC4=
   </data>
@@ -47,30 +47,5 @@
    eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
   </data>
  </layer>
- <objectgroup id="6" name="objects">
-  <object id="1" type="item_spawn" x="432" y="592">
-   <properties>
-    <property name="itemId" value="plank"/>
-    <property name="quantity" type="int" value="3"/>
-    <property name="uid" value="b6c79dd1-c6f5-4641-94a2-7ad154f2fbb8"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="2" type="item_spawn" x="624" y="1008">
-   <properties>
-    <property name="itemId" value="fish"/>
-    <property name="quantity" type="int" value="1"/>
-    <property name="uid" value="a9b9fdd3-e84b-4a13-9e6f-9ae6edd7b7cb"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="3" type="item_spawn" x="784" y="784">
-   <properties>
-    <property name="itemId" value="coin"/>
-    <property name="quantity" type="int" value="5"/>
-    <property name="uid" value="d894222c-e579-4e17-9315-19efaf189f41"/>
-   </properties>
-   <point/>
-  </object>
- </objectgroup>
+ <objectgroup id="6" name="objects"/>
 </map>

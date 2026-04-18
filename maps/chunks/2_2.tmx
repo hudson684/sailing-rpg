@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="8" nextobjectid="1">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="1">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
+ <tileset firstgid="226" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <layer id="7" name="ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMBKHrn+4jrcdQcNVUVVXV1w8WeEAu
+  </data>
+ </layer>
+ <layer id="8" name="beach" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJzll1ly1EAQRLs/gJvYgptoxElAXAUOqX27g9Ux+aJSY8OX4QdHdGgsqbasyqyZlP7vv4/59fmS/1389TzHeebzLOdpztif38jp01/KaTjPrnM7Y7T5/rk+r2O6n9sbOb1XPlu6115OwaHgMSn+pHslfrlWOd59L4yIU2IU/Ef59/hduuNS7g0pMOmVK+8/5sQcPf0hz9LvRr7wt+v+ZvkQk75Mwq68uwi3YtMZZuTzLJtVvr5a/F644p+Ynd7drP5NddbCqlMeq54P8rHKRy8fYFbilOPxD8VohQE1tYoBJ/DTaEar/LpecjyU1yh/P877P8/zXTYev1I9h+LSgyaHD+aAWRgsJrlOsh0sz0U+ifdNefyy+Jv1rc0RFz4Ouj+a/yVFneS3GL59inqYg99pGrWu8nET1r31nNkE40k4jMqnkj0zyNxQf7n/Vg5POXhW3q2V/01XtKE33MF+eIhf5cCdmYCzaAc5fDBeoCdoDDWifbXdh4uVzRp2aGadgzNwCd7swuFZuU7yBZfgEFy45eD5YX0CU2aVOIv1c05XXXEewjNyJz7zRt+48rnNUf8qm1oxmhz9G2WzKSbP0ddNPsCtNc2AU/hCa5xfaENj+aAV84PvPgVmaEabg2s8Ywege+CHDqNLs+rebQ7hDHhQ82Lx2au93fM9R08Gi+E673rKDqhz9Biu47ezvFrDcNaVGRv0bpeuO997h85wWuslMwKHqKNR/3wO1hTz4bPA3nG9YA52s1tTcOtI1931qBeT+QbPOYVOoeXkzjx53swRPaIf/n8n28HqHM0nfIRXc4q6yKcynrseocd1Di0jJrMLh8EAHuwWj/3l9YE5fnjGPE82L+yCxrgNN9FudjJ21IidzyL7/rDnrWHAnIMfuO6qHcz8u1ObQ7/gPj0Bo8HsmeHO/DKPs/lHe9E5nlX5mgta3qfoU2++0RjypSa0CBvPnV2GL/aga6HnTT/BgZmgx+y1OseOxhc1PPaaGrChf+xAuMVnZpXeO0f3FBpPfeRAj2rDlr3gc0Le/t0HjcC+zleeY8dcs4vRYTjjesfcwAl+m8A/vm/AYXBAm/A/WJw1hQ7ym4/fNK6L4ME8cQ9tB2vi8B77a0rXOfXvrcwctbwANUJNMw==
   </data>
  </layer>
  <layer id="1" name="ground" width="32" height="32">
