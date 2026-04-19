@@ -1,5 +1,9 @@
+import { lazy } from "react";
 import { useSettingsStore } from "../game/store/settingsStore";
-import { CharacterCustomizer } from "./CharacterCustomizer";
+
+const CharacterCustomizer = lazy(() =>
+  import("./CharacterCustomizer").then((m) => ({ default: m.CharacterCustomizer })),
+);
 
 /** First-run wrapper around CharacterCustomizer (`mode="create"`). */
 export function CharacterCreator() {
