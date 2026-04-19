@@ -386,6 +386,15 @@ export class WorldScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
     this.cameras.main.setZoom(this.zoomTarget);
 
+    // Keep the camera viewport in sync with the canvas when it resizes
+    // (window resize, orientation change, mobile URL-bar collapse). Without
+    // this the main camera stays at its initial size and anything past it
+    // renders as the WebGL clear colour (black).
+    this.scale.on("resize", this.onScaleResize, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off("resize", this.onScaleResize, this);
+    });
+
     this.keys = {
       up: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
       down: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),
@@ -1814,6 +1823,10 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     return true;
+  }
+
+  private onScaleResize(gameSize: Phaser.Structs.Size) {
+    this.cameras.main.setViewport(0, 0, gameSize.width, gameSize.height);
   }
 
   private stepZoomKeyboard(dir: 1 | -1) {

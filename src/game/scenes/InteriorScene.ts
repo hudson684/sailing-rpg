@@ -125,6 +125,14 @@ export class InteriorScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
     this.cameras.main.setBackgroundColor("#1a1208");
 
+    // Track canvas resizes (window/orientation change). Otherwise the main
+    // camera viewport stays at its initial size and any extra canvas area
+    // renders as the WebGL clear colour (black).
+    this.scale.on("resize", this.onScaleResize, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off("resize", this.onScaleResize, this);
+    });
+
     // Interior NPC reconciler + walkability provider.
     this.npcReconciler = new SpriteReconciler<NpcSprite>(
       this,
@@ -395,6 +403,10 @@ export class InteriorScene extends Phaser.Scene {
       stamina: Math.round(stamina.current),
       staminaMax: STAMINA_MAX,
     });
+  }
+
+  private onScaleResize(gameSize: Phaser.Structs.Size) {
+    this.cameras.main.setViewport(0, 0, gameSize.width, gameSize.height);
   }
 
   private stepZoomKeyboard(dir: 1 | -1) {
