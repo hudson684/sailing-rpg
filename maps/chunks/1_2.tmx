@@ -1,9 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="8" nextobjectid="1">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="18" nextobjectid="34">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
  <tileset firstgid="226" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <tileset firstgid="736" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - no thick foam.tsx"/>
  <tileset firstgid="1246" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - no thick foam - Godot.tsx"/>
+ <tileset firstgid="1664" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
+ <tileset firstgid="2174" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx"/>
+ <tileset firstgid="6134" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass - coast.tsx"/>
+ <tileset firstgid="7120" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass - transparency.tsx"/>
+ <tileset firstgid="11080" source="../themes/The Village/TiledMap Editor/tilesets/Free_Premade_houses.tsx"/>
+ <tileset firstgid="14152" source="../themes/The Village/TiledMap Editor/tilesets/house-decorations.tsx"/>
+ <tileset firstgid="17544" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses.tsx"/>
+ <tileset firstgid="21640" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses2.tsx"/>
+ <tileset firstgid="25736" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses3.tsx"/>
+ <tileset firstgid="27848" source="../themes/The Village/TiledMap Editor/tilesets/props.tsx"/>
+ <tileset firstgid="29128" source="../themes/The Village/TiledMap Editor/tilesets/roofs1.tsx"/>
+ <tileset firstgid="33224" source="../themes/The Village/TiledMap Editor/tilesets/roofs1_intersections_wall-width10.tsx"/>
+ <tileset firstgid="37320" source="../themes/The Village/TiledMap Editor/tilesets/roofs2.tsx"/>
+ <tileset firstgid="41416" source="../themes/The Village/TiledMap Editor/tilesets/roofs2_intersections_wall-width10.tsx"/>
+ <tileset firstgid="45512" source="../themes/The Village/TiledMap Editor/tilesets/side_roofs_details_extrusion.tsx"/>
+ <tileset firstgid="49608" source="../themes/The Village/TiledMap Editor/tilesets/side_roofs_details_extrusion2.tsx"/>
+ <tileset firstgid="53704" source="../themes/The Village/TiledMap Editor/tilesets/tilesets-village.tsx"/>
+ <tileset firstgid="54190" source="../themes/The Village/TiledMap Editor/tilesets/Update 1.2 - recolored roof.tsx"/>
+ <tileset firstgid="57070" source="../themes/The Village/TiledMap Editor/tilesets/walls1.tsx"/>
+ <tileset firstgid="61166" source="../themes/The Village/TiledMap Editor/tilesets/walls2.tsx"/>
+ <tileset firstgid="65262" source="../themes/The Village/TiledMap Editor/tilesets/walls3.tsx"/>
+ <tileset firstgid="69358" source="../themes/The Village/TiledMap Editor/tilesets/walls4.tsx"/>
+ <tileset firstgid="73454" source="../themes/The Village/TiledMap Editor/tilesets/walls5.tsx"/>
+ <tileset firstgid="77550" source="../themes/The Village/TiledMap Editor/tilesets/walls-floor1.tsx"/>
+ <tileset firstgid="81646" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Tilesets-GL2SA.tsx"/>
+ <tileset firstgid="82350" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2.tsx"/>
+ <tileset firstgid="85870" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet1.tsx"/>
+ <tileset firstgid="89390" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx"/>
+ <tileset firstgid="89650" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx"/>
+ <tileset firstgid="90636" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass to water - godot.tsx"/>
+ <tileset firstgid="91284" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx"/>
+ <tileset firstgid="92270" source="../themes/Grass Land/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx"/>
  <layer id="7" name="ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMBKHrn+4jrcdQcNVUVVXV1w8WeEAu
@@ -11,7 +43,37 @@
  </layer>
  <layer id="1" name="beach" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   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
+   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
+  </data>
+ </layer>
+ <layer id="8" name="grass" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztVktu1EAQNQsycQfBwo6UBdwAIk3WIQPiDIEdG1gwa5jkCgRCDoCQYE0SjgAWiAMgFPb8bgC2kVhQpa6in9+MMwoLVimp5B573K/qvdfdzrLTOI3+WMiz7LPlYv7/8e8L5gPJLcmR5LV/rOFhkWU3lmNel9wp4tVjXeYdUI/6+yrgew0n5UGx30jWkqtlllV2bYv4fAFwRnnC3bJ7E8kDGx+coAbF3TFsxWzt2thVc92wNmzuiaVjH0ruw+8Nu24T/s3bZ/6OXxu3d8rYp/ftWRkXWsd3wFkJEWsCuCOrb2LYXsfIPDmwq/vih/XbQK+1ZQX3Wrt+AZwBYDnuJcmjkPKW1eD1OW8XQ+K3hvlR8wpq0Xv6/GkZa/hquQ86KM6azLu0lGWPZbwrOQzJh2eNM81X+XSP3mcLfsP+dbwoOl0pkx4vQQetYyzj84K/KePfku9Br295mhv95eMauPD5vW+vQwNrYF1+Sb7NI/4ecKR8u7cwGcPHddHVx595/CSPtFCDanBOOHgekke28zQn+5o5QD1w/ddFwr9bRi+gT7yGF4L7xLQ/NA6U+wawWeuaasDnzL9HWE7vo38e5dF/2r9rzr7i97wPXPfoP9eL8dlH+l/n/15IGLim0NPYK+OiH1l/9wBy5DjK/6b1jxhVMe03XO910dWygZzV/4cyroPVsust51/1R12xT/QZehCx/b0W6uTwtYjrV/t/Z/1XhI9nWdWD4XywX7l/j8u2FnzONfP/Xj6tJfKE2rL3cc9Fv/bFM6hxbP0PQ9dXPidrwfcqqrNP/1k6VMa/ngHD0OWSPYfex37xyvvVcfHR/jcG/zfUI69H9F8DdfH+y/vfrND9wP13wfZffLctuv5GTnB/8FrZj8fpr+E+VPxd8j/q2LfP4j6P+wnyMy/Uh3oGfgrx7G0Jv+nB4O8AXjP4/TnPA+xdnhf3e/6+QR+09N48fP2O9G851A/P+lnnPnoUueG1M89/eB7wmYgebKAG3P8q+j/XO69/5J75ZS3Z81gb9sB7wB8QQxP1
+  </data>
+ </layer>
+ <layer id="11" name="dirt" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztUj1PAkEQ3Z8AHImYzFKIDT+GoK2dtv4QStFGe8KvAEJnqPzqzo8/IdEW32RmcssVJyZc5bzkZXbn3ryZ3b0QHA6Hw+FwOHbHgEJ4jCF0EE+pWnuwg+avWMPvBf0/EW8RHxLyXNaP5zzH/iLut386xxwcgUPwW+f6Ijn3HdYLqq8/Ywb/5yhz9PVNDknydkcnNbxBGXwXT1G4THrZHMua+zsc+8IR/tUe+BqFtu7RNnPNHZPUpPq8VMf7PPGowhS6rBvCDXRtxDOSvZFzLXBMwkvoJ7HIr7SOvzU1ZurTVI8qXJH4NLqFPlNf9rDI3691PabC3/q2tL6tZ1kpG7/0v4dmA77HghvapuU/wDeNRtOn+XLtf8cPdVddIg==
+  </data>
+ </layer>
+ <layer id="12" name="sand overlap" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFIwnMU2BgUFRiYFAG4kUK9LefR5GBQV4Jgl8q0t/+UUAbsCOFkYE/k5FhrzADg4My/e2Pk2Bg0BJhYPAHpqlnA2R/OtB+GRX62z0KRgE1gJ3ywORdGHikPDB5dzCBfKD/rQcwDESB5Zf4AJdhlgMcBneBdj8cBOkQlBaKBzgcBjotDBSwHOCwB+VDm0HghpEa/yAwEvIfAEZEGDc=
+  </data>
+ </layer>
+ <layer id="10" name="gravel" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztVr1Kw1AUvrUWBBFUHNtCktrqC7gKOll1Fynq5uQTuNTqruLPIg4+RVsFR5Ggi4Og1VewKoiDQ/0OOZfcBtskt5Eq9MDH/cm55/e7SYToyV+QL1OIhtk9/2eWEBtW9/z/FykaQiwY+ufvUON7YDCjdz4Ljkx0wJNZ+P3E+c2A/vMd5qvKAHxewvcQxtOAXFuB/jb890N/xyeORZ/nJ7AxE7LuVO8cUDecONrVIheiN2F59ALdPsT/rtmLD7OZczdYX2jaKnI/CAlgXsmlFV+m4Xtd6XkZOseaPD7CuSrOlxjnSm8kX9rVlmIch96tj3/S+4lzZfZZ8sQwCXtbvG4VA9kknTfg0Mc/5UI2E1Yz/4mTBaCi+CZUDbcuFcM9q+Zgm/48pf7GcW7OcHSJd17+Ex/rnvzVecVw46M4wnD9gPNT/VHOMau5Zjbv9TFiHGeVY3jlGGgMy3XKzxtDEClzzjIGGtdMvXsrYwh6T4rMLdkLWf+wOaiSVWLPK/c+zqNqV74rZU8KpluH1Qj+beg+yLwqbLddbWzT5YXue9Nrj2zJ70FUeemI/B508i/Qk/CylBTiMeXigWHxvqU8zySj978Lm3vASFqIZZ6PYn6NcTjtrPeBMcynUtH7v4LtBvAM20+MWsrZI9R4Tc/tX8i/J9HKN+SLkok=
+  </data>
+ </layer>
+ <layer id="13" name="docks" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApGwSgYBaNgZIE/dowMsvaMDHJAPBDAEGhvERBXj9pPd7sFgXYGQu3/DU0HILwfiGsdGBnqHGjrJpjfseG5QLvnDXP7bYD22EKx1ADYjwwqB9h+UFhEQPF9IN4LtHsfje0HAH97KUA=
+  </data>
+ </layer>
+ <layer id="9" name="tall grass" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztVNsNgkAQ3PjNQTTagbEGSxC1AzVWAJagxg58VKBiC8YW7MBXCagduJtbfgigQS76sZNMDhLY2Z0dABAI/htrC6ClAEbWb/RPqPtE/ZtBfZrRZ8bnJP0q6teUOf0u1u7ZAEPkLKZTxvuOQW2afYMcoPYRGeD1LsNrj/Pg85n17Dt4rH1FnpF7rFdydA9peSOvpkzKRfBFH1SL5p4zH0rvupKRN3pnonS/tLML5yPPjsqsBTjznTMQsCdpHpB+39aerez82hFc7mGL9UI8m46u30jIYrSvha39L+q7oB7GMbZjtaOc1nn2ZUJ/JkG+h+z9ocDZP4XLnkT+mPwnCAQCgUAgMIcXBg051g==
   </data>
  </layer>
  <layer id="2" name="overlay" width="32" height="32">
@@ -21,17 +83,56 @@
  </layer>
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJzt1stKAlEcx/H/WVTC9DitczJbCK4kCGfKopuQbYuKFlnZRaObT5LdXGqXx+jeg/QVbaOlixnOoTg/+OxGvwxnBkbETsdmx5XMwdSOaZ8Y7OvePPe6YPB+T2mfGegv0syG1HUTIiOIYRRxjCW6/+acdjmk/hatPLaxg10UevTDXI1WHXe4xwMeNfaDbslXkvM7zyLqKXE9c+9Gjvaywb6d3X/dQFJJJGn23RrS0E/T8OBjElPIYBozGvoFGnvYxwEOUUQJRxr6FzQquMQVrnGDW1QD9Nu/H/pSSvpTnf/3ROMZL3jFG97xgc8A/V7fDyuOyEbLKqIYxqbz87Wx1jXuL9fY/a01znQNcay3nen3szExKFJxmuyZd98XYGFJvg==
+  </data>
+ </layer>
+ <layer id="16" name="grass_and_bushes" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztksERQDAURH+qQCu4oYdIA4l60A3qQRV2xtV9Dftm3vll9sdMCCGEEGyy3lkOC8igQbeFHan/BnQDs8U7W+HmOW/Y0T3gSep/Ad3wRjv8j4itExxIm4/oTnB+6JfBWQXrwPsPEe0EL+LiI8o=
   </data>
  </layer>
  <layer id="4" name="props_high" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJztz8kNgDAMBVGHrRv2NrikUOgHqmGqSASaJ8352xGSJEn6gnSkaKiljnoaqJSRrYlmWmiljfaCN5Rw5hRXrvfTzfZTcV/Sf71cowml
   </data>
  </layer>
  <layer id="5" name="roof" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJzt1ktOwlAYhuHTAlOoXHaDXEQTugTbRI3CPrhOhKBuRiuXBBA2ArWFXfgmMDOxCaStg/9LnvGbnDM4RynZv11dKQ06EkgiVY8uX6FVxRVquMZNhP0WrTY66KKHfoT9Oa0FlvjCCusz+4+3mnpCA038OZP7h44EkkiZwQ3H0tQnxphgipl1aI1ovuAVb0H9E+fS+oYHHzvsj/0xzQmmmIXUN2xNXSCLHPIo2IeWR9PHDvuQ+kValyihjAqqx36Wc8ghj4IVTl8mk8lkMtnv3fHu3+MhpPc/aM90BxjG1H+n+wEnpv6G7hZuTP00/64MDPl/qR8U1US2
   </data>
  </layer>
+ <layer id="15" name="roof two" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztxrENACAIADA8k5WE/19wIzygUzs1Avil8sx7HQAA4LULoJQBfA==
+  </data>
+ </layer>
+ <objectgroup id="17" name="COLLISION">
+  <object id="2" x="33.3333" y="712" width="93" height="6"/>
+  <object id="3" x="113" y="712.667" width="12.3333" height="133.333"/>
+  <object id="5" x="112.667" y="832.333" width="100.333" height="13.3333"/>
+  <object id="6" x="98" y="992" width="111.667" height="14.6667"/>
+  <object id="7" x="95.6667" y="932.333" width="17.3333" height="61.6667"/>
+  <object id="8" x="-0.333333" y="931.333" width="95.3333" height="13"/>
+  <object id="10" x="7" y="896.667" width="7.66667" height="11.3333"/>
+  <object id="11" x="7" y="864.333" width="7" height="12"/>
+  <object id="12" x="6.66667" y="832.667" width="8.66667" height="13.6667"/>
+  <object id="13" x="38.6667" y="833.333" width="7.66667" height="12"/>
+  <object id="14" x="39" y="801.333" width="7" height="14"/>
+  <object id="15" x="39.3333" y="767" width="6.33333" height="13.3333"/>
+  <object id="16" x="39.3333" y="735.667" width="6.66667" height="13"/>
+  <object id="17" x="268.25" y="767.75" width="17.75" height="18.5"/>
+  <object id="19" x="472" y="664" width="199" height="82.5"/>
+  <object id="20" x="485.5" y="730.5" width="27.5" height="29.5"/>
+  <object id="21" x="631" y="731.5" width="32.5" height="31"/>
+  <object id="22" x="666.5" y="742" width="29.5" height="30.5"/>
+  <object id="24" x="673" y="676.5" width="29.5" height="26.5"/>
+  <object id="25" x="252.333" y="253.917" width="132.333" height="85.4167"/>
+  <object id="26" x="754.25" y="351.25" width="29.75" height="27.75"/>
+  <object id="27" x="943.5" y="352" width="18.5" height="33"/>
+  <object id="28" x="982.182" y="962" width="20" height="34.1818"/>
+  <object id="29" x="139.818" y="782.364" width="36.3636" height="25.0909"/>
+  <object id="30" x="652.5" y="239.75" width="33.75" height="26.25"/>
+  <object id="31" x="710.5" y="177" width="53.75" height="36"/>
+  <object id="32" x="842" y="72.25" width="44" height="46.25"/>
+ </objectgroup>
 </map>

@@ -20,12 +20,12 @@
  </layer>
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzbcNwgAQRuGr7RHIMAzBhGHIMAzBhEGgM5lBKE2GtwC44Rp0T/qqk+4XsSzLsqzoFo7I0vl8D77cftEp4n+ovB9zReJIIIkU0sggi5yru5/nfwFFlOChjAqqqCnv1/nfQBMttNFBFz30lfcH/B9ihDF8TDDFDHPl/YD/K6yxwRY77HHAUXk/5P8ZF1xxwx0PPPFS3rcsy7L+ozcbxyR7
+   eJztzbcNwmAQhuGr7cIDkGEYMgxDhmHIMAihMZlBKE2Gt6MCS4hfNPdKT3XSfSKapmma5t/EEpla7+/uh9svOvj89wzvB2yRIEIII4IoYogjYZvdT/I/hTQyyCKHPAooGt4v8b+MCqqooY4GmmgZ3m/zv4MueuhjgCFGGBved/m/wBIrrLHBFjvsDe97/D/ihDMuuOKGOx6G9//ZzBGZO9/fNU3TtFdPkaonzQ==
   </data>
  </layer>
  <layer id="4" name="props_high" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzcENgCAUwNB/Zv+RRIRpUJGzHcETiUlf0nMjJEn6ZksRmXYqdFClltb8O5+TLrpp0ENz0V+SJOnPXsuNDKM=
+   eJztzcsNglAURdE7JiSvJhn5g05wpKJ2ovWACtUAfsbsCoBI8mLC2cka3eQeM6WUUmpceWBW4I4HnihRBX72a3YatHjhjQ++nvaXodkKa2ywRYwk9LO/Z+eAIzKccMbF0/5cWzizyP1+n1rK713P/6H71K78vvX8H7orpZT6nzoBihhv
   </data>
  </layer>
  <layer id="5" name="roof" width="32" height="32">

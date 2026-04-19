@@ -183,8 +183,16 @@ export function droppedItemsSaveable(
 
 // ─── Scene state (mode) ───────────────────────────────────────────────────
 
+const InteriorReturnSchema = z.object({
+  interiorKey: z.string().min(1),
+  returnWorldTx: z.number().int(),
+  returnWorldTy: z.number().int(),
+  returnFacing: z.string(),
+});
+
 const SceneDataSchema = z.object({
-  mode: z.enum(["OnFoot", "AtHelm", "Anchoring"]),
+  mode: z.enum(["OnFoot", "AtHelm", "Anchoring", "Interior"]),
+  interior: InteriorReturnSchema.nullable().optional(),
 });
 
 export function sceneSaveable(scene: SceneState): Saveable<z.infer<typeof SceneDataSchema>> {

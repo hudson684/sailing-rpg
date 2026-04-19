@@ -5,13 +5,34 @@
       "name": "Mera's General Goods",
       "greeting": "What'll it be, sailor?",
       "stock": [
-        { "itemId": "sword", "restockQuantity": 1 },
-        { "itemId": "pickaxe", "restockQuantity": 1 },
-        { "itemId": "axe", "restockQuantity": 1 },
-        { "itemId": "fishing_rod", "restockQuantity": 1 },
-        { "itemId": "rope", "restockQuantity": 10 },
-        { "itemId": "plank", "restockQuantity": 10 },
-        { "itemId": "health_potion", "restockQuantity": 5 }
+        {
+          "itemId": "sword",
+          "restockQuantity": 1
+        },
+        {
+          "itemId": "pickaxe",
+          "restockQuantity": 1
+        },
+        {
+          "itemId": "axe",
+          "restockQuantity": 1
+        },
+        {
+          "itemId": "fishing_rod",
+          "restockQuantity": 1
+        },
+        {
+          "itemId": "rope",
+          "restockQuantity": 10
+        },
+        {
+          "itemId": "plank",
+          "restockQuantity": 10
+        },
+        {
+          "itemId": "health_potion",
+          "restockQuantity": 5
+        }
       ]
     }
   ]

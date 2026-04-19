@@ -11,6 +11,13 @@ import iconHat from "../../ui/icons/inventory/item_hat.png";
 import iconCoat from "../../ui/icons/inventory/item_coat.png";
 import iconBoots from "../../ui/icons/inventory/item_boots.png";
 import iconSword from "../../ui/icons/inventory/item_sword.png";
+import iconSwordBasic from "../../ui/icons/inventory/item_sword_basic.png";
+import iconPickaxe from "../../ui/icons/inventory/item_pickaxe.png";
+import iconAxe from "../../ui/icons/inventory/item_axe.png";
+import iconFishingRod from "../../ui/icons/inventory/item_fishing_rod.png";
+import iconHopeiteOre from "../../ui/icons/inventory/item_hopeite_ore.png";
+import iconSlimeGoo from "../../ui/icons/inventory/item_slime_goo.png";
+import iconHealthPotion from "../../ui/icons/inventory/item_health_potion.png";
 import iconRing from "../../ui/icons/inventory/item_ring.png";
 
 function emojiIcon(glyph: string): string {
@@ -35,13 +42,13 @@ export const ITEM_ICONS: Record<string, string> = {
   leather_boots: iconBoots,
   cutlass: iconSword,
   signet_ring: iconRing,
-  sword: emojiIcon("⚔️"),
-  pickaxe: emojiIcon("⛏️"),
-  axe: emojiIcon("🪓"),
-  fishing_rod: emojiIcon("🎣"),
-  hopeite_ore: emojiIcon("🪨"),
-  slime_goo: emojiIcon("🟢"),
-  health_potion: emojiIcon("🧪"),
+  sword: iconSwordBasic,
+  pickaxe: iconPickaxe,
+  axe: iconAxe,
+  fishing_rod: iconFishingRod,
+  hopeite_ore: iconHopeiteOre,
+  slime_goo: iconSlimeGoo,
+  health_potion: iconHealthPotion,
 };
 
 export function iconForItem(id: string): string {

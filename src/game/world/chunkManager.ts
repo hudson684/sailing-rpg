@@ -1,7 +1,14 @@
 import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
 import { TileRegistry } from "./tileRegistry";
-import { parseSpawns, type ParsedSpawns, type ShipSpawn, type DockSpawn, type ItemSpawn } from "./spawns";
+import {
+  parseSpawns,
+  type ParsedSpawns,
+  type ShipSpawn,
+  type DockSpawn,
+  type ItemSpawn,
+  type DoorSpawn,
+} from "./spawns";
 import { ShapeCollider } from "./shapeCollision";
 
 export interface WorldManifest {
@@ -15,6 +22,10 @@ export interface WorldManifest {
   /** Runtime-only: all tileset image paths referenced by any chunk, relative to
    *  public/maps/. Populated by the map build; not authored by hand. */
   tilesetImages?: string[];
+  /** Map of interior keys → TMJ path (relative to public/maps/). Populated by
+   *  the map build pipeline from maps/interiors/*.tmx. Optional: a world
+   *  without any interior buildings will simply omit this. */
+  interiors?: Record<string, { path: string }>;
 }
 
 export interface Chunk {
@@ -312,6 +323,7 @@ export class ChunkManager {
     let ship: ShipSpawn | null = null;
     let dock: DockSpawn | null = null;
     const items: ItemSpawn[] = [];
+    const doors: DoorSpawn[] = [];
 
     for (const key of this.manifest.authoredChunks) {
       const [cxStr, cyStr] = key.split("_");
@@ -334,11 +346,12 @@ export class ChunkManager {
         dock = spawns.dock;
       }
       items.push(...spawns.items);
+      doors.push(...spawns.doors);
     }
 
     if (!ship) throw new Error("No ship_spawn object in any authored chunk.");
     if (!dock) throw new Error("No dock object in any authored chunk.");
-    return { ship, dock, items };
+    return { ship, dock, items, doors };
   }
 
   isWater(gtx: number, gty: number): boolean {
@@ -362,6 +375,13 @@ export class ChunkManager {
     return chunk.registry.isAnchorable(gtx - chunk.cx * s, gty - chunk.cy * s);
   }
 
+  shipTileState(gtx: number, gty: number): "water" | "beach" | "blocked" {
+    const chunk = this.chunkAtGlobalTile(gtx, gty);
+    if (!chunk) return "water";
+    const s = this.manifest.chunkSize;
+    return chunk.registry.shipTileState(gtx - chunk.cx * s, gty - chunk.cy * s);
+  }
+
   isLandWalkable(gtx: number, gty: number): boolean {
     return !this.isWater(gtx, gty) && !this.isBlocked(gtx, gty);
   }
@@ -381,6 +401,12 @@ export class ChunkManager {
     const chunkPxX = chunk.cx * s * TILE_SIZE;
     const chunkPxY = chunk.cy * s * TILE_SIZE;
     return chunk.shapes.isBlockedAtLocalPx(gpx - chunkPxX, gpy - chunkPxY);
+  }
+
+  /** Iterate every loaded chunk. Used by callers that need to bulk-toggle
+   *  visibility (e.g. hiding the world while inside a building). */
+  loadedChunks(): Iterable<Chunk> {
+    return this.chunks.values();
   }
 
   authoredBoundsTiles(): { minTx: number; minTy: number; maxTx: number; maxTy: number } {

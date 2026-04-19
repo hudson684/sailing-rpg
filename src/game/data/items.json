@@ -134,7 +134,7 @@
       "slot": "mainHand",
       "stats": { "attack": 3 },
       "visualLayer": { "layer": "tool", "variant": "iron-sword" },
-      "value": 80
+      "value": 3
     },
     {
       "id": "pickaxe",

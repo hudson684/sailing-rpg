@@ -1,6 +1,7 @@
 import { selectHud, selectToasts, useUIStore } from "./store/uiStore";
 import { computeMaxHp, useGameStore } from "../game/store/gameStore";
 import { Hotbar } from "./Hotbar";
+import heartIcon from "./icons/hud/hud_heart.png";
 import "./Hud.css";
 
 export function Hud() {
@@ -15,7 +16,7 @@ export function Hud() {
   return (
     <div className="hud">
       <div className="hud-health" role="status" aria-label={`Health ${hpCurrent} of ${hpMax}`}>
-        <div className="hud-health-icon" aria-hidden="true">♥</div>
+        <img className="hud-health-icon" src={heartIcon} alt="" aria-hidden="true" />
         <div className="hud-health-bar">
           <div className="hud-health-fill" style={{ width: `${pct * 100}%` }} />
           <div className="hud-health-text">{hpCurrent} / {hpMax}</div>
@@ -24,12 +25,12 @@ export function Hud() {
 
       <Hotbar variant="hud" />
 
-      {state.prompt && <div className="hud-prompt">{state.prompt}</div>}
+      {state.prompt && <div className="px-panel hud-prompt">{state.prompt}</div>}
 
       {toasts.length > 0 && (
         <div className="hud-toasts">
           {toasts.map((t) => (
-            <div key={t.id} className={`hud-toast hud-toast-${t.kind}`}>
+            <div key={t.id} className={`px-panel hud-toast hud-toast-${t.kind}`}>
               {t.text}
             </div>
           ))}

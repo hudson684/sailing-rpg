@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="8" nextobjectid="1">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="1">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
+ <tileset firstgid="226" source="../themes/The Village/TiledMap Editor/tilesets/Free_Premade_houses.tsx"/>
+ <tileset firstgid="3298" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses.tsx"/>
+ <tileset firstgid="7394" source="../themes/The Village/TiledMap Editor/tilesets/roofs2.tsx"/>
  <layer id="7" name="ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMBKHrn+4jrcdQcNVUVVXV1w8WeEAu
@@ -14,6 +17,11 @@
  <layer id="2" name="overlay" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+  </data>
+ </layer>
+ <layer id="8" name="buildings_low" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJzt0UENwCAUBNEPCGkd0NQYpMYgNQapgq6LuewYeIeJYKsp4kqc32R30B+yJ+gv2Rv0a9b/zPlNdgf9IXuC/pK9Qb8W/S+c32R30HeO7D1Y/4P9+2T9B/Zf2HfOOcf0A97lDfM=
   </data>
  </layer>
  <layer id="3" name="props_low" width="32" height="32">

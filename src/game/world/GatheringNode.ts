@@ -22,7 +22,28 @@ export interface NodeDef {
   drop: { itemId: ItemId; quantity: number };
   /** If true, the node's footprint blocks player movement while alive. */
   blocks: boolean;
+  /** Pixel offset of the collision box center from the node anchor. */
+  collisionOffsetX?: number;
+  collisionOffsetY?: number;
+  /** Pixel offset applied to the depth-sort y (anchor.y + ySortOffset). */
+  ySortOffset?: number;
+  /** Optional animated sprite to render in place of the color rectangle. */
+  sprite?: NodeSpriteDef;
 }
+
+export interface NodeSpriteDef {
+  sheet: string;
+  frameWidth: number;
+  frameHeight: number;
+  frames: number;
+  frameRate: number;
+  scale?: number;
+  /** 0..1 vertical origin: 1 = bottom of sprite sits on node anchor. */
+  originY?: number;
+}
+
+export const nodeSpriteTextureKey = (defId: string) => `node_${defId}`;
+export const nodeSpriteAnimKey = (defId: string) => `node_${defId}_idle`;
 
 export interface NodeInstanceData {
   id: string;
@@ -42,14 +63,14 @@ export const NODE_INTERACT_RADIUS = TILE_SIZE * 1.4;
 export class GatheringNode {
   readonly id: string;
   readonly def: NodeDef;
-  readonly x: number;
-  readonly y: number;
+  x: number;
+  y: number;
   private hp: number;
   private alive = true;
   private respawnAt = 0;
   private readonly container: Phaser.GameObjects.Container;
   private readonly body: Phaser.GameObjects.Rectangle;
-  private readonly label: Phaser.GameObjects.Text;
+  private readonly sprite?: Phaser.GameObjects.Sprite;
   private readonly hpBar: Phaser.GameObjects.Rectangle;
   private readonly hpBarBg: Phaser.GameObjects.Rectangle;
 
@@ -61,18 +82,31 @@ export class GatheringNode {
     this.hp = def.hp;
 
     this.container = scene.add.container(this.x, this.y);
-    this.container.setDepth(this.y);
+    this.container.setDepth(this.y + (def.ySortOffset ?? 0));
 
     this.body = scene.add
-      .rectangle(0, 0, def.width, def.height, Phaser.Display.Color.HexStringToColor(def.color).color)
+      .rectangle(
+        def.collisionOffsetX ?? 0,
+        def.collisionOffsetY ?? 0,
+        def.width,
+        def.height,
+        Phaser.Display.Color.HexStringToColor(def.color).color,
+      )
       .setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(def.outlineColor).color);
-    this.label = scene.add
-      .text(0, -def.height / 2 - 8, this.shortLabel(), {
-        fontFamily: "monospace",
-        fontSize: "10px",
-        color: "#ffffff",
-      })
-      .setOrigin(0.5, 1);
+    if (def.sprite) {
+      const s = def.sprite;
+      const scale = s.scale ?? 1;
+      const originY = s.originY ?? 1;
+      // Place the sprite so its (0.5, originY) point sits at the bottom of
+      // the node footprint — that anchor lines up with the trunk base.
+      this.sprite = scene.add
+        .sprite(0, def.height / 2, nodeSpriteTextureKey(def.id))
+        .setOrigin(0.5, originY)
+        .setScale(scale);
+      const animKey = nodeSpriteAnimKey(def.id);
+      if (scene.anims.exists(animKey)) this.sprite.play(animKey);
+      this.body.setVisible(false);
+    }
     this.hpBarBg = scene.add
       .rectangle(0, def.height / 2 + 4, def.width, 3, 0x000000, 0.6)
       .setOrigin(0.5, 0);
@@ -81,17 +115,16 @@ export class GatheringNode {
       .setOrigin(0, 0);
     this.hpBarBg.setVisible(false);
     this.hpBar.setVisible(false);
-    this.container.add([this.body, this.label, this.hpBarBg, this.hpBar]);
-  }
-
-  private shortLabel(): string {
-    if (this.def.kind === "tree") return "🌳";
-    if (this.def.kind === "ore") return "⛰";
-    return "🐟";
+    this.container.add([this.body, this.hpBarBg, this.hpBar]);
+    if (this.sprite) this.container.addAt(this.sprite, 0);
   }
 
   isAlive(): boolean {
     return this.alive;
+  }
+
+  setVisible(visible: boolean): void {
+    this.container.setVisible(visible);
   }
 
   /** Pixel-rect of the node, used for player walkability when blocking. */
@@ -99,11 +132,13 @@ export class GatheringNode {
     if (!this.alive || !this.def.blocks) return false;
     const hw = this.def.width / 2;
     const hh = this.def.height / 2;
+    const cx = this.x + (this.def.collisionOffsetX ?? 0);
+    const cy = this.y + (this.def.collisionOffsetY ?? 0);
     return (
-      px >= this.x - hw &&
-      px <= this.x + hw &&
-      py >= this.y - hh &&
-      py <= this.y + hh
+      px >= cx - hw &&
+      px <= cx + hw &&
+      py >= cy - hh &&
+      py <= cy + hh
     );
   }
 
@@ -129,7 +164,7 @@ export class GatheringNode {
 
   private flash(scene: Phaser.Scene) {
     scene.tweens.add({
-      targets: this.body,
+      targets: this.sprite ?? this.body,
       alpha: 0.3,
       duration: 80,
       yoyo: true,
@@ -161,8 +196,16 @@ export class GatheringNode {
     this.hp = this.def.hp;
     this.container.setVisible(true);
     this.body.setAlpha(1);
+    this.sprite?.setAlpha(1);
     this.hpBar.setVisible(false);
     this.hpBarBg.setVisible(false);
+  }
+
+  setPositionPx(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+    this.container.setPosition(x, y);
+    this.container.setDepth(y);
   }
 
   destroy() {

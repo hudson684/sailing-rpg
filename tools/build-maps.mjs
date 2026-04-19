@@ -2,7 +2,7 @@
 // Run via `npm run maps`. Also copies referenced tileset images into
 // public/maps/ so the browser can fetch them alongside the TMJ.
 
-import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync, readdirSync } from "node:fs";
 import { inflateSync } from "node:zlib";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -13,6 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const mapsDir = path.join(repoRoot, "maps");
 const chunksDir = path.join(mapsDir, "chunks");
+const interiorsDir = path.join(mapsDir, "interiors");
 const publicMapsDir = path.join(repoRoot, "public", "maps");
 
 export { mapsDir, publicMapsDir };
@@ -29,9 +30,13 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   if (check) {
     // Fast CI mode: verify every spawn object has a uid and there are no
     // duplicates. Skips the TMX→TMJ emit so CI can run this cheaply.
-    const reports = stampUidsInDir(chunksDir, { check: true });
+    const chunkReports = stampUidsInDir(chunksDir, { check: true });
+    const interiorReports = stampUidsInDir(interiorsDir, { check: true });
+    const reports = [...chunkReports, ...interiorReports];
     const total = reports.reduce((n, r) => n + r.existingUids.length, 0);
-    console.log(`maps:check ok — ${total} uid(s) across ${reports.length} chunk(s).`);
+    console.log(
+      `maps:check ok — ${total} uid(s) across ${chunkReports.length} chunk(s) + ${interiorReports.length} interior(s).`,
+    );
   } else {
     buildAll();
   }
@@ -46,19 +51,40 @@ export function readManifest() {
   return JSON.parse(readFileSync(manifestPath, "utf8"));
 }
 
-/** Write public/maps/world.json with the given tileset-image union. */
-function writeManifest(manifest, tilesetImages) {
-  const outManifest = { ...manifest, tilesetImages: [...tilesetImages].sort() };
+/** Write public/maps/world.json with the given tileset-image union and
+ *  optional interior map index. */
+function writeManifest(manifest, tilesetImages, interiors) {
+  const outManifest = {
+    ...manifest,
+    tilesetImages: [...tilesetImages].sort(),
+    ...(interiors && Object.keys(interiors).length > 0 ? { interiors } : {}),
+  };
   const outManifestPath = path.join(publicMapsDir, "world.json");
   mkdirSync(path.dirname(outManifestPath), { recursive: true });
   writeFileSync(outManifestPath, JSON.stringify(outManifest));
+}
+
+/** List interior TMX basenames (without `.tmx`). Empty if dir absent. */
+function listInteriorKeys() {
+  try {
+    return readdirSync(interiorsDir)
+      .filter((f) => f.endsWith(".tmx"))
+      .map((f) => f.replace(/\.tmx$/, ""))
+      .sort();
+  } catch (err) {
+    if (err && err.code === "ENOENT") return [];
+    throw err;
+  }
 }
 
 export function buildAll() {
   // Stamp any missing uids into source TMX before reading for TMJ emit. New
   // uids land in the working tree — commit them alongside the Tiled changes
   // that introduced the objects.
-  const stampReports = stampUidsInDir(chunksDir, { check: false });
+  const stampReports = [
+    ...stampUidsInDir(chunksDir, { check: false }),
+    ...stampUidsInDir(interiorsDir, { check: false }),
+  ];
   const stampedTotal = stampReports.reduce((n, r) => n + r.stamped, 0);
   if (stampedTotal > 0) {
     console.log(
@@ -77,10 +103,20 @@ export function buildAll() {
     for (const img of summary.tilesetImages) tilesetImages.add(img);
     summaries.push(summary);
   }
-  writeManifest(manifest, tilesetImages);
+
+  const interiorKeys = listInteriorKeys();
+  const interiors = {};
+  for (const key of interiorKeys) {
+    const tmjRel = path.join("interiors", `${key}.tmj`);
+    const summary = buildMap(path.join("interiors", `${key}.tmx`), tmjRel);
+    for (const img of summary.tilesetImages) tilesetImages.add(img);
+    interiors[key] = { path: `interiors/${key}.tmj` };
+  }
+
+  writeManifest(manifest, tilesetImages, interiors);
   validateWorld(manifest, summaries);
   console.log(
-    `Wrote manifest + ${manifest.authoredChunks.length} chunk TMJ file(s); ${tilesetImages.size} tileset image(s).`,
+    `Wrote manifest + ${manifest.authoredChunks.length} chunk TMJ file(s) + ${interiorKeys.length} interior TMJ file(s); ${tilesetImages.size} tileset image(s).`,
   );
 }
 
@@ -102,7 +138,15 @@ export function refreshManifestImages() {
     const tmj = JSON.parse(readFileSync(tmjPath, "utf8"));
     for (const ts of tmj.tilesets ?? []) if (ts.image) tilesetImages.add(ts.image);
   }
-  writeManifest(manifest, tilesetImages);
+  const interiors = {};
+  for (const key of listInteriorKeys()) {
+    const tmjPath = path.join(publicMapsDir, "interiors", `${key}.tmj`);
+    if (!existsSync(tmjPath)) continue;
+    const tmj = JSON.parse(readFileSync(tmjPath, "utf8"));
+    for (const ts of tmj.tilesets ?? []) if (ts.image) tilesetImages.add(ts.image);
+    interiors[key] = { path: `interiors/${key}.tmj` };
+  }
+  writeManifest(manifest, tilesetImages, interiors);
 }
 
 /** Validate build-time invariants. Throws on any violation. */

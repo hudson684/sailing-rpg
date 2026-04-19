@@ -26,18 +26,51 @@ export interface ItemSpawn {
   quantity: number;
 }
 
-export type Spawn = ShipSpawn | DockSpawn | ItemSpawn;
+/** A door painted in a world chunk. Pressing E (or stepping on, depending on
+ *  variant) enters the named interior, placing the player at (entryTx, entryTy)
+ *  in interior-local tile coords. The door's own tile is the player's
+ *  return spot when leaving the interior. */
+export interface DoorSpawn {
+  kind: "door";
+  uid: string;
+  tileX: number;
+  tileY: number;
+  interiorKey: string;
+  entryTx: number;
+  entryTy: number;
+}
+
+/** A tile in an interior map that, when stepped on (or interacted with), exits
+ *  back to the world at the door's saved return position. */
+export interface InteriorExitSpawn {
+  kind: "interior_exit";
+  uid: string;
+  tileX: number;
+  tileY: number;
+  /** When true, requires E-press instead of auto-triggering on step. */
+  promptOnly: boolean;
+}
+
+export type Spawn = ShipSpawn | DockSpawn | ItemSpawn | DoorSpawn | InteriorExitSpawn;
 
 export interface ParsedSpawns {
   ship: ShipSpawn;
   dock: DockSpawn;
   items: ItemSpawn[];
+  doors: DoorSpawn[];
 }
 
 /** Lenient variant: ship/dock may be absent when parsing a single chunk. */
 export interface ChunkParsedSpawns {
   ship: ShipSpawn | null;
   dock: DockSpawn | null;
+  items: ItemSpawn[];
+  doors: DoorSpawn[];
+}
+
+/** Spawns parsed from a standalone interior map. */
+export interface InteriorParsedSpawns {
+  exits: InteriorExitSpawn[];
   items: ItemSpawn[];
 }
 
@@ -64,6 +97,7 @@ export function parseSpawns(
   let ship: ShipSpawn | null = null;
   let dock: DockSpawn | null = null;
   const items: ItemSpawn[] = [];
+  const doors: DoorSpawn[] = [];
 
   if (layer) {
     for (const raw of layer.objects) {
@@ -101,6 +135,30 @@ export function parseSpawns(
           });
           break;
         }
+        case "door": {
+          const interiorKey = String(props.interiorKey ?? "");
+          const uid = String(props.uid ?? "");
+          if (!interiorKey) {
+            throw new Error(`door at (${tileX},${tileY}) missing interiorKey property.`);
+          }
+          if (!uid) {
+            throw new Error(
+              `door at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+            );
+          }
+          const entryTx = Number(props.entryTx ?? 0);
+          const entryTy = Number(props.entryTy ?? 0);
+          doors.push({
+            kind: "door",
+            uid,
+            tileX,
+            tileY,
+            interiorKey,
+            entryTx,
+            entryTy,
+          });
+          break;
+        }
         default:
           break;
       }
@@ -110,7 +168,54 @@ export function parseSpawns(
   if (requireShip && !ship) throw new Error('Map is missing a ship_spawn object.');
   if (requireDock && !dock) throw new Error('Map is missing a dock object.');
 
-  return { ship, dock, items };
+  return { ship, dock, items, doors };
+}
+
+/** Parse the `objects` layer of an interior tilemap. Interior maps live in
+ *  their own coordinate space (no global offset) and are loaded one at a time. */
+export function parseInteriorSpawns(
+  tilemap: Phaser.Tilemaps.Tilemap,
+): InteriorParsedSpawns {
+  const layer = tilemap.getObjectLayer("objects");
+  const tw = tilemap.tileWidth;
+  const th = tilemap.tileHeight;
+  const exits: InteriorExitSpawn[] = [];
+  const items: ItemSpawn[] = [];
+  if (!layer) return { exits, items };
+
+  for (const raw of layer.objects) {
+    const props = propMap(raw.properties as TiledProperty[] | undefined);
+    const tileX = Math.floor((raw.x ?? 0) / tw);
+    const tileY = Math.floor((raw.y ?? 0) / th);
+    if (raw.type === "interior_exit") {
+      const uid = String(props.uid ?? "");
+      if (!uid) {
+        throw new Error(
+          `interior_exit at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+        );
+      }
+      exits.push({
+        kind: "interior_exit",
+        uid,
+        tileX,
+        tileY,
+        promptOnly: Boolean(props.promptOnly ?? false),
+      });
+    } else if (raw.type === "item_spawn") {
+      const itemId = String(props.itemId ?? "") as ItemId;
+      const quantity = Number(props.quantity ?? 1);
+      const uid = String(props.uid ?? "");
+      if (!itemId) throw new Error(`interior item_spawn at (${tileX},${tileY}) missing itemId`);
+      if (!uid) {
+        throw new Error(
+          `interior item_spawn at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+        );
+      }
+      items.push({ kind: "item_spawn", uid, tileX, tileY, itemId, quantity });
+    }
+  }
+
+  return { exits, items };
 }
 
 interface TiledProperty {

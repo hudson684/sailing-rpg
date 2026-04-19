@@ -22,6 +22,12 @@ import npcDataRaw from "../data/npcs.json";
 import { enemyTextureKey, type EnemiesFile } from "../entities/enemyTypes";
 import enemiesDataRaw from "../data/enemies.json";
 import {
+  loadNodesFile,
+  nodeSpriteAnimKey,
+  nodeSpriteTextureKey,
+} from "../world/GatheringNode";
+import nodesDataRaw from "../data/nodes.json";
+import {
   SKIN_PALETTES,
   bakePlayerSkin,
   installPlayerSkinCanvases,
@@ -35,6 +41,9 @@ export const itemIconTextureKey = (id: string) => `item_icon_${id}`;
 
 export const WORLD_MANIFEST_KEY = "worldManifest";
 export const CHUNK_KEY_PREFIX = "chunk_";
+export const INTERIOR_KEY_PREFIX = "interior_";
+
+export const interiorTilemapKey = (key: string) => `${INTERIOR_KEY_PREFIX}${key}`;
 
 const npcData = npcDataRaw as NpcData;
 const enemiesData = enemiesDataRaw as EnemiesFile;
@@ -53,6 +62,9 @@ export class BootScene extends Phaser.Scene {
       }
       for (const key of data.authoredChunks) {
         this.load.tilemapTiledJSON(`${CHUNK_KEY_PREFIX}${key}`, `maps/chunks/${key}.tmj`);
+      }
+      for (const [key, ref] of Object.entries(data.interiors ?? {})) {
+        this.load.tilemapTiledJSON(interiorTilemapKey(key), `maps/${ref.path}`);
       }
     });
 
@@ -133,6 +145,14 @@ export class BootScene extends Phaser.Scene {
       });
     }
 
+    for (const def of loadNodesFile(nodesDataRaw).defs) {
+      if (!def.sprite) continue;
+      this.load.spritesheet(nodeSpriteTextureKey(def.id), def.sprite.sheet, {
+        frameWidth: def.sprite.frameWidth,
+        frameHeight: def.sprite.frameHeight,
+      });
+    }
+
     for (const npc of npcData.npcs) {
       const idle = npc.sprite.idle;
       this.load.spritesheet(npcTextureKey(npc.id, "idle"), idle.sheet, {
@@ -206,6 +226,21 @@ export class BootScene extends Phaser.Scene {
           repeat: 0,
         });
       }
+    }
+
+    for (const def of loadNodesFile(nodesDataRaw).defs) {
+      if (!def.sprite) continue;
+      const animKey = nodeSpriteAnimKey(def.id);
+      if (this.anims.exists(animKey)) continue;
+      this.anims.create({
+        key: animKey,
+        frames: this.anims.generateFrameNumbers(nodeSpriteTextureKey(def.id), {
+          start: 0,
+          end: def.sprite.frames - 1,
+        }),
+        frameRate: def.sprite.frameRate,
+        repeat: -1,
+      });
     }
 
     this.scene.start("World");

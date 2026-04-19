@@ -4,26 +4,70 @@
       "id": "brom_blacksmith",
       "name": "Brom the Blacksmith",
       "sprite": {
-        "idle": { "sheet": "sprites/npcs/blacksmith-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
-        "walk": { "sheet": "sprites/npcs/blacksmith-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
+        "idle": {
+          "sheet": "sprites/npcs/blacksmith-idle.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 3,
+          "frameRate": 4
+        },
+        "walk": {
+          "sheet": "sprites/npcs/blacksmith-walk.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 7,
+          "frameRate": 8
+        }
       },
-      "display": { "scale": 1.7, "originY": 0.506 },
-      "spawn": { "tileX": 46, "tileY": 13 },
+      "display": {
+        "scale": 1.7,
+        "originY": 0.506
+      },
+      "spawn": {
+        "tileX": 46,
+        "tileY": 13
+      },
       "facing": "right",
-      "movement": { "type": "static" },
+      "movement": {
+        "type": "static"
+      },
       "dialogue": "brom_blacksmith"
     },
     {
       "id": "mera_vendor",
       "name": "Mera, General Vendor",
       "sprite": {
-        "idle": { "sheet": "sprites/npcs/merchant-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
-        "walk": { "sheet": "sprites/npcs/merchant-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
+        "idle": {
+          "sheet": "sprites/npcs/merchant-idle.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 3,
+          "frameRate": 4
+        },
+        "walk": {
+          "sheet": "sprites/npcs/merchant-walk.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 7,
+          "frameRate": 8
+        }
       },
-      "display": { "scale": 1.7, "originY": 0.506 },
-      "spawn": { "tileX": 50, "tileY": 19 },
+      "display": {
+        "scale": 1.7,
+        "originY": 0.506
+      },
+      "spawn": {
+        "tileX": 51,
+        "tileY": 19
+      },
       "facing": "right",
-      "movement": { "type": "static" },
+      "movement": {
+        "type": "static"
+      },
       "dialogue": "mera_vendor",
       "shopId": "mera_general"
     },
@@ -31,45 +75,125 @@
       "id": "garra_chef",
       "name": "Garra the Chef",
       "sprite": {
-        "idle": { "sheet": "sprites/npcs/chef-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
-        "walk": { "sheet": "sprites/npcs/chef-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
+        "idle": {
+          "sheet": "sprites/npcs/chef-idle.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 3,
+          "frameRate": 4
+        },
+        "walk": {
+          "sheet": "sprites/npcs/chef-walk.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 7,
+          "frameRate": 8
+        }
       },
-      "display": { "scale": 1.7, "originY": 0.506 },
-      "spawn": { "tileX": 55, "tileY": 20 },
+      "display": {
+        "scale": 1.7,
+        "originY": 0.506
+      },
+      "spawn": {
+        "tileX": 55,
+        "tileY": 20
+      },
       "facing": "right",
-      "movement": { "type": "static" },
+      "movement": {
+        "type": "static"
+      },
       "dialogue": "garra_chef"
     },
     {
       "id": "old_salt_fisherman",
       "name": "Old Salt",
       "sprite": {
-        "idle": { "sheet": "sprites/npcs/angler-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
-        "walk": { "sheet": "sprites/npcs/angler-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
+        "idle": {
+          "sheet": "sprites/npcs/angler-idle.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 3,
+          "frameRate": 4
+        },
+        "walk": {
+          "sheet": "sprites/npcs/angler-walk.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 7,
+          "frameRate": 8
+        }
       },
-      "display": { "scale": 1.7, "originY": 0.506 },
-      "spawn": { "tileX": 44, "tileY": 14 },
+      "display": {
+        "scale": 1.7,
+        "originY": 0.506
+      },
+      "spawn": {
+        "tileX": 44,
+        "tileY": 14
+      },
       "facing": "right",
-      "movement": { "type": "wander", "radiusTiles": 2, "moveSpeed": 40, "pauseMs": 2000, "stepMs": 1500 },
+      "movement": {
+        "type": "wander",
+        "radiusTiles": 2,
+        "moveSpeed": 40,
+        "pauseMs": 2000,
+        "stepMs": 1500
+      },
       "dialogue": "old_salt_fisherman"
     },
     {
       "id": "jory_miner",
       "name": "Jory the Miner",
       "sprite": {
-        "idle": { "sheet": "sprites/npcs/miner-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
-        "walk": { "sheet": "sprites/npcs/miner-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
+        "idle": {
+          "sheet": "sprites/npcs/miner-idle.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 3,
+          "frameRate": 4
+        },
+        "walk": {
+          "sheet": "sprites/npcs/miner-walk.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 7,
+          "frameRate": 8
+        }
       },
-      "display": { "scale": 1.7, "originY": 0.506 },
-      "spawn": { "tileX": 46, "tileY": 24 },
+      "display": {
+        "scale": 1.7,
+        "originY": 0.506
+      },
+      "spawn": {
+        "tileX": 46,
+        "tileY": 21
+      },
       "facing": "right",
       "movement": {
         "type": "patrol",
         "waypoints": [
-          { "tileX": 46, "tileY": 24 },
-          { "tileX": 54, "tileY": 24 },
-          { "tileX": 54, "tileY": 20 },
-          { "tileX": 46, "tileY": 20 }
+          {
+            "tileX": 46,
+            "tileY": 24
+          },
+          {
+            "tileX": 54,
+            "tileY": 24
+          },
+          {
+            "tileX": 54,
+            "tileY": 20
+          },
+          {
+            "tileX": 46,
+            "tileY": 20
+          }
         ],
         "moveSpeed": 50,
         "pauseMs": 1500
@@ -80,39 +204,109 @@
       "id": "elin_innkeeper",
       "name": "Elin the Innkeeper",
       "sprite": {
-        "idle": { "sheet": "sprites/npcs/inn-keeper-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
-        "walk": { "sheet": "sprites/npcs/inn-keeper-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
+        "idle": {
+          "sheet": "sprites/npcs/inn-keeper-idle.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 3,
+          "frameRate": 4
+        },
+        "walk": {
+          "sheet": "sprites/npcs/inn-keeper-walk.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 7,
+          "frameRate": 8
+        }
       },
-      "display": { "scale": 1.7, "originY": 0.506 },
-      "spawn": { "tileX": 50, "tileY": 22 },
+      "display": {
+        "scale": 1.7,
+        "originY": 0.506
+      },
+      "spawn": {
+        "tileX": 49,
+        "tileY": 22
+      },
       "facing": "left",
-      "movement": { "type": "wander", "radiusTiles": 3, "moveSpeed": 45, "pauseMs": 1800, "stepMs": 1500 },
+      "movement": {
+        "type": "wander",
+        "radiusTiles": 3,
+        "moveSpeed": 45,
+        "pauseMs": 1800,
+        "stepMs": 1500
+      },
       "dialogue": "elin_innkeeper"
     },
     {
       "id": "tomas_farmer",
       "name": "Tomas the Farmer",
       "sprite": {
-        "idle": { "sheet": "sprites/npcs/farmer-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
-        "walk": { "sheet": "sprites/npcs/farmer-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
+        "idle": {
+          "sheet": "sprites/npcs/farmer-idle.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 3,
+          "frameRate": 4
+        },
+        "walk": {
+          "sheet": "sprites/npcs/farmer-walk.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 7,
+          "frameRate": 8
+        }
       },
-      "display": { "scale": 1.7, "originY": 0.506 },
-      "spawn": { "tileX": 46, "tileY": 22 },
+      "display": {
+        "scale": 1.7,
+        "originY": 0.506
+      },
+      "spawn": {
+        "tileX": 46,
+        "tileY": 22
+      },
       "facing": "right",
-      "movement": { "type": "static" },
+      "movement": {
+        "type": "static"
+      },
       "dialogue": "tomas_farmer"
     },
     {
       "id": "lilan_florist",
       "name": "Lilan the Florist",
       "sprite": {
-        "idle": { "sheet": "sprites/npcs/florist-idle.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 3, "frameRate": 4 },
-        "walk": { "sheet": "sprites/npcs/florist-walk.png", "frameWidth": 79, "frameHeight": 79, "start": 0, "end": 7, "frameRate": 8 }
+        "idle": {
+          "sheet": "sprites/npcs/florist-idle.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 3,
+          "frameRate": 4
+        },
+        "walk": {
+          "sheet": "sprites/npcs/florist-walk.png",
+          "frameWidth": 79,
+          "frameHeight": 79,
+          "start": 0,
+          "end": 7,
+          "frameRate": 8
+        }
       },
-      "display": { "scale": 1.7, "originY": 0.506 },
-      "spawn": { "tileX": 52, "tileY": 25 },
+      "display": {
+        "scale": 1.7,
+        "originY": 0.506
+      },
+      "spawn": {
+        "tileX": 52,
+        "tileY": 25
+      },
       "facing": "left",
-      "movement": { "type": "static" },
+      "movement": {
+        "type": "static"
+      },
       "dialogue": "lilan_florist"
     }
   ],

@@ -1,0 +1,169 @@
+.edit-mode-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  font-family: monospace;
+  font-size: 12px;
+  color: #f0e8d0;
+  z-index: 200;
+}
+
+.edit-rail {
+  position: absolute;
+  top: 50px;
+  bottom: 50px;
+  width: 240px;
+  background: rgba(20, 20, 30, 0.92);
+  border: 1px solid #4a3a25;
+  padding: 10px;
+  overflow-y: auto;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-rail-left {
+  left: 8px;
+}
+
+.edit-rail-right {
+  right: 8px;
+}
+
+.edit-section-title {
+  text-transform: uppercase;
+  font-weight: bold;
+  color: #ffcc66;
+  border-bottom: 1px solid #4a3a25;
+  padding: 4px 0;
+  margin-top: 8px;
+}
+
+.edit-section-title:first-child {
+  margin-top: 0;
+}
+
+.edit-btn {
+  background: #2a2a40;
+  color: #f0e8d0;
+  border: 1px solid #4a3a25;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+}
+
+.edit-btn:hover {
+  background: #3a3a55;
+}
+
+.edit-btn.active {
+  background: #5a4a25;
+  border-color: #ffcc66;
+}
+
+.edit-btn.primary {
+  background: #4a6a25;
+  border-color: #88cc55;
+}
+
+.edit-btn.danger {
+  background: #5a2a2a;
+  border-color: #cc6666;
+  margin-top: 8px;
+}
+
+.edit-btn.small {
+  padding: 2px 6px;
+  font-size: 11px;
+}
+
+.edit-place-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.edit-place-row label {
+  color: #aaaaaa;
+}
+
+.edit-place-row select {
+  background: #1a1a25;
+  color: #f0e8d0;
+  border: 1px solid #4a3a25;
+  padding: 4px;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.edit-place-row select.active {
+  border-color: #ffcc66;
+}
+
+.edit-empty {
+  color: #888888;
+  font-style: italic;
+  padding: 6px 0;
+}
+
+.edit-hint {
+  color: #888888;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.edit-hint code {
+  background: #1a1a25;
+  padding: 1px 4px;
+}
+
+.edit-field {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  border-bottom: 1px dashed #2a2a40;
+}
+
+.edit-field-label {
+  color: #aaaaaa;
+}
+
+.edit-field-value {
+  color: #f0e8d0;
+}
+
+.edit-shop {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.edit-shop-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.edit-shop-row select {
+  flex: 1;
+  background: #1a1a25;
+  color: #f0e8d0;
+  border: 1px solid #4a3a25;
+  padding: 2px;
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.edit-shop-row input {
+  width: 50px;
+  background: #1a1a25;
+  color: #f0e8d0;
+  border: 1px solid #4a3a25;
+  padding: 2px 4px;
+  font-family: inherit;
+  font-size: 11px;
+}

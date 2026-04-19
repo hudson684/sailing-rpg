@@ -16,7 +16,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { XMLParser } from "fast-xml-parser";
 
-export const SPAWN_LAYER_TYPES = ["item_spawn"];
+export const SPAWN_LAYER_TYPES = ["item_spawn", "door", "interior_exit"];
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -86,10 +86,16 @@ export function stampUidsInFile(tmxPath, opts = {}) {
  * the whole set.
  */
 export function stampUidsInDir(tmxDir, opts = {}) {
-  const files = readdirSync(tmxDir)
-    .filter((f) => f.endsWith(".tmx"))
-    .map((f) => path.join(tmxDir, f))
-    .sort();
+  let files = [];
+  try {
+    files = readdirSync(tmxDir)
+      .filter((f) => f.endsWith(".tmx"))
+      .map((f) => path.join(tmxDir, f))
+      .sort();
+  } catch (err) {
+    if (err && err.code === "ENOENT") return [];
+    throw err;
+  }
   const reports = files.map((f) => stampUidsInFile(f, opts));
 
   const globalUids = new Map(); // uid → first file

@@ -1,6 +1,6 @@
 /* ── Pixel UI primitives ────────────────────────────────────────────────
  *
- * All panels in the game (except HUD + Dialogue) share this look:
+ * All panels in the game (except HUD) share this look:
  * tan wooden frames with pixel-art 9-slice borders, rendered with the
  * CuteFantasy bitmap font. One class system so every window feels like
  * one interface.

@@ -30,7 +30,15 @@ const ROWBOAT_DIMS: VesselDims = {
 };
 
 const SHIP_MAX_SPEED = 120; // px/s at full throttle
+const SHIP_REVERSE_MAX = 30; // px/s when backing off a beach (negative throttle)
 const SHIP_ACCEL = 60; // px/s^2
+
+export type ShipTileState = "water" | "beach" | "blocked";
+
+export interface SailingStepResult {
+  beached: boolean;
+  blocked: boolean;
+}
 
 const HULL_COLOR = 0x5e3a1a;
 const HULL_STROKE = 0x2a1a08;
@@ -225,18 +233,78 @@ export class Ship {
     this.updateVisual();
   }
 
+  /** Tiles overlapped by the hull's bbox at a continuous (x, y, heading). */
+  static occupiedTilesAt(
+    x: number,
+    y: number,
+    heading: Heading,
+    dims: VesselDims = ROWBOAT_DIMS,
+  ): Array<{ x: number; y: number }> {
+    const eastWest = heading === 1 || heading === 3;
+    const w = eastWest ? dims.tilesLong : dims.tilesWide;
+    const h = eastWest ? dims.tilesWide : dims.tilesLong;
+    const halfW = (w * TILE_SIZE) / 2;
+    const halfH = (h * TILE_SIZE) / 2;
+    const eps = 0.001;
+    const tx0 = Math.floor((x - halfW) / TILE_SIZE);
+    const ty0 = Math.floor((y - halfH) / TILE_SIZE);
+    const tx1 = Math.floor((x + halfW - eps) / TILE_SIZE);
+    const ty1 = Math.floor((y + halfH - eps) / TILE_SIZE);
+    const tiles: Array<{ x: number; y: number }> = [];
+    for (let tx = tx0; tx <= tx1; tx++) {
+      for (let ty = ty0; ty <= ty1; ty++) tiles.push({ x: tx, y: ty });
+    }
+    return tiles;
+  }
+
   /** Advance physics while sailing. Heading changes are discrete (see `turn()`). */
-  updateSailing(dtSec: number): void {
-    const targetSpeed = this.targetThrottle * SHIP_MAX_SPEED;
-    if (this.speed < targetSpeed) this.speed = Math.min(targetSpeed, this.speed + SHIP_ACCEL * dtSec);
-    else this.speed = Math.max(targetSpeed, this.speed - SHIP_ACCEL * dtSec);
+  updateSailing(
+    dtSec: number,
+    classify: (tx: number, ty: number) => ShipTileState,
+  ): SailingStepResult {
+    const targetSpeed = this.targetThrottle * (this.targetThrottle < 0 ? SHIP_REVERSE_MAX : SHIP_MAX_SPEED);
+    let nextSpeed = this.speed;
+    if (nextSpeed < targetSpeed) nextSpeed = Math.min(targetSpeed, nextSpeed + SHIP_ACCEL * dtSec);
+    else nextSpeed = Math.max(targetSpeed, nextSpeed - SHIP_ACCEL * dtSec);
 
     const a = headingToRotation(this.heading);
-    this.x += Math.cos(a) * this.speed * dtSec;
-    this.y += Math.sin(a) * this.speed * dtSec;
+    const nx = this.x + Math.cos(a) * nextSpeed * dtSec;
+    const ny = this.y + Math.sin(a) * nextSpeed * dtSec;
 
+    const tiles = Ship.occupiedTilesAt(nx, ny, this.heading, this.dims);
+    let worst: ShipTileState = "water";
+    for (const t of tiles) {
+      const s = classify(t.x, t.y);
+      if (s === "blocked") { worst = "blocked"; break; }
+      if (s === "beach") worst = "beach";
+    }
+
+    if (worst === "blocked") {
+      this.speed = 0;
+      this.targetThrottle = 0;
+      this.container.setPosition(this.x, this.y);
+      this.container.setDepth(this.sortY());
+      return { beached: false, blocked: true };
+    }
+
+    if (worst === "beach") {
+      // Soft grounding: forward thrust dies, reverse off only.
+      if (this.targetThrottle > 0) this.targetThrottle = 0;
+      if (nextSpeed > 0) nextSpeed = 0;
+      this.speed = nextSpeed;
+      this.x += Math.cos(a) * this.speed * dtSec;
+      this.y += Math.sin(a) * this.speed * dtSec;
+      this.container.setPosition(this.x, this.y);
+      this.container.setDepth(this.sortY());
+      return { beached: true, blocked: false };
+    }
+
+    this.speed = nextSpeed;
+    this.x = nx;
+    this.y = ny;
     this.container.setPosition(this.x, this.y);
     this.container.setDepth(this.sortY());
+    return { beached: false, blocked: false };
   }
 
   /** Set position (and optionally heading) — used by anchoring drift tween. */

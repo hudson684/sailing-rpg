@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="8" nextobjectid="1">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="1">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
+ <tileset firstgid="226" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses2.tsx"/>
+ <tileset firstgid="4322" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass - transparency.tsx"/>
  <layer id="7" name="ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMBKHrn+4jrcdQcNVUVVXV1w8WeEAu
+  </data>
+ </layer>
+ <layer id="9" name="grass" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJyNlwFu1DAQRdPlCCC7N4HCVeAKqGcBixugcpVNcoRqexVikdE+v520WIqStZ3MzJ8/f7zTdB2PdZpO27WUaZr3a92v/tzn+3r/3fZrxnWq1/W4+u+2vxu/47nfh7Gtfbifpoft/n67f6/XffHuDF9mzIWdVm5joE/v6r/vLpl9jcv+7VauMS+Iey2j7RVrxGfB2pdt78cdp+7La+OMuMNGPM+KdSnjnjVZdx7+vGL/67bnJ+JYEC9xjzlyZClj/A24r5g7sv9jt00+tTJygP7EPnLN/A3c453uz+cD+xfwjliHD+Rvwz7GTr9jvtt82K8j24F7VjfE1H7RP9YHedkx+PUG55/q7bu0lcVPXrZkP/F4eYPzT/W2vgPbzBa1hjnP6iJ4UDdt+bY9l/ucd+QxtWMutxy35tFH+nESrjFn3jHupYxcZ0xZnqmPTX4aq0z/HuvoG+uHGPq7zAc1h3ro/hD7jT2/w330hfi6BpiL8JP2mVPGf4HPjNl34uBeaE2wbrXEhxjnhHP02/mk5jFOvsvadY8KTBk//V7LyD9ygmcB61T2jSym2EP75DxjI/epf8SEa84PbRoD2p/hc3auIL7MZ0v8Y0+cy4gNcxbjeZu7qyP3rBvWNmN01I+45hxxnMsYPzUm4x85Yr2n3rCG3VNsnxrhWjKWTfN+N9Mxa5J7D2uJvc61tMq+/eE5zTxiTxrGzgGu+5zDb2UaQB30Htep4w8MeM41btZV59Z2s7MQayOzT24zdvvuXshckLvEwLnzeEYOrJXWnyw+93djuMrPdNTrf5SsB9gX7yFXfRYwh47GJ+mR68w6ldU3tcd5ij2vjZ6L/j/w7uAM4PPlUQ/2WZXz/zMu9RbnrBfMssHe5R6Q6c/R+C0++JzNs4l7IXXMddSvvwgGSF4=
   </data>
  </layer>
  <layer id="1" name="ground" width="32" height="32">
@@ -19,6 +26,11 @@
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+  </data>
+ </layer>
+ <layer id="8" name="buildings_low" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJzt0cdtw1AURFFK6oRm6ItB7IuxL8Y2fAD38Db+A5z1XUyW/Y/lryz7oaCkon7F9Rutlo6eL0Ngf9SamFlY2QL7u9bBycXNE9jP3/6noKSifsf1G62Wjp4vQ2B/1JqYWVjZAvu71sHJxc0T2M8//qegpKL+xPUbrZaOni9DYH/UmphZWNkC+7vWwcnFzRPYT0tLS0tLS0tL+9sv/Usl1Q==
   </data>
  </layer>
  <layer id="4" name="props_high" width="32" height="32">

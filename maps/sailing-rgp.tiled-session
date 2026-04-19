@@ -12,11 +12,11 @@
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
         "chunks/0_0.tmx": {
-            "scale": 0.5,
-            "selectedLayer": 0,
+            "scale": 0.75,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 569,
-                "y": 568
+                "x": 1271.3333333333333,
+                "y": 552
             }
         },
         "chunks/0_1.tmx": {
@@ -28,11 +28,11 @@
             }
         },
         "chunks/0_2.tmx": {
-            "scale": 0.8145507812499999,
-            "selectedLayer": 0,
+            "scale": 1,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 511.93861647284507,
-                "y": 511.93861647284496
+                "x": 1489.5,
+                "y": 700
             }
         },
         "chunks/0_3.tmx": {
@@ -48,35 +48,41 @@
                 15,
                 6
             ],
-            "scale": 0.25,
-            "selectedLayer": 12,
+            "scale": 0.5,
+            "selectedLayer": 7,
             "viewCenter": {
-                "x": 1462,
-                "y": 3056
+                "x": 1443,
+                "y": 3392
             }
         },
         "chunks/1_1.tmx": {
-            "scale": 0.5,
+            "scale": 2,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 545,
-                "y": 568
+                "x": 351.25,
+                "y": 1755
             }
         },
         "chunks/1_2.tmx": {
-            "scale": 0.5,
-            "selectedLayer": 1,
+            "expandedGroupLayers": [
+                14
+            ],
+            "expandedObjectLayers": [
+                17
+            ],
+            "scale": 0.33,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": 1139,
-                "y": 1096
+                "x": 1422.7272727272727,
+                "y": 1118.1818181818182
             }
         },
         "chunks/1_3.tmx": {
-            "scale": 0.8145507812499999,
-            "selectedLayer": 0,
+            "scale": 0.33,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": 511.32478120129485,
-                "y": 511.93861647284496
+                "x": 1462.1212121212122,
+                "y": 230.30303030303025
             }
         },
         "chunks/2_0.tmx": {
@@ -97,18 +103,18 @@
         },
         "chunks/2_2.tmx": {
             "scale": 0.33,
-            "selectedLayer": 1,
+            "selectedLayer": 4,
             "viewCenter": {
-                "x": 443.939393939394,
-                "y": 745.4545454545453
+                "x": 437.8787878787879,
+                "y": 1254.5454545454545
             }
         },
         "chunks/2_3.tmx": {
-            "scale": 0.8145507812499999,
-            "selectedLayer": 0,
+            "scale": 2,
+            "selectedLayer": 4,
             "viewCenter": {
-                "x": 511.93861647284507,
-                "y": 511.93861647284496
+                "x": 879.25,
+                "y": 742
             }
         },
         "chunks/3_0.tmx": {
@@ -136,11 +142,11 @@
             }
         },
         "chunks/3_3.tmx": {
-            "scale": 0.5,
-            "selectedLayer": 0,
+            "scale": 2,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 607,
-                "y": 516
+                "x": -247.25,
+                "y": 565
             }
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet1-sprites.tsx": {
@@ -154,10 +160,10 @@
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2.tsx": {
             "scaleInDock": 0.75,
-            "scaleInEditor": 1
+            "scaleInEditor": 0.33
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet3.tsx": {
-            "scaleInDock": 0.75
+            "scaleInDock": 0.5
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet4-sprites.tsx": {
             "scaleInDock": 1
@@ -287,6 +293,19 @@
         "themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx": {
             "scaleInDock": 1
         },
+        "themes/The Village/TiledMap Editor/tilesets/Premade_houses3.tsx": {
+            "scaleInEditor": 0.5
+        },
+        "themes/The Village/TiledMap Editor/tilesets/props(as sprites).tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1
+        },
+        "themes/The Village/TiledMap Editor/tilesets/props.tsx": {
+            "dynamicWrapping": false
+        },
+        "themes/The Village/TiledMap Editor/tilesets/roofs1.tsx": {
+            "dynamicWrapping": false
+        },
         "themes/grassland/TiledMap Editor/Tilesets/Atlas-Props-sheet1.tsx": {
             "scaleInDock": 1,
             "scaleInEditor": 1
@@ -340,7 +359,7 @@
             "scaleInEditor": 1
         }
     },
-    "last.externalTilesetPath": "C:/dev/sailing-rpg/maps/themes/Grass Land/TiledMap Editor/Tilesets",
+    "last.externalTilesetPath": "C:/dev/sailing-rpg/maps/themes/The Village/TiledMap Editor/tilesets",
     "last.imagePath": "C:/dev/sailing-rpg/maps/themes/sea/Tilesets",
     "last.worldFilePath": "C:/dev/sailing-rpg/maps",
     "loadedWorlds": [
@@ -353,6 +372,8 @@
     ],
     "project": "sailing-rgp.tiled-project",
     "recentFiles": [
+        "themes/The Village/TiledMap Editor/tilesets/Premade_houses3.tsx",
+        "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2.tsx",
         "chunks/1_1.tmx",
         "chunks/0_0.tmx",
         "chunks/1_0.tmx",
@@ -362,9 +383,7 @@
         "chunks/0_2.tmx",
         "chunks/1_2.tmx",
         "chunks/1_3.tmx",
-        "chunks/2_1.tmx",
-        "chunks/2_2.tmx",
-        "chunks/2_3.tmx"
+        "chunks/2_1.tmx"
     ],
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx"

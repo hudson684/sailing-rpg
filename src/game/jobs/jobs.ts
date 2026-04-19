@@ -2,6 +2,8 @@ import { createRegistry } from "../data/createRegistry";
 import iconSailor from "../../ui/icons/jobs/job_sailor.png";
 import iconFisher from "../../ui/icons/jobs/job_fisher.png";
 import iconWarrior from "../../ui/icons/jobs/job_warrior.png";
+import iconOrecheologist from "../../ui/icons/jobs/job_orecheologist.png";
+import iconLumberjack from "../../ui/icons/jobs/job_lumberjack.png";
 
 /**
  * Jobs are per-skill progression tracks. Each has an XP bucket and a derived
@@ -46,7 +48,7 @@ const DEFS: ReadonlyArray<JobDef> = [
   {
     id: "orecheologist",
     name: "Orecheologist",
-    icon: iconWarrior,
+    icon: iconOrecheologist,
     color: "#b07a3a",
     category: "gathering",
     description: "Student of stone and seam. Gained by swinging a pickaxe.",
@@ -54,7 +56,7 @@ const DEFS: ReadonlyArray<JobDef> = [
   {
     id: "lumberjack",
     name: "Lumberjack",
-    icon: iconWarrior,
+    icon: iconLumberjack,
     color: "#5a8a3a",
     category: "gathering",
     description: "Felling timber. Gained by swinging an axe at trees.",

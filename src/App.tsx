@@ -9,6 +9,8 @@ import { Dialogue } from "./ui/Dialogue";
 import { Shop } from "./ui/Shop";
 import { CharacterCreator } from "./ui/CharacterCreator";
 import { CharacterCustomizer } from "./ui/CharacterCustomizer";
+import { EditMode } from "./ui/EditMode";
+import { NodeDefEditor } from "./ui/NodeDefEditor";
 import { useSettingsStore } from "./game/store/settingsStore";
 import "./ui/pixel-ui.css";
 import "./App.css";
@@ -63,6 +65,8 @@ export default function App() {
             open={customizerOpen}
             onClose={() => setCustomizerOpen(false)}
           />
+          {import.meta.env.DEV && <EditMode />}
+          {import.meta.env.DEV && <NodeDefEditor />}
         </>
       ) : (
         <CharacterCreator />

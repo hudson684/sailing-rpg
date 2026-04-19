@@ -24,14 +24,10 @@
 }
 
 .hud-health-icon {
-  font-size: 28px;
-  line-height: 1;
-  color: var(--pixel-accent-red, #c0392b);
-  text-shadow:
-    1px 0 0 var(--pixel-ink),
-    -1px 0 0 var(--pixel-ink),
-    0 1px 0 var(--pixel-ink),
-    0 -1px 0 var(--pixel-ink);
+  width: 28px;
+  height: 28px;
+  image-rendering: pixelated;
+  display: block;
 }
 
 .hud-health-bar {
@@ -70,19 +66,17 @@
   pointer-events: none;
 }
 
-.hud-prompt {
+.hud .hud-prompt {
   position: absolute;
-  bottom: 80px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  padding: 8px 18px;
-  background: rgba(6, 14, 28, 0.85);
-  border: 1px solid rgba(200, 220, 255, 0.5);
-  border-radius: 999px;
+  transform: translate(-50%, 60%);
+  border-width: 16px;
+  padding: 4px 10px 6px;
   font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  color: var(--pixel-ink);
+  font-weight: 600;
 }
 
 .hud-toasts {
@@ -97,24 +91,17 @@
   pointer-events: none;
 }
 
-.hud-toast {
-  padding: 8px 16px;
-  background: rgba(14, 30, 56, 0.85);
-  border: 1px solid rgba(120, 170, 220, 0.5);
-  border-radius: 6px;
-  font-size: 13px;
+.hud-toasts .hud-toast {
+  position: relative;
+  border-width: 16px;
+  padding: 4px 8px 6px;
+  font-size: 14px;
   animation: toast-in 180ms ease-out;
 }
 
-.hud-toast-success {
-  border-color: rgba(120, 210, 140, 0.6);
-}
-.hud-toast-warn {
-  border-color: rgba(230, 200, 110, 0.6);
-}
-.hud-toast-error {
-  border-color: rgba(230, 120, 120, 0.6);
-}
+.hud-toasts .hud-toast-success { border-image-source: url("/ui/panel-green.png");  color: #1a2a1a; }
+.hud-toasts .hud-toast-warn    { border-image-source: url("/ui/panel-orange.png"); }
+.hud-toasts .hud-toast-error   { border-image-source: url("/ui/panel-red.png");    color: #2a0d0d; }
 
 @keyframes toast-in {
   from {

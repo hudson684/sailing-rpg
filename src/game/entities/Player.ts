@@ -335,6 +335,7 @@ export class Player {
       return;
     }
     const scene = this.sprite.scene;
+    if (!scene) return;
     if (!scene.textures.exists(def.textureKey)) {
       console.warn(`[Player] CF tool texture missing: ${def.textureKey}`);
       return;
@@ -355,6 +356,7 @@ export class Player {
 
   setLayer(layer: CfLayer, variant: string | null): void {
     const scene = this.sprite.scene;
+    if (!scene) return;
     const existing = this.cfLayers.get(layer);
     if (variant === null) {
       if (existing) {
@@ -394,6 +396,7 @@ export class Player {
 
   private layerOf(sprite: Phaser.GameObjects.Sprite): CfLayer | null {
     for (const [layer, s] of this.cfLayers) if (s === sprite) return layer;
+    if (this.cfTool && this.cfTool.sprite === sprite) return "tool";
     return null;
   }
 

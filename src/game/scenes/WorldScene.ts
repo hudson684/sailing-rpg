@@ -1,6 +1,16 @@
 import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
-import { bus, type DialogueAction, type InventoryAction } from "../bus";
+import {
+  bus,
+  type DialogueAction,
+  type EditDeleteRequest,
+  type EditEntityKind,
+  type EditMoveRequest,
+  type EditPlaceRequest,
+  type EditShopUpdate,
+  type EditSnapshot,
+  type InventoryAction,
+} from "../bus";
 import { ALL_ITEM_IDS, ITEMS } from "../inventory/items";
 import { ALL_JOB_IDS } from "../jobs/jobs";
 import { useGameStore } from "../store/gameStore";
@@ -32,13 +42,29 @@ const HEADING_TO_FACING: Record<Heading, Facing> = {
 };
 import { VESSEL_TEMPLATES } from "../entities/vessels";
 import { loadWorld, type WorldMap } from "../world/worldMap";
-import type { ItemSpawn } from "../world/spawns";
-import type { WorldManifest } from "../world/chunkManager";
+import {
+  parseInteriorSpawns,
+  type DoorSpawn,
+  type InteriorExitSpawn,
+  type ItemSpawn,
+} from "../world/spawns";
+import { tilesetImageKeyFor, type WorldManifest } from "../world/chunkManager";
+import { TileRegistry } from "../world/tileRegistry";
 import { findAnchorPose } from "../util/anchor";
-import { CHUNK_KEY_PREFIX, WORLD_MANIFEST_KEY, itemIconTextureKey } from "./BootScene";
+import {
+  CHUNK_KEY_PREFIX,
+  WORLD_MANIFEST_KEY,
+  interiorTilemapKey,
+  itemIconTextureKey,
+} from "./BootScene";
 import { Npc, NPC_INTERACT_RADIUS, registerNpcAnimations } from "../entities/Npc";
 import { SKIN_PALETTES, bakePlayerSkin, type SkinPaletteId } from "../entities/playerSkin";
-import type { NpcData, DialogueDef } from "../entities/npcTypes";
+import {
+  npcIsOnInterior,
+  npcIsOnWorld,
+  type NpcData,
+  type DialogueDef,
+} from "../entities/npcTypes";
 import npcDataRaw from "../data/npcs.json";
 import { DebugOverlays, type OverlayName } from "../debug/DebugOverlays";
 import { GroundItemsState } from "../world/groundItemsState";
@@ -55,9 +81,16 @@ import type {
   DropTable,
   DropTablesFile,
   EnemiesFile,
+  EnemyDef,
+  EnemyInstanceData,
 } from "../entities/enemyTypes";
 import enemiesDataRaw from "../data/enemies.json";
 import dropTablesDataRaw from "../data/dropTables.json";
+import itemInstancesRaw from "../data/itemInstances.json";
+import shopsDataRaw from "../data/shops.json";
+import type { NodeDef, NodeInstanceData } from "../world/GatheringNode";
+import type { ShopDef } from "../shops/types";
+import type { ItemId } from "../inventory/items";
 import { spawnFloatingNumber } from "../fx/floatingText";
 import {
   SaveController,
@@ -67,12 +100,20 @@ import {
 } from "../save";
 
 const HELM_INTERACT_RADIUS = TILE_SIZE * 0.7;
+const DOOR_INTERACT_RADIUS = TILE_SIZE * 0.9;
 const PICKUP_RADIUS = TILE_SIZE * 0.8;
+const INTERIOR_OVERHEAD_LAYERS = new Set(["props_high", "roof"]);
+const INTERIOR_OVERHEAD_DEPTH_BASE = 1_000_000;
 const SHOP_CLICK_RADIUS = TILE_SIZE * 1.5;
 /** Time after last damage before player HP regen kicks in. */
 const PLAYER_OUT_OF_COMBAT_MS = 6000;
 /** HP per second regenerated while out of combat (fractional ok). */
 const PLAYER_REGEN_PER_SEC = 1.0;
+
+/** Tile where a new game drops the player — center of the starter village
+ *  on the chunk (1,0) island, not at the dock. Loaded saves override this
+ *  via the hydrated player position. */
+const DEFAULT_PLAYER_SPAWN_TILE = { x: 48, y: 17 } as const;
 
 const ZOOM_STEPS = [0.5, 1, 1.5, 2, 3, 4, 6, 8] as const;
 const MIN_ZOOM = ZOOM_STEPS[0];
@@ -85,13 +126,39 @@ const WHEEL_SETTLE_MS = 140;
 
 interface GroundItem {
   uid: string;
-  itemId: import("../inventory/items").ItemId;
+  itemId: ItemId;
   quantity: number;
   x: number;
   y: number;
   sprite: Phaser.GameObjects.Image;
-  /** "authored" = from map; "dropped" = player-dropped with TTL. */
-  source: "authored" | "dropped";
+  /** "authored" = from map TMJ; "editor" = from itemInstances.json (also
+   *  dev-authored, but mutable via the in-game edit overlay); "dropped" =
+   *  player-dropped at runtime with a TTL. */
+  source: "authored" | "editor" | "dropped";
+}
+
+interface ItemInstancesFile {
+  instances: Array<{
+    id: string;
+    itemId: string;
+    quantity: number;
+    tileX: number;
+    tileY: number;
+    /** Defaults to "world" when absent. */
+    map?: string;
+  }>;
+}
+
+interface ShopsFile {
+  shops: ShopDef[];
+}
+
+interface EditorItemData {
+  id: string;
+  itemId: ItemId;
+  quantity: number;
+  tileX: number;
+  tileY: number;
 }
 
 let activeWorldScene: WorldScene | null = null;
@@ -111,14 +178,47 @@ export class WorldScene extends Phaser.Scene {
     canAutosave: () => this.sceneState.mode !== "Anchoring",
   });
   private groundItems = new Map<string, GroundItem>();
+  private doors: DoorSpawn[] = [];
+  private interior: {
+    key: string;
+    tilemap: Phaser.Tilemaps.Tilemap;
+    layers: Phaser.Tilemaps.TilemapLayer[];
+    registry: TileRegistry;
+    exits: InteriorExitSpawn[];
+    /** Last tile (in interior coords) the player stood on, used to debounce
+     *  auto-exit so stepping out and immediately back in doesn't loop. */
+    lastExitTile: { x: number; y: number } | null;
+  } | null = null;
   private nodes: GatheringNode[] = [];
   private enemies: Enemy[] = [];
   private lastPlayerDamagedAt = 0;
   private playerRegenAccum = 0;
   private dropTables = new Map<string, DropTable>();
   private npcs: Npc[] = [];
+  private interiorNpcs: Npc[] = [];
+  /** Cached parse of the full NPC data file. World NPCs spawn from `npcs`;
+   *  interior NPCs are looked up here when entering a building so the same
+   *  source-of-truth file feeds both. */
+  private npcData: NpcData = npcDataRaw as NpcData;
   private dialogues: Record<string, DialogueDef> = {};
-  private activeDialogue: { speaker: string; pages: string[]; page: number } | null = null;
+  private activeDialogue: { speaker: string; pages: string[]; page: number; shopId?: string } | null = null;
+
+  // ── Edit mode ──────────────────────────────────────────────────
+  private editMode = false;
+  private editHighlight?: Phaser.GameObjects.Graphics;
+  private editDrag:
+    | { kind: EditEntityKind; id: string; startWorldX: number; startWorldY: number; moved: boolean }
+    | null = null;
+  /** Editor-placed ground items (sidecar to TMJ-authored items). Keyed by uid.
+   *  Survives across edit-mode toggles inside one session; serialized to
+   *  itemInstances.json on save. */
+  private editorItems = new Map<string, EditorItemData>();
+  private editAutoIncrement = 0;
+  /** Cached defs the React overlay can pick from when placing new entities. */
+  private enemyDefs = new Map<string, EnemyDef>();
+  private nodeDefs = new Map<string, NodeDef>();
+  /** Initial shops (mutated by edit:shopUpdate; read on snapshot). */
+  private shopsForEdit: ShopDef[] = [];
 
   private zoomTarget = useSettingsStore.getState().zoom;
   private wheelZoomDir: 1 | -1 | 0 = 0;
@@ -144,11 +244,22 @@ export class WorldScene extends Phaser.Scene {
   };
 
   private sailingXpAccum = 0;
+  private wasBeached = false;
+  private wasBlocked = false;
 
   private onDialogueAction = (action: DialogueAction) => {
     if (!this.activeDialogue) return;
     if (action.type === "close") {
       this.closeDialogue();
+      return;
+    }
+    if (action.type === "openShop") {
+      const shopId = this.activeDialogue.shopId;
+      this.closeDialogue();
+      if (shopId) {
+        useShopStore.getState().openShop(shopId);
+        bus.emitTyped("shop:open", { shopId });
+      }
       return;
     }
     // advance
@@ -199,10 +310,11 @@ export class WorldScene extends Phaser.Scene {
       chunkKeyPrefix: CHUNK_KEY_PREFIX,
     });
 
-    const { ship: shipSpawn, dock, items } = this.world.spawns;
+    const { ship: shipSpawn, items, doors } = this.world.spawns;
+    this.doors = doors;
     const spawnPx = {
-      x: (dock.tileX + 0.5) * TILE_SIZE,
-      y: (dock.tileY + 0.5) * TILE_SIZE,
+      x: (DEFAULT_PLAYER_SPAWN_TILE.x + 0.5) * TILE_SIZE,
+      y: (DEFAULT_PLAYER_SPAWN_TILE.y + 0.5) * TILE_SIZE,
     };
     this.player = new Player(this, spawnPx.x, spawnPx.y);
     this.ship = new Ship(this, {
@@ -216,11 +328,16 @@ export class WorldScene extends Phaser.Scene {
       new Ship(this, { tx: 73, ty: 20, heading: 1 }, VESSEL_TEMPLATES.galleon),
     );
 
+    this.loadEditorItems();
     this.respawnGroundItems(items);
     this.spawnNpcs();
     this.spawnGatheringNodes();
     this.loadDropTables();
     this.spawnEnemies();
+    this.shopsForEdit = (shopsDataRaw as ShopsFile).shops.map((s) => ({
+      ...s,
+      stock: s.stock.map((row) => ({ ...row })),
+    }));
 
     // Ocean-blue backdrop for any viewport area outside authored chunks.
     this.cameras.main.setBackgroundColor("#1f4d78");
@@ -260,10 +377,22 @@ export class WorldScene extends Phaser.Scene {
     this.input.on(
       "pointerdown",
       (pointer: Phaser.Input.Pointer) => {
+        if (this.editMode && pointer.leftButtonDown()) {
+          this.onEditPointerDown(pointer.worldX, pointer.worldY);
+          return;
+        }
         if (!pointer.rightButtonDown()) return;
         this.onRightClick(pointer.worldX, pointer.worldY);
       },
     );
+    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      if (!this.editMode || !this.editDrag) return;
+      this.onEditPointerMove(pointer.worldX, pointer.worldY);
+    });
+    this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (!this.editMode) return;
+      this.onEditPointerUp(pointer.worldX, pointer.worldY);
+    });
     this.keys.attack.on("down", () => this.onAttack());
 
     // Number keys 1–5 quick-equip the corresponding hotbar slot's item.
@@ -318,6 +447,8 @@ export class WorldScene extends Phaser.Scene {
     this.keys.d.on("down", turnStarboard);
     this.keys.right.on("down", turnStarboard);
 
+    this.editHighlight = this.add.graphics().setDepth(9500).setVisible(false);
+
     this.debug = new DebugOverlays(this, this.world, {
       getShipPose: () =>
         this.ship ? { x: this.ship.x, y: this.ship.y, rotation: this.ship.rotation } : null,
@@ -333,18 +464,31 @@ export class WorldScene extends Phaser.Scene {
             }
           : null,
     });
-    const overlayKeys: Array<[Phaser.Input.Keyboard.Key, OverlayName]> = [
-      [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F1), "walkability"],
-      [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F2), "chunkGrid"],
-      [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F3), "spawns"],
-      [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F4), "anchorSearch"],
-      [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F6), "hitbox"],
-    ];
-    for (const [key, name] of overlayKeys) key.on("down", () => this.debug.toggle(name));
+    if (import.meta.env.DEV) {
+      const overlayKeys: Array<[Phaser.Input.Keyboard.Key, OverlayName]> = [
+        [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F1), "walkability"],
+        [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F2), "chunkGrid"],
+        [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F3), "spawns"],
+        [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F4), "anchorSearch"],
+        [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F6), "hitbox"],
+      ];
+      for (const [key, name] of overlayKeys) key.on("down", () => this.debug.toggle(name));
+    }
 
     bus.onTyped("inventory:action", this.onInventoryAction);
     bus.onTyped("dialogue:action", this.onDialogueAction);
     bus.onTyped("skin:apply", this.onSkinApply);
+    if (import.meta.env.DEV) {
+      bus.onTyped("edit:toggle", this.onEditToggle);
+      bus.onTyped("edit:requestSnapshot", this.onEditRequestSnapshot);
+      bus.onTyped("edit:move", this.onEditMove);
+      bus.onTyped("edit:place", this.onEditPlace);
+      bus.onTyped("edit:delete", this.onEditDelete);
+      bus.onTyped("edit:shopUpdate", this.onEditShopUpdate);
+      bus.onTyped("edit:requestExport", this.onEditRequestExport);
+      const editKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F7);
+      editKey.on("down", () => bus.emitTyped("edit:toggle"));
+    }
     activeWorldScene = this;
 
     // Mirror the equipment loadout onto the player's paper-doll. Apply the
@@ -379,6 +523,15 @@ export class WorldScene extends Phaser.Scene {
       bus.offTyped("inventory:action", this.onInventoryAction);
       bus.offTyped("dialogue:action", this.onDialogueAction);
       bus.offTyped("skin:apply", this.onSkinApply);
+      if (import.meta.env.DEV) {
+        bus.offTyped("edit:toggle", this.onEditToggle);
+        bus.offTyped("edit:requestSnapshot", this.onEditRequestSnapshot);
+        bus.offTyped("edit:move", this.onEditMove);
+        bus.offTyped("edit:place", this.onEditPlace);
+        bus.offTyped("edit:delete", this.onEditDelete);
+        bus.offTyped("edit:shopUpdate", this.onEditShopUpdate);
+        bus.offTyped("edit:requestExport", this.onEditRequestExport);
+      }
       unsubEquipment();
       unsubWardrobe();
       if (activeWorldScene === this) activeWorldScene = null;
@@ -418,8 +571,26 @@ export class WorldScene extends Phaser.Scene {
 
   update(_time: number, dtMs: number) {
     const dt = dtMs / 1000;
-    this.world.manager.tick(dtMs);
     this.saveController.playtime.tick();
+    if (this.sceneState.mode === "Interior") {
+      if (!this.activeDialogue && !this.editMode) this.updateOnFoot(dt);
+      if (!this.editMode) {
+        for (const npc of this.interiorNpcs) {
+          npc.update(dtMs, (x, y) => this.isWalkablePx(x, y));
+        }
+      }
+      this.checkInteriorAutoExit();
+      this.emitHud();
+      this.debug.update();
+      return;
+    }
+    this.world.manager.tick(dtMs);
+    if (this.editMode) {
+      this.redrawEditHighlights();
+      this.emitHud();
+      this.debug.update();
+      return;
+    }
     if (this.sceneState.mode === "OnFoot" && !this.activeDialogue) this.updateOnFoot(dt);
     else if (this.sceneState.mode === "AtHelm") this.updateAtHelm(dt);
     else if (this.sceneState.mode === "Anchoring") {
@@ -518,7 +689,7 @@ export class WorldScene extends Phaser.Scene {
   private npcAtWorldPoint(x: number, y: number): Npc | null {
     let best: Npc | null = null;
     let bestDist = SHOP_CLICK_RADIUS;
-    for (const npc of this.npcs) {
+    for (const npc of this.activeNpcs()) {
       const d = Phaser.Math.Distance.Between(x, y, npc.x, npc.y);
       if (d <= bestDist) {
         best = npc;
@@ -588,12 +759,163 @@ export class WorldScene extends Phaser.Scene {
 
   private handlePlayerDeath() {
     showToast("You were defeated. Respawning…", 2500, "error");
-    const dock = this.world.spawns.dock;
     this.player.setPosition(
-      (dock.tileX + 0.5) * TILE_SIZE,
-      (dock.tileY + 0.5) * TILE_SIZE,
+      (DEFAULT_PLAYER_SPAWN_TILE.x + 0.5) * TILE_SIZE,
+      (DEFAULT_PLAYER_SPAWN_TILE.y + 0.5) * TILE_SIZE,
     );
     useGameStore.getState().healthReset();
+  }
+
+  // ─── Building interiors ───────────────────────────────────────────
+
+  /** Enter a building. Hides world visuals, swaps in the interior tilemap,
+   *  and parks the player at the door's authored entry tile. */
+  private enterInterior(door: DoorSpawn) {
+    if (this.activeDialogue) this.closeDialogue();
+    this.sceneState.interior = {
+      interiorKey: door.interiorKey,
+      returnWorldTx: door.tileX,
+      returnWorldTy: door.tileY,
+      returnFacing: this.player.facing,
+    };
+    this.sceneState.mode = "Interior";
+
+    this.setWorldVisible(false);
+    this.loadInterior(door.interiorKey);
+    this.spawnInteriorNpcs(door.interiorKey);
+
+    const entryX = (door.entryTx + 0.5) * TILE_SIZE;
+    const entryY = (door.entryTy + 0.5) * TILE_SIZE;
+    this.player.setPosition(entryX, entryY);
+    this.player.setFacing("up");
+    if (this.interior) {
+      this.interior.lastExitTile = { x: door.entryTx, y: door.entryTy };
+    }
+    showToast("Inside. Walk back through the door to leave.", 2500);
+    void this.saveController.autosave();
+  }
+
+  /** Leave the current interior, restoring world visuals and the player's
+   *  pre-entry world tile. */
+  private exitInterior() {
+    const ret = this.sceneState.interior;
+    this.despawnInteriorNpcs();
+    this.unloadInterior();
+    this.setWorldVisible(true);
+    this.sceneState.mode = "OnFoot";
+    this.sceneState.interior = null;
+    if (ret) {
+      this.player.setPosition(
+        (ret.returnWorldTx + 0.5) * TILE_SIZE,
+        (ret.returnWorldTy + 0.5) * TILE_SIZE,
+      );
+      const f = ret.returnFacing;
+      if (
+        f === "up" || f === "down" || f === "left" || f === "right" ||
+        f === "up-left" || f === "up-right" || f === "down-left" || f === "down-right"
+      ) {
+        this.player.setFacing(f);
+      }
+    }
+    void this.saveController.autosave();
+  }
+
+  /** Build the interior tilemap from the cached TMJ, bind tilesets, create
+   *  layers, and parse exits. Camera bounds are switched to the interior. */
+  private loadInterior(key: string) {
+    const cacheKey = interiorTilemapKey(key);
+    if (!this.cache.tilemap.exists(cacheKey)) {
+      console.error(`No cached interior tilemap '${cacheKey}'.`);
+      return;
+    }
+    const tilemap = this.make.tilemap({ key: cacheKey });
+    const cached = this.cache.tilemap.get(cacheKey) as
+      | { data?: { tilesets?: Array<{ name: string; image: string }> } }
+      | undefined;
+    const rawTilesets = cached?.data?.tilesets ?? [];
+    const imageByName = new Map(rawTilesets.map((t) => [t.name, t.image]));
+
+    const boundTilesets: Phaser.Tilemaps.Tileset[] = [];
+    for (const tsDef of tilemap.tilesets) {
+      const imagePath = imageByName.get(tsDef.name);
+      if (!imagePath) {
+        throw new Error(`Interior '${key}': no image path for tileset '${tsDef.name}'.`);
+      }
+      const bound = tilemap.addTilesetImage(tsDef.name, tilesetImageKeyFor(imagePath));
+      if (!bound) {
+        throw new Error(`Interior '${key}': failed to bind tileset '${tsDef.name}'.`);
+      }
+      boundTilesets.push(bound);
+    }
+
+    const renderScale = TILE_SIZE / tilemap.tileWidth;
+    const layers: Phaser.Tilemaps.TilemapLayer[] = [];
+    tilemap.layers.forEach((layerData, idx) => {
+      const layer = tilemap.createLayer(layerData.name, boundTilesets, 0, 0) as
+        | Phaser.Tilemaps.TilemapLayer
+        | null;
+      if (!layer) return;
+      if (renderScale !== 1) layer.setScale(renderScale);
+      const overhead = INTERIOR_OVERHEAD_LAYERS.has(layerData.name.toLowerCase());
+      layer.setDepth(overhead ? INTERIOR_OVERHEAD_DEPTH_BASE + idx : idx);
+      layers.push(layer);
+    });
+
+    const registry = new TileRegistry(tilemap);
+    const { exits } = parseInteriorSpawns(tilemap);
+
+    this.interior = { key, tilemap, layers, registry, exits, lastExitTile: null };
+
+    const wPx = tilemap.width * TILE_SIZE;
+    const hPx = tilemap.height * TILE_SIZE;
+    this.cameras.main.setBounds(0, 0, wPx, hPx);
+  }
+
+  private unloadInterior() {
+    if (!this.interior) return;
+    for (const layer of this.interior.layers) layer.destroy();
+    this.interior.tilemap.destroy();
+    this.interior = null;
+    const b = this.world.bounds;
+    this.cameras.main.setBounds(
+      b.minTx * TILE_SIZE,
+      b.minTy * TILE_SIZE,
+      (b.maxTx - b.minTx) * TILE_SIZE,
+      (b.maxTy - b.minTy) * TILE_SIZE,
+    );
+  }
+
+  /** Toggle every world-owned visual so interior mode renders cleanly without
+   *  destroying state. NPCs, enemies, gathering nodes, ground items, ships,
+   *  and chunk tile layers all hide together. */
+  /** Auto-trigger an interior exit when the player walks onto a non-prompt
+   *  exit tile. Tile-debounced so re-entering immediately doesn't loop. */
+  private checkInteriorAutoExit() {
+    if (!this.interior) return;
+    const tx = Math.floor(this.player.x / TILE_SIZE);
+    const ty = Math.floor(this.player.y / TILE_SIZE);
+    const last = this.interior.lastExitTile;
+    if (last && last.x === tx && last.y === ty) return;
+    this.interior.lastExitTile = { x: tx, y: ty };
+    for (const e of this.interior.exits) {
+      if (e.promptOnly) continue;
+      if (e.tileX === tx && e.tileY === ty) {
+        this.exitInterior();
+        return;
+      }
+    }
+  }
+
+  private setWorldVisible(visible: boolean) {
+    for (const chunk of this.world.manager.loadedChunks()) {
+      for (const layer of chunk.layers) layer.setVisible(visible);
+    }
+    for (const npc of this.npcs) npc.sprite.setVisible(visible);
+    for (const enemy of this.enemies) enemy.sprite.setVisible(visible);
+    for (const node of this.nodes) node.setVisible(visible);
+    for (const gi of this.groundItems.values()) gi.sprite.setVisible(visible);
+    if (this.ship) this.ship.container.setVisible(visible);
+    for (const v of this.decorativeVessels) v.container.setVisible(visible);
   }
 
   private onAttack() {
@@ -717,10 +1039,10 @@ export class WorldScene extends Phaser.Scene {
 
   private spawnEnemies() {
     const file = enemiesDataRaw as EnemiesFile;
-    const defs = new Map(file.defs.map((d) => [d.id, d]));
+    this.enemyDefs = new Map(file.defs.map((d) => [d.id, d]));
     for (const def of file.defs) registerEnemyAnimations(this, def);
     for (const inst of file.instances) {
-      const def = defs.get(inst.defId);
+      const def = this.enemyDefs.get(inst.defId);
       if (!def) {
         console.warn(`Unknown enemy defId: ${inst.defId}`);
         continue;
@@ -760,9 +1082,9 @@ export class WorldScene extends Phaser.Scene {
 
   private spawnGatheringNodes() {
     const file = loadNodesFile(nodesDataRaw);
-    const defs = indexDefs(file.defs);
+    this.nodeDefs = indexDefs(file.defs);
     for (const inst of file.instances) {
-      const def = defs.get(inst.defId);
+      const def = this.nodeDefs.get(inst.defId);
       if (!def) {
         console.warn(`Unknown node defId: ${inst.defId}`);
         continue;
@@ -783,6 +1105,11 @@ export class WorldScene extends Phaser.Scene {
         this.openDialogueWith(npc);
         return;
       }
+      const door = this.nearestDoor();
+      if (door) {
+        this.enterInterior(door);
+        return;
+      }
       const pickup = this.nearestGroundItem();
       if (pickup) {
         this.pickUp(pickup);
@@ -791,15 +1118,66 @@ export class WorldScene extends Phaser.Scene {
       if (this.isNearHelm()) this.takeHelm();
     } else if (this.sceneState.mode === "AtHelm") {
       this.beginAnchoring();
+    } else if (this.sceneState.mode === "Interior") {
+      const exit = this.nearestInteriorExit();
+      if (exit) this.exitInterior();
     }
   }
 
+  private nearestDoor(): DoorSpawn | null {
+    let best: DoorSpawn | null = null;
+    let bestDist = DOOR_INTERACT_RADIUS;
+    for (const d of this.doors) {
+      const dx = (d.tileX + 0.5) * TILE_SIZE - this.player.x;
+      const dy = (d.tileY + 0.5) * TILE_SIZE - this.player.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= bestDist) {
+        best = d;
+        bestDist = dist;
+      }
+    }
+    return best;
+  }
+
+  private nearestInteriorExit(): InteriorExitSpawn | null {
+    if (!this.interior) return null;
+    let best: InteriorExitSpawn | null = null;
+    let bestDist = DOOR_INTERACT_RADIUS;
+    for (const e of this.interior.exits) {
+      const dx = (e.tileX + 0.5) * TILE_SIZE - this.player.x;
+      const dy = (e.tileY + 0.5) * TILE_SIZE - this.player.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= bestDist) {
+        best = e;
+        bestDist = dist;
+      }
+    }
+    return best;
+  }
+
   private spawnNpcs(data: NpcData = npcDataRaw as NpcData) {
+    this.npcData = data;
     this.dialogues = data.dialogues ?? {};
     for (const def of data.npcs) {
+      if (!npcIsOnWorld(def)) continue;
       registerNpcAnimations(this, def);
       this.npcs.push(new Npc(this, def));
     }
+  }
+
+  /** Spawn NPCs whose `map` matches the given interior. Called from
+   *  enterInterior; the matching defs are looked up in `this.npcData`. */
+  private spawnInteriorNpcs(interiorKey: string) {
+    for (const def of this.npcData.npcs) {
+      if (!npcIsOnInterior(def, interiorKey)) continue;
+      registerNpcAnimations(this, def);
+      this.interiorNpcs.push(new Npc(this, def));
+    }
+  }
+
+  private despawnInteriorNpcs() {
+    for (const npc of this.interiorNpcs) npc.sprite.destroy();
+    this.interiorNpcs = [];
   }
 
   reloadNpcs(data: NpcData) {
@@ -807,12 +1185,25 @@ export class WorldScene extends Phaser.Scene {
     this.npcs = [];
     if (this.activeDialogue) this.closeDialogue();
     this.spawnNpcs(data);
+    // If currently inside a building, refresh the interior crew too.
+    if (this.sceneState.mode === "Interior" && this.sceneState.interior) {
+      this.despawnInteriorNpcs();
+      this.spawnInteriorNpcs(this.sceneState.interior.interiorKey);
+    }
+  }
+
+  /** Every NPC currently active on the player's map. Combines world NPCs and
+   *  the in-building roster so proximity, click, and HUD code can stay flat. */
+  private activeNpcs(): Npc[] {
+    return this.sceneState.mode === "Interior"
+      ? this.interiorNpcs
+      : this.npcs;
   }
 
   private nearestNpc(): Npc | null {
     let best: Npc | null = null;
     let bestDist = NPC_INTERACT_RADIUS;
-    for (const npc of this.npcs) {
+    for (const npc of this.activeNpcs()) {
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.x, npc.y);
       if (d <= bestDist) {
         best = npc;
@@ -833,6 +1224,7 @@ export class WorldScene extends Phaser.Scene {
       speaker: dialogue.speaker || npc.def.name,
       pages: dialogue.pages.slice(),
       page: 0,
+      shopId: npc.def.shopId,
     };
     this.emitDialogue();
   }
@@ -854,15 +1246,31 @@ export class WorldScene extends Phaser.Scene {
       speaker: this.activeDialogue.speaker,
       pages: this.activeDialogue.pages,
       page: this.activeDialogue.page,
+      shopId: this.activeDialogue.shopId,
     });
   }
 
-  /** (Re)spawn ground items from authored data, filtered by the picked-up set. */
+  /** (Re)spawn ground items from authored data, filtered by the picked-up set.
+   *  Also re-spawns editor-placed items tracked in `editorItems`. */
   private respawnGroundItems(spawns: ItemSpawn[]) {
     for (const gi of this.groundItems.values()) gi.sprite.destroy();
     this.groundItems.clear();
 
-    for (const s of spawns) {
+    const allSpawns: Array<ItemSpawn & { _source: "authored" | "editor" }> = [];
+    for (const s of spawns) allSpawns.push({ ...s, _source: "authored" });
+    for (const e of this.editorItems.values()) {
+      allSpawns.push({
+        kind: "item_spawn",
+        uid: e.id,
+        tileX: e.tileX,
+        tileY: e.tileY,
+        itemId: e.itemId,
+        quantity: e.quantity,
+        _source: "editor",
+      });
+    }
+
+    for (const s of allSpawns) {
       if (this.groundItemsState.isPickedUp(s.uid)) continue;
       const x = (s.tileX + 0.5) * TILE_SIZE;
       const y = (s.tileY + 0.5) * TILE_SIZE;
@@ -886,7 +1294,7 @@ export class WorldScene extends Phaser.Scene {
         x,
         y,
         sprite,
-        source: "authored",
+        source: s._source,
       });
     }
 
@@ -950,7 +1358,7 @@ export class WorldScene extends Phaser.Scene {
     } else {
       gi.sprite.destroy();
       this.groundItems.delete(gi.uid);
-      if (gi.source === "authored") {
+      if (gi.source === "authored" || gi.source === "editor") {
         this.groundItemsState.markPickedUp(gi.uid);
       } else {
         this.droppedItemsState.remove(gi.uid);
@@ -1001,10 +1409,22 @@ export class WorldScene extends Phaser.Scene {
     if (this.keys.w.isDown || this.keys.up.isDown) {
       this.ship.targetThrottle = Math.min(1, this.ship.targetThrottle + 0.6 * dt);
     } else if (this.keys.s.isDown || this.keys.down.isDown) {
-      this.ship.targetThrottle = Math.max(0, this.ship.targetThrottle - 0.6 * dt);
+      this.ship.targetThrottle = Math.max(-1, this.ship.targetThrottle - 0.6 * dt);
     }
 
-    this.ship.updateSailing(dt);
+    const step = this.ship.updateSailing(dt, (tx, ty) => this.world.manager.shipTileState(tx, ty));
+    if (step.blocked) {
+      if (!this.wasBlocked) showToast("Ran aground! Turn to clear water.", 2500);
+      this.wasBlocked = true;
+      this.wasBeached = false;
+    } else if (step.beached) {
+      if (!this.wasBeached) showToast("Run aground on the beach. Back off with S.", 2500);
+      this.wasBeached = true;
+      this.wasBlocked = false;
+    } else {
+      this.wasBeached = false;
+      this.wasBlocked = false;
+    }
     this.accrueSailingXp(dt);
 
     const helm = this.ship.helmWorldPx();
@@ -1103,6 +1523,23 @@ export class WorldScene extends Phaser.Scene {
 
   /** Re-enter the current scene mode to fix up camera, freeze, helm parking. */
   private applySceneMode() {
+    if (this.sceneState.mode === "Interior") {
+      const ret = this.sceneState.interior;
+      if (!ret) {
+        // Save was inconsistent — drop back to OnFoot rather than trap the
+        // player in a non-existent room.
+        this.sceneState.mode = "OnFoot";
+      } else {
+        this.player.frozen = false;
+        this.setWorldVisible(false);
+        this.loadInterior(ret.interiorKey);
+        this.despawnInteriorNpcs();
+        this.spawnInteriorNpcs(ret.interiorKey);
+        // Player x/y already restored by playerSaveable; just ensure depth/zoom.
+        this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
+        return;
+      }
+    }
     if (this.sceneState.mode === "AtHelm") {
       this.player.frozen = true;
       this.ship.mode = "sailing";
@@ -1143,6 +1580,16 @@ export class WorldScene extends Phaser.Scene {
   private isPointWalkable(px: number, py: number, ignoreEnemy?: Enemy): boolean {
     const tx = Math.floor(px / TILE_SIZE);
     const ty = Math.floor(py / TILE_SIZE);
+    if (this.interior) {
+      // Interior maps have no water and no chunk shapes — just bounds + collide.
+      if (
+        tx < 0 || ty < 0 ||
+        tx >= this.interior.tilemap.width ||
+        ty >= this.interior.tilemap.height
+      ) return false;
+      if (this.interior.registry.isBlocked(tx, ty)) return false;
+      return true;
+    }
     const onDeck =
       this.ship &&
       this.ship.mode === "docked" &&
@@ -1262,6 +1709,9 @@ export class WorldScene extends Phaser.Scene {
       }
     } else if (this.sceneState.mode === "AtHelm") {
       prompt = "Press E to drop anchor";
+    } else if (this.sceneState.mode === "Interior" && !this.activeDialogue) {
+      const exit = this.nearestInteriorExit();
+      if (exit?.promptOnly) prompt = "Press E to leave";
     }
 
     setHud({
@@ -1294,6 +1744,406 @@ export class WorldScene extends Phaser.Scene {
     useGameStore.getState().jobsAddXp(id, amount);
     showToast(`+${amount} ${id} XP`, 1200);
   }
+
+  // ─── Edit mode ────────────────────────────────────────────────────
+
+  private loadEditorItems() {
+    const file = itemInstancesRaw as ItemInstancesFile;
+    for (const inst of file.instances) {
+      if (inst.map && inst.map !== "world") continue;
+      this.editorItems.set(inst.id, {
+        id: inst.id,
+        itemId: inst.itemId as ItemId,
+        quantity: inst.quantity,
+        tileX: inst.tileX,
+        tileY: inst.tileY,
+      });
+      // Pick the highest numeric suffix so the id allocator never collides
+      // with previously-saved editor items.
+      const m = /^ed-(\d+)$/.exec(inst.id);
+      if (m) this.editAutoIncrement = Math.max(this.editAutoIncrement, Number(m[1]));
+    }
+  }
+
+  private nextEditId(prefix: string): string {
+    this.editAutoIncrement += 1;
+    return `${prefix}-${this.editAutoIncrement}`;
+  }
+
+  private onEditToggle = () => {
+    this.editMode = !this.editMode;
+    if (this.editMode) showToast("Edit mode ON — left-click to select/place. F7 to exit.", 2500);
+    else showToast("Edit mode OFF.", 1500);
+    if (!this.editMode) {
+      this.editHighlight?.clear();
+      this.editHighlight?.setVisible(false);
+    }
+    this.emitEditState();
+  };
+
+  private redrawEditHighlights() {
+    const g = this.editHighlight;
+    if (!g) return;
+    g.clear();
+    g.setVisible(true);
+    const r = this.EDIT_PICK_RADIUS;
+    const colors: Record<EditEntityKind, number> = {
+      npc: 0x5fd7ff,
+      enemy: 0xff6b6b,
+      node: 0xffd65f,
+      item: 0xb57bff,
+    };
+    const circle = (kind: EditEntityKind, x: number, y: number) => {
+      g.lineStyle(2, colors[kind], 0.9);
+      g.strokeCircle(x, y, r);
+    };
+    for (const npc of this.npcs) circle("npc", npc.x, npc.y);
+    for (const e of this.enemies) circle("enemy", e.x, e.y);
+    for (const n of this.nodes) circle("node", n.x, n.y);
+    for (const gi of this.groundItems.values()) {
+      if (gi.source === "dropped") continue;
+      circle("item", gi.x, gi.y);
+    }
+  }
+
+  private onEditRequestSnapshot = () => {
+    this.emitEditState();
+  };
+
+  private emitEditState() {
+    bus.emitTyped("edit:state", {
+      active: this.editMode,
+      snapshot: this.editMode ? this.buildEditSnapshot() : null,
+    });
+  }
+
+  private buildEditSnapshot(): EditSnapshot {
+    const npcs = this.npcs.map((n) => ({
+      id: n.def.id,
+      name: n.def.name,
+      tileX: Math.floor(n.x / TILE_SIZE),
+      tileY: Math.floor(n.y / TILE_SIZE),
+      shopId: n.def.shopId,
+      map: "world",
+    }));
+    const enemies = this.enemies.map((e) => ({
+      id: e.id,
+      defId: e.def.id,
+      defName: e.def.name,
+      tileX: Math.floor(e.x / TILE_SIZE),
+      tileY: Math.floor(e.y / TILE_SIZE),
+    }));
+    const nodes = this.nodes.map((n) => ({
+      id: n.id,
+      defId: n.def.id,
+      defName: n.def.name,
+      tileX: Math.floor(n.x / TILE_SIZE),
+      tileY: Math.floor(n.y / TILE_SIZE),
+    }));
+    const items = Array.from(this.groundItems.values())
+      .filter((gi) => gi.source !== "dropped")
+      .map((gi) => ({
+        id: gi.uid,
+        itemId: gi.itemId,
+        itemName: ITEMS[gi.itemId]?.name ?? gi.itemId,
+        quantity: gi.quantity,
+        tileX: Math.floor(gi.x / TILE_SIZE),
+        tileY: Math.floor(gi.y / TILE_SIZE),
+        source: gi.source as "authored" | "editor",
+      }));
+    return {
+      npcs,
+      enemies,
+      nodes,
+      items,
+      defs: {
+        npcs: this.npcs.map((n) => ({ id: n.def.id, name: n.def.name })),
+        enemies: Array.from(this.enemyDefs.values()).map((d) => ({ id: d.id, name: d.name })),
+        nodes: Array.from(this.nodeDefs.values()).map((d) => ({ id: d.id, name: d.name })),
+        items: ALL_ITEM_IDS.map((id) => ({ id, name: ITEMS[id]?.name ?? id })),
+      },
+      shops: this.shopsForEdit.map((s) => ({
+        id: s.id,
+        name: s.name,
+        greeting: s.greeting,
+        stock: s.stock.map((row) => ({ ...row })),
+      })),
+    };
+  }
+
+  private onEditLeftClick(worldX: number, worldY: number) {
+    const tileX = Math.floor(worldX / TILE_SIZE);
+    const tileY = Math.floor(worldY / TILE_SIZE);
+    const hit = this.findEditableAt(worldX, worldY);
+    bus.emitTyped("edit:click", { worldX, worldY, tileX, tileY, hit });
+  }
+
+  private onEditPointerDown(worldX: number, worldY: number) {
+    const hit = this.findEditableAt(worldX, worldY);
+    if (hit) {
+      this.editDrag = {
+        kind: hit.kind,
+        id: hit.id,
+        startWorldX: worldX,
+        startWorldY: worldY,
+        moved: false,
+      };
+    } else {
+      this.editDrag = null;
+    }
+  }
+
+  private onEditPointerMove(worldX: number, worldY: number) {
+    const drag = this.editDrag;
+    if (!drag) return;
+    const dx = worldX - drag.startWorldX;
+    const dy = worldY - drag.startWorldY;
+    if (!drag.moved && Math.hypot(dx, dy) < 4) return;
+    drag.moved = true;
+    this.dragEntityTo(drag.kind, drag.id, worldX, worldY);
+  }
+
+  private onEditPointerUp(worldX: number, worldY: number) {
+    const drag = this.editDrag;
+    this.editDrag = null;
+    if (drag && drag.moved) {
+      const tileX = Math.floor(worldX / TILE_SIZE);
+      const tileY = Math.floor(worldY / TILE_SIZE);
+      this.onEditMove({ kind: drag.kind, id: drag.id, tileX, tileY });
+      return;
+    }
+    // Treat a no-drag click as select/place: existing behavior.
+    this.onEditLeftClick(worldX, worldY);
+  }
+
+  private dragEntityTo(kind: EditEntityKind, id: string, px: number, py: number) {
+    if (kind === "npc") {
+      const npc = this.npcs.find((n) => n.def.id === id);
+      if (!npc) return;
+      npc.sprite.setPosition(px, py);
+      npc.sprite.setDepth(npc.sortY());
+    } else if (kind === "enemy") {
+      const e = this.enemies.find((x) => x.id === id);
+      if (!e) return;
+      e.sprite.setPosition(px, py);
+      e.sprite.setDepth(e.sortY());
+    } else if (kind === "node") {
+      const n = this.nodes.find((x) => x.id === id);
+      if (!n) return;
+      n.setPositionPx(px, py);
+    } else if (kind === "item") {
+      const gi = this.groundItems.get(id);
+      if (!gi || gi.source !== "editor") return;
+      gi.x = px;
+      gi.y = py;
+      gi.sprite.setPosition(px, py);
+      gi.sprite.setDepth(py);
+    }
+  }
+
+  private readonly EDIT_PICK_RADIUS = TILE_SIZE * 0.9;
+
+  private findEditableAt(
+    worldX: number,
+    worldY: number,
+  ): { kind: EditEntityKind; id: string } | null {
+    const radius = this.EDIT_PICK_RADIUS;
+    interface Hit { kind: EditEntityKind; id: string; dist: number }
+    const hits: Hit[] = [];
+    const consider = (kind: EditEntityKind, id: string, x: number, y: number) => {
+      const d = Phaser.Math.Distance.Between(worldX, worldY, x, y);
+      if (d > radius) return;
+      hits.push({ kind, id, dist: d });
+    };
+    for (const npc of this.npcs) consider("npc", npc.def.id, npc.x, npc.y);
+    for (const e of this.enemies) consider("enemy", e.id, e.x, e.y);
+    for (const n of this.nodes) consider("node", n.id, n.x, n.y);
+    for (const gi of this.groundItems.values()) {
+      if (gi.source === "dropped") continue;
+      consider("item", gi.uid, gi.x, gi.y);
+    }
+    if (hits.length === 0) return null;
+    hits.sort((a, b) => a.dist - b.dist);
+    return { kind: hits[0].kind, id: hits[0].id };
+  }
+
+  private onEditMove = (req: EditMoveRequest) => {
+    const px = (req.tileX + 0.5) * TILE_SIZE;
+    const py = (req.tileY + 0.5) * TILE_SIZE;
+    if (req.kind === "npc") {
+      const npc = this.npcs.find((n) => n.def.id === req.id);
+      if (!npc) return;
+      // Mutate the def so a subsequent restart spawns at the same tile and
+      // the next snapshot reads the right home position.
+      npc.def.spawn = { tileX: req.tileX, tileY: req.tileY };
+      npc.sprite.setPosition(px, py);
+      npc.sprite.setDepth(npc.sortY());
+    } else if (req.kind === "enemy") {
+      const e = this.enemies.find((x) => x.id === req.id);
+      if (!e) return;
+      e.sprite.setPosition(px, py);
+      e.sprite.setDepth(e.sortY());
+    } else if (req.kind === "node") {
+      // Nodes use their constructor pos as `x/y` and a container — recreate.
+      const idx = this.nodes.findIndex((n) => n.id === req.id);
+      if (idx === -1) return;
+      const old = this.nodes[idx];
+      old.destroy();
+      this.nodes[idx] = new GatheringNode(this, old.def, {
+        id: old.id,
+        defId: old.def.id,
+        tileX: req.tileX,
+        tileY: req.tileY,
+      });
+    } else if (req.kind === "item") {
+      const gi = this.groundItems.get(req.id);
+      if (!gi || gi.source !== "editor") return;
+      gi.x = px;
+      gi.y = py;
+      gi.sprite.setPosition(px, py);
+      gi.sprite.setDepth(py);
+      const stored = this.editorItems.get(req.id);
+      if (stored) {
+        stored.tileX = req.tileX;
+        stored.tileY = req.tileY;
+      }
+    }
+    this.emitEditState();
+  };
+
+  private onEditPlace = (req: EditPlaceRequest) => {
+    if (req.kind === "npc") {
+      const template = this.npcData.npcs.find((n) => n.id === req.defId);
+      if (!template) return;
+      const newId = this.nextEditId(`${template.id}-copy`);
+      const clone = JSON.parse(JSON.stringify(template));
+      clone.id = newId;
+      clone.spawn = { tileX: req.tileX, tileY: req.tileY };
+      clone.map = "world";
+      this.npcData.npcs.push(clone);
+      registerNpcAnimations(this, clone);
+      this.npcs.push(new Npc(this, clone));
+    } else if (req.kind === "enemy") {
+      const def = this.enemyDefs.get(req.defId);
+      if (!def) return;
+      const inst: EnemyInstanceData = {
+        id: this.nextEditId(`${def.id}`),
+        defId: def.id,
+        tileX: req.tileX,
+        tileY: req.tileY,
+      };
+      this.enemies.push(new Enemy(this, def, inst));
+    } else if (req.kind === "node") {
+      const def = this.nodeDefs.get(req.defId);
+      if (!def) return;
+      const inst: NodeInstanceData = {
+        id: this.nextEditId(`${def.id}`),
+        defId: def.id,
+        tileX: req.tileX,
+        tileY: req.tileY,
+      };
+      this.nodes.push(new GatheringNode(this, def, inst));
+    } else if (req.kind === "item") {
+      const id = this.nextEditId("ed");
+      this.editorItems.set(id, {
+        id,
+        itemId: req.defId as ItemId,
+        quantity: req.quantity ?? 1,
+        tileX: req.tileX,
+        tileY: req.tileY,
+      });
+      // Re-render via respawn for sprite consistency.
+      this.respawnGroundItems(this.world.spawns.items);
+    }
+    this.emitEditState();
+  };
+
+  private onEditDelete = (req: EditDeleteRequest) => {
+    if (req.kind === "npc") {
+      const idx = this.npcs.findIndex((n) => n.def.id === req.id);
+      if (idx === -1) return;
+      this.npcs[idx].sprite.destroy();
+      this.npcs.splice(idx, 1);
+      this.npcData.npcs = this.npcData.npcs.filter((n) => n.id !== req.id);
+    } else if (req.kind === "enemy") {
+      const idx = this.enemies.findIndex((e) => e.id === req.id);
+      if (idx === -1) return;
+      this.enemies[idx].destroy();
+      this.enemies.splice(idx, 1);
+    } else if (req.kind === "node") {
+      const idx = this.nodes.findIndex((n) => n.id === req.id);
+      if (idx === -1) return;
+      this.nodes[idx].destroy();
+      this.nodes.splice(idx, 1);
+    } else if (req.kind === "item") {
+      const gi = this.groundItems.get(req.id);
+      if (!gi || gi.source !== "editor") return;
+      gi.sprite.destroy();
+      this.groundItems.delete(req.id);
+      this.editorItems.delete(req.id);
+    }
+    this.emitEditState();
+  };
+
+  private onEditRequestExport = () => {
+    // Apply moved positions back into the def list before serializing.
+    for (const npc of this.npcs) {
+      const def = this.npcData.npcs.find((n) => n.id === npc.def.id);
+      if (def) def.spawn = { tileX: Math.floor(npc.x / TILE_SIZE), tileY: Math.floor(npc.y / TILE_SIZE) };
+    }
+    const enemiesFile: EnemiesFile = {
+      defs: (enemiesDataRaw as EnemiesFile).defs,
+      instances: this.enemies.map((e) => ({
+        id: e.id,
+        defId: e.def.id,
+        tileX: Math.floor(e.x / TILE_SIZE),
+        tileY: Math.floor(e.y / TILE_SIZE),
+      })),
+    };
+    const nodesFile = {
+      defs: (loadNodesFile(nodesDataRaw)).defs,
+      instances: this.nodes.map((n) => ({
+        id: n.id,
+        defId: n.def.id,
+        tileX: Math.floor(n.x / TILE_SIZE),
+        tileY: Math.floor(n.y / TILE_SIZE),
+      })),
+    };
+    const itemInstancesFile: ItemInstancesFile = {
+      instances: Array.from(this.editorItems.values()).map((e) => ({
+        id: e.id,
+        itemId: e.itemId,
+        quantity: e.quantity,
+        tileX: e.tileX,
+        tileY: e.tileY,
+      })),
+    };
+    const shopsFile: ShopsFile = { shops: this.shopsForEdit };
+
+    const stringify = (obj: unknown) => JSON.stringify(obj, null, 2) + "\n";
+    bus.emitTyped("edit:export", {
+      files: [
+        { name: "npcs.json", content: stringify(this.npcData) },
+        { name: "enemies.json", content: stringify(enemiesFile) },
+        { name: "nodes.json", content: stringify(nodesFile) },
+        { name: "itemInstances.json", content: stringify(itemInstancesFile) },
+        { name: "shops.json", content: stringify(shopsFile) },
+      ],
+    });
+  };
+
+  private onEditShopUpdate = (req: EditShopUpdate) => {
+    const shop = this.shopsForEdit.find((s) => s.id === req.shopId);
+    if (!shop) return;
+    shop.stock = req.stock.map((row) => ({
+      itemId: row.itemId as ItemId,
+      restockQuantity: row.restockQuantity,
+    }));
+    // Drop any cached runtime instance for this shop so the next open reads
+    // the new stock list.
+    useShopStore.getState().reset();
+    this.emitEditState();
+  };
 
   private grantRandomItem() {
     const id = ALL_ITEM_IDS[Math.floor(Math.random() * ALL_ITEM_IDS.length)];

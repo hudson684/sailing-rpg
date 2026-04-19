@@ -6,15 +6,30 @@
       "kind": "tree",
       "color": "#3a6b2a",
       "outlineColor": "#1f3d18",
-      "width": 22,
-      "height": 28,
-      "hp": 3,
+      "width": 25,
+      "height": 16,
+      "sprite": {
+        "sheet": "sprites/nodes/palm-tree.png",
+        "frameWidth": 156,
+        "frameHeight": 215,
+        "frames": 10,
+        "frameRate": 8,
+        "scale": 1,
+        "originY": 0.92
+      },
+      "hp": 4,
       "respawnSec": 30,
       "requiredTool": "axe",
       "skill": "lumberjack",
       "xpPerHit": 4,
-      "drop": { "itemId": "plank", "quantity": 2 },
-      "blocks": true
+      "drop": {
+        "itemId": "plank",
+        "quantity": 4
+      },
+      "blocks": true,
+      "ySortOffset": -57.71429443359375,
+      "collisionOffsetX": 3.28573608398438,
+      "collisionOffsetY": -52
     },
     {
       "id": "ore_hopeite",
@@ -24,12 +39,24 @@
       "outlineColor": "#4a3a25",
       "width": 24,
       "height": 22,
+      "sprite": {
+        "sheet": "sprites/nodes/hopeite-rocks.png",
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "frames": 1,
+        "frameRate": 1,
+        "scale": 1,
+        "originY": 0.85
+      },
       "hp": 4,
       "respawnSec": 30,
       "requiredTool": "pickaxe",
       "skill": "orecheologist",
       "xpPerHit": 5,
-      "drop": { "itemId": "hopeite_ore", "quantity": 1 },
+      "drop": {
+        "itemId": "hopeite_ore",
+        "quantity": 1
+      },
       "blocks": true
     },
     {
@@ -45,17 +72,67 @@
       "requiredTool": "fishing_rod",
       "skill": "fishing",
       "xpPerHit": 6,
-      "drop": { "itemId": "fish", "quantity": 1 },
+      "drop": {
+        "itemId": "fish",
+        "quantity": 1
+      },
       "blocks": false
     }
   ],
   "instances": [
-    { "id": "n_tree_1", "defId": "tree_palm", "tileX": 50, "tileY": 18 },
-    { "id": "n_tree_2", "defId": "tree_palm", "tileX": 52, "tileY": 19 },
-    { "id": "n_tree_3", "defId": "tree_palm", "tileX": 48, "tileY": 21 },
-    { "id": "n_ore_1",  "defId": "ore_hopeite", "tileX": 47, "tileY": 17 },
-    { "id": "n_ore_2",  "defId": "ore_hopeite", "tileX": 51, "tileY": 22 },
-    { "id": "n_fish_1", "defId": "fishing_spot", "tileX": 56, "tileY": 16 },
-    { "id": "n_fish_2", "defId": "fishing_spot", "tileX": 58, "tileY": 25 }
+    {
+      "id": "n_tree_1",
+      "defId": "tree_palm",
+      "tileX": 41,
+      "tileY": 26
+    },
+    {
+      "id": "n_tree_2",
+      "defId": "tree_palm",
+      "tileX": 38,
+      "tileY": 23
+    },
+    {
+      "id": "n_tree_3",
+      "defId": "tree_palm",
+      "tileX": 37,
+      "tileY": 15
+    },
+    {
+      "id": "n_ore_1",
+      "defId": "ore_hopeite",
+      "tileX": 47,
+      "tileY": 25
+    },
+    {
+      "id": "n_ore_2",
+      "defId": "ore_hopeite",
+      "tileX": 44,
+      "tileY": 26
+    },
+    {
+      "id": "n_fish_1",
+      "defId": "fishing_spot",
+      "tileX": 61,
+      "tileY": 16
+    },
+    {
+      "id": "n_fish_2",
+      "defId": "fishing_spot",
+      "tileX": 61,
+      "tileY": 21
+    },
+    {
+      "id": "tree_palm-4",
+      "defId": "tree_palm",
+      "tileX": 44,
+      "tileY": 85
+    },
+    {
+      "id": "tree_palm-5",
+      "defId": "tree_palm",
+      "tileX": 40,
+      "tileY": 83
+    }
   ]
 }

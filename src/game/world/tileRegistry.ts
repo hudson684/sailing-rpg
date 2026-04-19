@@ -38,12 +38,14 @@ export class TileRegistry {
   isWater(tileX: number, tileY: number): boolean {
     // "Deep water" — blocks on-foot movement. The `ocean` layer is the base of
     // every authored chunk. A cell is deep water iff ocean is present AND
-    // nothing is painted above it on any other tile layer (including
-    // `shallow water`, which is wadeable and handled by isAnchorable). Outside
-    // authored chunks, callers (ChunkManager) default to open ocean anyway.
+    // nothing *other than shallow water* is painted above it. Shallow water
+    // buried under ocean must not make the cell walkable — ocean wins.
+    // Wadeable shallow water is a cell with shallow water painted and no
+    // ocean covering it. Outside authored chunks, callers (ChunkManager)
+    // default to open ocean anyway.
     if (this.tilemap.getTileAt(tileX, tileY, false, "ocean")) {
       for (const layerName of this.tileLayerNames) {
-        if (layerName === "ocean") continue;
+        if (layerName === "ocean" || layerName === "shallow water") continue;
         if (this.tilemap.getTileAt(tileX, tileY, false, layerName)) return false;
       }
       return true;
@@ -71,6 +73,28 @@ export class TileRegistry {
 
   isBlocked(tileX: number, tileY: number): boolean {
     return this.anyLayerHasProp(tileX, tileY, "collides");
+  }
+
+  /**
+   * Sailing collision classifier:
+   * - "water"   → ocean/shallow water with nothing else painted (anchorable).
+   * - "beach"   → ocean/shallow water/nothing, plus a `beach` tile, and no
+   *               other land/prop layers. Soft-grounding: hull stops but can
+   *               reverse off.
+   * - "blocked" → anything else (grass, walls, docks, props, collides...).
+   *               Hard stop.
+   */
+  shipTileState(tileX: number, tileY: number): "water" | "beach" | "blocked" {
+    const hasOcean = !!this.tilemap.getTileAt(tileX, tileY, false, "ocean");
+    const hasShallow = !!this.tilemap.getTileAt(tileX, tileY, false, "shallow water");
+    const hasBeach = !!this.tilemap.getTileAt(tileX, tileY, false, "beach");
+    for (const layerName of this.tileLayerNames) {
+      if (layerName === "ocean" || layerName === "shallow water" || layerName === "beach") continue;
+      if (this.tilemap.getTileAt(tileX, tileY, false, layerName)) return "blocked";
+    }
+    if (hasBeach) return "beach";
+    if (hasOcean || hasShallow) return "water";
+    return "blocked";
   }
 
   /** Does any tile stacked at (tx, ty) carry a given boolean property? */

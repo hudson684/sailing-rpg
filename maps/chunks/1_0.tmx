@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="18" nextobjectid="28">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="18" nextobjectid="29">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
  <tileset firstgid="226" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <tileset firstgid="736" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
@@ -70,7 +70,7 @@
  </layer>
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzjkKAkEYROGKZ4Sx+1oaqODuiRTcd72RBupxjHyBYCKYtIhQD76s+asl55z7z4aZNMp+/QvnvtspSBdcccM5vH93z19SlkepjICIUkx7/1MV9mqoo4Hqc79ZSC200UEXPfQxKNJsj9maYIoZ5lhgiRUba2ywxQ57HHBMtO+cc86l7gH4LxgN
+   eJztzTsOglAQheHpMcF7t6UFmPh2TeIDH6g7kgJYjpV/YUJjYjOFxfmTr5vMMVNKKaXUv/YMZg1adKjD97tX0vMsiWZDBEQMou//X43Yy5BjgvFnf5qazTDHAkussMYm9dneslVghz0OOKLEiY0zLriiwg13PJz2lVJKKe/e7JQW5A==
   </data>
  </layer>
  <layer id="2" name="overlay" width="32" height="32">
@@ -80,7 +80,7 @@
  </layer>
  <layer id="4" name="props_high" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztz0sOAUEYReF/WI8EhXVp3WwKifdq7ECJPTlGJkxEqpJ2T/KNb66ZUuqbVs5sjY2rs39lN+NWad97s4Do6+w/y4H/od7+PzRIZkOMkDDGBNNUZn/GToM5WnRYYFlof8vODnsccMQJ5zf7l/jyq/KHn/dC/5VSSinVrx7IqRIh
+   eJztz7sJgEAURNGXC+qqdfnduvxXYwmCPXkzkzWTDWQO3HgYMxERkbDUmWWUk6OCSqpcnP2anYZa6qingXyk/ZGdiWZaaKWN9sD+kTx95Xz5eUX6LyIiIv9yA4ctDBM=
   </data>
  </layer>
  <layer id="5" name="roof" width="32" height="32">
@@ -90,7 +90,7 @@
  </layer>
  <layer id="16" name="shadows" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzbEJACAMAMH02UidTB3erGAlwh18/REA/2kZ0auRb/6zvqvaj/4AAHDrAC00AmU=
+   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
   </data>
  </layer>
  <objectgroup id="6" name="objects">
@@ -105,6 +105,14 @@
     <property name="itemId" value="plank"/>
     <property name="quantity" type="int" value="1"/>
     <property name="uid" value="b38fb007-d2b5-4241-8c45-35386dede976"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="28" type="item_spawn" x="832" y="432">
+   <properties>
+    <property name="itemId" value="fishing_rod"/>
+    <property name="quantity" type="int" value="1"/>
+    <property name="uid" value="9b5bb4a8-3025-4d53-8a09-e8b93b8b8359"/>
    </properties>
    <point/>
   </object>

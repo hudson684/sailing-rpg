@@ -26,25 +26,51 @@ export function Dialogue() {
       } else if (e.key === "Escape") {
         e.preventDefault();
         bus.emitTyped("dialogue:action", { type: "close" });
+      } else if ((e.key === "t" || e.key === "T") && state.shopId) {
+        e.preventDefault();
+        bus.emitTyped("dialogue:action", { type: "openShop" });
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [state.visible]);
+  }, [state.visible, state.shopId]);
 
   if (!state.visible) return null;
 
   const page = state.pages[state.page] ?? "";
   const isLast = state.page >= state.pages.length - 1;
-  const onClick = () => bus.emitTyped("dialogue:action", { type: "advance" });
+  const onAdvance = () => bus.emitTyped("dialogue:action", { type: "advance" });
+  const onClose = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    bus.emitTyped("dialogue:action", { type: "close" });
+  };
+  const onTrade = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    bus.emitTyped("dialogue:action", { type: "openShop" });
+  };
 
   return (
     <div className="dialogue-root">
-      <div className="dialogue-box" onClick={onClick} role="dialog" aria-label={`Dialogue: ${state.speaker}`}>
-        <div className="dialogue-speaker">{state.speaker}</div>
+      <div
+        className="px-panel dialogue-box"
+        onClick={onAdvance}
+        role="dialog"
+        aria-label={`Dialogue: ${state.speaker}`}
+      >
+        <div className="px-header">
+          <span className="px-header-title">{state.speaker}</span>
+          <button className="px-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
         <div className="dialogue-text">{page}</div>
-        <div className="dialogue-footer">
-          <span className="dialogue-hint">
+        {state.shopId && (
+          <div className="dialogue-options">
+            <button type="button" className="px-btn px-btn-orange" onClick={onTrade}>
+              Trade (T)
+            </button>
+          </div>
+        )}
+        <div className="px-footer dialogue-footer">
+          <span>
             {isLast ? "E / Space — close" : "E / Space — next"} · Esc — close
           </span>
           <span className="dialogue-progress">
