@@ -121,6 +121,8 @@ const DockedPoseSchema = z.object({
 });
 
 const ShipDataSchema = z.object({
+  id: z.string().min(1),
+  defId: z.string().min(1),
   x: z.number(),
   y: z.number(),
   heading: HeadingSchema,
@@ -130,13 +132,18 @@ const ShipDataSchema = z.object({
   docked: DockedPoseSchema,
 });
 
-export function shipSaveable(ship: Ship): Saveable<z.infer<typeof ShipDataSchema>> {
+const ShipsDataSchema = z.array(ShipDataSchema);
+
+export function shipsSaveable(
+  getShips: () => Ship[],
+  hydrate: (states: z.infer<typeof ShipsDataSchema>) => void,
+): Saveable<z.infer<typeof ShipsDataSchema>> {
   return {
-    id: "ship",
+    id: "ships",
     version: 1,
-    schema: ShipDataSchema,
-    serialize: () => ship.serialize(),
-    hydrate: (data) => ship.hydrate(data),
+    schema: ShipsDataSchema,
+    serialize: () => getShips().map((s) => s.serialize()),
+    hydrate: (data) => hydrate(data),
   };
 }
 

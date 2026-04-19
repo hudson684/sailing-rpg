@@ -1,12 +1,11 @@
 import * as Phaser from "phaser";
 import { tilesetImageKeyFor, type WorldManifest } from "../world/chunkManager";
 import {
-  VESSEL_ANIM_DIRS,
-  VESSEL_ANIM_STATES,
-  VESSEL_TEMPLATES,
-  vesselAnimKey,
-  vesselTextureKey,
+  SHIP_HEADINGS,
+  loadShipsFile,
+  shipTilemapKey,
 } from "../entities/vessels";
+import type { Heading } from "../entities/Ship";
 import {
   CF_ANIMS,
   CF_DIRS,
@@ -18,6 +17,7 @@ import {
   type CfLayer,
 } from "../entities/playerAnims";
 import { npcTextureKey, type NpcData } from "../entities/npcTypes";
+import { registerNpcAnimations } from "../entities/NpcSprite";
 import npcDataRaw from "../data/npcs.json";
 import { enemyTextureKey, type EnemiesFile } from "../entities/enemyTypes";
 import enemiesDataRaw from "../data/enemies.json";
@@ -66,19 +66,20 @@ export class BootScene extends Phaser.Scene {
       for (const [key, ref] of Object.entries(data.interiors ?? {})) {
         this.load.tilemapTiledJSON(interiorTilemapKey(key), `maps/${ref.path}`);
       }
-    });
-
-    for (const vessel of Object.values(VESSEL_TEMPLATES)) {
-      for (const state of VESSEL_ANIM_STATES) {
-        for (const dir of VESSEL_ANIM_DIRS) {
-          this.load.spritesheet(
-            vesselTextureKey(vessel, state, dir),
-            `sprites/${vessel.spritePrefix}-${state}-${dir}.png`,
-            { frameWidth: vessel.frame.width, frameHeight: vessel.frame.height },
-          );
+      const shipsManifest = data.ships ?? {};
+      for (const vessel of loadShipsFile().defs.values()) {
+        for (let h = 0 as Heading; h < 4; h = ((h + 1) as Heading)) {
+          const mapKey = `${vessel.tmjPrefix}-${SHIP_HEADINGS[h]}`;
+          const ref = shipsManifest[mapKey];
+          if (!ref) {
+            throw new Error(
+              `Ship tilemap '${mapKey}' missing from world manifest — check ships/${mapKey}.tmx exists and the map build ran.`,
+            );
+          }
+          this.load.tilemapTiledJSON(shipTilemapKey(vessel, h), `maps/${ref.path}`);
         }
       }
-    }
+    });
 
     {
       // Default outfit layers — variant string matches file basename in
@@ -170,25 +171,6 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    for (const vessel of Object.values(VESSEL_TEMPLATES)) {
-      for (const state of VESSEL_ANIM_STATES) {
-        for (const dir of VESSEL_ANIM_DIRS) {
-          const key = vesselAnimKey(vessel, state, dir);
-          if (this.anims.exists(key)) continue;
-          const count = vessel.frames[state];
-          this.anims.create({
-            key,
-            frames: this.anims.generateFrameNumbers(vesselTextureKey(vessel, state, dir), {
-              start: 0,
-              end: count - 1,
-            }),
-            frameRate: vessel.frameRate,
-            repeat: -1,
-          });
-        }
-      }
-    }
-
     try {
       installPlayerSkinCanvases(this.textures);
       const skinId = useSettingsStore.getState().skinTone;
@@ -243,6 +225,11 @@ export class BootScene extends Phaser.Scene {
       });
     }
 
+    // Register NPC animations globally so every scene's reconciler can
+    // spawn sprites without re-registering per-scene.
+    for (const npc of npcData.npcs) registerNpcAnimations(this, npc);
+
+    this.scene.launch("Systems");
     this.scene.start("World");
   }
 }

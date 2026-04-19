@@ -7,7 +7,7 @@
  <tileset firstgid="5092" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass - coast.tsx"/>
  <tileset firstgid="6078" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx"/>
  <tileset firstgid="7064" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Tilesets-GL2SA.tsx"/>
- <layer id="7" name="Ocean" width="32" height="32">
+ <layer id="7" name="ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMA6B1eP9SS7QeR8FeUlVVVfX1AZnYlC4=
   </data>

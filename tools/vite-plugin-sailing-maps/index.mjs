@@ -8,7 +8,7 @@
 // dev-server error overlay so the author can fix the TMX in place and save.
 
 import path from "node:path";
-import { buildAll, mapsDir } from "../build-maps.mjs";
+import { buildAll, mapsDir, shipsDir } from "../build-maps.mjs";
 
 export default function sailingMapsPlugin() {
   let server = null;
@@ -37,14 +37,20 @@ export default function sailingMapsPlugin() {
     configureServer(_server) {
       server = _server;
       server.watcher.add(path.join(mapsDir, "**"));
+      server.watcher.add(path.join(shipsDir, "**"));
       const onChange = (file) => {
         const abs = path.resolve(file);
-        if (!abs.startsWith(mapsDir)) return;
-        const rel = path.relative(mapsDir, abs).replace(/\\/g, "/");
-        if (rel.endsWith(".tmj")) return; // emitted output, ignore
-        // Only rebuild for files the build actually reads.
-        if (rel === "world.json" || rel.startsWith("tilesets/") || /^chunks\/\d+_\d+\.tmx$/.test(rel)) {
-          rebuild(rel);
+        if (abs.startsWith(mapsDir)) {
+          const rel = path.relative(mapsDir, abs).replace(/\\/g, "/");
+          if (rel.endsWith(".tmj")) return;
+          if (rel === "world.json" || rel.startsWith("tilesets/") || /^chunks\/\d+_\d+\.tmx$/.test(rel) || /^interiors\/.+\.tmx$/.test(rel)) {
+            rebuild(rel);
+          }
+          return;
+        }
+        if (abs.startsWith(shipsDir)) {
+          const rel = path.relative(shipsDir, abs).replace(/\\/g, "/");
+          if (rel.endsWith(".tmx")) rebuild(`ships/${rel}`);
         }
       };
       server.watcher.on("change", onChange);

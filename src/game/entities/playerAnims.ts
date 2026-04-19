@@ -12,6 +12,29 @@ export const CF_SHEET_ROWS = 56;
 export const CF_DIRS = ["forward", "right", "back"] as const;
 export type CfDir = (typeof CF_DIRS)[number];
 
+/** 8-way in-world facing for the player. CF sheets only ship 3 directions —
+ *  `facingToCfDir` (in PlayerSprite) maps these down to CfDir + flipX. */
+export type Facing =
+  | "up"
+  | "up-right"
+  | "right"
+  | "down-right"
+  | "down"
+  | "down-left"
+  | "left"
+  | "up-left";
+
+export const FACING_VALUES: readonly Facing[] = [
+  "up",
+  "up-right",
+  "right",
+  "down-right",
+  "down",
+  "down-left",
+  "left",
+  "up-left",
+];
+
 export const CF_STATES = ["idle", "walk", "attack", "mine", "chop", "fish"] as const;
 export type CfState = (typeof CF_STATES)[number];
 

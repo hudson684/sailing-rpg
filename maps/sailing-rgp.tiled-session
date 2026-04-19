@@ -1,13 +1,18 @@
 {
-    "activeFile": "chunks/0_0.tmx",
+    "activeFile": "chunks/4_2.tmx",
     "expandedProjectPaths": [
-        "themes",
-        "tilesets",
-        "themes/grassland/TiledMap Editor",
-        "themes/grassland/TiledMap Editor/Tilesets",
+        "themes/Grass Land",
         "themes/grassland",
         "chunks",
-        "."
+        "themes/The Village/TiledMap Editor/tilesets",
+        "themes/grassland/TiledMap Editor",
+        ".",
+        "themes/Grass Land/TiledMap Editor",
+        "ships",
+        "themes/grassland/TiledMap Editor/Tilesets",
+        "themes/The Village",
+        "themes/Grass Land/TiledMap Editor/Tilesets",
+        "themes/The Village/TiledMap Editor"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -15,24 +20,24 @@
             "scale": 0.75,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 1271.3333333333333,
-                "y": 552
+                "x": 511.33333333333326,
+                "y": 510.6666666666666
             }
         },
         "chunks/0_1.tmx": {
             "scale": 0.75,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 537.3333333333333,
-                "y": 525.3333333333334
+                "x": 885.9999999999999,
+                "y": 718.6666666666665
             }
         },
         "chunks/0_2.tmx": {
             "scale": 0.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 1573,
-                "y": 706
+                "x": 1073,
+                "y": 820
             }
         },
         "chunks/0_3.tmx": {
@@ -44,23 +49,19 @@
             }
         },
         "chunks/1_0.tmx": {
-            "expandedObjectLayers": [
-                15,
-                6
-            ],
-            "scale": 0.5,
-            "selectedLayer": 7,
+            "scale": 1.5,
+            "selectedLayer": 8,
             "viewCenter": {
-                "x": 1443,
-                "y": 3392
+                "x": 699,
+                "y": 615.3333333333333
             }
         },
         "chunks/1_1.tmx": {
-            "scale": 2,
+            "scale": 1,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 351.25,
-                "y": 1755
+                "x": 792.5,
+                "y": 667
             }
         },
         "chunks/1_2.tmx": {
@@ -70,19 +71,27 @@
             "expandedObjectLayers": [
                 17
             ],
-            "scale": 0.5,
+            "scale": 0.33,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 25,
-                "y": 638
+                "x": 1362.1212121212122,
+                "y": 978.7878787878788
             }
         },
         "chunks/1_3.tmx": {
-            "scale": 0.5,
-            "selectedLayer": 7,
+            "scale": 0.33,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": -297,
-                "y": -166
+                "x": 1362.1212121212122,
+                "y": 978.7878787878788
+            }
+        },
+        "chunks/1_4.tmx": {
+            "scale": 3,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 519.1666666666666,
+                "y": 588
             }
         },
         "chunks/2_0.tmx": {
@@ -102,19 +111,19 @@
             }
         },
         "chunks/2_2.tmx": {
-            "scale": 0.75,
-            "selectedLayer": 6,
+            "scale": 0.33,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": 267.33333333333326,
-                "y": 1288
+                "x": 1362.1212121212122,
+                "y": 978.7878787878788
             }
         },
         "chunks/2_3.tmx": {
-            "scale": 0.5,
-            "selectedLayer": 2,
+            "scale": 0.33,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 77,
-                "y": -316
+                "x": 1362.1212121212122,
+                "y": 978.7878787878788
             }
         },
         "chunks/3_0.tmx": {
@@ -126,35 +135,151 @@
             }
         },
         "chunks/3_1.tmx": {
-            "scale": 0.8145507812499999,
+            "scale": 0.33,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 538.3335331495025,
-                "y": 511.93861647284496
+                "x": 1113.6363636363637,
+                "y": 903.0303030303032
             }
         },
         "chunks/3_2.tmx": {
-            "scale": 0.8145507812499999,
+            "scale": 0.33,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 538.3335331495025,
-                "y": 511.93861647284496
+                "x": 1113.6363636363637,
+                "y": -121.21212121212125
             }
         },
         "chunks/3_3.tmx": {
-            "scale": 2,
-            "selectedLayer": 3,
+            "scale": 0.125,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": -247.25,
-                "y": 565
+                "x": -652,
+                "y": 504
+            }
+        },
+        "chunks/4_0.tmx": {
+            "scale": 1,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 284.5,
+                "y": 784
+            }
+        },
+        "chunks/4_1.tmx": {
+            "scale": 0.33,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 965.1515151515152,
+                "y": 1154.5454545454545
+            }
+        },
+        "chunks/4_2.tmx": {
+            "scale": 0.33,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 89.39393939393926,
+                "y": -121.21212121212125
+            }
+        },
+        "chunks/4_3.tmx": {
+            "scale": 0.33,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 943.9393939393938,
+                "y": 809.0909090909091
+            }
+        },
+        "chunks/5_0.tmx": {
+            "scale": 0.33,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": -37.87878787878799,
+                "y": 1890.909090909091
+            }
+        },
+        "chunks/5_1.tmx": {
+            "scale": 0.33,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 113.63636363636351,
+                "y": 272.72727272727275
+            }
+        },
+        "chunks/5_2.tmx": {
+            "scale": 0.33,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": -59.090909090909236,
+                "y": 130.30303030303025
+            }
+        },
+        "chunks/5_3.tmx": {
+            "scale": 0.33,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": -86.36363636363649,
+                "y": -18.181818181818244
             }
         },
         "interiors/cabin.tmx": {
+            "expandedObjectLayers": [
+                14,
+                6
+            ],
             "scale": 1.5,
-            "selectedLayer": 10,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 230.33333333333337,
-                "y": 202.66666666666669
+                "x": 490.99999999999994,
+                "y": 327.33333333333326
+            }
+        },
+        "ships/galleon-e.tmx": {
+            "scale": 1,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 753.5,
+                "y": -228
+            }
+        },
+        "ships/galleon-n.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 461,
+                "y": 586
+            }
+        },
+        "ships/galleon-s.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 65,
+                "y": 762
+            }
+        },
+        "ships/galleon-w.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": -165,
+                "y": 66
+            }
+        },
+        "ships/rowboat-e.tmx": {
+            "scale": 5.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 27.545454545454543,
+                "y": 54.727272727272734
+            }
+        },
+        "ships/rowboat-n.tmx": {
+            "scale": 8,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 22.1875,
+                "y": 32.375
             }
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet1-sprites.tsx": {
@@ -167,11 +292,11 @@
             "scaleInDock": 1
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2.tsx": {
-            "scaleInDock": 0.75,
+            "scaleInDock": 0.125,
             "scaleInEditor": 0.33
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet3.tsx": {
-            "scaleInDock": 0.5
+            "scaleInDock": 0.33
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet4-sprites.tsx": {
             "scaleInDock": 1
@@ -195,13 +320,14 @@
             "scaleInDock": 0.33
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass - transparency.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 0.5
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 1.5,
+            "scaleInEditor": 1
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/beach - no thick foam - Godot.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 0.25
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/beach - no thick foam.tsx": {
             "scaleInDock": 1
@@ -243,7 +369,7 @@
             "scaleInDock": 1
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/platform - grass to water - godot.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 0.75
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/platform - grass to water.tsx": {
             "scaleInDock": 1
@@ -264,7 +390,8 @@
             "scaleInDock": 1
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass - river orientation.tsx": {
-            "scaleInDock": 0.5
+            "scaleInDock": 0.5,
+            "scaleInEditor": 1
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass(transparency) - river orientation-godot.tsx": {
             "scaleInDock": 1
@@ -285,7 +412,7 @@
             "scaleInDock": 1
         },
         "themes/Sea Adventures/TiledMap Editor/Tilesets/Tilesets-GL2SA.tsx": {
-            "scaleInDock": 1,
+            "scaleInDock": 0.5,
             "scaleInEditor": 0.75
         },
         "themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx": {
@@ -293,26 +420,206 @@
         },
         "themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx": {
             "dynamicWrapping": false,
-            "scaleInDock": 1
+            "scaleInDock": 1.5
         },
         "themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass - coast.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 1.5
         },
         "themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx": {
+            "scaleInDock": 0.5
+        },
+        "themes/Sea Adventures/props/animated/animated Palm Tree-1-foliage-shadow.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/animated Palm Tree-1-foliage-shadow2.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/animated Palm Tree-1-foliage.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/animated Palm Tree-1.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/animated Palm Tree-2-foliage-shadow.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/animated Palm Tree-2-foliage-shadow2.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/animated Palm Tree-2-foliage.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/animated Palm Tree-2.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/animated Palm Tree-3-foliage-shadow.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/animated Palm Tree-3-foliage.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/animated Palm Tree-3.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/banner-2-anim-neutral.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/banner-2-anim.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/banner-anim-neutral.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/banner-anim.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/banner-only.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/boat-idle-down.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/boat-idle-sideways.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/boat-idle-up.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/boat-sailing-down.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/boat-sailing-sideways.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/boat-sailing-up.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/buried chest-opening-gold.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/buried chest-opening-half buried-gold.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/buried chest-opening-half buried.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/buried chest-opening.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/flag-pirate.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/flag-pirate2.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/gems-1.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/gems-2.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/gems-3.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/gems-4.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/ship/ship-animations - down-idle-baked.tsx": {
+            "scaleInDock": 0.5
+        },
+        "themes/Sea Adventures/props/animated/ship/ship-animations - down-sailing-baked.tsx": {
+            "scaleInDock": 0.5
+        },
+        "themes/Sea Adventures/props/animated/ship/ship-animations - down-sailing-windFX.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/ship/ship-animations - up-idle-baked.tsx": {
+            "scaleInDock": 0.5
+        },
+        "themes/Sea Adventures/props/animated/ship/ship-animations - up-sailing-baked.tsx": {
+            "scaleInDock": 0.5
+        },
+        "themes/Sea Adventures/props/animated/ship/ship-animations - up-sailing-windFX.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Sea Adventures/props/animated/ship/ship-animations-sideways-idle-baked.tsx": {
+            "scaleInDock": 0.33
+        },
+        "themes/Sea Adventures/props/animated/ship/ship-animations-sideways-sailing-baked.tsx": {
+            "scaleInDock": 0.5
+        },
+        "themes/Sea Adventures/props/animated/ship/ship-animations-sideways-sailing-windFX-baked.tsx": {
+            "scaleInDock": 0.75
+        },
+        "themes/Sea Adventures/props/animated/wind fx-48frames.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/The Village/TiledMap Editor/tilesets/Free_Premade_houses.tsx": {
+            "scaleInDock": 0.75
+        },
+        "themes/The Village/TiledMap Editor/tilesets/Premade_houses.tsx": {
+            "scaleInDock": 0.25
+        },
+        "themes/The Village/TiledMap Editor/tilesets/Premade_houses2.tsx": {
             "scaleInDock": 1
         },
         "themes/The Village/TiledMap Editor/tilesets/Premade_houses3.tsx": {
+            "scaleInDock": 0.5,
             "scaleInEditor": 0.5
+        },
+        "themes/The Village/TiledMap Editor/tilesets/Update 1.2 - recolored roof.tsx": {
+            "scaleInDock": 0.33
+        },
+        "themes/The Village/TiledMap Editor/tilesets/house-decorations.tsx": {
+            "scaleInDock": 1
         },
         "themes/The Village/TiledMap Editor/tilesets/props(as sprites).tsx": {
             "dynamicWrapping": true,
             "scaleInDock": 1
         },
         "themes/The Village/TiledMap Editor/tilesets/props.tsx": {
-            "dynamicWrapping": false
+            "dynamicWrapping": false,
+            "scaleInDock": 0.33
         },
         "themes/The Village/TiledMap Editor/tilesets/roofs1.tsx": {
-            "dynamicWrapping": false
+            "dynamicWrapping": false,
+            "scaleInDock": 0.5
+        },
+        "themes/The Village/TiledMap Editor/tilesets/roofs1_intersections_wall-width10.tsx": {
+            "scaleInDock": 0.33
+        },
+        "themes/The Village/TiledMap Editor/tilesets/roofs2.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/The Village/TiledMap Editor/tilesets/roofs2_intersections_wall-width10.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/The Village/TiledMap Editor/tilesets/side_roofs_details_extrusion.tsx": {
+            "scaleInDock": 0.5
+        },
+        "themes/The Village/TiledMap Editor/tilesets/side_roofs_details_extrusion2.tsx": {
+            "scaleInDock": 1.5
+        },
+        "themes/The Village/TiledMap Editor/tilesets/tilesets-village.tsx": {
+            "scaleInDock": 0.75
+        },
+        "themes/The Village/TiledMap Editor/tilesets/walls-floor1.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/The Village/TiledMap Editor/tilesets/walls1.tsx": {
+            "scaleInDock": 0.33
+        },
+        "themes/The Village/TiledMap Editor/tilesets/walls2.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/The Village/TiledMap Editor/tilesets/walls3.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/The Village/TiledMap Editor/tilesets/walls4.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/The Village/TiledMap Editor/tilesets/walls5.tsx": {
+            "scaleInDock": 1
         },
         "themes/grassland/TiledMap Editor/Tilesets/Atlas-Props-sheet1.tsx": {
             "scaleInDock": 1,
@@ -375,29 +682,44 @@
             "scaleInEditor": 1
         }
     },
-    "last.externalTilesetPath": "C:/dev/sailing-rpg/maps/tilesets",
+    "last.externalTilesetPath": "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated",
     "last.imagePath": "C:/dev/sailing-rpg/maps/themes/Village Interiors/assets",
-    "last.worldFilePath": "C:/dev/sailing-rpg/maps",
+    "last.worldFilePath": "C:/dev/sailing-rpg/maps/ships",
     "loadedWorlds": [
-        "C:/dev/sailing-rpg/maps/sailing-rpg.world"
+        "C:/dev/sailing-rpg/maps/sailing-rpg.world",
+        "C:/dev/sailing-rpg/maps/ships/galleon.world",
+        "C:/dev/sailing-rpg/maps/ships/rowboat.world"
     ],
+    "map.lastUsedFormat": "tmx",
     "openFiles": [
         "chunks/0_0.tmx",
         "chunks/1_0.tmx",
-        "chunks/1_1.tmx"
+        "chunks/1_1.tmx",
+        "chunks/1_2.tmx",
+        "chunks/0_2.tmx",
+        "chunks/2_2.tmx",
+        "chunks/2_3.tmx",
+        "chunks/1_3.tmx",
+        "chunks/3_3.tmx",
+        "themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass - river orientation.tsx",
+        "themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx",
+        "interiors/cabin.tmx",
+        "chunks/0_1.tmx",
+        "chunks/4_2.tmx",
+        "chunks/1_4.tmx"
     ],
     "project": "sailing-rgp.tiled-project",
     "recentFiles": [
-        "tilesets/furniture_and_props.tsx",
-        "tilesets/Interiors_tilesets.tsx",
-        "themes/The Village/TiledMap Editor/tilesets/Premade_houses3.tsx",
-        "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2.tsx",
-        "chunks/1_1.tmx",
-        "chunks/0_0.tmx",
-        "chunks/1_0.tmx",
-        "chunks/2_0.tmx",
-        "chunks/0_3.tmx",
+        "chunks/1_4.tmx",
+        "chunks/4_2.tmx",
         "chunks/0_1.tmx",
+        "interiors/cabin.tmx",
+        "themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx",
+        "themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass - river orientation.tsx",
+        "chunks/3_3.tmx",
+        "chunks/1_3.tmx",
+        "chunks/2_3.tmx",
+        "chunks/2_2.tmx",
         "chunks/0_2.tmx",
         "chunks/1_2.tmx"
     ],

@@ -126,6 +126,13 @@ export function EditMode() {
           entity="item"
           onPick={(defId) => setTool({ kind: "place", entity: "item", defId })}
         />
+        <PlacePicker
+          label="Ship"
+          options={snapshot.defs.ships}
+          tool={tool}
+          entity="ship"
+          onPick={(defId) => setTool({ kind: "place", entity: "ship", defId })}
+        />
 
         <div className="edit-section-title">Save</div>
         <button
@@ -212,6 +219,7 @@ interface SelectedEntity {
   enemy?: EditSnapshot["enemies"][number];
   node?: EditSnapshot["nodes"][number];
   item?: EditSnapshot["items"][number];
+  ship?: EditSnapshot["ships"][number];
 }
 
 function findSelected(
@@ -231,8 +239,12 @@ function findSelected(
     const node = snapshot.nodes.find((n) => n.id === selection.id);
     return node ? { kind: "node", node } : null;
   }
-  const item = snapshot.items.find((i) => i.id === selection.id);
-  return item ? { kind: "item", item } : null;
+  if (selection.kind === "item") {
+    const item = snapshot.items.find((i) => i.id === selection.id);
+    return item ? { kind: "item", item } : null;
+  }
+  const ship = snapshot.ships.find((s) => s.id === selection.id);
+  return ship ? { kind: "ship", ship } : null;
 }
 
 interface InspectorProps {
@@ -299,6 +311,22 @@ function Inspector({
         <Field label="Tile" value={`${n.tileX}, ${n.tileY}`} />
         <button className="edit-btn danger" onClick={onDelete}>
           Delete Node
+        </button>
+      </div>
+    );
+  }
+  if (selected.kind === "ship" && selected.ship) {
+    const s = selected.ship;
+    return (
+      <div>
+        <Field label="Kind" value="Ship" />
+        <Field label="ID" value={s.id} />
+        <Field label="Type" value={s.defName} />
+        <Field label="Tile" value={`${s.tileX}, ${s.tileY}`} />
+        <Field label="Heading" value={s.heading} />
+        <div className="edit-hint">Click the ship to cycle heading (N→E→S→W).</div>
+        <button className="edit-btn danger" onClick={onDelete}>
+          Delete Ship
         </button>
       </div>
     );

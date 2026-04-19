@@ -4,8 +4,6 @@ import { TileRegistry } from "./tileRegistry";
 import {
   parseSpawns,
   type ParsedSpawns,
-  type ShipSpawn,
-  type DockSpawn,
   type ItemSpawn,
   type DoorSpawn,
 } from "./spawns";
@@ -26,6 +24,9 @@ export interface WorldManifest {
    *  the map build pipeline from maps/interiors/*.tmx. Optional: a world
    *  without any interior buildings will simply omit this. */
   interiors?: Record<string, { path: string }>;
+  /** Map of ship keys (e.g. `galleon-n`) → TMJ path. Populated by the build
+   *  pipeline from ships/*.tmx. One tmj per (ship def × heading). */
+  ships?: Record<string, { path: string }>;
 }
 
 export interface Chunk {
@@ -320,8 +321,6 @@ export class ChunkManager {
   }
 
   initialize(): ParsedSpawns {
-    let ship: ShipSpawn | null = null;
-    let dock: DockSpawn | null = null;
     const items: ItemSpawn[] = [];
     const doors: DoorSpawn[] = [];
 
@@ -334,24 +333,12 @@ export class ChunkManager {
       const spawns = parseSpawns(chunk.tilemap, {
         offsetTx: cx * this.manifest.chunkSize,
         offsetTy: cy * this.manifest.chunkSize,
-        requireShip: false,
-        requireDock: false,
       });
-      if (spawns.ship) {
-        if (ship) throw new Error(`Multiple ship_spawn objects: chunks ${key} and prior`);
-        ship = spawns.ship;
-      }
-      if (spawns.dock) {
-        if (dock) throw new Error(`Multiple dock objects: chunks ${key} and prior`);
-        dock = spawns.dock;
-      }
       items.push(...spawns.items);
       doors.push(...spawns.doors);
     }
 
-    if (!ship) throw new Error("No ship_spawn object in any authored chunk.");
-    if (!dock) throw new Error("No dock object in any authored chunk.");
-    return { ship, dock, items, doors };
+    return { items, doors };
   }
 
   isWater(gtx: number, gty: number): boolean {

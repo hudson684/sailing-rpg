@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="8" nextobjectid="4">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="4">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
  <tileset firstgid="226" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass to water - godot.tsx"/>
  <tileset firstgid="874" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2.tsx"/>
+ <tileset firstgid="4394" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
+ <tileset firstgid="8490" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset - wall1.tsx"/>
+ <tileset firstgid="8730" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset - wall1 - transparency.tsx"/>
  <layer id="7" name="ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMBKHrn+4jrcdQcNVUVVXV1w8WeEAu
@@ -13,6 +16,16 @@
    eJztVrFRAzEQlC4gJCB0QEgBFEAJhASEDhwSEBI4JPiQAijAAQVQAI3Y/9+DI+7w7WhfEEkaB4x2Zkf/p7dWe7rTOISOjo7/iE0M4VF5H8+jt1WdF0l81vdZ47fSXudB13yS02hcu95B50fn3sebSv1NTBpr8gWd2bVm58Fpz5PyuiL/pm160Jp87Skkf9CZKQb/Fi/N/9a1sTYI7X1IPkeaxxxipf6H+DuvrIs88DlwHP7vCv2vJPnBunjOc8J5wDxYqv+p/j9i8si5gA7yjP3k2hf6+2OZ/A+GuKyr/Lz5PEYaW2gbLmWpnfcW9wPvp4W2YSVLj5xnzscUljXR4s5D/+X1x7pcn6gRY+2dZxhi0kQ/8T449zxv+yiteYPdeXyfc4/n5N7DdzbW+BdJ68Mr3y38nt+FVndvUld76Pu/9sC1Br/ox1Y1jz18Oc3PzvmqfJdTfCfpG4tfnel/RkdHRxt8A4Cv2CA=
   </data>
  </layer>
+ <layer id="8" name="level_1_wall" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztlEsOwjAMRHOV7DlBCRwgTTgApJyg91+TSh4xmC6QYlggjzRq5Up9/iUhuFwu15imGMJhx+f4G9axe+lexbfu1H0x4k+KVbqreO5uipUlbsGfhFmFU4Vf6H1jnajfWeKjfGaDU8mJ3CQH7tEoH30swuB3WPcBT4v5X2mXUHMTIx/MZFbxbR/vBvPP8t+Z6k3EbRIDOxmywee5J8qn7fAt2eBz/Sm+7h7P2+rMaT73vqp6K33T98CocP5QG8y7zr2wrj8Tq6kcwOf+W9WP+xa173F45iU+73+L3eNzn+J733kX2hd2HjmsH9qa7XK5/l8P6AteBA==
+  </data>
+ </layer>
+ <layer id="9" name="level_2_wall" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztkzEKgDAMRXOQTo6VeoAiHqBFT+D9z2GGCiFU0SHp8h+8pcsvPwkRAACAP8SJKLDLNCZ3Zlc2Of4hilxpcuoit7ydPYW1vW+G+VF1HoQes8iqc+8OZPf1pQOr/CJyezt4/+0w3AE9A63l/o3Of7p9j/wv2ZazL+rWelruHQAAWHAButwsEA==
+  </data>
+ </layer>
  <layer id="2" name="overlay" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
@@ -20,12 +33,12 @@
  </layer>
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzbcNwmAQhuGr7cIDkGEYMgxDhmHIMAihMZlBKE2Gt6MCS4hfNPdKT3XSfSKapmma5t/EEpla7+/uh9svOvj89wzvB2yRIEIII4IoYogjYZvdT/I/hTQyyCKHPAooGt4v8b+MCqqooY4GmmgZ3m/zv4MueuhjgCFGGBved/m/wBIrrLHBFjvsDe97/D/ihDMuuOKGOx6G9//ZzBGZO9/fNU3TtFdPkaonzQ==
+   eJztzjcOwkAURdGp7cISLRla9kGGxZBhMWRYCKExmYVQmgyXHhAFIyTzr3Qaj/SflZIkSZKk9+0MpUYYG8/fHb7bL96+kddUygc/AggihDAiiJr6th/FuZ9AEimkkUEWOeQ17xe4X0QJZVRQRQ11NDTvN7nfQhsddNFDHwMMNe/b3J9hjgWWWGGNDbaa9x3u73HAESecccEVN837/97EUmpqff5dkiT3FPP8+g/c1x1/bigL
   </data>
  </layer>
  <layer id="4" name="props_high" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzcsNglAURdE7JiSvJhn5g05wpKJ2ovWACtUAfsbsCoBI8mLC2cka3eQeM6WUUmpceWBW4I4HnihRBX72a3YatHjhjQ++nvaXodkKa2ywRYwk9LO/Z+eAIzKccMbF0/5cWzizyP1+n1rK713P/6H71K78vvX8H7orpZT6nzoBihhv
+   eJztzTsOglAYROG/JiR3TVL5wp1gpaLuRNcDAq4G8FFzFgAJBbloMif5mmnGTCml1D+UBWY5HihQosIz8PNf89OgxQtvfPD19L8MzVZYY4MtYuxCP/8Hfo44IcUZF1w9/av5WjizyI3fpy7hY9/zM7RP3Y2Pe8/P0K6UUup36wCvyRhv
   </data>
  </layer>
  <layer id="5" name="roof" width="32" height="32">

@@ -1,0 +1,390 @@
+{
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/animated Palm Tree-1-foliage-shadow.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/animated Palm Tree-1-foliage-shadow2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/animated Palm Tree-1-foliage.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/animated Palm Tree-1.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/animated Palm Tree-2-foliage-shadow.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/animated Palm Tree-2-foliage-shadow2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/animated Palm Tree-2-foliage.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/animated Palm Tree-2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/animated Palm Tree-3-foliage-shadow.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/animated Palm Tree-3-foliage.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/animated Palm Tree-3.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/banner-2-anim-neutral.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/banner-2-anim.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/banner-anim-neutral.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/banner-anim.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/banner-only.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/boat-idle-down.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/boat-idle-sideways.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/boat-idle-up.tsx": {
+            "scaleInDock": 1.5
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/boat-sailing-down.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/boat-sailing-sideways.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/boat-sailing-up.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/buried chest-opening-gold.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/buried chest-opening-half buried-gold.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/buried chest-opening-half buried.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/buried chest-opening.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/flag-pirate.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/flag-pirate2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/gems-1.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/gems-2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/gems-3.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/gems-4.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-idle-details above ground1.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-idle-details above ground2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-idle-ground.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-idle-handrail.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-idle-handrail2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-idle-sail.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-idle-ship hull details.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-idle-ship-base.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-idle-waves-spash.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-idle-waves.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-idle-wheel.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-sailing-details above ground1.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-sailing-details above ground2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-sailing-ground.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-sailing-handrail.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-sailing-handrail2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-sailing-sail.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-sailing-ship hull details.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-sailing-ship-base.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-sailing-waves-spash.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-sailing-waves.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-sailing-wheel.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/down-sailing-wind.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-idle-details above ground1.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-idle-details above ground2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-idle-details above ground3.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-idle-ground-stairs.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-idle-ground.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-idle-handrail.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-idle-sail.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-idle-ship hull details.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-idle-ship-base.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-idle-waves.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-idle-wheel.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-sailing-details above ground1.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-sailing-details above ground2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-sailing-details above ground3.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-sailing-ground-stairs.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-sailing-ground.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-sailing-handrail.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-sailing-sail.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-sailing-ship hull details.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-sailing-ship-base.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-sailing-waves.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-sailing-wheel.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/sideways-sailing-wind.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-idle-details above ground1.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-idle-details above ground2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-idle-ground.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-idle-handrail.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-idle-handrail2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-idle-sail.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-idle-ship hull details.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-idle-ship-base.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-idle-waves.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-idle-wheel.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-sailing-details above ground1.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-sailing-details above ground2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-sailing-ground.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-sailing-handrail.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-sailing-handrail2.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-sailing-sail.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-sailing-ship hull details.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-sailing-ship-base.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-sailing-waves.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-sailing-wheel.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-sailing-wind.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship-animations-sideways-idle-baked.tsx": {
+            "dynamicWrapping": false
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/wind fx-48frames.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/themes/Sea Adventures/props/animated/ship/ship-animations - down-idle-baked.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/themes/Sea Adventures/props/animated/ship/ship-animations - down-sailing-baked.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/themes/Sea Adventures/props/animated/ship/ship-animations - up-idle-baked.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/themes/Sea Adventures/props/animated/ship/ship-animations - up-sailing-baked.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/themes/Sea Adventures/props/animated/ship/ship-animations-sideways-idle-baked.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/themes/Sea Adventures/props/animated/ship/ship-animations-sideways-sailing-baked.tsx": {
+            "scaleInDock": 1
+        },
+        "galleon-e.tmx": {
+            "scale": 0.75,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 290,
+                "y": 198.66666666666669
+            }
+        },
+        "galleon-n.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 315,
+                "y": 480
+            }
+        },
+        "galleon-s.tmx": {
+            "scale": 1.061764705882353,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 139.86149584487535,
+                "y": 263.71191135734074
+            }
+        },
+        "rowboat-e.tmx": {
+            "scale": 1,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 189.5,
+                "y": -63
+            }
+        },
+        "rowboat-n.tmx": {
+            "scale": 1.5,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 146.33333333333334,
+                "y": 92
+            }
+        },
+        "rowboat-s.tmx": {
+            "scale": 1.5,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": -102.33333333333331,
+                "y": 246.66666666666669
+            }
+        }
+    },
+    "last.externalTilesetPath": "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated",
+    "loadedWorlds": [
+        "C:/dev/sailing-rpg/ships/galleon.world",
+        "C:/dev/sailing-rpg/ships/rowboat.world"
+    ],
+    "openFiles": [
+    ],
+    "project": "ships.tiled-project",
+    "recentFiles": [
+        "rowboat-n.tmx"
+    ],
+    "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)"
+}

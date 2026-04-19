@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="15" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="15" nextobjectid="17">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="19" height="14" tilewidth="32" tileheight="32" infinite="0" nextlayerid="15" nextobjectid="19">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
  <tileset firstgid="4097" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <tileset firstgid="4607" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx"/>
@@ -11,78 +11,78 @@
  <tileset firstgid="8254" source="../tilesets/Interiors_tilesets.tsx"/>
  <tileset firstgid="11646" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2.tsx"/>
  <tileset firstgid="15166" source="../tilesets/furniture_and_props.tsx"/>
- <layer id="1" name="floor" width="15" height="10">
+ <layer id="1" name="floor" width="19" height="14">
   <data encoding="base64" compression="zlib">
-   eJzVUEEOgCAM21MQBf/us0DwG66hiwuePNqk2WDrVhD5L9Ii0oPIqnFTFs3jMs7IO8+ozbAaInqz5lXjxftMnuGttd4Wnr02pzKHLk17OzWNdfhsbk5znuwdhsL5uNvpK3N3mvx20gO6yDr0iTQf/i++4AiDM26jYDAa
+   eJztUEEKgDAM61OmbvPvPktd/YYNpiiC7uBFwUBoOrssVeTHW5AaEQ0indVoHE23zdZDK3t8q8FnUXE3m56sLjzP5BzqXn63hD2X+07U8EmVXEqPwnns5X2k9sy+9xVGvo+ZnntkZkun/ZS8A3xazsMvkZ7z+C+fYAgbv4YVwFgwGg==
   </data>
  </layer>
- <layer id="10" name="walls" width="15" height="10">
+ <layer id="10" name="walls" width="19" height="14">
   <data encoding="base64" compression="zlib">
-   eJyd0DkOwjAQBVA37IFLABXnCIT1VqwBbkXYcyZeJAoaN1h6kvWtb40m7YcwZkLGlBnzSLZgyYo1G7bs2HMgj2RHTpy5UHDlxp0Hz0j24k1JbRBCnQZNWrTpRLKELj1SxkzImDJjHskWLFmxZsOWHXsO5JHsyOnbrY3CX6fqpn92z7oXCq7cuPMYxDsvb2/KauahPdOgSYv2914pfv6pOomsS2neD16oP/w=
+   eJzN0VsKgkAYhuG5MQ8dNqFdtQ7zWLvK0rJdecjMNfUKBUH/EHQR/fCAfDN+MDNK/ff4rlJrBAgRIUaiyVJssHXfu3ZkGfY4IEeBoyY7ocRZ6KrIajRocUGHqybrccMgdBmeUhOYsGDDwVSTzTDHwhPui2yNACEixEg0WYoNtkLXjizDHgfkKHDUZCeUmi5j9fmtpZG6/C+7zkJXRVajQYsLOmHfc3rWbhikMy55R5iwYMN5fI/ql3/GjhnZHMOX5/nl3AFQCz/8
   </data>
  </layer>
- <layer id="8" name="bbeams" width="15" height="10">
+ <layer id="8" name="bbeams" width="19" height="14">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFo4D6AAACWAAB
+   eJxjYBgFo2AUjAL8AAAEKAAB
   </data>
  </layer>
- <layer id="11" name="carpet" width="15" height="10">
+ <layer id="11" name="carpet" width="19" height="14">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFgwHIajEwyAGxPBAraJGmNxaoPg6I44E4gUS9c4Hq5wHxfCBeQKJefAAAFOUGZw==
+   eJxjYBgFo2DggawWA4McEMsDsYIWZWbFAvXHAXE8ECdQaNZcoP55QDwfiBdQaNZQBgDDcQZn
   </data>
  </layer>
- <layer id="9" name="Dock" width="15" height="10">
+ <layer id="9" name="Dock" width="19" height="14">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFo4D6AAACWAAB
+   eJxjYBgFo2AUjAL8AAAEKAAB
   </data>
  </layer>
- <layer id="2" name="overlay" width="15" height="10">
+ <layer id="2" name="overlay" width="19" height="14">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFo4D6AAACWAAB
+   eJxjYBgFo2AUjAL8AAAEKAAB
   </data>
  </layer>
- <layer id="3" name="props_low" width="15" height="10">
+ <layer id="3" name="props_low" width="19" height="14">
   <data encoding="base64" compression="zlib">
-   eJxjYKAeUHZgYFABYlUHTLkDVvj1+gH1+ANxAJre6UD+DCCeicXMSVAzK4FyVUBcjabmEJB/GIiPYNG7j4B7cIGbHAwMr0jQC1IPA5KcpNlFqvrBBAB1ARCB
+   eJxjYBi5QNmBgUEFiFUdMOUOWJFmlh/QDH8gDkAzazqQPwOIZ2KxAx1MgtpZCVRbBcTVaHoOAfmHgfgIEWbtI9H9uMBNDgaGVySYBVKPC0hykmY3qepHAe0AAAbgEIE=
   </data>
  </layer>
- <layer id="12" name="shopfront" width="15" height="10">
+ <layer id="12" name="shopfront" width="19" height="14">
   <data encoding="base64" compression="zlib">
-   eJxjYBjaIMCagSEQiIOAONgaIX7RGrceGKgGqqkB6bdhYKiDqv8NpP8QoXcZUM1yIF4BxCuh6tWA5qjbkO6H4QgAaJoMrg==
+   eJxjYBgFgwkEWDMwBAJxEBAHWyPEL1rj1oMLVAP11IDMs2FgqIPq/w2k/5Bh1jKgnuVAvAKIV0L1qwHNVbch3axRMPQAADw+DK4=
   </data>
  </layer>
- <layer id="4" name="props_high" width="15" height="10">
+ <layer id="4" name="props_high" width="19" height="14">
   <data encoding="base64" compression="zlib">
-   eJxjYKAc/ONmYPjPjSm+l5GBYR8jeWb+Ber7B8T3OCD4EQd2dcnM2MXTgeJynBCsxEm6/cpMqDQ5IBmIU4A4Fcq/icMP2MBiIF4CxEuhfEkS/UCqemoDACZuDhQ=
+   eJxjYBh54B83A8N/bkzxvYwMDPsYqWPHX6A5/4D4HgcEP+IgTl8yM3bxdKC4HCcEK3FS7j5lJlSaGiAZiFOAOBWH/E0iwwAEFgPxEiBeikNeksQwIFX9KEAFADewDhQ=
   </data>
  </layer>
- <layer id="5" name="roof" width="15" height="10">
+ <layer id="5" name="roof" width="19" height="14">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFo4D6AAACWAAB
+   eJxjYBgFo2AUjAL8AAAEKAAB
   </data>
  </layer>
  <objectgroup id="6" name="objects">
-  <object id="16" name="interior_exit" type="interior_exit" x="286.75" y="308" width="67.5" height="12">
+  <object id="16" name="interior_exit" type="interior_exit" x="350.75" y="372" width="67.5" height="12">
    <properties>
     <property name="promptOnly" type="bool" value="true"/>
     <property name="uid" value="d383fd29-b313-4b22-869e-618e5bfceec1"/>
    </properties>
   </object>
  </objectgroup>
- <objectgroup id="14" name="COLLISIONS">
-  <object id="1" x="96" y="146" width="118.667" height="22.6667"/>
-  <object id="3" x="96" y="116" width="24.6667" height="32"/>
-  <object id="4" x="295.333" y="115" width="24.3333" height="19"/>
-  <object id="5" x="265.667" y="146.333" width="53.6667" height="23"/>
-  <object id="6" x="321" y="75.6667" width="29" height="83"/>
-  <object id="7" x="383" y="73.6667" width="33.3333" height="84"/>
-  <object id="8" x="339.667" y="75" width="59.3333" height="48.3333"/>
-  <object id="9" x="66" y="13.5" width="349" height="81.5"/>
-  <object id="10" x="415.5" y="14.5" width="65" height="273.5"/>
-  <object id="11" x="352.5" y="288" width="97.5" height="28.5"/>
-  <object id="12" x="32" y="288.5" width="253.5" height="31"/>
-  <object id="13" x="-0.5" y="0.5" width="64.5" height="285.5"/>
-  <object id="14" x="70.5455" y="102.364" width="19.0909" height="68.5455"/>
-  <object id="15" x="135.75" y="92.25" width="81" height="18.75"/>
+ <objectgroup id="14" name="COLLISION">
+  <object id="1" x="160" y="210" width="118.667" height="22.6667"/>
+  <object id="3" x="160" y="180" width="24.6667" height="32"/>
+  <object id="4" x="359.333" y="179" width="24.3333" height="19"/>
+  <object id="5" x="329.667" y="210.333" width="53.6667" height="23"/>
+  <object id="6" x="385" y="139.667" width="29" height="83"/>
+  <object id="7" x="447" y="137.667" width="33.3333" height="84"/>
+  <object id="8" x="403.667" y="139" width="59.3333" height="48.3333"/>
+  <object id="9" x="130" y="77.5" width="349" height="81.5"/>
+  <object id="10" x="479.5" y="78.5" width="65" height="273.5"/>
+  <object id="11" x="416.5" y="352" width="97.5" height="28.5"/>
+  <object id="12" x="96" y="352.5" width="253.5" height="31"/>
+  <object id="13" x="63.5" y="64.5" width="64.5" height="285.5"/>
+  <object id="14" x="134.546" y="166.364" width="19.0909" height="68.5455"/>
+  <object id="15" x="199.75" y="156.25" width="81" height="18.75"/>
  </objectgroup>
 </map>

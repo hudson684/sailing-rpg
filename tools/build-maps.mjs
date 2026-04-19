@@ -14,9 +14,10 @@ const repoRoot = path.resolve(__dirname, "..");
 const mapsDir = path.join(repoRoot, "maps");
 const chunksDir = path.join(mapsDir, "chunks");
 const interiorsDir = path.join(mapsDir, "interiors");
+const shipsDir = path.join(repoRoot, "ships");
 const publicMapsDir = path.join(repoRoot, "public", "maps");
 
-export { mapsDir, publicMapsDir };
+export { mapsDir, publicMapsDir, shipsDir };
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -95,12 +96,13 @@ export function readManifest() {
 }
 
 /** Write public/maps/world.json with the given tileset-image union and
- *  optional interior map index. */
-function writeManifest(manifest, tilesetImages, interiors) {
+ *  optional interior/ship map indices. */
+function writeManifest(manifest, tilesetImages, interiors, ships) {
   const outManifest = {
     ...manifest,
     tilesetImages: [...tilesetImages].sort(),
     ...(interiors && Object.keys(interiors).length > 0 ? { interiors } : {}),
+    ...(ships && Object.keys(ships).length > 0 ? { ships } : {}),
   };
   const outManifestPath = path.join(publicMapsDir, "world.json");
   mkdirSync(path.dirname(outManifestPath), { recursive: true });
@@ -109,8 +111,17 @@ function writeManifest(manifest, tilesetImages, interiors) {
 
 /** List interior TMX basenames (without `.tmx`). Empty if dir absent. */
 function listInteriorKeys() {
+  return listTmxKeys(interiorsDir);
+}
+
+/** List ship TMX basenames (without `.tmx`), e.g. `galleon-n`. Empty if dir absent. */
+function listShipKeys() {
+  return listTmxKeys(shipsDir);
+}
+
+function listTmxKeys(dir) {
   try {
-    return readdirSync(interiorsDir)
+    return readdirSync(dir)
       .filter((f) => f.endsWith(".tmx"))
       .map((f) => f.replace(/\.tmx$/, ""))
       .sort();
@@ -156,10 +167,19 @@ export function buildAll() {
     interiors[key] = { path: `interiors/${key}.tmj` };
   }
 
-  writeManifest(manifest, tilesetImages, interiors);
+  const shipKeys = listShipKeys();
+  const ships = {};
+  for (const key of shipKeys) {
+    const outRel = path.join("ships", `${key}.tmj`);
+    const summary = buildMap(`${key}.tmx`, outRel, { srcRoot: shipsDir });
+    for (const img of summary.tilesetImages) tilesetImages.add(img);
+    ships[key] = { path: `ships/${key}.tmj` };
+  }
+
+  writeManifest(manifest, tilesetImages, interiors, ships);
   validateWorld(manifest, summaries);
   console.log(
-    `Wrote manifest + ${manifest.authoredChunks.length} chunk TMJ file(s) + ${interiorKeys.length} interior TMJ file(s); ${tilesetImages.size} tileset image(s).`,
+    `Wrote manifest + ${manifest.authoredChunks.length} chunk TMJ file(s) + ${interiorKeys.length} interior + ${shipKeys.length} ship TMJ file(s); ${tilesetImages.size} tileset image(s).`,
   );
 }
 
@@ -189,7 +209,15 @@ export function refreshManifestImages() {
     for (const ts of tmj.tilesets ?? []) if (ts.image) tilesetImages.add(ts.image);
     interiors[key] = { path: `interiors/${key}.tmj` };
   }
-  writeManifest(manifest, tilesetImages, interiors);
+  const ships = {};
+  for (const key of listShipKeys()) {
+    const tmjPath = path.join(publicMapsDir, "ships", `${key}.tmj`);
+    if (!existsSync(tmjPath)) continue;
+    const tmj = JSON.parse(readFileSync(tmjPath, "utf8"));
+    for (const ts of tmj.tilesets ?? []) if (ts.image) tilesetImages.add(ts.image);
+    ships[key] = { path: `ships/${key}.tmj` };
+  }
+  writeManifest(manifest, tilesetImages, interiors, ships);
 }
 
 /** Validate build-time invariants. Throws on any violation. */
@@ -240,8 +268,9 @@ export function validateWorld(manifest, summaries) {
   }
 }
 
-export function buildMap(tmxRelPath, outRelPath) {
-  const tmxPath = path.join(mapsDir, tmxRelPath);
+export function buildMap(tmxRelPath, outRelPath, opts = {}) {
+  const srcRoot = opts.srcRoot ?? mapsDir;
+  const tmxPath = path.join(srcRoot, tmxRelPath);
   const tmxXml = readFileSync(tmxPath, "utf8");
   const tree = parser.parse(tmxXml);
   const mapNode = findNode(tree, "map");
@@ -281,13 +310,24 @@ export function buildMap(tmxRelPath, outRelPath) {
       const encoding = dataAttrs["@_encoding"];
       const compression = dataAttrs["@_compression"];
       const text = (dataEntry.data[0]?.["#text"] ?? "").trim();
-      if (encoding !== "base64") throw new Error(`Layer encoding ${encoding} unsupported`);
-      let bytes = Buffer.from(text, "base64");
-      if (compression === "zlib") bytes = inflateSync(bytes);
-      else if (compression === "gzip") bytes = inflateSync(bytes); // node handles gzip too
-      else if (compression) throw new Error(`Compression ${compression} unsupported`);
-      const gids = new Array(bytes.length / 4);
-      for (let i = 0; i < gids.length; i++) gids[i] = bytes.readUInt32LE(i * 4);
+      let gids;
+      if (encoding === "csv") {
+        if (compression) throw new Error(`CSV layer unexpectedly has compression ${compression}`);
+        gids = text
+          .split(/,/)
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0)
+          .map((s) => Number(BigInt(s) & 0xffffffffn));
+      } else if (encoding === "base64") {
+        let bytes = Buffer.from(text, "base64");
+        if (compression === "zlib") bytes = inflateSync(bytes);
+        else if (compression === "gzip") bytes = inflateSync(bytes); // node handles gzip too
+        else if (compression) throw new Error(`Compression ${compression} unsupported`);
+        gids = new Array(bytes.length / 4);
+        for (let i = 0; i < gids.length; i++) gids[i] = bytes.readUInt32LE(i * 4);
+      } else {
+        throw new Error(`Layer encoding ${encoding} unsupported`);
+      }
       layers.push({
         type: "tilelayer",
         id: int(attrs["@_id"]),

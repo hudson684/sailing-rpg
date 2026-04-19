@@ -19,6 +19,7 @@ const ALLOWED = new Set([
   "nodes.json",
   "shops.json",
   "itemInstances.json",
+  "ships.json",
 ]);
 
 export default function editSavePlugin() {

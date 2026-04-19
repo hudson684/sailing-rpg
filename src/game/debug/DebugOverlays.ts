@@ -9,8 +9,13 @@ const OVERLAY_DEPTH = 10000;
 const ANCHOR_SEARCH_RADIUS = 6;
 
 export interface DebugOverlayHooks {
-  /** Current ship pose for the anchorSearch overlay. Null if no ship yet. */
-  getShipPose: () => { x: number; y: number; rotation: number } | null;
+  /** Current ship pose + dims for the anchorSearch overlay. Null if no ship. */
+  getShipPose: () => {
+    x: number;
+    y: number;
+    rotation: number;
+    dims: { tilesLong: number; tilesWide: number };
+  } | null;
   /** True when the player is at the helm (controls whether anchorSearch shows). */
   isAtHelm: () => boolean;
   /** Player feet hitbox (axis-aligned rect centered on cx,cy) + sprite origin
@@ -225,9 +230,7 @@ export class DebugOverlays {
     const g = this.gfx.spawns;
     g.clear();
     this.disposeLabels(this.spawnLabels);
-    const { ship, dock, items } = this.world.spawns;
-    this.markSpawn(g, ship.tileX, ship.tileY, 0x66ccff, "ship");
-    this.markSpawn(g, dock.tileX, dock.tileY, 0xffaa44, "dock");
+    const { items } = this.world.spawns;
     for (const it of items) {
       this.markSpawn(g, it.tileX, it.tileY, 0x66ff88, `${it.itemId}${it.quantity > 1 ? `×${it.quantity}` : ""}`);
     }
@@ -275,16 +278,19 @@ export class DebugOverlays {
     let minCost = Infinity;
     let maxCost = -Infinity;
 
+    const dims = pose.dims;
+    const eastWestLong = dims.tilesLong;
+    const eastWestWide = dims.tilesWide;
     for (let dy = -ANCHOR_SEARCH_RADIUS; dy <= ANCHOR_SEARCH_RADIUS; dy++) {
       for (let dx = -ANCHOR_SEARCH_RADIUS; dx <= ANCHOR_SEARCH_RADIUS; dx++) {
         for (let h = 0 as Heading; h < 4; h = (h + 1) as Heading) {
-          const bboxW = h === 1 || h === 3 ? 3 : 2;
-          const bboxH = h === 1 || h === 3 ? 2 : 3;
+          const bboxW = h === 1 || h === 3 ? eastWestLong : eastWestWide;
+          const bboxH = h === 1 || h === 3 ? eastWestWide : eastWestLong;
           const tx = Math.round(cx + dx - bboxW / 2);
           const ty = Math.round(cy + dy - bboxH / 2);
           const cand: DockedPose = { tx, ty, heading: h };
-          const clear = Ship.footprint(cand).every((t) => mgr.isAnchorable(t.x, t.y));
-          const center = Ship.bboxCenterPx(cand);
+          const clear = Ship.footprint(cand, dims).every((t) => mgr.isAnchorable(t.x, t.y));
+          const center = Ship.bboxCenterPx(cand, dims);
           const dpx = center.x - pose.x;
           const dpy = center.y - pose.y;
           const distSq = dpx * dpx + dpy * dpy;
@@ -302,7 +308,7 @@ export class DebugOverlays {
 
     const span = Math.max(1, maxCost - minCost);
     for (const c of candidates) {
-      const center = Ship.bboxCenterPx(c.pose);
+      const center = Ship.bboxCenterPx(c.pose, dims);
       if (!c.clear) {
         g.lineStyle(1, 0xff3333, 0.5);
         g.strokeCircle(center.x, center.y, 3);
@@ -315,8 +321,8 @@ export class DebugOverlays {
       const color = (r << 16) | (gg << 8);
       g.lineStyle(2, color, 0.9);
       g.fillStyle(color, 0.2);
-      const pxW = (c.pose.heading === 1 || c.pose.heading === 3 ? 3 : 2) * TILE_SIZE;
-      const pxH = (c.pose.heading === 1 || c.pose.heading === 3 ? 2 : 3) * TILE_SIZE;
+      const pxW = (c.pose.heading === 1 || c.pose.heading === 3 ? eastWestLong : eastWestWide) * TILE_SIZE;
+      const pxH = (c.pose.heading === 1 || c.pose.heading === 3 ? eastWestWide : eastWestLong) * TILE_SIZE;
       g.fillRect(c.pose.tx * TILE_SIZE, c.pose.ty * TILE_SIZE, pxW, pxH);
       g.strokeRect(c.pose.tx * TILE_SIZE, c.pose.ty * TILE_SIZE, pxW, pxH);
     }

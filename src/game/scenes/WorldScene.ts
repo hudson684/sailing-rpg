@@ -23,9 +23,12 @@ import {
   PLAYER_FEET_WIDTH,
   PLAYER_FEET_HEIGHT,
   PLAYER_FEET_OFFSET_Y,
+  getOrCreatePlayerModel,
   type Facing,
 } from "../entities/Player";
 import { syncPlayerVisualsFromEquipment } from "../entities/playerEquipmentVisuals";
+import { stamina, STAMINA_MAX } from "../player/stamina";
+import { healthRegen } from "../player/regen";
 import { CF_WARDROBE_LAYERS } from "../entities/playerWardrobe";
 import {
   Ship,
@@ -33,12 +36,9 @@ import {
   type DockedPose,
   type Heading,
 } from "../entities/Ship";
+import { loadShipsFile, type ShipInstanceData, type VesselTemplate } from "../entities/vessels";
 
-const STAMINA_MAX = 100;
 const SPRINT_SPEED_MULT = 1.35;
-const STAMINA_DRAIN_PER_SEC = 12;
-const STAMINA_REGEN_PER_SEC = 20;
-const STAMINA_REGEN_DELAY_MS = 5000;
 
 const HEADING_TO_FACING: Record<Heading, Facing> = {
   0: "up",
@@ -46,28 +46,28 @@ const HEADING_TO_FACING: Record<Heading, Facing> = {
   2: "down",
   3: "left",
 };
-import { VESSEL_TEMPLATES } from "../entities/vessels";
 import { loadWorld, type WorldMap } from "../world/worldMap";
 import {
-  parseInteriorSpawns,
   type DoorSpawn,
-  type InteriorExitSpawn,
   type ItemSpawn,
 } from "../world/spawns";
-import { tilesetImageKeyFor, type WorldManifest } from "../world/chunkManager";
-import { TileRegistry } from "../world/tileRegistry";
+import { type WorldManifest } from "../world/chunkManager";
+import type { InteriorReturnData } from "./InteriorScene";
 import { findAnchorPose } from "../util/anchor";
 import {
   CHUNK_KEY_PREFIX,
   WORLD_MANIFEST_KEY,
-  interiorTilemapKey,
   itemIconTextureKey,
 } from "./BootScene";
-import { Npc, NPC_INTERACT_RADIUS, registerNpcAnimations } from "../entities/Npc";
+import { NpcSprite, NPC_INTERACT_RADIUS, registerNpcAnimations } from "../entities/NpcSprite";
+import { NpcModel } from "../entities/NpcModel";
+import { SpriteReconciler } from "../entities/SpriteReconciler";
+import { entityRegistry } from "../entities/registry";
+import type { MapId } from "../entities/mapId";
+import { worldTicker } from "../entities/WorldTicker";
+import { addNpc, clearNpcs, bootstrapNpcs, removeNpcById } from "../entities/npcBootstrap";
 import { SKIN_PALETTES, bakePlayerSkin, type SkinPaletteId } from "../entities/playerSkin";
 import {
-  npcIsOnInterior,
-  npcIsOnWorld,
   type NpcData,
   type DialogueDef,
 } from "../entities/npcTypes";
@@ -104,18 +104,13 @@ import {
   systems as saveSystems,
   type SaveEnvelope,
 } from "../save";
+import { setActiveSaveController } from "../save/activeController";
 
 const HELM_INTERACT_RADIUS = TILE_SIZE * 0.7;
 const DOOR_INTERACT_RADIUS = TILE_SIZE * 0.9;
 const PICKUP_RADIUS = TILE_SIZE * 0.8;
-const INTERIOR_OVERHEAD_LAYERS = new Set(["props_high", "roof"]);
-const INTERIOR_OVERHEAD_DEPTH_BASE = 1_000_000;
 const SHOP_CLICK_RADIUS = TILE_SIZE * 1.5;
 /** Time after last damage before player HP regen kicks in. */
-const PLAYER_OUT_OF_COMBAT_MS = 6000;
-/** HP per second regenerated while out of combat (fractional ok). */
-const PLAYER_REGEN_PER_SEC = 1.0;
-
 /** Tile where a new game drops the player — center of the starter village
  *  on the chunk (1,0) island, not at the dock. Loaded saves override this
  *  via the hydrated player position. */
@@ -172,8 +167,14 @@ let activeWorldScene: WorldScene | null = null;
 export class WorldScene extends Phaser.Scene {
   private world!: WorldMap;
   private player!: Player;
-  private ship!: Ship;
-  private decorativeVessels: Ship[] = [];
+  /** All ship instances, keyed by instance id. */
+  private ships = new Map<string, Ship>();
+  /** Cached vessel defs (for edit-mode placement and respawn). */
+  private shipDefs = new Map<string, VesselTemplate>();
+  /** Initial instance list from ships.json (for resetting on new game). */
+  private shipInstanceData: ShipInstanceData[] = [];
+  /** Ship the player is currently piloting / anchoring aboard. */
+  private activeShip: Ship | null = null;
   private readonly groundItemsState = new GroundItemsState();
   private readonly droppedItemsState = new DroppedItemsState();
   private droppedExpiryAccum = 0;
@@ -185,26 +186,14 @@ export class WorldScene extends Phaser.Scene {
   });
   private groundItems = new Map<string, GroundItem>();
   private doors: DoorSpawn[] = [];
-  private interior: {
-    key: string;
-    tilemap: Phaser.Tilemaps.Tilemap;
-    layers: Phaser.Tilemaps.TilemapLayer[];
-    registry: TileRegistry;
-    exits: InteriorExitSpawn[];
-    /** Last tile (in interior coords) the player stood on, used to debounce
-     *  auto-exit so stepping out and immediately back in doesn't loop. */
-    lastExitTile: { x: number; y: number } | null;
-  } | null = null;
   private nodes: GatheringNode[] = [];
   private enemies: Enemy[] = [];
-  private lastPlayerDamagedAt = 0;
-  private playerRegenAccum = 0;
   private dropTables = new Map<string, DropTable>();
-  private npcs: Npc[] = [];
-  private interiorNpcs: Npc[] = [];
-  /** Cached parse of the full NPC data file. World NPCs spawn from `npcs`;
-   *  interior NPCs are looked up here when entering a building so the same
-   *  source-of-truth file feeds both. */
+  /** Owns scene-local sprites for world-mapped NPC models. Interior NPC
+   *  sprites are owned by InteriorScene's own reconciler. */
+  private npcReconciler!: SpriteReconciler<NpcSprite>;
+  /** Cached NPC data used for edit-mode templates and export. The registry
+   *  is source-of-truth for runtime state; this stays for authoring flows. */
   private npcData: NpcData = npcDataRaw as NpcData;
   private dialogues: Record<string, DialogueDef> = {};
   private activeDialogue: { speaker: string; pages: string[]; page: number; shopId?: string } | null = null;
@@ -249,12 +238,6 @@ export class WorldScene extends Phaser.Scene {
     quickload: Phaser.Input.Keyboard.Key;
     sprint: Phaser.Input.Keyboard.Key;
   };
-
-  // Stamina lives on the scene (not in the game store) because it changes
-  // every frame during sprinting; 60Hz store writes would churn subscribers.
-  // Published to the HUD via emitHud instead.
-  private staminaCurrent = STAMINA_MAX;
-  private lastSprintAtMs = -Infinity;
 
   private sailingXpAccum = 0;
   private wasBeached = false;
@@ -323,27 +306,32 @@ export class WorldScene extends Phaser.Scene {
       chunkKeyPrefix: CHUNK_KEY_PREFIX,
     });
 
-    const { ship: shipSpawn, items, doors } = this.world.spawns;
+    const { items, doors } = this.world.spawns;
     this.doors = doors;
     const spawnPx = {
       x: (DEFAULT_PLAYER_SPAWN_TILE.x + 0.5) * TILE_SIZE,
       y: (DEFAULT_PLAYER_SPAWN_TILE.y + 0.5) * TILE_SIZE,
     };
-    this.player = new Player(this, spawnPx.x, spawnPx.y);
-    this.ship = new Ship(this, {
-      tx: shipSpawn.tileX,
-      ty: shipSpawn.tileY,
-      heading: shipSpawn.heading,
-    });
+    // Model is shared across scenes (registry-owned, survives sleep/wake);
+    // the sprite is scene-local and torn down on shutdown.
+    const playerModel = getOrCreatePlayerModel({ x: spawnPx.x, y: spawnPx.y });
+    entityRegistry.setMap(playerModel.id, { kind: "world" });
+    this.player = new Player(this, playerModel);
 
-    // Decorative galleon moored east of the larger L-dock, south of the rowboat.
-    this.decorativeVessels.push(
-      new Ship(this, { tx: 73, ty: 20, heading: 1 }, VESSEL_TEMPLATES.galleon),
-    );
+    const shipsFile = loadShipsFile();
+    this.shipDefs = shipsFile.defs;
+    this.shipInstanceData = shipsFile.instances.map((i) => ({ ...i }));
+    for (const inst of this.shipInstanceData) {
+      this.spawnShip(inst);
+    }
 
     this.loadEditorItems();
     this.respawnGroundItems(items);
-    this.spawnNpcs();
+    // Populate the registry before subscribing the reconciler so it picks up
+    // existing models via getByMap with this live scene, instead of being
+    // triggered by registry mutations from outside the scene lifecycle.
+    bootstrapNpcs(this.npcData);
+    this.setupNpcReconciler();
     this.spawnGatheringNodes();
     this.loadDropTables();
     this.spawnEnemies();
@@ -459,10 +447,10 @@ export class WorldScene extends Phaser.Scene {
 
     // Cardinal-only helm input: tap A/D (or ←/→) to turn 90° port/starboard.
     const turnPort = () => {
-      if (this.sceneState.mode === "AtHelm") this.ship.turn(-1);
+      if (this.sceneState.mode === "AtHelm" && this.activeShip) this.activeShip.turn(-1);
     };
     const turnStarboard = () => {
-      if (this.sceneState.mode === "AtHelm") this.ship.turn(1);
+      if (this.sceneState.mode === "AtHelm" && this.activeShip) this.activeShip.turn(1);
     };
     this.keys.a.on("down", turnPort);
     this.keys.left.on("down", turnPort);
@@ -473,7 +461,14 @@ export class WorldScene extends Phaser.Scene {
 
     this.debug = new DebugOverlays(this, this.world, {
       getShipPose: () =>
-        this.ship ? { x: this.ship.x, y: this.ship.y, rotation: this.ship.rotation } : null,
+        this.activeShip
+          ? {
+              x: this.activeShip.x,
+              y: this.activeShip.y,
+              rotation: this.activeShip.rotation,
+              dims: this.activeShip.dims,
+            }
+          : null,
       isAtHelm: () => this.sceneState.mode === "AtHelm",
       getPlayerHitbox: () =>
         this.player
@@ -508,6 +503,7 @@ export class WorldScene extends Phaser.Scene {
       bus.onTyped("edit:delete", this.onEditDelete);
       bus.onTyped("edit:shopUpdate", this.onEditShopUpdate);
       bus.onTyped("edit:requestExport", this.onEditRequestExport);
+      bus.onTyped("player:resetSpawn", this.onResetSpawn);
       const editKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F7);
       editKey.on("down", () => bus.emitTyped("edit:toggle"));
     }
@@ -541,6 +537,10 @@ export class WorldScene extends Phaser.Scene {
       syncPlayerVisualsFromEquipment(this.player, useGameStore.getState().equipment.equipped);
     });
 
+    this.events.on(Phaser.Scenes.Events.WAKE, (_sys: unknown, data: InteriorReturnData | undefined) => {
+      this.onInteriorWake(data);
+    });
+
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       bus.offTyped("inventory:action", this.onInventoryAction);
       bus.offTyped("dialogue:action", this.onDialogueAction);
@@ -553,10 +553,18 @@ export class WorldScene extends Phaser.Scene {
         bus.offTyped("edit:delete", this.onEditDelete);
         bus.offTyped("edit:shopUpdate", this.onEditShopUpdate);
         bus.offTyped("edit:requestExport", this.onEditRequestExport);
+        bus.offTyped("player:resetSpawn", this.onResetSpawn);
       }
       unsubEquipment();
       unsubWardrobe();
       if (activeWorldScene === this) activeWorldScene = null;
+      for (const e of this.enemies) entityRegistry.remove(e.id);
+      this.enemies = [];
+      worldTicker.unregisterWalkable({ kind: "world" });
+      this.npcReconciler?.shutdown();
+      // Destroy the scene-local sprite; the PlayerModel persists in the
+      // registry and rebinds to whichever scene wakes next.
+      this.player?.destroy();
       this.saveController.shutdown();
     });
 
@@ -574,13 +582,14 @@ export class WorldScene extends Phaser.Scene {
 
   private async initSave(): Promise<void> {
     await this.saveController.init();
+    setActiveSaveController(this.saveController);
     this.saveController.registerSystems([
       saveSystems.inventorySaveable(),
       saveSystems.equipmentSaveable(),
       saveSystems.jobsSaveable(),
       saveSystems.healthSaveable(),
       saveSystems.playerSaveable(this.player),
-      saveSystems.shipSaveable(this.ship),
+      saveSystems.shipsSaveable(() => Array.from(this.ships.values()), (states) => this.hydrateShips(states)),
       saveSystems.groundItemsSaveable(this.groundItemsState),
       saveSystems.droppedItemsSaveable(this.droppedItemsState),
       saveSystems.sceneSaveable(this.sceneState),
@@ -593,24 +602,31 @@ export class WorldScene extends Phaser.Scene {
 
   update(_time: number, dtMs: number) {
     const dt = dtMs / 1000;
-    this.saveController.playtime.tick();
-    if (this.sceneState.mode === "Interior") {
-      if (!this.activeDialogue && !this.editMode) this.updateOnFoot(dt);
-      if (!this.editMode) {
-        for (const npc of this.interiorNpcs) {
-          npc.update(dtMs, (x, y) => this.isWalkablePx(x, y));
-        }
-      }
-      this.checkInteriorAutoExit();
-      this.emitHud();
-      this.debug.update();
-      return;
+    this.tickExterior(dt, dtMs);
+    this.tickAlways(dtMs);
+  }
+
+  /** Per-frame scene-local work that must run regardless of mode (OnFoot,
+   *  Interior, AtHelm, Anchoring, edit). Scene-agnostic ticks (playtime, HP
+   *  regen, stamina regen, entity-model ticking) run from SystemsScene and
+   *  aren't duplicated here. */
+  private tickAlways(dtMs: number) {
+    this.droppedExpiryAccum += dtMs;
+    if (this.droppedExpiryAccum >= 1000) {
+      this.droppedExpiryAccum = 0;
+      this.expireDroppedItems();
     }
+    // Pull NPC sprites forward to match models mutated by the global ticker.
+    this.npcReconciler?.syncAll();
+    this.updateZoom(dtMs);
+    this.emitHud();
+    this.debug.update();
+  }
+
+  private tickExterior(dt: number, dtMs: number) {
     this.world.manager.tick(dtMs);
     if (this.editMode) {
       this.redrawEditHighlights();
-      this.emitHud();
-      this.debug.update();
       return;
     }
     if (this.sceneState.mode === "OnFoot" && !this.activeDialogue) this.updateOnFoot(dt);
@@ -618,56 +634,74 @@ export class WorldScene extends Phaser.Scene {
     else if (this.sceneState.mode === "Anchoring") {
       // Tween drives the ship; nothing to do here.
     }
-    for (const npc of this.npcs) npc.update(dtMs, (x, y) => this.isWalkablePx(x, y));
     for (const node of this.nodes) node.update(this.time.now);
-    {
-      // Enemies are passive while the player is at the helm or anchoring.
-      const playerCtx =
-        this.sceneState.mode === "OnFoot"
-          ? {
-              x: this.player.x,
-              y: this.player.y,
-              onHit: (dmg: number) => this.onPlayerHit(dmg),
-            }
-          : undefined;
-      for (const enemy of this.enemies) {
-        enemy.update(
-          dtMs,
-          this.time.now,
-          (x, y) => this.isWalkablePx(x, y, enemy),
-          playerCtx,
-        );
-      }
+    // Enemies are passive while the player is at the helm or anchoring.
+    const playerCtx =
+      this.sceneState.mode === "OnFoot"
+        ? {
+            x: this.player.x,
+            y: this.player.y,
+            onHit: (dmg: number) => this.onPlayerHit(dmg),
+          }
+        : undefined;
+    for (const enemy of this.enemies) {
+      enemy.update(
+        dtMs,
+        this.time.now,
+        (x, y) => this.isWalkablePx(x, y, enemy),
+        playerCtx,
+      );
     }
-    this.tickPlayerRegen(dtMs);
-    this.tickStaminaRegen(dtMs);
     const pTile = this.player.tile();
     this.world.manager.updateOverheadFade(pTile.x, pTile.y, dtMs);
-    this.droppedExpiryAccum += dtMs;
-    if (this.droppedExpiryAccum >= 1000) {
-      this.droppedExpiryAccum = 0;
-      this.expireDroppedItems();
-    }
     this.syncPlayerShipDepth();
-    this.updateZoom(dtMs);
-    this.emitHud();
-    this.debug.update();
   }
 
-  /** Player rides above the hull whenever on the ship — the ship's container
+  /** Player rides above the hull whenever on a ship — each ship's container
    *  depth uses the footprint bottom, which would otherwise cover the player. */
   private syncPlayerShipDepth() {
-    if (!this.ship) {
-      this.player.depthOverride = null;
-      return;
+    let ridingShip: Ship | null = null;
+    if (this.sceneState.mode === "AtHelm" || this.sceneState.mode === "Anchoring") {
+      ridingShip = this.activeShip;
+    } else if (this.sceneState.mode === "OnFoot") {
+      ridingShip = this.shipAtPlayer();
     }
-    const onShip =
-      this.sceneState.mode === "AtHelm" ||
-      this.sceneState.mode === "Anchoring" ||
-      (this.sceneState.mode === "OnFoot" &&
-        this.ship.isOnDeck(this.player.x, this.player.y));
-    this.player.depthOverride = onShip ? this.ship.sortY() + 1 : null;
+    this.player.depthOverride = ridingShip ? ridingShip.sortY() + 1 : null;
     this.player.sprite.setDepth(this.player.depthOverride ?? this.player.sortY());
+  }
+
+  /** Find the docked ship (if any) whose deck the player is currently standing on. */
+  private shipAtPlayer(): Ship | null {
+    for (const ship of this.ships.values()) {
+      if (ship.isOnDeck(this.player.x, this.player.y)) return ship;
+    }
+    return null;
+  }
+
+  private spawnShip(inst: ShipInstanceData): Ship {
+    const def = this.shipDefs.get(inst.defId);
+    if (!def) throw new Error(`Unknown ship defId '${inst.defId}' for instance '${inst.id}'.`);
+    const ship = new Ship(this, inst.id, def, {
+      tx: inst.tileX,
+      ty: inst.tileY,
+      heading: inst.heading,
+    });
+    this.ships.set(inst.id, ship);
+    return ship;
+  }
+
+  /** Apply saved per-ship states. Ships present in the save hydrate; ships
+   *  absent fall back to their ships.json initial pose. Ships saved but no
+   *  longer present in ships.json are ignored. */
+  private hydrateShips(states: Array<ReturnType<Ship["serialize"]>>): void {
+    const byId = new Map(states.map((s) => [s.id, s]));
+    for (const ship of this.ships.values()) {
+      const saved = byId.get(ship.id);
+      if (saved) ship.hydrate(saved);
+    }
+    if (this.sceneState.mode !== "AtHelm" && this.sceneState.mode !== "Anchoring") {
+      this.activeShip = null;
+    }
   }
 
   // ─── Mode: OnFoot ────────────────────────────────────────────────
@@ -685,11 +719,8 @@ export class WorldScene extends Phaser.Scene {
       dy *= inv;
     }
     const moving = dx !== 0 || dy !== 0;
-    const sprinting = moving && this.keys.sprint.isDown && this.staminaCurrent > 0;
-    if (sprinting) {
-      this.staminaCurrent = Math.max(0, this.staminaCurrent - STAMINA_DRAIN_PER_SEC * dt);
-      this.lastSprintAtMs = this.time.now;
-    }
+    const sprinting = moving && this.keys.sprint.isDown && stamina.current > 0;
+    if (sprinting) stamina.drain(dt);
     const speed = PLAYER_SPEED * (sprinting ? SPRINT_SPEED_MULT : 1);
     this.player.tryMove(dx * speed * dt, dy * speed * dt, (px, py) =>
       this.isWalkablePx(px, py),
@@ -716,10 +747,10 @@ export class WorldScene extends Phaser.Scene {
     bus.emitTyped("shop:open", { shopId: npc.def.shopId });
   }
 
-  private npcAtWorldPoint(x: number, y: number): Npc | null {
-    let best: Npc | null = null;
+  private npcAtWorldPoint(x: number, y: number): NpcModel | null {
+    let best: NpcModel | null = null;
     let bestDist = SHOP_CLICK_RADIUS;
-    for (const npc of this.activeNpcs()) {
+    for (const npc of this.activeNpcModels()) {
       const d = Phaser.Math.Distance.Between(x, y, npc.x, npc.y);
       if (d <= bestDist) {
         best = npc;
@@ -755,8 +786,7 @@ export class WorldScene extends Phaser.Scene {
     if (damage <= 0) return;
     const taken = useGameStore.getState().healthDamage(damage);
     if (taken <= 0) return;
-    this.lastPlayerDamagedAt = this.time.now;
-    this.playerRegenAccum = 0;
+    healthRegen.noteDamage();
     this.flashPlayer();
     spawnFloatingNumber(this, this.player.x, this.player.y - 22, taken, {
       kind: "damage-player",
@@ -764,27 +794,6 @@ export class WorldScene extends Phaser.Scene {
     if (useGameStore.getState().health.current <= 0) this.handlePlayerDeath();
   }
 
-  private tickPlayerRegen(dtMs: number) {
-    if (this.time.now - this.lastPlayerDamagedAt < PLAYER_OUT_OF_COMBAT_MS) return;
-    const store = useGameStore.getState();
-    const { current } = store.health;
-    if (current <= 0) return;
-    this.playerRegenAccum += PLAYER_REGEN_PER_SEC * (dtMs / 1000);
-    if (this.playerRegenAccum < 1) return;
-    const whole = Math.floor(this.playerRegenAccum);
-    const healed = store.healthHeal(whole);
-    this.playerRegenAccum -= whole;
-    if (healed === 0) this.playerRegenAccum = 0; // already full; don't stockpile
-  }
-
-  private tickStaminaRegen(dtMs: number) {
-    if (this.staminaCurrent >= STAMINA_MAX) return;
-    if (this.time.now - this.lastSprintAtMs < STAMINA_REGEN_DELAY_MS) return;
-    this.staminaCurrent = Math.min(
-      STAMINA_MAX,
-      this.staminaCurrent + STAMINA_REGEN_PER_SEC * (dtMs / 1000),
-    );
-  }
 
   private flashPlayer() {
     this.tweens.add({
@@ -795,6 +804,22 @@ export class WorldScene extends Phaser.Scene {
       repeat: 1,
     });
   }
+
+  private onResetSpawn = () => {
+    if (this.scene.isActive("Interior") || this.scene.isSleeping("Interior")) {
+      this.scene.stop("Interior");
+      if (this.scene.isSleeping()) this.scene.wake();
+    }
+    this.sceneState.interior = null;
+    this.sceneState.activeScene = "World";
+    this.activeShip = null;
+    this.sceneState.mode = "OnFoot";
+    this.player.setPosition(
+      (DEFAULT_PLAYER_SPAWN_TILE.x + 0.5) * TILE_SIZE,
+      (DEFAULT_PLAYER_SPAWN_TILE.y + 0.5) * TILE_SIZE,
+    );
+    showToast("Teleported to default spawn.", 1500);
+  };
 
   private handlePlayerDeath() {
     showToast("You were defeated. Respawning…", 2500, "error");
@@ -807,46 +832,40 @@ export class WorldScene extends Phaser.Scene {
 
   // ─── Building interiors ───────────────────────────────────────────
 
-  /** Enter a building. Hides world visuals, swaps in the interior tilemap,
-   *  and parks the player at the door's authored entry tile. */
+  /** Enter a building. Sleeps this scene and launches InteriorScene; the
+   *  return payload is delivered back via SCENE_WAKE on exit. */
   private enterInterior(door: DoorSpawn) {
     if (this.activeDialogue) this.closeDialogue();
+    const returnFacing = this.player.facing;
     this.sceneState.interior = {
       interiorKey: door.interiorKey,
       returnWorldTx: door.tileX,
       returnWorldTy: door.tileY,
-      returnFacing: this.player.facing,
+      returnFacing,
     };
     this.sceneState.mode = "Interior";
-
-    this.setWorldVisible(false);
-    this.loadInterior(door.interiorKey);
-    this.spawnInteriorNpcs(door.interiorKey);
-
-    const entryX = (door.entryTx + 0.5) * TILE_SIZE;
-    const entryY = (door.entryTy + 0.5) * TILE_SIZE;
-    this.player.setPosition(entryX, entryY);
-    this.player.setFacing("up");
-    if (this.interior) {
-      this.interior.lastExitTile = { x: door.entryTx, y: door.entryTy };
-    }
-    showToast("Inside. Walk back through the door to leave.", 2500);
+    this.sceneState.activeScene = "Interior";
     void this.saveController.autosave();
+    this.scene.sleep();
+    this.scene.launch("Interior", {
+      interiorKey: door.interiorKey,
+      entryTx: door.entryTx,
+      entryTy: door.entryTy,
+      returnWorldTx: door.tileX,
+      returnWorldTy: door.tileY,
+      returnFacing,
+    });
   }
 
-  /** Leave the current interior, restoring world visuals and the player's
-   *  pre-entry world tile. */
-  private exitInterior() {
-    const ret = this.sceneState.interior;
-    this.despawnInteriorNpcs();
-    this.unloadInterior();
-    this.setWorldVisible(true);
+  /** Called when InteriorScene hands control back via `scene.wake`. */
+  private onInteriorWake(ret: InteriorReturnData | undefined) {
     this.sceneState.mode = "OnFoot";
+    this.sceneState.activeScene = "World";
     this.sceneState.interior = null;
     if (ret) {
       this.player.setPosition(
         (ret.returnWorldTx + 0.5) * TILE_SIZE,
-        (ret.returnWorldTy + 0.5) * TILE_SIZE,
+        (ret.returnWorldTy + 1.5) * TILE_SIZE,
       );
       const f = ret.returnFacing;
       if (
@@ -856,105 +875,8 @@ export class WorldScene extends Phaser.Scene {
         this.player.setFacing(f);
       }
     }
+    this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
     void this.saveController.autosave();
-  }
-
-  /** Build the interior tilemap from the cached TMJ, bind tilesets, create
-   *  layers, and parse exits. Camera bounds are switched to the interior. */
-  private loadInterior(key: string) {
-    const cacheKey = interiorTilemapKey(key);
-    if (!this.cache.tilemap.exists(cacheKey)) {
-      console.error(`No cached interior tilemap '${cacheKey}'.`);
-      return;
-    }
-    const tilemap = this.make.tilemap({ key: cacheKey });
-    const cached = this.cache.tilemap.get(cacheKey) as
-      | { data?: { tilesets?: Array<{ name: string; image: string }> } }
-      | undefined;
-    const rawTilesets = cached?.data?.tilesets ?? [];
-    const imageByName = new Map(rawTilesets.map((t) => [t.name, t.image]));
-
-    const boundTilesets: Phaser.Tilemaps.Tileset[] = [];
-    for (const tsDef of tilemap.tilesets) {
-      const imagePath = imageByName.get(tsDef.name);
-      if (!imagePath) {
-        throw new Error(`Interior '${key}': no image path for tileset '${tsDef.name}'.`);
-      }
-      const bound = tilemap.addTilesetImage(tsDef.name, tilesetImageKeyFor(imagePath));
-      if (!bound) {
-        throw new Error(`Interior '${key}': failed to bind tileset '${tsDef.name}'.`);
-      }
-      boundTilesets.push(bound);
-    }
-
-    const renderScale = TILE_SIZE / tilemap.tileWidth;
-    const layers: Phaser.Tilemaps.TilemapLayer[] = [];
-    tilemap.layers.forEach((layerData, idx) => {
-      const layer = tilemap.createLayer(layerData.name, boundTilesets, 0, 0) as
-        | Phaser.Tilemaps.TilemapLayer
-        | null;
-      if (!layer) return;
-      if (renderScale !== 1) layer.setScale(renderScale);
-      const overhead = INTERIOR_OVERHEAD_LAYERS.has(layerData.name.toLowerCase());
-      layer.setDepth(overhead ? INTERIOR_OVERHEAD_DEPTH_BASE + idx : idx);
-      layers.push(layer);
-    });
-
-    const registry = new TileRegistry(tilemap);
-    const { exits } = parseInteriorSpawns(tilemap);
-
-    this.interior = { key, tilemap, layers, registry, exits, lastExitTile: null };
-
-    const wPx = tilemap.width * TILE_SIZE;
-    const hPx = tilemap.height * TILE_SIZE;
-    this.cameras.main.setBounds(0, 0, wPx, hPx, true);
-  }
-
-  private unloadInterior() {
-    if (!this.interior) return;
-    for (const layer of this.interior.layers) layer.destroy();
-    this.interior.tilemap.destroy();
-    this.interior = null;
-    const b = this.world.bounds;
-    this.cameras.main.setBounds(
-      b.minTx * TILE_SIZE,
-      b.minTy * TILE_SIZE,
-      (b.maxTx - b.minTx) * TILE_SIZE,
-      (b.maxTy - b.minTy) * TILE_SIZE,
-    );
-  }
-
-  /** Toggle every world-owned visual so interior mode renders cleanly without
-   *  destroying state. NPCs, enemies, gathering nodes, ground items, ships,
-   *  and chunk tile layers all hide together. */
-  /** Auto-trigger an interior exit when the player walks onto a non-prompt
-   *  exit tile. Tile-debounced so re-entering immediately doesn't loop. */
-  private checkInteriorAutoExit() {
-    if (!this.interior) return;
-    const tx = Math.floor(this.player.x / TILE_SIZE);
-    const ty = Math.floor(this.player.y / TILE_SIZE);
-    const last = this.interior.lastExitTile;
-    if (last && last.x === tx && last.y === ty) return;
-    this.interior.lastExitTile = { x: tx, y: ty };
-    for (const e of this.interior.exits) {
-      if (e.promptOnly) continue;
-      if (e.tileX === tx && e.tileY === ty) {
-        this.exitInterior();
-        return;
-      }
-    }
-  }
-
-  private setWorldVisible(visible: boolean) {
-    for (const chunk of this.world.manager.loadedChunks()) {
-      for (const layer of chunk.layers) layer.setVisible(visible);
-    }
-    for (const npc of this.npcs) npc.sprite.setVisible(visible);
-    for (const enemy of this.enemies) enemy.sprite.setVisible(visible);
-    for (const node of this.nodes) node.setVisible(visible);
-    for (const gi of this.groundItems.values()) gi.sprite.setVisible(visible);
-    if (this.ship) this.ship.container.setVisible(visible);
-    for (const v of this.decorativeVessels) v.container.setVisible(visible);
   }
 
   private onAttack() {
@@ -1086,8 +1008,21 @@ export class WorldScene extends Phaser.Scene {
         console.warn(`Unknown enemy defId: ${inst.defId}`);
         continue;
       }
-      this.enemies.push(new Enemy(this, def, inst));
+      this.addEnemy(new Enemy(this, def, inst));
     }
+  }
+
+  private addEnemy(enemy: Enemy) {
+    this.enemies.push(enemy);
+    entityRegistry.add(enemy);
+  }
+
+  private removeEnemyAt(index: number) {
+    const e = this.enemies[index];
+    if (!e) return;
+    entityRegistry.remove(e.id);
+    e.destroy();
+    this.enemies.splice(index, 1);
   }
 
   /** Roll a drop table and spawn drops at (x, y) as dropped items. */
@@ -1157,9 +1092,6 @@ export class WorldScene extends Phaser.Scene {
       if (this.isNearHelm()) this.takeHelm();
     } else if (this.sceneState.mode === "AtHelm") {
       this.beginAnchoring();
-    } else if (this.sceneState.mode === "Interior") {
-      const exit = this.nearestInteriorExit();
-      if (exit) this.exitInterior();
     }
   }
 
@@ -1178,71 +1110,43 @@ export class WorldScene extends Phaser.Scene {
     return best;
   }
 
-  private nearestInteriorExit(): InteriorExitSpawn | null {
-    if (!this.interior) return null;
-    let best: InteriorExitSpawn | null = null;
-    let bestDist = DOOR_INTERACT_RADIUS;
-    for (const e of this.interior.exits) {
-      const dx = (e.tileX + 0.5) * TILE_SIZE - this.player.x;
-      const dy = (e.tileY + 0.5) * TILE_SIZE - this.player.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist <= bestDist) {
-        best = e;
-        bestDist = dist;
-      }
-    }
-    return best;
-  }
-
-  private spawnNpcs(data: NpcData = npcDataRaw as NpcData) {
-    this.npcData = data;
-    this.dialogues = data.dialogues ?? {};
-    for (const def of data.npcs) {
-      if (!npcIsOnWorld(def)) continue;
-      registerNpcAnimations(this, def);
-      this.npcs.push(new Npc(this, def));
-    }
-  }
-
-  /** Spawn NPCs whose `map` matches the given interior. Called from
-   *  enterInterior; the matching defs are looked up in `this.npcData`. */
-  private spawnInteriorNpcs(interiorKey: string) {
-    for (const def of this.npcData.npcs) {
-      if (!npcIsOnInterior(def, interiorKey)) continue;
-      registerNpcAnimations(this, def);
-      this.interiorNpcs.push(new Npc(this, def));
-    }
-  }
-
-  private despawnInteriorNpcs() {
-    for (const npc of this.interiorNpcs) npc.sprite.destroy();
-    this.interiorNpcs = [];
+  private setupNpcReconciler() {
+    this.npcData = npcDataRaw as NpcData;
+    this.dialogues = this.npcData.dialogues ?? {};
+    const worldMap: MapId = { kind: "world" };
+    this.npcReconciler = new SpriteReconciler<NpcSprite>(
+      this,
+      worldMap,
+      (scene, model) => {
+        if (model.kind !== "npc") return null;
+        return new NpcSprite(scene, model as NpcModel);
+      },
+    );
+    worldTicker.registerWalkable(worldMap, (x, y) => this.isWalkablePx(x, y));
   }
 
   reloadNpcs(data: NpcData) {
-    for (const npc of this.npcs) npc.sprite.destroy();
-    this.npcs = [];
+    this.npcData = data;
+    this.dialogues = data.dialogues ?? {};
     if (this.activeDialogue) this.closeDialogue();
-    this.spawnNpcs(data);
-    // If currently inside a building, refresh the interior crew too.
-    if (this.sceneState.mode === "Interior" && this.sceneState.interior) {
-      this.despawnInteriorNpcs();
-      this.spawnInteriorNpcs(this.sceneState.interior.interiorKey);
-    }
+    clearNpcs();
+    bootstrapNpcs(data);
+    // Sprites are re-created automatically by the reconciler via `added` events.
   }
 
-  /** Every NPC currently active on the player's map. Combines world NPCs and
-   *  the in-building roster so proximity, click, and HUD code can stay flat. */
-  private activeNpcs(): Npc[] {
-    return this.sceneState.mode === "Interior"
-      ? this.interiorNpcs
-      : this.npcs;
+  /** Every NPC model currently active on the player's map. */
+  private activeNpcModels(): Iterable<NpcModel> {
+    const mapId: MapId =
+      this.sceneState.mode === "Interior" && this.sceneState.interior
+        ? { kind: "interior", key: this.sceneState.interior.interiorKey }
+        : { kind: "world" };
+    return npcModelsIn(mapId);
   }
 
-  private nearestNpc(): Npc | null {
-    let best: Npc | null = null;
+  private nearestNpc(): NpcModel | null {
+    let best: NpcModel | null = null;
     let bestDist = NPC_INTERACT_RADIUS;
-    for (const npc of this.activeNpcs()) {
+    for (const npc of this.activeNpcModels()) {
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.x, npc.y);
       if (d <= bestDist) {
         best = npc;
@@ -1252,7 +1156,7 @@ export class WorldScene extends Phaser.Scene {
     return best;
   }
 
-  private openDialogueWith(npc: Npc) {
+  private openDialogueWith(npc: NpcModel) {
     const dialogue = this.dialogues[npc.def.dialogue];
     if (!dialogue) {
       showToast(`${npc.def.name} has nothing to say.`, 1500);
@@ -1418,26 +1322,41 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  /** Closest docked ship whose helm tile is within the player's interact
+   *  radius, if any. */
+  private shipAtHelm(): Ship | null {
+    let best: Ship | null = null;
+    let bestDist = HELM_INTERACT_RADIUS;
+    for (const ship of this.ships.values()) {
+      if (ship.mode !== "docked") continue;
+      const helmTile = Ship.helmTile(ship.docked, ship.dims);
+      const hx = (helmTile.x + 0.5) * TILE_SIZE;
+      const hy = (helmTile.y + 0.5) * TILE_SIZE;
+      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, hx, hy);
+      if (d <= bestDist) {
+        best = ship;
+        bestDist = d;
+      }
+    }
+    return best;
+  }
+
   private isNearHelm(): boolean {
-    if (this.ship.mode !== "docked") return false;
-    const helmTile = Ship.helmTile(this.ship.docked);
-    const helmPx = {
-      x: (helmTile.x + 0.5) * TILE_SIZE,
-      y: (helmTile.y + 0.5) * TILE_SIZE,
-    };
-    const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, helmPx.x, helmPx.y);
-    return d <= HELM_INTERACT_RADIUS;
+    return this.shipAtHelm() !== null;
   }
 
   // ─── Transition: OnFoot → AtHelm ──────────────────────────────────
 
   private takeHelm() {
-    const helm = this.ship.helmWorldPx();
+    const ship = this.shipAtHelm();
+    if (!ship) return;
+    this.activeShip = ship;
+    const helm = ship.helmWorldPx();
     this.player.setPosition(helm.x, helm.y);
     this.player.frozen = true;
-    this.ship.startSailing();
+    ship.startSailing();
     this.sceneState.mode = "AtHelm";
-    this.cameras.main.startFollow(this.ship.container, true, 0.1, 0.1);
+    this.cameras.main.startFollow(ship.container, true, 0.1, 0.1);
     showToast("W/S throttle, A/D turn 90°, E to drop anchor.", 4500);
     void this.saveController.autosave();
   }
@@ -1445,13 +1364,15 @@ export class WorldScene extends Phaser.Scene {
   // ─── Mode: AtHelm ─────────────────────────────────────────────────
 
   private updateAtHelm(dt: number) {
+    const ship = this.activeShip;
+    if (!ship) return;
     if (this.keys.w.isDown || this.keys.up.isDown) {
-      this.ship.targetThrottle = Math.min(1, this.ship.targetThrottle + 0.6 * dt);
+      ship.targetThrottle = Math.min(1, ship.targetThrottle + 0.6 * dt);
     } else if (this.keys.s.isDown || this.keys.down.isDown) {
-      this.ship.targetThrottle = Math.max(-1, this.ship.targetThrottle - 0.6 * dt);
+      ship.targetThrottle = Math.max(-1, ship.targetThrottle - 0.6 * dt);
     }
 
-    const step = this.ship.updateSailing(dt, (tx, ty) => this.world.manager.shipTileState(tx, ty));
+    const step = ship.updateSailing(dt, (tx, ty) => this.world.manager.shipTileState(tx, ty));
     if (step.blocked) {
       if (!this.wasBlocked) showToast("Ran aground! Turn to clear water.", 2500);
       this.wasBlocked = true;
@@ -1466,21 +1387,23 @@ export class WorldScene extends Phaser.Scene {
     }
     this.accrueSailingXp(dt);
 
-    const helm = this.ship.helmWorldPx();
+    const helm = ship.helmWorldPx();
     this.player.setPosition(helm.x, helm.y);
     this.player.sprite.setRotation(0);
-    this.player.setFacing(HEADING_TO_FACING[this.ship.heading]);
+    this.player.setFacing(HEADING_TO_FACING[ship.heading]);
   }
 
   // ─── Transition: AtHelm → Anchoring → OnFoot ──────────────────────
 
   private beginAnchoring() {
+    const ship = this.activeShip;
+    if (!ship) return;
     const target = findAnchorPose(
       (tx, ty) => this.world.manager.isAnchorable(tx, ty),
-      this.ship.x,
-      this.ship.y,
-      this.ship.heading,
-      this.ship.dims,
+      ship.x,
+      ship.y,
+      ship.heading,
+      ship.dims,
       TILE_SIZE,
     );
     if (!target) {
@@ -1489,24 +1412,24 @@ export class WorldScene extends Phaser.Scene {
     }
 
     this.sceneState.mode = "Anchoring";
-    this.ship.mode = "anchoring";
-    this.ship.targetThrottle = 0;
+    ship.mode = "anchoring";
+    ship.targetThrottle = 0;
 
-    const targetCenter = Ship.bboxCenterPx(target);
-    this.ship.setPose(this.ship.x, this.ship.y, target.heading);
+    const targetCenter = Ship.bboxCenterPx(target, ship.dims);
+    ship.setPose(ship.x, ship.y, target.heading);
 
     this.tweens.add({
-      targets: this.ship,
+      targets: ship,
       x: targetCenter.x,
       y: targetCenter.y,
       duration: 1000,
       ease: "Cubic.easeOut",
       onUpdate: () => {
-        this.ship.setPose(this.ship.x, this.ship.y);
-        const helm = this.ship.helmWorldPx();
+        ship.setPose(ship.x, ship.y);
+        const helm = ship.helmWorldPx();
         this.player.setPosition(helm.x, helm.y);
         this.player.sprite.setRotation(0);
-        this.player.setFacing(HEADING_TO_FACING[this.ship.heading]);
+        this.player.setFacing(HEADING_TO_FACING[ship.heading]);
       },
       onComplete: () => this.finishAnchoring(target),
     });
@@ -1515,8 +1438,10 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private finishAnchoring(pose: DockedPose) {
-    this.ship.finalizeDock(pose);
-    const helmTile = Ship.helmTile(pose);
+    const ship = this.activeShip;
+    if (!ship) return;
+    ship.finalizeDock(pose);
+    const helmTile = Ship.helmTile(pose, ship.dims);
     this.player.setPosition(
       (helmTile.x + 0.5) * TILE_SIZE,
       (helmTile.y + 0.5) * TILE_SIZE,
@@ -1524,6 +1449,7 @@ export class WorldScene extends Phaser.Scene {
     this.player.sprite.setRotation(0);
     this.player.frozen = false;
     this.sceneState.mode = "OnFoot";
+    this.activeShip = null;
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
     showToast("Anchored. Walk around or step off the ship.", 3000);
     void this.saveController.autosave();
@@ -1544,15 +1470,24 @@ export class WorldScene extends Phaser.Scene {
       this.groundItemsState.reset();
       this.droppedItemsState.reset();
       this.sceneState.mode = "OnFoot";
-      this.player.setPosition(
-        (this.world.spawns.dock.tileX + 0.5) * TILE_SIZE,
-        (this.world.spawns.dock.tileY + 0.5) * TILE_SIZE,
-      );
-      this.ship.finalizeDock({
-        tx: this.world.spawns.ship.tileX,
-        ty: this.world.spawns.ship.tileY,
-        heading: this.world.spawns.ship.heading,
-      });
+      // Reset each ship to its initial placement.
+      for (const inst of this.shipInstanceData) {
+        const ship = this.ships.get(inst.id);
+        if (!ship) continue;
+        ship.finalizeDock({
+          tx: inst.tileX,
+          ty: inst.tileY,
+          heading: inst.heading,
+        });
+      }
+      // Park the player next to the first ship instance (if any).
+      const first = this.shipInstanceData[0];
+      if (first) {
+        this.player.setPosition(
+          (first.tileX + 0.5) * TILE_SIZE,
+          (first.tileY + 1.5) * TILE_SIZE,
+        );
+      }
     }
 
     this.respawnGroundItems(this.world.spawns.items);
@@ -1568,25 +1503,47 @@ export class WorldScene extends Phaser.Scene {
         // Save was inconsistent — drop back to OnFoot rather than trap the
         // player in a non-existent room.
         this.sceneState.mode = "OnFoot";
+        this.sceneState.activeScene = "World";
       } else {
+        // Sleep this scene and wake InteriorScene with the persisted return
+        // tile + facing so on-exit we drop back outside the correct door.
+        const f = ret.returnFacing;
+        const returnFacing: Facing =
+          (f === "up" || f === "down" || f === "left" || f === "right" ||
+           f === "up-left" || f === "up-right" || f === "down-left" || f === "down-right")
+            ? f
+            : "down";
         this.player.frozen = false;
-        this.setWorldVisible(false);
-        this.loadInterior(ret.interiorKey);
-        this.despawnInteriorNpcs();
-        this.spawnInteriorNpcs(ret.interiorKey);
-        // Player x/y already restored by playerSaveable; just ensure depth/zoom.
-        this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
+        this.sceneState.activeScene = "Interior";
+        this.scene.sleep();
+        this.scene.launch("Interior", {
+          interiorKey: ret.interiorKey,
+          entryTx: Math.floor(this.player.x / TILE_SIZE),
+          entryTy: Math.floor(this.player.y / TILE_SIZE),
+          returnWorldTx: ret.returnWorldTx,
+          returnWorldTy: ret.returnWorldTy,
+          returnFacing,
+        });
         return;
       }
     }
     if (this.sceneState.mode === "AtHelm") {
+      const ship = this.activeShip ?? this.shipAtPlayer();
+      if (!ship) {
+        this.sceneState.mode = "OnFoot";
+        this.player.frozen = false;
+        this.player.sprite.setRotation(0);
+        this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
+        return;
+      }
+      this.activeShip = ship;
       this.player.frozen = true;
-      this.ship.mode = "sailing";
-      const helm = this.ship.helmWorldPx();
+      ship.mode = "sailing";
+      const helm = ship.helmWorldPx();
       this.player.setPosition(helm.x, helm.y);
       this.player.sprite.setRotation(0);
-      this.player.setFacing(HEADING_TO_FACING[this.ship.heading]);
-      this.cameras.main.startFollow(this.ship.container, true, 0.1, 0.1);
+      this.player.setFacing(HEADING_TO_FACING[ship.heading]);
+      this.cameras.main.startFollow(ship.container, true, 0.1, 0.1);
     } else {
       // Anchoring mid-save is degraded to OnFoot on load.
       if (this.sceneState.mode === "Anchoring") this.sceneState.mode = "OnFoot";
@@ -1619,24 +1576,20 @@ export class WorldScene extends Phaser.Scene {
   private isPointWalkable(px: number, py: number, ignoreEnemy?: Enemy): boolean {
     const tx = Math.floor(px / TILE_SIZE);
     const ty = Math.floor(py / TILE_SIZE);
-    if (this.interior) {
-      // Interior maps have no water and no chunk shapes — just bounds + collide.
-      if (
-        tx < 0 || ty < 0 ||
-        tx >= this.interior.tilemap.width ||
-        ty >= this.interior.tilemap.height
-      ) return false;
-      if (this.interior.registry.isBlocked(tx, ty)) return false;
-      return true;
+    let onDeck = false;
+    for (const ship of this.ships.values()) {
+      if (ship.mode !== "docked") continue;
+      if (Ship.footprint(ship.docked, ship.dims).some((t) => t.x === tx && t.y === ty)) {
+        onDeck = true;
+        break;
+      }
     }
-    const onDeck =
-      this.ship &&
-      this.ship.mode === "docked" &&
-      Ship.footprint(this.ship.docked).some((t) => t.x === tx && t.y === ty);
-    // Water blocks only when the player isn't standing on a docked ship's deck.
-    if (!onDeck && this.world.manager.isWater(tx, ty)) return false;
-    // Tile-level `collides: true` + sub-tile shape collision (poles, etc.).
-    if (this.world.manager.isBlockedPx(px, py)) return false;
+    // On a docked ship's deck, the deck is the walkable surface — the tiles
+    // beneath (water, beach, or colliding ground) are irrelevant.
+    if (!onDeck) {
+      if (this.world.manager.isWater(tx, ty)) return false;
+      if (this.world.manager.isBlockedPx(px, py)) return false;
+    }
     for (const node of this.nodes) {
       if (node.blocksPx(px, py)) return false;
     }
@@ -1706,7 +1659,7 @@ export class WorldScene extends Phaser.Scene {
         ? "AtHelm"
         : this.sceneState.mode === "Anchoring"
           ? "Anchoring"
-          : this.ship && this.ship.isOnDeck(this.player.x, this.player.y)
+          : this.shipAtPlayer()
             ? "OnDeck"
             : "OnFoot";
 
@@ -1748,19 +1701,14 @@ export class WorldScene extends Phaser.Scene {
           }
         }
       }
-    } else if (this.sceneState.mode === "AtHelm") {
-      prompt = "Press E to drop anchor";
-    } else if (this.sceneState.mode === "Interior" && !this.activeDialogue) {
-      const exit = this.nearestInteriorExit();
-      if (exit?.promptOnly) prompt = "Press E to leave";
     }
 
     setHud({
       mode: hudMode,
       prompt,
-      speed: this.ship ? Math.round(this.ship.speed) : 0,
-      heading: this.ship ? normalizeAngle(this.ship.rotation) : 0,
-      stamina: Math.round(this.staminaCurrent),
+      speed: this.activeShip ? Math.round(this.activeShip.speed) : 0,
+      heading: this.activeShip ? normalizeAngle(this.activeShip.rotation) : 0,
+      stamina: Math.round(stamina.current),
       staminaMax: STAMINA_MAX,
     });
   }
@@ -1771,7 +1719,8 @@ export class WorldScene extends Phaser.Scene {
    * without trivialising the curve.
    */
   private accrueSailingXp(dt: number) {
-    const traveled = Math.abs(this.ship.speed) * dt;
+    if (!this.activeShip) return;
+    const traveled = Math.abs(this.activeShip.speed) * dt;
     if (traveled <= 0) return;
     this.sailingXpAccum += traveled / 8;
     if (this.sailingXpAccum >= 1) {
@@ -1835,18 +1784,20 @@ export class WorldScene extends Phaser.Scene {
       enemy: 0xff6b6b,
       node: 0xffd65f,
       item: 0xb57bff,
+      ship: 0x7bffc7,
     };
     const circle = (kind: EditEntityKind, x: number, y: number) => {
       g.lineStyle(2, colors[kind], 0.9);
       g.strokeCircle(x, y, r);
     };
-    for (const npc of this.npcs) circle("npc", npc.x, npc.y);
+    for (const npc of npcModelsIn({ kind: "world" })) circle("npc", npc.x, npc.y);
     for (const e of this.enemies) circle("enemy", e.x, e.y);
     for (const n of this.nodes) circle("node", n.x, n.y);
     for (const gi of this.groundItems.values()) {
       if (gi.source === "dropped") continue;
       circle("item", gi.x, gi.y);
     }
+    for (const ship of this.ships.values()) circle("ship", ship.x, ship.y);
   }
 
   private onEditRequestSnapshot = () => {
@@ -1861,7 +1812,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private buildEditSnapshot(): EditSnapshot {
-    const npcs = this.npcs.map((n) => ({
+    const npcs = Array.from(npcModelsIn({ kind: "world" })).map((n) => ({
       id: n.def.id,
       name: n.def.name,
       tileX: Math.floor(n.x / TILE_SIZE),
@@ -1894,16 +1845,27 @@ export class WorldScene extends Phaser.Scene {
         tileY: Math.floor(gi.y / TILE_SIZE),
         source: gi.source as "authored" | "editor",
       }));
+    const headingStr: Record<number, "N" | "E" | "S" | "W"> = { 0: "N", 1: "E", 2: "S", 3: "W" };
+    const ships = Array.from(this.ships.values()).map((s) => ({
+      id: s.id,
+      defId: s.vessel.id,
+      defName: s.vessel.id,
+      tileX: s.docked.tx,
+      tileY: s.docked.ty,
+      heading: headingStr[s.docked.heading],
+    }));
     return {
       npcs,
       enemies,
       nodes,
       items,
+      ships,
       defs: {
-        npcs: this.npcs.map((n) => ({ id: n.def.id, name: n.def.name })),
+        npcs: this.npcData.npcs.map((n) => ({ id: n.id, name: n.name })),
         enemies: Array.from(this.enemyDefs.values()).map((d) => ({ id: d.id, name: d.name })),
         nodes: Array.from(this.nodeDefs.values()).map((d) => ({ id: d.id, name: d.name })),
         items: ALL_ITEM_IDS.map((id) => ({ id, name: ITEMS[id]?.name ?? id })),
+        ships: Array.from(this.shipDefs.values()).map((d) => ({ id: d.id, name: d.id })),
       },
       shops: this.shopsForEdit.map((s) => ({
         id: s.id,
@@ -1955,16 +1917,30 @@ export class WorldScene extends Phaser.Scene {
       this.onEditMove({ kind: drag.kind, id: drag.id, tileX, tileY });
       return;
     }
+    // No-drag click on a ship cycles its heading; other kinds fall through.
+    if (drag && !drag.moved && drag.kind === "ship") {
+      const ship = this.ships.get(drag.id);
+      if (ship) {
+        const nextH = ((ship.docked.heading + 1) % 4) as 0 | 1 | 2 | 3;
+        ship.finalizeDock({ tx: ship.docked.tx, ty: ship.docked.ty, heading: nextH });
+        const stored = this.shipInstanceData.find((s) => s.id === drag.id);
+        if (stored) stored.heading = nextH;
+        this.emitEditState();
+        return;
+      }
+    }
     // Treat a no-drag click as select/place: existing behavior.
     this.onEditLeftClick(worldX, worldY);
   }
 
   private dragEntityTo(kind: EditEntityKind, id: string, px: number, py: number) {
     if (kind === "npc") {
-      const npc = this.npcs.find((n) => n.def.id === id);
-      if (!npc) return;
-      npc.sprite.setPosition(px, py);
-      npc.sprite.setDepth(npc.sortY());
+      const model = entityRegistry.get(`npc:${id}`) as NpcModel | undefined;
+      if (!model) return;
+      model.setPositionPx(px, py);
+      // Reconciler's next syncAll picks up new position; force an immediate
+      // sync here so the drag feels responsive in the same frame.
+      this.npcReconciler.spriteFor(model.id)?.syncFromModel();
     } else if (kind === "enemy") {
       const e = this.enemies.find((x) => x.id === id);
       if (!e) return;
@@ -1981,6 +1957,12 @@ export class WorldScene extends Phaser.Scene {
       gi.y = py;
       gi.sprite.setPosition(px, py);
       gi.sprite.setDepth(py);
+    } else if (kind === "ship") {
+      const ship = this.ships.get(id);
+      if (!ship) return;
+      const tx = Math.floor(px / TILE_SIZE);
+      const ty = Math.floor(py / TILE_SIZE);
+      ship.finalizeDock({ tx, ty, heading: ship.docked.heading });
     }
   }
 
@@ -1998,12 +1980,15 @@ export class WorldScene extends Phaser.Scene {
       if (d > radius) return;
       hits.push({ kind, id, dist: d });
     };
-    for (const npc of this.npcs) consider("npc", npc.def.id, npc.x, npc.y);
+    for (const npc of npcModelsIn({ kind: "world" })) consider("npc", npc.def.id, npc.x, npc.y);
     for (const e of this.enemies) consider("enemy", e.id, e.x, e.y);
     for (const n of this.nodes) consider("node", n.id, n.x, n.y);
     for (const gi of this.groundItems.values()) {
       if (gi.source === "dropped") continue;
       consider("item", gi.uid, gi.x, gi.y);
+    }
+    for (const ship of this.ships.values()) {
+      consider("ship", ship.id, ship.x, ship.y);
     }
     if (hits.length === 0) return null;
     hits.sort((a, b) => a.dist - b.dist);
@@ -2014,13 +1999,13 @@ export class WorldScene extends Phaser.Scene {
     const px = (req.tileX + 0.5) * TILE_SIZE;
     const py = (req.tileY + 0.5) * TILE_SIZE;
     if (req.kind === "npc") {
-      const npc = this.npcs.find((n) => n.def.id === req.id);
-      if (!npc) return;
+      const model = entityRegistry.get(`npc:${req.id}`) as NpcModel | undefined;
+      if (!model) return;
       // Mutate the def so a subsequent restart spawns at the same tile and
       // the next snapshot reads the right home position.
-      npc.def.spawn = { tileX: req.tileX, tileY: req.tileY };
-      npc.sprite.setPosition(px, py);
-      npc.sprite.setDepth(npc.sortY());
+      model.def.spawn = { tileX: req.tileX, tileY: req.tileY };
+      model.setPositionPx(px, py);
+      this.npcReconciler.spriteFor(model.id)?.syncFromModel();
     } else if (req.kind === "enemy") {
       const e = this.enemies.find((x) => x.id === req.id);
       if (!e) return;
@@ -2050,6 +2035,15 @@ export class WorldScene extends Phaser.Scene {
         stored.tileX = req.tileX;
         stored.tileY = req.tileY;
       }
+    } else if (req.kind === "ship") {
+      const ship = this.ships.get(req.id);
+      if (!ship) return;
+      ship.finalizeDock({ tx: req.tileX, ty: req.tileY, heading: ship.docked.heading });
+      const stored = this.shipInstanceData.find((s) => s.id === req.id);
+      if (stored) {
+        stored.tileX = req.tileX;
+        stored.tileY = req.tileY;
+      }
     }
     this.emitEditState();
   };
@@ -2064,8 +2058,12 @@ export class WorldScene extends Phaser.Scene {
       clone.spawn = { tileX: req.tileX, tileY: req.tileY };
       clone.map = "world";
       this.npcData.npcs.push(clone);
+      // Newly-authored NPC: animations aren't registered yet because it's a
+      // runtime clone. The clone reuses the template's sprite sheets, so the
+      // existing anim keys already match (keyed by id). Since the clone gets
+      // a fresh id, register fresh anim keys for it.
       registerNpcAnimations(this, clone);
-      this.npcs.push(new Npc(this, clone));
+      addNpc(clone, { kind: "world" });
     } else if (req.kind === "enemy") {
       const def = this.enemyDefs.get(req.defId);
       if (!def) return;
@@ -2075,7 +2073,7 @@ export class WorldScene extends Phaser.Scene {
         tileX: req.tileX,
         tileY: req.tileY,
       };
-      this.enemies.push(new Enemy(this, def, inst));
+      this.addEnemy(new Enemy(this, def, inst));
     } else if (req.kind === "node") {
       const def = this.nodeDefs.get(req.defId);
       if (!def) return;
@@ -2097,22 +2095,32 @@ export class WorldScene extends Phaser.Scene {
       });
       // Re-render via respawn for sprite consistency.
       this.respawnGroundItems(this.world.spawns.items);
+    } else if (req.kind === "ship") {
+      const def = this.shipDefs.get(req.defId);
+      if (!def) return;
+      const id = this.nextEditId(`${def.id}`);
+      const inst: ShipInstanceData = {
+        id,
+        defId: def.id,
+        tileX: req.tileX,
+        tileY: req.tileY,
+        heading: 1,
+      };
+      this.shipInstanceData.push(inst);
+      this.spawnShip(inst);
     }
     this.emitEditState();
   };
 
   private onEditDelete = (req: EditDeleteRequest) => {
     if (req.kind === "npc") {
-      const idx = this.npcs.findIndex((n) => n.def.id === req.id);
-      if (idx === -1) return;
-      this.npcs[idx].sprite.destroy();
-      this.npcs.splice(idx, 1);
+      if (!entityRegistry.get(`npc:${req.id}`)) return;
+      removeNpcById(req.id);
       this.npcData.npcs = this.npcData.npcs.filter((n) => n.id !== req.id);
     } else if (req.kind === "enemy") {
       const idx = this.enemies.findIndex((e) => e.id === req.id);
       if (idx === -1) return;
-      this.enemies[idx].destroy();
-      this.enemies.splice(idx, 1);
+      this.removeEnemyAt(idx);
     } else if (req.kind === "node") {
       const idx = this.nodes.findIndex((n) => n.id === req.id);
       if (idx === -1) return;
@@ -2124,13 +2132,22 @@ export class WorldScene extends Phaser.Scene {
       gi.sprite.destroy();
       this.groundItems.delete(req.id);
       this.editorItems.delete(req.id);
+    } else if (req.kind === "ship") {
+      const ship = this.ships.get(req.id);
+      if (!ship) return;
+      ship.destroy();
+      this.ships.delete(req.id);
+      this.shipInstanceData = this.shipInstanceData.filter((s) => s.id !== req.id);
+      if (this.activeShip === ship) this.activeShip = null;
     }
     this.emitEditState();
   };
 
   private onEditRequestExport = () => {
     // Apply moved positions back into the def list before serializing.
-    for (const npc of this.npcs) {
+    for (const model of entityRegistry.all()) {
+      if (model.kind !== "npc") continue;
+      const npc = model as NpcModel;
       const def = this.npcData.npcs.find((n) => n.id === npc.def.id);
       if (def) def.spawn = { tileX: Math.floor(npc.x / TILE_SIZE), tileY: Math.floor(npc.y / TILE_SIZE) };
     }
@@ -2163,6 +2180,18 @@ export class WorldScene extends Phaser.Scene {
     };
     const shopsFile: ShopsFile = { shops: this.shopsForEdit };
 
+    const headingStr: Record<number, "N" | "E" | "S" | "W"> = { 0: "N", 1: "E", 2: "S", 3: "W" };
+    const shipsFile = {
+      defs: Array.from(this.shipDefs.values()),
+      instances: this.shipInstanceData.map((s) => ({
+        id: s.id,
+        defId: s.defId,
+        tileX: s.tileX,
+        tileY: s.tileY,
+        heading: headingStr[s.heading],
+      })),
+    };
+
     const stringify = (obj: unknown) => JSON.stringify(obj, null, 2) + "\n";
     bus.emitTyped("edit:export", {
       files: [
@@ -2171,6 +2200,7 @@ export class WorldScene extends Phaser.Scene {
         { name: "nodes.json", content: stringify(nodesFile) },
         { name: "itemInstances.json", content: stringify(itemInstancesFile) },
         { name: "shops.json", content: stringify(shopsFile) },
+        { name: "ships.json", content: stringify(shipsFile) },
       ],
     });
   };
@@ -2198,6 +2228,13 @@ export class WorldScene extends Phaser.Scene {
     } else {
       showToast("Inventory is full.", 1500);
     }
+  }
+}
+
+/** Iterate NpcModel entries in the registry filtered by map. */
+function* npcModelsIn(mapId: MapId): Iterable<NpcModel> {
+  for (const m of entityRegistry.getByMap(mapId)) {
+    if (m.kind === "npc") yield m as NpcModel;
   }
 }
 

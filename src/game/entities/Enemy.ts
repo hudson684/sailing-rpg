@@ -8,6 +8,8 @@ import {
   type EnemyDef,
   type EnemyInstanceData,
 } from "./enemyTypes";
+import type { MapId } from "./mapId";
+import type { EntityModel } from "./registry";
 
 type EnemyState = "idle" | "chase" | "attack" | "hurt" | "returning" | "dying" | "dead";
 
@@ -26,8 +28,10 @@ interface PlayerRef {
   onHit: (damage: number) => void;
 }
 
-export class Enemy {
+export class Enemy implements EntityModel {
   readonly id: string;
+  readonly kind = "enemy" as const;
+  mapId: MapId = { kind: "world" };
   readonly def: EnemyDef;
   readonly sprite: Phaser.GameObjects.Sprite;
 

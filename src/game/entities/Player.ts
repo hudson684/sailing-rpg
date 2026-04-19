@@ -9,8 +9,12 @@ import {
   type CfDir,
   type CfLayer,
   type CfState,
+  type Facing,
 } from "./playerAnims";
 import { CF_TOOLS, cfToolAnimKey, type CfToolDef } from "./playerTools";
+import { PlayerModel, PLAYER_MODEL_ID } from "./PlayerModel";
+import { entityRegistry } from "./registry";
+import type { MapId } from "./mapId";
 
 export const PLAYER_SPEED = 199; // pixels / sec
 // Collision footprint at the feet. Wider than tall and offset down from
@@ -28,26 +32,7 @@ export const PLAYER_FEET_OFFSET_Y = -PLAYER_FEET_HEIGHT / 2;
 const CF_ORIGIN_Y = 40 / CF_FRAME_SIZE;
 const CF_SPRITE_SCALE = 1.5;
 
-export type Facing =
-  | "up"
-  | "up-right"
-  | "right"
-  | "down-right"
-  | "down"
-  | "down-left"
-  | "left"
-  | "up-left";
-
-export const FACING_VALUES: readonly Facing[] = [
-  "up",
-  "up-right",
-  "right",
-  "down-right",
-  "down",
-  "down-left",
-  "left",
-  "up-left",
-];
+export { type Facing, FACING_VALUES } from "./playerAnims";
 
 // CF sheets ship 3 facings (forward/right/back). Left-facing = right row
 // played with each child sprite flipped horizontally (Containers don't have
@@ -101,6 +86,28 @@ const DEFAULT_CF_OUTFIT: Partial<Record<CfLayer, string>> = {
   hair: "1-brown",
 };
 
+/**
+ * Get (or create and register) the singleton PlayerModel. The model is a
+ * registry citizen so it survives scene swaps; a freshly-constructed Player
+ * view in a newly-woken scene finds the same model here.
+ */
+export function getOrCreatePlayerModel(initial?: { x: number; y: number; mapId?: MapId }): PlayerModel {
+  const existing = entityRegistry.get(PLAYER_MODEL_ID);
+  if (existing) return existing as PlayerModel;
+  const model = new PlayerModel(initial?.mapId ?? { kind: "world" });
+  if (initial) {
+    model.x = initial.x;
+    model.y = initial.y;
+  }
+  entityRegistry.add(model);
+  return model;
+}
+
+/**
+ * Scene-local view of the global PlayerModel. Owns the Container + layered
+ * child sprites; reads position/facing/anim state from the model and writes
+ * back on movement. Destroyed on scene shutdown; model persists.
+ */
 export class Player {
   // Container of layered child sprites (base + clothing + tool overlay) so
   // they move/scale/depth-sort as a single paper-doll. External callers use
@@ -113,17 +120,17 @@ export class Player {
   // subsequent calls. Hidden during idle/walk; shown only while the matching
   // action state is animating.
   private cfTool: { def: CfToolDef; sprite: Phaser.GameObjects.Sprite } | null = null;
-  // Per-layer override of DEFAULT_CF_OUTFIT, populated from the wardrobe
-  // (settingsStore). Equipment overlays still take precedence; this only
-  // controls what an "unequipped" or never-equipped slot displays.
-  private cfBaseline: Partial<Record<CfLayer, string | null>> = {};
-  private _facing: Facing = "down";
-  private _animState: CfState = "idle";
-  private _actionLock = false;
-  public frozen = false;
+  readonly model: PlayerModel;
 
   get attacking(): boolean {
-    return this._actionLock;
+    return this.model.actionLock;
+  }
+
+  get frozen(): boolean {
+    return this.model.frozen;
+  }
+  set frozen(v: boolean) {
+    this.model.frozen = v;
   }
 
   /** Back-compat alias: play the sword attack one-shot. */
@@ -142,16 +149,16 @@ export class Player {
    * playing or the player is frozen.
    */
   playAction(state: "attack" | "mine" | "chop" | "fish", onComplete?: () => void): boolean {
-    if (this._actionLock || this.frozen) return false;
-    this._actionLock = true;
-    this._animState = state;
+    if (this.model.actionLock || this.model.frozen) return false;
+    this.model.actionLock = true;
+    this.model.animState = state;
     this.applyAnim();
     // Every layer plays the same anim in lockstep — pick the base layer as
     // the driver of the completion callback.
     const driver = this.cfLayers.get("base")!;
     driver.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-      this._actionLock = false;
-      this._animState = "idle";
+      this.model.actionLock = false;
+      this.model.animState = "idle";
       this.applyAnim();
       if (onComplete) onComplete();
     });
@@ -159,32 +166,45 @@ export class Player {
   }
 
   get facing(): Facing {
-    return this._facing;
+    return this.model.facing;
   }
 
   setFacing(f: Facing): void {
-    this._facing = f;
+    this.model.facing = f;
     this.applyAnim();
   }
 
   serialize(): { x: number; y: number; facing: Facing } {
-    return { x: this.sprite.x, y: this.sprite.y, facing: this._facing };
+    return this.model.serialize();
   }
 
   hydrate(data: { x: number; y: number; facing: Facing }): void {
-    this.sprite.setPosition(data.x, data.y);
+    this.model.hydrate(data);
+    this.sprite.setPosition(this.model.x, this.model.y);
     this.applyDepth();
-    this._facing = data.facing;
-    this._animState = "idle";
     this.applyAnim();
   }
 
-  constructor(scene: Phaser.Scene, x: number, y: number) {
+  constructor(scene: Phaser.Scene, model: PlayerModel);
+  constructor(scene: Phaser.Scene, x: number, y: number);
+  constructor(scene: Phaser.Scene, a: PlayerModel | number, b?: number) {
+    // Accept either a pre-built model (new code path) or legacy (x, y).
+    // Legacy path creates-or-gets the singleton model so callers that haven't
+    // migrated yet still end up sharing one model across scenes.
+    if (typeof a === "number") {
+      this.model = getOrCreatePlayerModel({ x: a, y: b as number });
+      this.model.x = a;
+      this.model.y = b as number;
+    } else {
+      this.model = a;
+    }
+
     this.cfLayers = new Map();
-    const container = scene.add.container(x, y);
-    // Layer order in CF_LAYERS controls draw order (back to front).
+    const container = scene.add.container(this.model.x, this.model.y);
+    // Layer order in CF_LAYERS controls draw order (back to front). Prefer
+    // the model's wardrobe baseline, falling back to the default outfit.
     for (const layer of CF_LAYERS) {
-      const variant = DEFAULT_CF_OUTFIT[layer];
+      const variant = this.resolveBaseline(layer) ?? DEFAULT_CF_OUTFIT[layer] ?? null;
       if (!variant) continue;
       const key = cfTextureKey(layer, variant);
       if (!scene.textures.exists(key)) continue;
@@ -195,33 +215,44 @@ export class Player {
     }
     container.setScale(CF_SPRITE_SCALE);
     this.sprite = container;
+    // Restore tool overlay if one was equipped before the scene swap.
+    if (this.model.cfToolId) {
+      this.installToolSprite(this.model.cfToolId);
+    }
     container.setDepth(this.sortY());
     this.applyAnim();
   }
 
   get x(): number {
-    return this.sprite.x;
+    return this.model.x;
   }
   get y(): number {
-    return this.sprite.y;
+    return this.model.y;
   }
 
   /** When set, overrides sortY-based depth — used while riding on a ship's
    *  deck so the player renders above the hull sprite regardless of y. */
-  public depthOverride: number | null = null;
+  get depthOverride(): number | null {
+    return this.model.depthOverride;
+  }
+  set depthOverride(v: number | null) {
+    this.model.depthOverride = v;
+  }
 
   /** Y-value used for depth sorting — the container's feet world-y. */
   sortY(): number {
     // Container origin is at (0,0); children sit with feet at child y=0
     // because their own origin is (0.5, CF_ORIGIN_Y).
-    return this.sprite.y;
+    return this.model.y;
   }
 
   private applyDepth() {
-    this.sprite.setDepth(this.depthOverride ?? this.sortY());
+    this.sprite.setDepth(this.model.depthOverride ?? this.sortY());
   }
 
   setPosition(x: number, y: number) {
+    this.model.x = x;
+    this.model.y = y;
     this.sprite.setPosition(x, y);
     this.applyDepth();
   }
@@ -230,11 +261,17 @@ export class Player {
     this.sprite.setVisible(v);
   }
 
+  /** Destroy the scene-local sprite. The PlayerModel persists in the registry
+   *  and can be rebound to a fresh Player in another scene. */
+  destroy() {
+    this.sprite.destroy();
+  }
+
   /** Returns the player's tile coordinates (integer). */
   tile(): { x: number; y: number } {
     return {
-      x: Math.floor(this.sprite.x / TILE_SIZE),
-      y: Math.floor(this.sprite.y / TILE_SIZE),
+      x: Math.floor(this.model.x / TILE_SIZE),
+      y: Math.floor(this.model.y / TILE_SIZE),
     };
   }
 
@@ -243,31 +280,33 @@ export class Player {
    * Uses axis-separated tests so the player can slide along walls.
    */
   tryMove(dx: number, dy: number, isWalkablePx: (x: number, y: number) => boolean) {
-    if (this.frozen) {
+    if (this.model.frozen) {
       this.setAnimState("idle");
       return;
     }
-    if (this._actionLock) {
+    if (this.model.actionLock) {
       // Movement locked during the swing; facing/anim already set.
       return;
     }
     let moved = false;
     if (dx !== 0) {
-      const nx = this.sprite.x + dx;
-      if (isWalkablePx(nx, this.sprite.y)) {
+      const nx = this.model.x + dx;
+      if (isWalkablePx(nx, this.model.y)) {
+        this.model.x = nx;
         this.sprite.x = nx;
         moved = true;
       }
     }
     if (dy !== 0) {
-      const ny = this.sprite.y + dy;
-      if (isWalkablePx(this.sprite.x, ny)) {
+      const ny = this.model.y + dy;
+      if (isWalkablePx(this.model.x, ny)) {
+        this.model.y = ny;
         this.sprite.y = ny;
         moved = true;
       }
     }
     const intended = facingFromDelta(dx, dy);
-    if (intended) this._facing = intended;
+    if (intended) this.model.facing = intended;
     this.setAnimState(moved ? "walk" : "idle");
     this.applyDepth();
   }
@@ -295,7 +334,7 @@ export class Player {
   }
 
   private resolveBaseline(layer: CfLayer): string | null {
-    if (layer in this.cfBaseline) return this.cfBaseline[layer] ?? null;
+    if (layer in this.model.cfBaseline) return this.model.cfBaseline[layer] ?? null;
     return DEFAULT_CF_OUTFIT[layer] ?? null;
   }
 
@@ -306,7 +345,7 @@ export class Player {
    * overwritten on the next equipment change.
    */
   setBaselineLayer(layer: CfLayer, variant: string | null): void {
-    this.cfBaseline[layer] = variant;
+    this.model.cfBaseline[layer] = variant;
     // Apply immediately. Caller is responsible for re-running equipment sync
     // afterwards if an equipped item should still take precedence on this
     // layer (the bookkeeping lives outside Player so it stays decoupled from
@@ -322,6 +361,11 @@ export class Player {
    * the tool's actionState.
    */
   setTool(toolId: string | null): void {
+    this.model.cfToolId = toolId;
+    this.installToolSprite(toolId);
+  }
+
+  private installToolSprite(toolId: string | null): void {
     if (toolId === null) {
       if (this.cfTool) {
         this.cfTool.sprite.destroy();
@@ -401,19 +445,19 @@ export class Player {
   }
 
   private setAnimState(state: CfState) {
-    if (state === this._animState) {
+    if (state === this.model.animState) {
       const driver = this.cfLayers.get("base");
       if (driver && driver.anims.isPlaying) {
         this.applyAnim();
         return;
       }
     }
-    this._animState = state;
+    this.model.animState = state;
     this.applyAnim();
   }
 
   private applyAnim() {
-    if (!CF_ANIMS[this._animState]) return;
+    if (!CF_ANIMS[this.model.animState]) return;
     for (const layer of this.cfLayers.keys()) this.applyAnimToLayer(layer);
     this.applyToolAnim();
   }
@@ -421,7 +465,7 @@ export class Player {
   private applyToolAnim() {
     if (!this.cfTool) return;
     const { def, sprite } = this.cfTool;
-    const cfState = this._animState as CfState;
+    const cfState = this.model.animState as CfState;
     // Only show + animate the tool while its matching action plays. The base
     // anim and the tool anim share fps / frame counts (see CF_TOOLS), so
     // they advance in lockstep off Phaser's scene clock.
@@ -430,7 +474,7 @@ export class Player {
       sprite.anims.stop();
       return;
     }
-    const { dir, flipX } = facingToCfDir(this._facing);
+    const { dir, flipX } = facingToCfDir(this.model.facing);
     sprite.setFlipX(flipX);
     sprite.setVisible(true);
     sprite.anims.play(cfToolAnimKey(def.id, dir), true);
@@ -439,9 +483,9 @@ export class Player {
   private applyAnimToLayer(layer: CfLayer) {
     const sprite = this.cfLayers.get(layer);
     if (!sprite) return;
-    const cfState = this._animState as CfState;
+    const cfState = this.model.animState as CfState;
     if (!CF_ANIMS[cfState]) return;
-    const { dir, flipX } = facingToCfDir(this._facing);
+    const { dir, flipX } = facingToCfDir(this.model.facing);
     sprite.setFlipX(flipX);
     sprite.anims.play(cfAnimKey(sprite.texture.key, cfState, dir), true);
   }

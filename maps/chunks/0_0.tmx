@@ -7,6 +7,15 @@
  <tileset firstgid="5092" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass - coast.tsx"/>
  <tileset firstgid="6078" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx"/>
  <tileset firstgid="7064" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Tilesets-GL2SA.tsx"/>
+ <tileset firstgid="7768" source="../themes/Sea Adventures/props/animated/ship/ship-animations - down-idle-baked.tsx"/>
+ <tileset firstgid="13468" source="../themes/Sea Adventures/props/animated/ship/ship-animations - down-sailing-baked.tsx"/>
+ <tileset firstgid="19928" source="../themes/Sea Adventures/props/animated/ship/ship-animations - down-sailing-windFX.tsx"/>
+ <tileset firstgid="26388" source="../themes/Sea Adventures/props/animated/ship/ship-animations - up-idle-baked.tsx"/>
+ <tileset firstgid="32088" source="../themes/Sea Adventures/props/animated/ship/ship-animations - up-sailing-baked.tsx"/>
+ <tileset firstgid="38548" source="../themes/Sea Adventures/props/animated/ship/ship-animations - up-sailing-windFX.tsx"/>
+ <tileset firstgid="45008" source="../themes/Sea Adventures/props/animated/ship/ship-animations-sideways-idle-baked.tsx"/>
+ <tileset firstgid="50708" source="../themes/Sea Adventures/props/animated/ship/ship-animations-sideways-sailing-baked.tsx"/>
+ <tileset firstgid="57168" source="../themes/Sea Adventures/props/animated/ship/ship-animations-sideways-sailing-windFX-baked.tsx"/>
  <layer id="7" name="ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMA6B1eP9SS7QeR8FeUlVVVfX1AZnYlC4=

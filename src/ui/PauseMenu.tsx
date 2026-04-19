@@ -70,6 +70,17 @@ export function PauseMenu() {
             Customize
           </button>
           <button className="px-btn px-btn-red" onClick={newGame}>New Game</button>
+          {import.meta.env.DEV && (
+            <button
+              className="px-btn px-btn-grey"
+              onClick={() => {
+                bus.emitTyped("player:resetSpawn");
+                bus.emitTyped("pause:toggle");
+              }}
+            >
+              Reset to Spawn
+            </button>
+          )}
         </div>
         <div className="px-footer">ESC: toggle · F5: quicksave · F9: quickload</div>
       </div>

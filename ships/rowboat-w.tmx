@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="5" height="3" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="1">
+ <tileset firstgid="1" source="../maps/themes/Sea Adventures/props/animated/boat-sailing-sideways.tsx"/>
+ <tileset firstgid="1153" source="../maps/themes/Sea Adventures/props/animated/boat-idle-sideways.tsx"/>
+ <layer id="1" name="moving" width="5" height="3">
+  <data encoding="csv">
+2147483763,2147483762,2147483761,2147483760,2147483759,
+2147483799,2147483798,2147483797,2147483796,2147483795,
+2147483835,2147483834,2147483833,2147483832,2147483831
+</data>
+ </layer>
+ <layer id="2" name="idle" width="5" height="3">
+  <data encoding="csv">
+2147484915,2147484914,2147484913,2147484912,2147484911,
+2147484951,2147484950,2147484949,2147484948,2147484947,
+2147484987,2147484986,2147484985,2147484984,2147484983
+</data>
+ </layer>
+</map>

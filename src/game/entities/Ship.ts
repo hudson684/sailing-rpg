@@ -1,12 +1,7 @@
 import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
-import {
-  VESSEL_TEMPLATES,
-  headingToVesselDir,
-  vesselAnimKey,
-  vesselTextureKey,
-  type VesselTemplate,
-} from "./vessels";
+import { type VesselTemplate } from "./vessels";
+import { createShipVisual, type ShipVisualLayers } from "./shipTilemap";
 
 export type Heading = 0 | 1 | 2 | 3; // 0=N, 1=E, 2=S, 3=W
 
@@ -24,11 +19,6 @@ export interface VesselDims {
   tilesWide: number;
 }
 
-const ROWBOAT_DIMS: VesselDims = {
-  tilesLong: VESSEL_TEMPLATES.rowboat.tilesLong,
-  tilesWide: VESSEL_TEMPLATES.rowboat.tilesWide,
-};
-
 const SHIP_MAX_SPEED = 120; // px/s at full throttle
 const SHIP_REVERSE_MAX = 30; // px/s when backing off a beach (negative throttle)
 const SHIP_ACCEL = 60; // px/s^2
@@ -40,13 +30,9 @@ export interface SailingStepResult {
   blocked: boolean;
 }
 
-const HULL_COLOR = 0x5e3a1a;
-const HULL_STROKE = 0x2a1a08;
-const DECK_COLOR = 0xb88449;
-const MAST_COLOR = 0x2a1a08;
-const HELM_COLOR = 0xd9b07a;
-
 export class Ship {
+  /** Stable instance id (matches ships.json instance id). */
+  public readonly id: string;
   public mode: ShipMode = "docked";
   public docked: DockedPose;
   public readonly vessel: VesselTemplate;
@@ -60,15 +46,17 @@ export class Ship {
   public speed = 0;
   public targetThrottle = 0; // 0..1
 
+  /** Lightweight anchor for camera follow and global visibility. Tilemap layers
+   *  cannot be Container children, so they live at scene level and are
+   *  repositioned to track this container each time pose changes. */
   public readonly container: Phaser.GameObjects.Container;
-  private readonly hull: Phaser.GameObjects.Rectangle;
-  private readonly deckTiles: Phaser.GameObjects.Rectangle[] = [];
-  private readonly mast: Phaser.GameObjects.Arc;
-  private readonly helmMarker: Phaser.GameObjects.Rectangle;
-  private readonly bowMarker: Phaser.GameObjects.Triangle;
-  private readonly visual: Phaser.GameObjects.Sprite;
+  /** One visual per heading (moving + idle layers). Only the active heading's
+   *  pair is visible at a time; within that pair, `mode === "sailing"` chooses
+   *  moving, otherwise idle. */
+  private readonly visuals: ShipVisualLayers[];
 
-  constructor(scene: Phaser.Scene, docked: DockedPose, vessel: VesselTemplate = VESSEL_TEMPLATES.rowboat) {
+  constructor(scene: Phaser.Scene, id: string, vessel: VesselTemplate, docked: DockedPose) {
+    this.id = id;
     this.vessel = vessel;
     this.dims = { tilesLong: vessel.tilesLong, tilesWide: vessel.tilesWide };
     this.docked = { ...docked };
@@ -77,61 +65,10 @@ export class Ship {
     this.x = c.x;
     this.y = c.y;
 
-    // Cardinal-only sailing: the container never rotates — headings are discrete
-    // and every art sheet is pre-drawn per direction.
     this.container = scene.add.container(this.x, this.y);
     this.container.setDepth(this.sortY());
 
-    const longPx = TILE_SIZE * this.dims.tilesLong;
-    const widePx = TILE_SIZE * this.dims.tilesWide;
-
-    this.hull = scene.add
-      .rectangle(0, 0, longPx + 4, widePx + 4, HULL_COLOR)
-      .setStrokeStyle(2, HULL_STROKE);
-
-    const xOff = -(this.dims.tilesLong - 1) / 2;
-    const yOff = -(this.dims.tilesWide - 1) / 2;
-    for (let dx = 0; dx < this.dims.tilesLong; dx++) {
-      for (let dy = 0; dy < this.dims.tilesWide; dy++) {
-        const t = scene.add
-          .rectangle((xOff + dx) * TILE_SIZE, (yOff + dy) * TILE_SIZE, TILE_SIZE - 2, TILE_SIZE - 2, DECK_COLOR)
-          .setStrokeStyle(1, HULL_STROKE);
-        this.deckTiles.push(t);
-      }
-    }
-
-    this.mast = scene.add.circle(0, 0, 5, MAST_COLOR);
-    this.helmMarker = scene.add
-      .rectangle(0, -TILE_SIZE / 2, 10, 10, HELM_COLOR)
-      .setStrokeStyle(1, HULL_STROKE);
-    this.bowMarker = scene.add.triangle(
-      longPx / 2 + 6,
-      0,
-      0,
-      -8,
-      12,
-      0,
-      0,
-      8,
-      0xffeeaa,
-    );
-
-    this.container.add([
-      this.hull,
-      ...this.deckTiles,
-      this.mast,
-      this.helmMarker,
-      this.bowMarker,
-    ]);
-    this.hull.setVisible(false);
-    this.deckTiles.forEach((t) => t.setVisible(false));
-    this.mast.setVisible(false);
-    this.helmMarker.setVisible(false);
-    this.bowMarker.setVisible(false);
-
-    this.visual = scene.add.sprite(0, 0, vesselTextureKey(vessel, "idle", "down"), 0);
-    this.visual.setScale(vessel.scale);
-    this.container.add(this.visual);
+    this.visuals = [0, 1, 2, 3].map((h) => createShipVisual(scene, vessel, h as Heading));
     this.updateVisual();
   }
 
@@ -150,14 +87,56 @@ export class Ship {
     return this.y + (hTiles / 2) * TILE_SIZE;
   }
 
-  private updateVisual() {
-    const state = this.mode === "sailing" ? "sailing" : "idle";
-    const { dir, flipX } = headingToVesselDir(this.heading);
-    const key = vesselAnimKey(this.vessel, state, dir);
-    if (this.visual.anims.currentAnim?.key !== key) {
-      this.visual.anims.play(key, true);
+  /** Visual offset (in container-local px) for the current heading. Rotates the
+   *  def's (long, wide) tile offset into X/Y — long = bow axis, wide = starboard. */
+  private visualOffsetPx(): { x: number; y: number } {
+    const off = this.vessel.visualOffset ?? { long: 0, wide: 0 };
+    const longPx = off.long * TILE_SIZE;
+    const widePx = off.wide * TILE_SIZE;
+    switch (this.heading) {
+      case 0: return { x: widePx, y: -longPx };
+      case 1: return { x: longPx, y: widePx };
+      case 2: return { x: -widePx, y: longPx };
+      case 3: return { x: -longPx, y: -widePx };
     }
-    this.visual.setFlipX(flipX);
+  }
+
+  private applyLayerTransforms(): void {
+    const { x: ox, y: oy } = this.visualOffsetPx();
+    const depth = this.sortY();
+    for (let h = 0; h < 4; h++) {
+      const v = this.visuals[h];
+      const topLeftX = this.x - v.widthPx / 2 + ox;
+      const topLeftY = this.y - v.heightPx / 2 + oy;
+      v.moving.setPosition(topLeftX, topLeftY);
+      v.idle.setPosition(topLeftX, topLeftY);
+      v.moving.setDepth(depth);
+      v.idle.setDepth(depth);
+    }
+  }
+
+  private updateVisual() {
+    const sailing = this.mode === "sailing";
+    for (let h = 0; h < 4; h++) {
+      const active = h === this.heading;
+      const v = this.visuals[h];
+      v.moving.setVisible(active && sailing);
+      v.idle.setVisible(active && !sailing);
+    }
+    this.applyLayerTransforms();
+  }
+
+  /** Toggle ship visibility (used when changing scenes / entering interiors). */
+  setVisible(visible: boolean): void {
+    this.container.setVisible(visible);
+    if (!visible) {
+      for (const v of this.visuals) {
+        v.moving.setVisible(false);
+        v.idle.setVisible(false);
+      }
+    } else {
+      this.updateVisual();
+    }
   }
 
   /** Rotate heading by +1 (starboard / right) or -1 (port / left). */
@@ -168,7 +147,7 @@ export class Ship {
   }
 
   /** Footprint tiles occupied by the ship in a given docked pose. */
-  static footprint(pose: DockedPose, dims: VesselDims = ROWBOAT_DIMS): Array<{ x: number; y: number }> {
+  static footprint(pose: DockedPose, dims: VesselDims): Array<{ x: number; y: number }> {
     const { tx, ty, heading } = pose;
     const eastWest = heading === 1 || heading === 3;
     const w = eastWest ? dims.tilesLong : dims.tilesWide;
@@ -181,7 +160,7 @@ export class Ship {
   }
 
   /** Pixel center of the bbox for a given docked pose. */
-  static bboxCenterPx(pose: DockedPose, dims: VesselDims = ROWBOAT_DIMS): { x: number; y: number } {
+  static bboxCenterPx(pose: DockedPose, dims: VesselDims): { x: number; y: number } {
     const { tx, ty, heading } = pose;
     const eastWest = heading === 1 || heading === 3;
     const w = eastWest ? dims.tilesLong : dims.tilesWide;
@@ -191,31 +170,36 @@ export class Ship {
 
   /**
    * Tile occupied by the helm (where the player stands to steer) in a docked pose.
-   * Tuned for the rowboat's 2×1 footprint — the player-interactive vessel. The helm
-   * is the stern tile (opposite the bow implied by `heading`).
+   * The helm is the stern tile (opposite the bow implied by `heading`), centered
+   * across the beam. Generalized over any tilesLong×tilesWide footprint.
    */
-  static helmTile(pose: DockedPose, _dims: VesselDims = ROWBOAT_DIMS): { x: number; y: number } {
+  static helmTile(pose: DockedPose, dims: VesselDims): { x: number; y: number } {
     const { tx, ty, heading } = pose;
+    const L = dims.tilesLong;
+    const W = dims.tilesWide;
+    const centerW = Math.floor((W - 1) / 2);
     switch (heading) {
-      case 0:
-        return { x: tx, y: ty + 1 };
-      case 1:
-        return { x: tx, y: ty };
-      case 2:
-        return { x: tx, y: ty };
-      case 3:
-        return { x: tx + 1, y: ty };
+      case 0: return { x: tx + centerW, y: ty + L - 1 };
+      case 1: return { x: tx, y: ty + centerW };
+      case 2: return { x: tx + centerW, y: ty };
+      case 3: return { x: tx + L - 1, y: ty + centerW };
     }
   }
 
   /**
    * World-pixel position of the helm, for parking the player while sailing/anchoring.
-   * Tuned to the visible stern of the rowboat artwork — the sprite isn't centered in
-   * its 288×256 frame, so we use per-heading offsets instead of a single rotated vector.
+   * Falls back to the footprint-centered helm tile; per-heading fine-tuning will
+   * move into the .tmx object layer in a follow-up.
    */
   helmWorldPx(): { x: number; y: number } {
-    const offset = HELM_OFFSET_PX[this.vessel.id][this.heading];
-    return { x: this.x + offset.dx, y: this.y + offset.dy };
+    // Park the player half the length behind center along the bow axis.
+    const half = (this.dims.tilesLong / 2 - 0.5) * TILE_SIZE;
+    switch (this.heading) {
+      case 0: return { x: this.x, y: this.y + half };
+      case 1: return { x: this.x - half, y: this.y };
+      case 2: return { x: this.x, y: this.y - half };
+      case 3: return { x: this.x + half, y: this.y };
+    }
   }
 
   /** Whether a player-center pixel is on a deck tile of this ship (docked only). */
@@ -238,7 +222,7 @@ export class Ship {
     x: number,
     y: number,
     heading: Heading,
-    dims: VesselDims = ROWBOAT_DIMS,
+    dims: VesselDims,
   ): Array<{ x: number; y: number }> {
     const eastWest = heading === 1 || heading === 3;
     const w = eastWest ? dims.tilesLong : dims.tilesWide;
@@ -282,8 +266,7 @@ export class Ship {
     if (worst === "blocked") {
       this.speed = 0;
       this.targetThrottle = 0;
-      this.container.setPosition(this.x, this.y);
-      this.container.setDepth(this.sortY());
+      this.syncTransform();
       return { beached: false, blocked: true };
     }
 
@@ -294,51 +277,50 @@ export class Ship {
       this.speed = nextSpeed;
       this.x += Math.cos(a) * this.speed * dtSec;
       this.y += Math.sin(a) * this.speed * dtSec;
-      this.container.setPosition(this.x, this.y);
-      this.container.setDepth(this.sortY());
+      this.syncTransform();
       return { beached: true, blocked: false };
     }
 
     this.speed = nextSpeed;
     this.x = nx;
     this.y = ny;
+    this.syncTransform();
+    return { beached: false, blocked: false };
+  }
+
+  private syncTransform(): void {
     this.container.setPosition(this.x, this.y);
     this.container.setDepth(this.sortY());
-    return { beached: false, blocked: false };
+    this.applyLayerTransforms();
   }
 
   /** Set position (and optionally heading) — used by anchoring drift tween. */
   setPose(x: number, y: number, heading?: Heading): void {
     this.x = x;
     this.y = y;
-    this.container.setPosition(x, y);
-    this.container.setDepth(this.sortY());
     if (heading !== undefined && heading !== this.heading) {
       this.heading = heading;
       this.updateVisual();
+    } else {
+      this.syncTransform();
     }
   }
 
   finalizeDock(pose: DockedPose): void {
     this.docked = { ...pose };
     const c = Ship.bboxCenterPx(pose, this.dims);
-    this.setPose(c.x, c.y, pose.heading);
     this.mode = "docked";
     this.speed = 0;
     this.targetThrottle = 0;
+    this.setPose(c.x, c.y, pose.heading);
+    // setPose only updateVisuals if heading changed; force in case it didn't.
     this.updateVisual();
   }
 
-  serialize(): {
-    x: number;
-    y: number;
-    heading: Heading;
-    mode: ShipMode;
-    speed: number;
-    targetThrottle: number;
-    docked: DockedPose;
-  } {
+  serialize(): ShipSavedState {
     return {
+      id: this.id,
+      defId: this.vessel.id,
       x: this.x,
       y: this.y,
       heading: this.heading,
@@ -349,44 +331,40 @@ export class Ship {
     };
   }
 
-  hydrate(data: {
-    x: number;
-    y: number;
-    heading: Heading;
-    mode: ShipMode;
-    speed: number;
-    targetThrottle: number;
-    docked: DockedPose;
-  }): void {
+  hydrate(data: ShipSavedState): void {
     this.docked = { ...data.docked };
     this.mode = data.mode;
     this.speed = data.speed;
     this.targetThrottle = data.targetThrottle;
-    this.setPose(data.x, data.y, data.heading);
+    this.heading = data.heading;
+    this.x = data.x;
+    this.y = data.y;
     this.updateVisual();
+    this.container.setPosition(this.x, this.y);
+    this.container.setDepth(this.sortY());
+  }
+
+  destroy(): void {
+    for (const v of this.visuals) {
+      v.moving.destroy();
+      v.idle.destroy();
+      v.tilemap.destroy();
+    }
+    this.container.destroy();
   }
 }
 
-/**
- * Per-vessel visual helm offsets (in world px, post-scale). The helm sits on
- * the stern deck of the rendered sprite — not at the footprint's bbox center —
- * so we compensate for both (a) the sprite's off-centre position inside its
- * frame and (b) the visible hull extending well beyond the 2×1 tile footprint.
- */
-const HELM_OFFSET_PX: Record<VesselTemplate["id"], Record<Heading, { dx: number; dy: number }>> = {
-  rowboat: {
-    0: { dx: -2, dy: 22 },  // bow N → helm S (stern)
-    1: { dx: -20, dy: 9 },  // bow E → helm W
-    2: { dx: -2, dy: -14 }, // bow S → helm N
-    3: { dx: 20, dy: 9 },   // bow W → helm E
-  },
-  galleon: {
-    0: { dx: 0, dy: 40 },
-    1: { dx: -40, dy: 0 },
-    2: { dx: 0, dy: -40 },
-    3: { dx: 40, dy: 0 },
-  },
-};
+export interface ShipSavedState {
+  id: string;
+  defId: string;
+  x: number;
+  y: number;
+  heading: Heading;
+  mode: ShipMode;
+  speed: number;
+  targetThrottle: number;
+  docked: DockedPose;
+}
 
 export function headingToRotation(h: Heading): number {
   return (h - 1) * (Math.PI / 2);

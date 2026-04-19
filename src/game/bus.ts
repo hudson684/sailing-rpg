@@ -64,7 +64,7 @@ export interface WardrobeApply {
 // Edit mode is a developer-only overlay that lets you visually move,
 // place, and delete world entities, then export the resulting JSON.
 
-export type EditEntityKind = "npc" | "enemy" | "node" | "item";
+export type EditEntityKind = "npc" | "enemy" | "node" | "item" | "ship";
 
 export interface EditNpcEntry {
   id: string;
@@ -103,6 +103,15 @@ export interface EditItemEntry {
   source: "authored" | "editor";
 }
 
+export interface EditShipEntry {
+  id: string;
+  defId: string;
+  defName: string;
+  tileX: number;
+  tileY: number;
+  heading: "N" | "E" | "S" | "W";
+}
+
 export interface EditDefEntry {
   id: string;
   name: string;
@@ -120,11 +129,13 @@ export interface EditSnapshot {
   enemies: EditEnemyEntry[];
   nodes: EditNodeEntry[];
   items: EditItemEntry[];
+  ships: EditShipEntry[];
   defs: {
     npcs: EditDefEntry[];
     enemies: EditDefEntry[];
     nodes: EditDefEntry[];
     items: EditDefEntry[];
+    ships: EditDefEntry[];
   };
   shops: EditShopEntry[];
 }
@@ -189,6 +200,7 @@ type Events = {
   "edit:requestSnapshot": () => void;
   "edit:requestExport": () => void;
   "edit:export": (payload: { files: Array<{ name: string; content: string }> }) => void;
+  "player:resetSpawn": () => void;
 };
 
 class TypedEmitter extends Phaser.Events.EventEmitter {

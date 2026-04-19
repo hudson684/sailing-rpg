@@ -4,14 +4,10 @@
  <tileset firstgid="226" source="../themes/The Village/TiledMap Editor/tilesets/Free_Premade_houses.tsx"/>
  <tileset firstgid="3298" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses.tsx"/>
  <tileset firstgid="7394" source="../themes/The Village/TiledMap Editor/tilesets/roofs2.tsx"/>
- <layer id="7" name="ocean" width="32" height="32">
-  <data encoding="base64" compression="zlib">
-   eJztwwEJAAAMBKHrn+4jrcdQcNVUVVXV1w8WeEAu
-  </data>
- </layer>
+ <tileset firstgid="11490" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx"/>
  <layer id="1" name="ground" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJx91muOwzAIBOBeKLeyfSk7d91WCtK3U3Z/WE0THmaAgft6vfb7zPdZz/Pn3JzBu8/vCZnSLf3R6E/0Zuiv51vZL1ulM59z8670xnPKt/ILvYPcjDPwbUwDe/v6fYcRfhbPN77EpeQLB3E5PGtD3NWt72VjcErmXL/v2tnxTuWvcDWHiaP3NB6/pX99Zd0M7Il3+TW/fqv31lrZEwNlTsiLpzlc6Iqv7zf/R9i0Tq0PMRCHvLt5ybo3tvTZydrbxmnefV+YmMu7kTe+w6n/1lPZz/o94Uv5qln9iYlxWC95R3Gu9+VL+a5Gd8juf2TP9R2bdxGbzLn+vHvpHeyZZ/uly6O9al3X/43dFXr++izPdHyYPaMt8yXHWCv2VObK+1h72cu70bdPxtVjLY8Yt7Urp5tna8GakAvtm+TY5A1jzd63X2b4XfHd/phh07jP9Z1/+9HvOV9zN+j4ZjS+ciaaP/Ppr3GsRs581JH/s6+Te3bYyDljPHJQ9qNzzZzbMyf0xdfZLXadra72cifqZrE9Ys6t/9wJ3ZfERm5IPLr47vBl3ztTkzfz7vZX5jznc/K1M8AdKedCh7ezy/isr5yR+nYWJe/knBDvxNHZJC97P+eDvNZxs/1gDHJzclcn383m9GmuzetCz9h9l3zRzcbcy5OzxTrrLOvN+d7tv/amduV8eSXn9gi/4ukuoC9znVzTzU/5M/teXuj4OfdzcU2eyZ0zd8Tc87udw5isOf39td8lD2rD/cF9LvdPe8TZ2u342avWcZev3EO92wh/OS/FIHk4Z3Xu98b0A6Untqc=
   </data>
  </layer>
  <layer id="2" name="overlay" width="32" height="32">

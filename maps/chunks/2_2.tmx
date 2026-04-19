@@ -8,6 +8,9 @@
  <tileset firstgid="10328" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass(transparency) - river orientation.tsx"/>
  <tileset firstgid="11198" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses2.tsx"/>
  <tileset firstgid="15294" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet3.tsx"/>
+ <tileset firstgid="16438" source="../themes/Grass Land/TiledMap Editor/Tilesets/fence-straight.tsx"/>
+ <tileset firstgid="16486" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx"/>
+ <tileset firstgid="20446" source="../themes/Grass Land/TiledMap Editor/Tilesets/fertilized soil.tsx"/>
  <layer id="7" name="ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMBKHrn+4jrcdQcNVUVVXV1w8WeEAu
@@ -35,12 +38,12 @@
  </layer>
  <layer id="1" name="ground" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJztkj0OwjAMhT31hwVm1ENQJE5AS5qpnaBnAK4CnAFOBRMcAjEgQLyoRo26MBkWP+mTnVTys50SqVQqlWpjiHJLtEXMbEtu23sXd0bG/1QQnUuiC8iqJuZedNyQ962c/xweIXMtW2I+9yo5/wHqBqgfsX/ExF4vC+THQsb/bpr5fb/Q68HFKXgJvn/g+cVeL7/Y/4H9E+/9Pz0kjNv/XnD/Q9SvwahDzaSC+08x18w2LJGPwQNea8SC79y3idD8Xbn3eBq5//2b3D4M5l39yV+lUqlUcnoDZv5IhQ==
   </data>
  </layer>
  <layer id="2" name="overlay" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJzt1LENgDAQA0AvEJIOhARsA/vAjCHDhAZYAJcUpEO8hHySm2/s6gEREREReVNbPd+zAzb37Za7mruawjYpix5YmeRt+nf2Hsxp1N8FoGeGYNMv/zDy90yG/2dm96L/hwuG4gob
+   eJxjYBgFo2AUjIJREOvAwJACxL5A7A/EXkDsAcSeUH4IEPsAcbgDbeyPItJcYtWN2j9q/6j9xINoB0j+h+V1O6g9bg6QMsAXKh5Jgv1SfNjFX/MyMLzhJdellANxoLskcLhtFOAGR/kZGI4B8XH+gbH/I9DeT0D8eYDslxVgYJADYnmBgbF/FAwP4AYse9wHsPwpAtpdPFr+MQAAFowebg==
   </data>
  </layer>
  <layer id="3" name="props_low" width="32" height="32">

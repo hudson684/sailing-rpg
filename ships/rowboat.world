@@ -1,0 +1,10 @@
+{
+    "type": "world",
+    "maps": [
+        { "fileName": "rowboat-n.tmx", "x": 0,   "y": 0,   "width": 96,  "height": 160 },
+        { "fileName": "rowboat-s.tmx", "x": 196, "y": 0,   "width": 96,  "height": 160 },
+        { "fileName": "rowboat-e.tmx", "x": 0,   "y": 260, "width": 160, "height": 96 },
+        { "fileName": "rowboat-w.tmx", "x": 260, "y": 260, "width": 160, "height": 96 }
+    ],
+    "onlyShowAdjacentMaps": false
+}
