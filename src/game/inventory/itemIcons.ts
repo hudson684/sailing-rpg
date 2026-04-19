@@ -49,6 +49,8 @@ export const ITEM_ICONS: Record<string, string> = {
   hopeite_ore: iconHopeiteOre,
   slime_goo: iconSlimeGoo,
   health_potion: iconHealthPotion,
+  bow: emojiIcon("🏹"),
+  arrow: emojiIcon("➷"),
 };
 
 export function iconForItem(id: string): string {

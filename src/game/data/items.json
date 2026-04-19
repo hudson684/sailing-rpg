@@ -137,6 +137,36 @@
       "value": 3
     },
     {
+      "id": "bow",
+      "name": "Shortbow",
+      "color": "#8a6a3d",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "A simple shortbow. Equip, then left-click to fire arrows.",
+      "type": "weapon",
+      "slot": "mainHand",
+      "skill": "combat",
+      "stats": { "attack": 2 },
+      "ranged": {
+        "rangePx": 320,
+        "projectileSpeedPx": 480,
+        "damage": 2,
+        "projectile": "arrow",
+        "cooldownMs": 350
+      },
+      "value": 80
+    },
+    {
+      "id": "arrow",
+      "name": "Arrow",
+      "color": "#a88050",
+      "stackable": true,
+      "maxStack": 99,
+      "description": "Ammunition for a bow.",
+      "type": "ammo",
+      "value": 1
+    },
+    {
       "id": "pickaxe",
       "name": "Pickaxe",
       "color": "#8a6a3d",
