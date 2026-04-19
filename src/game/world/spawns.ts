@@ -123,28 +123,21 @@ function collectSpawns(
   return { items, doors };
 }
 
-interface RawTmjForSpawns {
-  tilewidth?: number;
-  tileheight?: number;
-  layers?: Array<{ type?: string; name?: string; objects?: TiledObjectLike[] }>;
-}
-
-/** Parse spawns directly from the raw Tiled JSON, without constructing a
- *  Phaser Tilemap. Lets us read spawn data for chunks whose tileset images
- *  aren't loaded yet — `make.tilemap({key})` on a chunk with unbound tilesets
- *  can throw from inside Phaser's parser. */
-export function parseSpawnsFromTmj(
-  tmj: RawTmjForSpawns,
+/** Parse the `objects` layer of a (chunk) tilemap into typed, global-tile spawns. */
+export function parseSpawns(
+  tilemap: Phaser.Tilemaps.Tilemap,
   opts: ParseSpawnsOptions = {},
 ): ParsedSpawns {
   const { offsetTx = 0, offsetTy = 0 } = opts;
-  const layer = tmj.layers?.find(
-    (l) => l.type === "objectgroup" && l.name === "objects",
+  const layer = tilemap.getObjectLayer("objects");
+  if (!layer) return { items: [], doors: [] };
+  return collectSpawns(
+    layer.objects as TiledObjectLike[],
+    tilemap.tileWidth,
+    tilemap.tileHeight,
+    offsetTx,
+    offsetTy,
   );
-  if (!layer?.objects) return { items: [], doors: [] };
-  const tw = tmj.tilewidth ?? 32;
-  const th = tmj.tileheight ?? 32;
-  return collectSpawns(layer.objects, tw, th, offsetTx, offsetTy);
 }
 
 /** Parse the `objects` layer of an interior tilemap. Interior maps live in
