@@ -1,5 +1,17 @@
 # Project notes for Claude
 
+## Always start from fresh main
+
+Before planning or coding on any branch, run `git fetch origin` and
+check how the current branch compares to `origin/main`. If the branch
+is behind `origin/main`, rebase onto it before doing anything else.
+Do NOT propose plans, read code for architectural decisions, or start
+implementing against a stale base — the codebase changes fast and old
+assumptions become wrong quickly.
+
+The SessionStart hook in `.claude/settings.json` prints this comparison
+automatically at the start of every session. Read its output.
+
 ## Don't start dev servers
 
 Never run `npm run dev` / `vite` / Playwright / any other server-starting

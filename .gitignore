@@ -47,7 +47,10 @@ assets-source
 maps/icons/
 
 # Claude Code / agent tooling local state
-.claude/
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
+!.claude/hooks/**
 .playwright-mcp/
 
 # Scratch / debug screenshots at repo root (keep public/ intentional)
