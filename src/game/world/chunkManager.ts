@@ -467,31 +467,40 @@ export class ChunkManager {
     const tilemap = this.scene.make.tilemap({ key: cacheKey });
 
     // Phaser's Tileset instances don't carry the raw `image` path string, so we
-    // read the image path for each tileset from the cached TMJ JSON, matching
-    // by tileset name.
+    // read image paths from the cached TMJ JSON. We pair by index (not by name)
+    // because some chunks embed two tilesets that share a `name` — e.g. the
+    // Grass-Land and Sea-Adventures packs both ship a tsx named
+    // "beach - with thick foam". Phaser's addTilesetImage() looks up by name
+    // and only ever matches the first, so calling it for each duplicate would
+    // rebind the same Tileset twice and leave the other untextured.
     const cached = this.scene.cache.tilemap.get(cacheKey) as
       | { data?: { tilesets?: Array<{ name: string; image: string }> } }
       | undefined;
     const rawTilesets = cached?.data?.tilesets ?? [];
-    const imageByName = new Map(rawTilesets.map((t) => [t.name, t.image]));
+    if (rawTilesets.length !== tilemap.tilesets.length) {
+      throw new Error(
+        `Tileset count mismatch for chunk ${cx},${cy}: raw=${rawTilesets.length} parsed=${tilemap.tilesets.length}`,
+      );
+    }
 
-    // Bind every tileset declared in the chunk's TMJ to its preloaded image.
+    const textureManager = this.scene.sys.textures;
     const boundTilesets: Phaser.Tilemaps.Tileset[] = [];
-    for (const tsDef of tilemap.tilesets) {
-      const imagePath = imageByName.get(tsDef.name) ?? "";
+    for (let i = 0; i < tilemap.tilesets.length; i++) {
+      const tileset = tilemap.tilesets[i];
+      const imagePath = rawTilesets[i]?.image ?? "";
       if (!imagePath) {
         throw new Error(
-          `No image path for tileset '${tsDef.name}' in chunk ${cx},${cy}`,
+          `No image path for tileset '${tileset.name}' in chunk ${cx},${cy}`,
         );
       }
       const imageKey = tilesetImageKeyFor(imagePath);
-      const bound = tilemap.addTilesetImage(tsDef.name, imageKey);
-      if (!bound) {
+      if (!textureManager.exists(imageKey)) {
         throw new Error(
-          `Failed to bind tileset '${tsDef.name}' (image '${imagePath}', key '${imageKey}') for chunk ${cx},${cy}`,
+          `Texture '${imageKey}' not loaded for tileset '${tileset.name}' in chunk ${cx},${cy}`,
         );
       }
-      boundTilesets.push(bound);
+      tileset.setImage(textureManager.get(imageKey));
+      boundTilesets.push(tileset);
     }
 
     const renderScale = TILE_SIZE / tilemap.tileWidth;

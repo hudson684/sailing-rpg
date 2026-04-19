@@ -1,0 +1,119 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+}
+body {
+  margin: 0;
+  background: #1c1f24;
+  color: #e8e8e8;
+}
+header {
+  padding: 12px 20px;
+  background: #14171b;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  border-bottom: 1px solid #2a2f36;
+}
+header h1 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.controls {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.controls select,
+.controls input,
+.controls button {
+  background: #20252c;
+  color: #e8e8e8;
+  border: 1px solid #2f343c;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font: inherit;
+}
+.controls button {
+  cursor: pointer;
+}
+.controls button:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 20px;
+}
+section h2 {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a929c;
+  margin: 0 0 10px;
+}
+#rig-frame {
+  width: 256px;
+  height: 256px;
+  background:
+    linear-gradient(45deg, #20252c 25%, transparent 25%) 0 0 / 16px 16px,
+    linear-gradient(-45deg, #20252c 25%, transparent 25%) 0 8px / 16px 16px,
+    linear-gradient(45deg, transparent 75%, #20252c 75%) 8px -8px / 16px 16px,
+    linear-gradient(-45deg, transparent 75%, #20252c 75%) 8px 0 / 16px 16px,
+    #14171b;
+  border: 1px solid #2a2f36;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  image-rendering: pixelated;
+}
+#rig {
+  position: relative;
+  transform: scale(4);
+  transform-origin: top left;
+  image-rendering: pixelated;
+}
+#rig img {
+  image-rendering: pixelated;
+}
+.bake-item {
+  margin-bottom: 16px;
+  padding: 10px;
+  background: #14171b;
+  border: 1px solid #2a2f36;
+  border-radius: 4px;
+}
+.bake-item .label {
+  font-size: 12px;
+  color: #b8c0ca;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+.bake-item canvas {
+  display: block;
+  background:
+    linear-gradient(45deg, #20252c 25%, transparent 25%) 0 0 / 8px 8px,
+    linear-gradient(-45deg, #20252c 25%, transparent 25%) 0 4px / 8px 8px,
+    linear-gradient(45deg, transparent 75%, #20252c 75%) 4px -4px / 8px 8px,
+    linear-gradient(-45deg, transparent 75%, #20252c 75%) 4px 0 / 8px 8px,
+    #0d0f12;
+  image-rendering: pixelated;
+  transform-origin: top left;
+  transform: scale(2);
+  margin-bottom: 80px;
+}
+.bake-item a {
+  color: #6cc4ff;
+  font-size: 12px;
+}

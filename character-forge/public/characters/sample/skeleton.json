@@ -1,0 +1,61 @@
+{
+  "name": "sample",
+  "frameSize": 64,
+  "origin": { "x": 32, "y": 18 },
+  "bones": [
+    {
+      "id": "torso",
+      "parent": null,
+      "joint": { "x": 0, "y": 0 },
+      "pivot": { "x": 8, "y": 0 },
+      "image": "parts/torso.png",
+      "rest": 0,
+      "z": 1
+    },
+    {
+      "id": "head",
+      "parent": "torso",
+      "joint": { "x": 8, "y": 0 },
+      "pivot": { "x": 6, "y": 12 },
+      "image": "parts/head.png",
+      "rest": 0,
+      "z": 2
+    },
+    {
+      "id": "arm-l",
+      "parent": "torso",
+      "joint": { "x": 1, "y": 2 },
+      "pivot": { "x": 3, "y": 1 },
+      "image": "parts/arm-l.png",
+      "rest": 0,
+      "z": 0
+    },
+    {
+      "id": "arm-r",
+      "parent": "torso",
+      "joint": { "x": 15, "y": 2 },
+      "pivot": { "x": 3, "y": 1 },
+      "image": "parts/arm-r.png",
+      "rest": 0,
+      "z": 3
+    },
+    {
+      "id": "leg-l",
+      "parent": "torso",
+      "joint": { "x": 4, "y": 24 },
+      "pivot": { "x": 3, "y": 1 },
+      "image": "parts/leg-l.png",
+      "rest": 0,
+      "z": 0
+    },
+    {
+      "id": "leg-r",
+      "parent": "torso",
+      "joint": { "x": 12, "y": 24 },
+      "pivot": { "x": 3, "y": 1 },
+      "image": "parts/leg-r.png",
+      "rest": 0,
+      "z": 0
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Character Forge</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Character Forge</h1>
+      <div class="controls">
+        <label>Character <select id="character-select"></select></label>
+        <label>Animation <select id="anim-select"></select></label>
+        <label>Preview FPS <input id="fps-input" type="number" min="1" max="60" value="8" /></label>
+        <button id="bake-btn">Bake spritesheets</button>
+      </div>
+    </header>
+    <main>
+      <section class="stage">
+        <h2>Live preview</h2>
+        <div id="rig-frame">
+          <div id="rig"></div>
+        </div>
+      </section>
+      <section class="bake-out">
+        <h2>Baked output</h2>
+        <div id="bake-preview"></div>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

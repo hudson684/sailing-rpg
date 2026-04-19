@@ -32,6 +32,8 @@ const INITIAL_HUD: HudState = {
   speed: 0,
   heading: 0,
   message: null,
+  stamina: 100,
+  staminaMax: 100,
 };
 
 let nextToastId = 1;

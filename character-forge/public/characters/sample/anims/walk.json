@@ -1,0 +1,13 @@
+{
+  "name": "walk",
+  "frames": 8,
+  "fps": 8,
+  "loop": true,
+  "keyframes": [
+    { "t": 0,    "rot": { "arm-l": 30, "arm-r": -30, "leg-l": -25, "leg-r": 25, "head": 0 } },
+    { "t": 0.25, "rot": { "arm-l": 0, "arm-r": 0, "leg-l": 0, "leg-r": 0, "head": -2 } },
+    { "t": 0.5,  "rot": { "arm-l": -30, "arm-r": 30, "leg-l": 25, "leg-r": -25, "head": 0 } },
+    { "t": 0.75, "rot": { "arm-l": 0, "arm-r": 0, "leg-l": 0, "leg-r": 0, "head": 2 } },
+    { "t": 1,    "rot": { "arm-l": 30, "arm-r": -30, "leg-l": -25, "leg-r": 25, "head": 0 } }
+  ]
+}

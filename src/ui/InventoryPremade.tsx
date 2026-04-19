@@ -103,14 +103,26 @@ export function InventoryPremade() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const k = e.key.toLowerCase();
-      if (k !== "i" && k !== "c") return;
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
-      setOpen((v) => !v);
+      const k = e.key.toLowerCase();
+      if (k === "i" || k === "c") {
+        setOpen((v) => !v);
+        return;
+      }
+      if (e.key === "Escape") {
+        setOpen((wasOpen) => {
+          if (wasOpen) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return false;
+          }
+          return wasOpen;
+        });
+      }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, []);
 
   const goldCount = useMemo(() => {

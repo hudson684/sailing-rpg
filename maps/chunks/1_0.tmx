@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="18" nextobjectid="29">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="18" nextobjectid="30">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
  <tileset firstgid="226" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <tileset firstgid="736" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
@@ -120,6 +120,15 @@
    <properties>
     <property name="heading" value="E"/>
    </properties>
+  </object>
+  <object id="29" type="door" x="384" y="544">
+   <properties>
+    <property name="entryTx" type="int" value="8"/>
+    <property name="entryTy" type="int" value="8"/>
+    <property name="interiorKey" value="cabin"/>
+    <property name="uid" value="cf439ab8-00b8-42ff-a022-a6d67b7e3f60"/>
+   </properties>
+   <point/>
   </object>
  </objectgroup>
  <objectgroup id="15" name="COLLISION">

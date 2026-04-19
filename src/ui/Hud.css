@@ -7,14 +7,13 @@
   color: #e8f0ff;
 }
 
-/* Hotbar lives at top:16 / left:16 and is 120*4 = 480px wide.
-   Place the health pill just to its right, vertically centered against
-   the hotbar's 30*4 = 120px height. */
+/* Hotbar lives at top:16 / left:16 and is 120*4 = 480px wide and
+   30*4 = 120px tall. Place the health pill directly below it. */
 .hud-health {
   position: absolute;
-  top: 16px;
-  left: calc(16px + 480px + 12px);
-  height: 120px;
+  top: calc(16px + 120px - 4px);
+  left: 16px;
+  width: 480px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -49,6 +48,66 @@
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25);
   transition: width 160ms ease-out;
 }
+.hud-stamina {
+  position: absolute;
+  top: calc(16px + 120px - 4px + 40px);
+  left: 16px;
+  width: 480px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+  font-family: var(--pixel-font);
+  color: var(--pixel-ink);
+}
+
+.hud-stamina-icon {
+  width: 28px;
+  height: 28px;
+  image-rendering: pixelated;
+  display: block;
+  background: linear-gradient(180deg, #9be36d 0%, #4fa23a 60%, #23611d 100%);
+  border: 3px solid var(--pixel-ink, #2b1d12);
+  border-radius: 6px;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3);
+}
+
+.hud-stamina-bar {
+  position: relative;
+  width: 220px;
+  height: 28px;
+  background: var(--pixel-tan, #d9b382);
+  border: 4px solid var(--pixel-ink, #2b1d12);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 3px 0 var(--pixel-parchment, #f3e3c2),
+    inset 0 -3px 0 var(--pixel-tan-dark, #a87d4a),
+    0 3px 0 rgba(0, 0, 0, 0.4);
+}
+.hud-stamina-fill {
+  height: 100%;
+  background: linear-gradient(180deg, #c6e86a 0%, #6fb23a 50%, #2d6a1a 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25);
+  transition: width 120ms ease-out;
+}
+.hud-stamina-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  color: var(--pixel-parchment, #f3e3c2);
+  text-shadow:
+    1px 0 0 var(--pixel-ink, #2b1d12),
+    -1px 0 0 var(--pixel-ink, #2b1d12),
+    0 1px 0 var(--pixel-ink, #2b1d12),
+    0 -1px 0 var(--pixel-ink, #2b1d12);
+  pointer-events: none;
+}
+
 .hud-health-text {
   position: absolute;
   inset: 0;

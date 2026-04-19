@@ -34,6 +34,12 @@ import {
   type Heading,
 } from "../entities/Ship";
 
+const STAMINA_MAX = 100;
+const SPRINT_SPEED_MULT = 1.35;
+const STAMINA_DRAIN_PER_SEC = 12;
+const STAMINA_REGEN_PER_SEC = 20;
+const STAMINA_REGEN_DELAY_MS = 5000;
+
 const HEADING_TO_FACING: Record<Heading, Facing> = {
   0: "up",
   1: "right",
@@ -241,7 +247,14 @@ export class WorldScene extends Phaser.Scene {
     debugXp: Phaser.Input.Keyboard.Key;
     quicksave: Phaser.Input.Keyboard.Key;
     quickload: Phaser.Input.Keyboard.Key;
+    sprint: Phaser.Input.Keyboard.Key;
   };
+
+  // Stamina lives on the scene (not in the game store) because it changes
+  // every frame during sprinting; 60Hz store writes would churn subscribers.
+  // Published to the HUD via emitHud instead.
+  private staminaCurrent = STAMINA_MAX;
+  private lastSprintAtMs = -Infinity;
 
   private sailingXpAccum = 0;
   private wasBeached = false;
@@ -366,7 +379,16 @@ export class WorldScene extends Phaser.Scene {
       debugXp: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.X),
       quicksave: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F5),
       quickload: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F9),
+      sprint: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT),
     };
+
+    this.input.keyboard!.addCapture([
+      Phaser.Input.Keyboard.KeyCodes.SHIFT,
+      Phaser.Input.Keyboard.KeyCodes.UP,
+      Phaser.Input.Keyboard.KeyCodes.DOWN,
+      Phaser.Input.Keyboard.KeyCodes.LEFT,
+      Phaser.Input.Keyboard.KeyCodes.RIGHT,
+    ]);
 
     this.keys.interact.on("down", () => this.onInteract());
 
@@ -618,6 +640,7 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     this.tickPlayerRegen(dtMs);
+    this.tickStaminaRegen(dtMs);
     const pTile = this.player.tile();
     this.world.manager.updateOverheadFade(pTile.x, pTile.y, dtMs);
     this.droppedExpiryAccum += dtMs;
@@ -661,7 +684,14 @@ export class WorldScene extends Phaser.Scene {
       dx *= inv;
       dy *= inv;
     }
-    this.player.tryMove(dx * PLAYER_SPEED * dt, dy * PLAYER_SPEED * dt, (px, py) =>
+    const moving = dx !== 0 || dy !== 0;
+    const sprinting = moving && this.keys.sprint.isDown && this.staminaCurrent > 0;
+    if (sprinting) {
+      this.staminaCurrent = Math.max(0, this.staminaCurrent - STAMINA_DRAIN_PER_SEC * dt);
+      this.lastSprintAtMs = this.time.now;
+    }
+    const speed = PLAYER_SPEED * (sprinting ? SPRINT_SPEED_MULT : 1);
+    this.player.tryMove(dx * speed * dt, dy * speed * dt, (px, py) =>
       this.isWalkablePx(px, py),
     );
   }
@@ -745,6 +775,15 @@ export class WorldScene extends Phaser.Scene {
     const healed = store.healthHeal(whole);
     this.playerRegenAccum -= whole;
     if (healed === 0) this.playerRegenAccum = 0; // already full; don't stockpile
+  }
+
+  private tickStaminaRegen(dtMs: number) {
+    if (this.staminaCurrent >= STAMINA_MAX) return;
+    if (this.time.now - this.lastSprintAtMs < STAMINA_REGEN_DELAY_MS) return;
+    this.staminaCurrent = Math.min(
+      STAMINA_MAX,
+      this.staminaCurrent + STAMINA_REGEN_PER_SEC * (dtMs / 1000),
+    );
   }
 
   private flashPlayer() {
@@ -868,7 +907,7 @@ export class WorldScene extends Phaser.Scene {
 
     const wPx = tilemap.width * TILE_SIZE;
     const hPx = tilemap.height * TILE_SIZE;
-    this.cameras.main.setBounds(0, 0, wPx, hPx);
+    this.cameras.main.setBounds(0, 0, wPx, hPx, true);
   }
 
   private unloadInterior() {
@@ -1676,6 +1715,8 @@ export class WorldScene extends Phaser.Scene {
       const npc = this.nearestNpc();
       if (npc) {
         prompt = `Press E to talk to ${npc.def.name}`;
+      } else if (this.nearestDoor()) {
+        prompt = "Press E to go inside";
       } else {
         const pickup = this.nearestGroundItem();
         if (pickup) {
@@ -1719,6 +1760,8 @@ export class WorldScene extends Phaser.Scene {
       prompt,
       speed: this.ship ? Math.round(this.ship.speed) : 0,
       heading: this.ship ? normalizeAngle(this.ship.rotation) : 0,
+      stamina: Math.round(this.staminaCurrent),
+      staminaMax: STAMINA_MAX,
     });
   }
 

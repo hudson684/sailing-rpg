@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="12" nextobjectid="1">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="14" nextobjectid="1">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
  <tileset firstgid="226" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <tileset firstgid="736" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet1.tsx"/>
  <tileset firstgid="4256" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses3.tsx"/>
  <tileset firstgid="6368" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass - transparency.tsx"/>
  <tileset firstgid="10328" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass(transparency) - river orientation.tsx"/>
+ <tileset firstgid="11198" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses2.tsx"/>
+ <tileset firstgid="15294" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet3.tsx"/>
  <layer id="7" name="ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMBKHrn+4jrcdQcNVUVVXV1w8WeEAu
@@ -38,12 +40,22 @@
  </layer>
  <layer id="2" name="overlay" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJzt1LENgDAQA0AvEJIOhARsA/vAjCHDhAZYAJcUpEO8hHySm2/s6gEREREReVNbPd+zAzb37Za7mruawjYpix5YmeRt+nf2Hsxp1N8FoGeGYNMv/zDy90yG/2dm96L/hwuG4gob
   </data>
  </layer>
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJztzbENgDAMBVHPgghiiayAAso0EURMQ8WQ/MIlNBSu7klXnxkAAAAAAN+GbDaq5E1qznH/Ra+iVm9TNfDf9NrV4XV1Bv6vl9f94/8A2T0LyQ==
+  </data>
+ </layer>
+ <layer id="12" name="buildings low" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJzt0ceNAkEURdEOgMGbTIAg8DYpoPEkhbfpzElhJGoxUl3pbP9b/CSJxWKxWCwWi8X+b616krTp0KVHnwFDRoyZMK1/f3/m5pwFKUtWrNmwZceeQ4D9o5snzly4cuPOgycv3nwC7GcaSfJDlhx5ChQpUaZClVrj+/stN9t06NKjz4AhI8ZMmAbYn7k5Z0HKkhVrNmzZsecQYP/o5okzF67cuPPgyYs3nwD7mab/kyVHngJFSpSpUKXW/P5+y802Hbr06DNgyIgxE6YB9mduzlmQsmTFmg1bduw5BNj/a7/ptk79
+  </data>
+ </layer>
+ <layer id="13" name="buildings_high" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJzt0cdtQkEYRtG3x+RUiDFNEG2CiwJMhqLIuR2fFiyNd3Ols/2/kSZJYrFYLBaLxWL/0eI9SZbv/7uxc3/PgSMnzly4cuPOgyevwO9J1ZLkjTQZsuTIU6BIiTIVqrWw+w33mrRo06HLJ1/06DNgyHfg/ZF7Yyb8MGXGnAVLVqzZsA28v3Nvz4EjJ85cuHLjzoMnr8D7qQ//T5oMWXLkKVCkRJkK1Y+w+w33mrRo06HLJ1/06DNgyHfg/ZF7Yyb8MGXGnAVLVqzZsA28v3Nvz4EjJ85cuHLjzoMnr8D7qbr/J02GLDnyFChSokyFaj3sfuzv/QKUglWX
   </data>
  </layer>
  <layer id="4" name="props_high" width="32" height="32">

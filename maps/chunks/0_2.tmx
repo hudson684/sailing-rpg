@@ -9,7 +9,7 @@
  </layer>
  <layer id="8" name="beach" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztlG8OgjAMxbsP4k0UPYmoJwHjTdBDiqICd7CNr9nwf0hgH9wvaUYc9r22G0SBgD8mhmhs/OnnrL31qO8yZC9GrBM9aEkv9sZ6iXrwo3mnHKcP7y14P+aY/eBBa4leeH7cE92Kf18h/zukFxlHwc9r85xrbtq11Ly/4fVAd8+u3hIh71yhrR4+IR52zvlM4ekKjSn8SR1HXhNez3TPLb1tyOpeEK6XpMNstS8VdE/IW5Ktr8SqOgWeE/xPPB466msfdogMtZfIWaD2FbxV0L6gHzXZftXd5FvkjpdXkTk9kNigBw389k3qeIgx+4bs2RgC9aBnJTZ2LkOROvOIjb0LQ6P3Z/nl+9cnOo/Ck76w8Fi/oPc2EAgE/pUbsbdVxg==
+   eJztU1sOwiAQXD7Umyh6Eos3qV6lXrIva9s7uJsOAY0/1hQSZZJJSQnM7M5ClJDwm9gqojW4UeH1j6x5YZa83vP3ENhDwXpX5pk5RvIgkD5oZqaW8bDycn7NWvZ2zBtN/MaDryPn7XzJ/QM9Z7329gyzpSmDO/MED5/OZI4s79CQuyuaelujNqmxZzbQM/DWgUa5f/sZPSjgoYdug3ulvgH1tfhanQrrDOfEYwm/c5Bjru1s19AsoSWeTvDWQ7tDPwZy/RrmyT+h8Ly849nrgfCCHozwuzRyz4NG9iO52QgB68HOilYul1DIvTy0cm8hNOz7MehHDNg8qkj6gmPE+gX23SYkJCT8Kx55oVPs
   </data>
  </layer>
  <layer id="1" name="ground" width="32" height="32">

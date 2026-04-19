@@ -24,6 +24,49 @@ const parser = new XMLParser({
   preserveOrder: true,
 });
 
+// Disambiguate output tileset image filenames when two source TSX files
+// reference different images with the same basename (e.g. each theme pack
+// ships its own `tilesets.png`). Keyed by the source image's absolute path
+// so the same source always resolves to the same output name within a build.
+// First imageAbs to claim a basename keeps it; later collisions get a
+// deterministic suffix derived from the source's parent directory.
+const imageOutRegistry = new Map(); // imageAbs (normalized) → outImage (e.g. "tilesets/foo.png")
+const basenameOwners = new Map(); // basename → imageAbs (the first absolute path that claimed this basename)
+
+function resolveOutImage(imageAbs) {
+  const key = path.normalize(imageAbs);
+  const cached = imageOutRegistry.get(key);
+  if (cached) return cached;
+  const base = path.basename(key);
+  const owner = basenameOwners.get(base);
+  let outName;
+  if (!owner || owner === key) {
+    basenameOwners.set(base, key);
+    outName = base;
+  } else {
+    // Collision: derive a short stable suffix from the parent dir name so the
+    // output filename stays human-readable. Sanitize for filesystem safety.
+    const parent = path.basename(path.dirname(key)).replace(/[^a-zA-Z0-9_-]+/g, "_");
+    const parsed = path.parse(base);
+    outName = `${parsed.name}__${parent}${parsed.ext}`;
+    // If that somehow also collides with a prior different source, keep adding
+    // parent dirs until unique. Defensive; rare in practice.
+    let probe = outName;
+    let up = path.dirname(path.dirname(key));
+    while (basenameOwners.has(probe) && basenameOwners.get(probe) !== key) {
+      const next = path.basename(up).replace(/[^a-zA-Z0-9_-]+/g, "_");
+      probe = `${parsed.name}__${next}_${probe}`;
+      up = path.dirname(up);
+      if (up === path.dirname(up)) break;
+    }
+    outName = probe;
+    basenameOwners.set(outName, key);
+  }
+  const outImage = `tilesets/${outName}`;
+  imageOutRegistry.set(key, outImage);
+  return outImage;
+}
+
 // Run as CLI only when invoked directly (not when imported by the Vite plugin).
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const check = process.argv.includes("--check");
@@ -352,10 +395,13 @@ function loadExternalTsx(tsxPath) {
   const imgAttrs = imgEntry[":@"];
   const imageRel = imgAttrs["@_source"];
   const imageAbs = path.resolve(path.dirname(tsxPath), imageRel);
-  const imageFileName = path.basename(imageRel);
   // The output TMJ references tileset images via a relative path from the
-  // TMJ's own location in public/maps/.
-  const outImage = `tilesets/${imageFileName}`;
+  // TMJ's own location in public/maps/. Different TSX sources may share a
+  // basename (each theme pack ships its own `tilesets.png`), so we route
+  // through a registry that disambiguates by source path — otherwise the
+  // two images would clobber each other on disk and one of the tilesets
+  // would render from the wrong image.
+  const outImage = resolveOutImage(imageAbs);
   const imageCopyTo = path.join(publicMapsDir, outImage);
 
   const tiles = [];

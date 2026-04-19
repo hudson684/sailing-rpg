@@ -12,6 +12,10 @@ export function Hud() {
   const hpMax = computeMaxHp(equipped);
 
   const pct = hpMax > 0 ? Math.max(0, Math.min(1, hpCurrent / hpMax)) : 0;
+  const stamina = state.stamina;
+  const staminaMax = state.staminaMax;
+  const staminaPct =
+    staminaMax > 0 ? Math.max(0, Math.min(1, stamina / staminaMax)) : 0;
 
   return (
     <div className="hud">
@@ -23,7 +27,19 @@ export function Hud() {
         </div>
       </div>
 
-      <Hotbar variant="hud" />
+      <div
+        className="hud-stamina"
+        role="status"
+        aria-label={`Stamina ${stamina} of ${staminaMax}`}
+      >
+        <div className="hud-stamina-icon" aria-hidden="true" />
+        <div className="hud-stamina-bar">
+          <div className="hud-stamina-fill" style={{ width: `${staminaPct * 100}%` }} />
+          <div className="hud-stamina-text">{stamina} / {staminaMax}</div>
+        </div>
+      </div>
+
+      <Hotbar variant="hud" scale={3} />
 
       {state.prompt && <div className="px-panel hud-prompt">{state.prompt}</div>}
 

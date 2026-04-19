@@ -9,6 +9,8 @@ export interface HudState {
   speed: number;
   heading: number;
   message: string | null;
+  stamina: number;
+  staminaMax: number;
 }
 
 export type InventoryAction =

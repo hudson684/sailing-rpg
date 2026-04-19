@@ -1,0 +1,11 @@
+{
+  "name": "idle",
+  "frames": 4,
+  "fps": 4,
+  "loop": true,
+  "keyframes": [
+    { "t": 0,    "rot": { "torso": 0, "head": 0, "arm-l": 5, "arm-r": -5, "leg-l": 0, "leg-r": 0 } },
+    { "t": 0.5,  "rot": { "torso": 1, "head": -2, "arm-l": 8, "arm-r": -8, "leg-l": 0, "leg-r": 0 } },
+    { "t": 1,    "rot": { "torso": 0, "head": 0, "arm-l": 5, "arm-r": -5, "leg-l": 0, "leg-r": 0 } }
+  ]
+}

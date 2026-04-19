@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="15" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="15" nextobjectid="17">
+ <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
+ <tileset firstgid="4097" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
+ <tileset firstgid="4607" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx"/>
+ <tileset firstgid="4867" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
+ <tileset firstgid="5092" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass - coast.tsx"/>
+ <tileset firstgid="6078" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx"/>
+ <tileset firstgid="7064" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Tilesets-GL2SA.tsx"/>
+ <tileset firstgid="7768" source="../themes/The Village/TiledMap Editor/tilesets/tilesets-village.tsx"/>
+ <tileset firstgid="8254" source="../tilesets/Interiors_tilesets.tsx"/>
+ <tileset firstgid="11646" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2.tsx"/>
+ <tileset firstgid="15166" source="../tilesets/furniture_and_props.tsx"/>
+ <layer id="1" name="floor" width="15" height="10">
+  <data encoding="base64" compression="zlib">
+   eJzVUEEOgCAM21MQBf/us0DwG66hiwuePNqk2WDrVhD5L9Ii0oPIqnFTFs3jMs7IO8+ozbAaInqz5lXjxftMnuGttd4Wnr02pzKHLk17OzWNdfhsbk5znuwdhsL5uNvpK3N3mvx20gO6yDr0iTQf/i++4AiDM26jYDAa
+  </data>
+ </layer>
+ <layer id="10" name="walls" width="15" height="10">
+  <data encoding="base64" compression="zlib">
+   eJyd0DkOwjAQBVA37IFLABXnCIT1VqwBbkXYcyZeJAoaN1h6kvWtb40m7YcwZkLGlBnzSLZgyYo1G7bs2HMgj2RHTpy5UHDlxp0Hz0j24k1JbRBCnQZNWrTpRLKELj1SxkzImDJjHskWLFmxZsOWHXsO5JHsyOnbrY3CX6fqpn92z7oXCq7cuPMYxDsvb2/KauahPdOgSYv2914pfv6pOomsS2neD16oP/w=
+  </data>
+ </layer>
+ <layer id="8" name="bbeams" width="15" height="10">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo4D6AAACWAAB
+  </data>
+ </layer>
+ <layer id="11" name="carpet" width="15" height="10">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFgwHIajEwyAGxPBAraJGmNxaoPg6I44E4gUS9c4Hq5wHxfCBeQKJefAAAFOUGZw==
+  </data>
+ </layer>
+ <layer id="9" name="Dock" width="15" height="10">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo4D6AAACWAAB
+  </data>
+ </layer>
+ <layer id="2" name="overlay" width="15" height="10">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo4D6AAACWAAB
+  </data>
+ </layer>
+ <layer id="3" name="props_low" width="15" height="10">
+  <data encoding="base64" compression="zlib">
+   eJxjYKAeUHZgYFABYlUHTLkDVvj1+gH1+ANxAJre6UD+DCCeicXMSVAzK4FyVUBcjabmEJB/GIiPYNG7j4B7cIGbHAwMr0jQC1IPA5KcpNlFqvrBBAB1ARCB
+  </data>
+ </layer>
+ <layer id="12" name="shopfront" width="15" height="10">
+  <data encoding="base64" compression="zlib">
+   eJxjYBjaIMCagSEQiIOAONgaIX7RGrceGKgGqqkB6bdhYKiDqv8NpP8QoXcZUM1yIF4BxCuh6tWA5qjbkO6H4QgAaJoMrg==
+  </data>
+ </layer>
+ <layer id="4" name="props_high" width="15" height="10">
+  <data encoding="base64" compression="zlib">
+   eJxjYKAc/ONmYPjPjSm+l5GBYR8jeWb+Ber7B8T3OCD4EQd2dcnM2MXTgeJynBCsxEm6/cpMqDQ5IBmIU4A4Fcq/icMP2MBiIF4CxEuhfEkS/UCqemoDACZuDhQ=
+  </data>
+ </layer>
+ <layer id="5" name="roof" width="15" height="10">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo4D6AAACWAAB
+  </data>
+ </layer>
+ <objectgroup id="6" name="objects">
+  <object id="16" name="interior_exit" type="interior_exit" x="286.75" y="308" width="67.5" height="12">
+   <properties>
+    <property name="promptOnly" type="bool" value="true"/>
+    <property name="uid" value="d383fd29-b313-4b22-869e-618e5bfceec1"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="14" name="COLLISIONS">
+  <object id="1" x="96" y="146" width="118.667" height="22.6667"/>
+  <object id="3" x="96" y="116" width="24.6667" height="32"/>
+  <object id="4" x="295.333" y="115" width="24.3333" height="19"/>
+  <object id="5" x="265.667" y="146.333" width="53.6667" height="23"/>
+  <object id="6" x="321" y="75.6667" width="29" height="83"/>
+  <object id="7" x="383" y="73.6667" width="33.3333" height="84"/>
+  <object id="8" x="339.667" y="75" width="59.3333" height="48.3333"/>
+  <object id="9" x="66" y="13.5" width="349" height="81.5"/>
+  <object id="10" x="415.5" y="14.5" width="65" height="273.5"/>
+  <object id="11" x="352.5" y="288" width="97.5" height="28.5"/>
+  <object id="12" x="32" y="288.5" width="253.5" height="31"/>
+  <object id="13" x="-0.5" y="0.5" width="64.5" height="285.5"/>
+  <object id="14" x="70.5455" y="102.364" width="19.0909" height="68.5455"/>
+  <object id="15" x="135.75" y="92.25" width="81" height="18.75"/>
+ </objectgroup>
+</map>
