@@ -2,7 +2,7 @@ import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
 import { TileRegistry } from "./tileRegistry";
 import {
-  parseSpawns,
+  parseSpawnsFromTmj,
   type ParsedSpawns,
   type ItemSpawn,
   type DoorSpawn,
@@ -427,15 +427,19 @@ export class ChunkManager {
 
   private parseChunkSpawns(cx: number, cy: number): ParsedSpawns {
     const cacheKey = `${this.chunkKeyPrefix}${cx}_${cy}`;
-    // A bare Tilemap (no createLayer / addTilesetImage) gives parseSpawns the
-    // tileWidth/tileHeight + objects layer it needs without touching textures.
-    const tilemap = this.scene.make.tilemap({ key: cacheKey });
-    const spawns = parseSpawns(tilemap, {
+    // Read spawns straight from the cached TMJ JSON. `make.tilemap({key})`
+    // runs Phaser's full parser (including BuildTilesetIndex + AssignTileProperties),
+    // which can blow up on a chunk whose tileset images haven't been loaded
+    // yet. Spawn parsing only needs the objects layer + tile size, so go
+    // around Phaser entirely.
+    const cached = this.scene.cache.tilemap.get(cacheKey) as
+      | { data?: Parameters<typeof parseSpawnsFromTmj>[0] }
+      | undefined;
+    if (!cached?.data) return { items: [], doors: [] };
+    return parseSpawnsFromTmj(cached.data, {
       offsetTx: cx * this.manifest.chunkSize,
       offsetTy: cy * this.manifest.chunkSize,
     });
-    tilemap.destroy();
-    return spawns;
   }
 
   isWater(gtx: number, gty: number): boolean {

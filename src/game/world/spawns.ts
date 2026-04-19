@@ -56,76 +56,95 @@ export interface ParseSpawnsOptions {
   offsetTy?: number;
 }
 
-/** Parse the `objects` layer of a (chunk) tilemap into typed, global-tile spawns. */
-export function parseSpawns(
-  tilemap: Phaser.Tilemaps.Tilemap,
-  opts: ParseSpawnsOptions = {},
-): ParsedSpawns {
-  const { offsetTx = 0, offsetTy = 0 } = opts;
-  const layer = tilemap.getObjectLayer("objects");
-  const tw = tilemap.tileWidth;
-  const th = tilemap.tileHeight;
+interface TiledObjectLike {
+  x?: number;
+  y?: number;
+  type?: string;
+  properties?: TiledProperty[];
+}
 
+function collectSpawns(
+  objects: TiledObjectLike[],
+  tw: number,
+  th: number,
+  offsetTx: number,
+  offsetTy: number,
+): ParsedSpawns {
   const items: ItemSpawn[] = [];
   const doors: DoorSpawn[] = [];
 
-  if (layer) {
-    for (const raw of layer.objects) {
-      const props = propMap(raw.properties as TiledProperty[] | undefined);
-      const tileX = Math.floor((raw.x ?? 0) / tw) + offsetTx;
-      const tileY = Math.floor((raw.y ?? 0) / th) + offsetTy;
-      switch (raw.type) {
-        case "item_spawn": {
-          const itemId = String(props.itemId ?? "") as ItemId;
-          const quantity = Number(props.quantity ?? 1);
-          const uid = String(props.uid ?? "");
-          if (!itemId) throw new Error(`item_spawn at (${tileX},${tileY}) missing itemId`);
-          if (!uid) {
-            throw new Error(
-              `item_spawn at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
-            );
-          }
-          items.push({
-            kind: "item_spawn",
-            uid,
-            tileX,
-            tileY,
-            itemId,
-            quantity,
-          });
-          break;
+  for (const raw of objects) {
+    const props = propMap(raw.properties);
+    const tileX = Math.floor((raw.x ?? 0) / tw) + offsetTx;
+    const tileY = Math.floor((raw.y ?? 0) / th) + offsetTy;
+    switch (raw.type) {
+      case "item_spawn": {
+        const itemId = String(props.itemId ?? "") as ItemId;
+        const quantity = Number(props.quantity ?? 1);
+        const uid = String(props.uid ?? "");
+        if (!itemId) throw new Error(`item_spawn at (${tileX},${tileY}) missing itemId`);
+        if (!uid) {
+          throw new Error(
+            `item_spawn at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+          );
         }
-        case "door": {
-          const interiorKey = String(props.interiorKey ?? "");
-          const uid = String(props.uid ?? "");
-          if (!interiorKey) {
-            throw new Error(`door at (${tileX},${tileY}) missing interiorKey property.`);
-          }
-          if (!uid) {
-            throw new Error(
-              `door at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
-            );
-          }
-          const entryTx = Number(props.entryTx ?? 0);
-          const entryTy = Number(props.entryTy ?? 0);
-          doors.push({
-            kind: "door",
-            uid,
-            tileX,
-            tileY,
-            interiorKey,
-            entryTx,
-            entryTy,
-          });
-          break;
-        }
-        default:
-          break;
+        items.push({ kind: "item_spawn", uid, tileX, tileY, itemId, quantity });
+        break;
       }
+      case "door": {
+        const interiorKey = String(props.interiorKey ?? "");
+        const uid = String(props.uid ?? "");
+        if (!interiorKey) {
+          throw new Error(`door at (${tileX},${tileY}) missing interiorKey property.`);
+        }
+        if (!uid) {
+          throw new Error(
+            `door at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+          );
+        }
+        const entryTx = Number(props.entryTx ?? 0);
+        const entryTy = Number(props.entryTy ?? 0);
+        doors.push({
+          kind: "door",
+          uid,
+          tileX,
+          tileY,
+          interiorKey,
+          entryTx,
+          entryTy,
+        });
+        break;
+      }
+      default:
+        break;
     }
   }
 
   return { items, doors };
+}
+
+interface RawTmjForSpawns {
+  tilewidth?: number;
+  tileheight?: number;
+  layers?: Array<{ type?: string; name?: string; objects?: TiledObjectLike[] }>;
+}
+
+/** Parse spawns directly from the raw Tiled JSON, without constructing a
+ *  Phaser Tilemap. Lets us read spawn data for chunks whose tileset images
+ *  aren't loaded yet — `make.tilemap({key})` on a chunk with unbound tilesets
+ *  can throw from inside Phaser's parser. */
+export function parseSpawnsFromTmj(
+  tmj: RawTmjForSpawns,
+  opts: ParseSpawnsOptions = {},
+): ParsedSpawns {
+  const { offsetTx = 0, offsetTy = 0 } = opts;
+  const layer = tmj.layers?.find(
+    (l) => l.type === "objectgroup" && l.name === "objects",
+  );
+  if (!layer?.objects) return { items: [], doors: [] };
+  const tw = tmj.tilewidth ?? 32;
+  const th = tmj.tileheight ?? 32;
+  return collectSpawns(layer.objects, tw, th, offsetTx, offsetTy);
 }
 
 /** Parse the `objects` layer of an interior tilemap. Interior maps live in
