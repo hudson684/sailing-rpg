@@ -37,6 +37,7 @@ import {
   type Heading,
 } from "../entities/Ship";
 import { loadShipsFile, type ShipInstanceData, type VesselTemplate } from "../entities/vessels";
+import { onVirtualKey, type VirtualKey } from "../input/virtualInput";
 
 const SPRINT_SPEED_MULT = 1.35;
 
@@ -270,6 +271,8 @@ export class WorldScene extends Phaser.Scene {
     sprint: Phaser.Input.Keyboard.Key;
   };
 
+  private unsubVirtualInput: (() => void) | null = null;
+
   private sailingXpAccum = 0;
   private wasBeached = false;
   private wasBlocked = false;
@@ -408,6 +411,34 @@ export class WorldScene extends Phaser.Scene {
       Phaser.Input.Keyboard.KeyCodes.LEFT,
       Phaser.Input.Keyboard.KeyCodes.RIGHT,
     ]);
+
+    // Touch controls dispatch virtual keys; route through the same Phaser
+    // Key objects the keyboard populates, so `isDown` and "down" listeners
+    // both fire without any special-casing elsewhere.
+    const virtualKeyMap: Record<VirtualKey, Phaser.Input.Keyboard.Key> = {
+      up: this.keys.up,
+      down: this.keys.down,
+      left: this.keys.left,
+      right: this.keys.right,
+      attack: this.keys.attack,
+      interact: this.keys.interact,
+      sprint: this.keys.sprint,
+    };
+    this.unsubVirtualInput = onVirtualKey((name, pressed) => {
+      const key = virtualKeyMap[name];
+      const event = {
+        keyCode: key.keyCode,
+        timeStamp: performance.now(),
+        altKey: false,
+        ctrlKey: false,
+        shiftKey: false,
+        metaKey: false,
+        preventDefault: () => {},
+        stopImmediatePropagation: () => {},
+      } as unknown as KeyboardEvent;
+      if (pressed) key.onDown(event);
+      else key.onUp(event);
+    });
 
     this.keys.interact.on("down", () => this.onInteract());
 
@@ -608,6 +639,8 @@ export class WorldScene extends Phaser.Scene {
       }
       unsubEquipment();
       unsubWardrobe();
+      this.unsubVirtualInput?.();
+      this.unsubVirtualInput = null;
       if (activeWorldScene === this) activeWorldScene = null;
       for (const e of this.enemies) entityRegistry.remove(e.id);
       this.enemies = [];

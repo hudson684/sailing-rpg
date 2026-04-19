@@ -1,0 +1,113 @@
+.touch-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.touch-btn {
+  pointer-events: auto;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  background: rgba(0, 0, 0, 0.42);
+  color: rgba(255, 255, 255, 0.92);
+  font-family: inherit;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  font-size: 20px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 60ms ease, background 60ms ease;
+}
+
+.touch-btn.touch-btn-active {
+  background: rgba(255, 255, 255, 0.28);
+  transform: scale(0.94);
+}
+
+.touch-btn-label {
+  pointer-events: none;
+  line-height: 1;
+}
+
+/* D-pad in a plus layout, anchored bottom-left. */
+.touch-dpad {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  width: 192px;
+  height: 192px;
+}
+
+.touch-dpad-up {
+  top: 0;
+  left: 64px;
+}
+
+.touch-dpad-down {
+  bottom: 0;
+  left: 64px;
+}
+
+.touch-dpad-left {
+  top: 64px;
+  left: 0;
+}
+
+.touch-dpad-right {
+  top: 64px;
+  right: 0;
+}
+
+/* Action buttons in the bottom-right, arranged with Q above, E below, sprint to the side. */
+.touch-actions {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  width: 176px;
+  height: 176px;
+}
+
+.touch-action {
+  width: 72px;
+  height: 72px;
+  font-size: 22px;
+}
+
+.touch-action-q {
+  right: 96px;
+  top: 8px;
+}
+
+.touch-action-e {
+  right: 8px;
+  bottom: 8px;
+}
+
+.touch-action-sprint {
+  right: 96px;
+  bottom: 8px;
+  width: 56px;
+  height: 56px;
+  font-size: 18px;
+}
+
+/* On very small screens, shrink a bit so buttons don't overflow. */
+@media (max-height: 420px) {
+  .touch-dpad { width: 168px; height: 168px; }
+  .touch-dpad-up, .touch-dpad-down { left: 56px; }
+  .touch-dpad-left, .touch-dpad-right { top: 56px; }
+  .touch-btn { width: 56px; height: 56px; font-size: 18px; }
+  .touch-action { width: 64px; height: 64px; }
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { bus, type PauseMenuSlot, type PauseMenuState } from "../game/bus";
 import { MANUAL_SLOT_IDS, type SaveEnvelope, type SlotId } from "../game/save";
+import { useSettingsStore, type MobileMode } from "../game/store/settingsStore";
 import "./PauseMenu.css";
 
 const EMPTY_STATE: PauseMenuState = { visible: false, slots: [] };
@@ -58,6 +59,7 @@ export function PauseMenu() {
             <SlotRow key={row.slot} row={row} />
           ))}
         </div>
+        <MobileModeRow />
         <div className="pause-actions">
           <button className="px-btn px-btn-green" onClick={resume}>Resume</button>
           <button
@@ -83,6 +85,32 @@ export function PauseMenu() {
           )}
         </div>
         <div className="px-footer">ESC: toggle · F5: quicksave · F9: quickload</div>
+      </div>
+    </div>
+  );
+}
+
+function MobileModeRow() {
+  const mode = useSettingsStore((s) => s.mobileMode);
+  const setMobileMode = useSettingsStore((s) => s.setMobileMode);
+  const options: { value: MobileMode; label: string }[] = [
+    { value: "auto", label: "Auto" },
+    { value: "on", label: "On" },
+    { value: "off", label: "Off" },
+  ];
+  return (
+    <div className="pause-mobile-row">
+      <div className="pause-mobile-label">Touch Controls</div>
+      <div className="pause-mobile-options">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            className={`px-btn ${mode === opt.value ? "px-btn-green" : "px-btn-grey"}`}
+            onClick={() => setMobileMode(opt.value)}
+          >
+            {opt.label}
+          </button>
+        ))}
       </div>
     </div>
   );

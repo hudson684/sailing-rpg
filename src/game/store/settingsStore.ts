@@ -14,12 +14,15 @@ import { DEFAULT_WARDROBE, type CfWardrobe } from "../entities/playerWardrobe";
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 8;
 
+export type MobileMode = "auto" | "on" | "off";
+
 export interface SettingsState {
   zoom: number;
   masterVolume: number;
   skinTone: SkinPaletteId;
   wardrobe: CfWardrobe;
   characterCreated: boolean;
+  mobileMode: MobileMode;
 
   setZoom: (z: number) => void;
   setMasterVolume: (v: number) => void;
@@ -27,6 +30,7 @@ export interface SettingsState {
   setWardrobeLayer: (layer: CfLayer, variant: string | null) => void;
   setWardrobe: (wardrobe: CfWardrobe) => void;
   setCharacterCreated: (v: boolean) => void;
+  setMobileMode: (m: MobileMode) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -37,6 +41,7 @@ export const useSettingsStore = create<SettingsState>()(
       skinTone: "default" as SkinPaletteId,
       wardrobe: { ...DEFAULT_WARDROBE },
       characterCreated: false,
+      mobileMode: "auto" as MobileMode,
 
       setZoom: (z) =>
         set({ zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z)) }),
@@ -47,16 +52,20 @@ export const useSettingsStore = create<SettingsState>()(
         set((s) => ({ wardrobe: { ...s.wardrobe, [layer]: variant } })),
       setWardrobe: (wardrobe) => set({ wardrobe: { ...wardrobe } }),
       setCharacterCreated: (v) => set({ characterCreated: v }),
+      setMobileMode: (m) => set({ mobileMode: m }),
     }),
     {
       name: "sailing-rpg:settings",
-      version: 4,
+      version: 5,
       storage: createJSONStorage(() => localStorage),
       // Old saves without `wardrobe` get the default outfit. No data loss.
       migrate: (persisted: unknown, version: number) => {
         const state = (persisted ?? {}) as Partial<SettingsState>;
         if (version < 4 || !state.wardrobe) {
           state.wardrobe = { ...DEFAULT_WARDROBE };
+        }
+        if (version < 5 || !state.mobileMode) {
+          state.mobileMode = "auto";
         }
         return state as SettingsState;
       },

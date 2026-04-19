@@ -12,6 +12,9 @@ import { CharacterCustomizer } from "./ui/CharacterCustomizer";
 import { EditMode } from "./ui/EditMode";
 import { NodeDefEditor } from "./ui/NodeDefEditor";
 import { useSettingsStore } from "./game/store/settingsStore";
+import { TouchControls } from "./ui/mobile/TouchControls";
+import { OrientationPrompt } from "./ui/mobile/OrientationPrompt";
+import { useIsMobile, useIsPortrait } from "./ui/mobile/useMobile";
 import "./ui/pixel-ui.css";
 import "./App.css";
 
@@ -20,6 +23,8 @@ export default function App() {
   const gameRef = useRef<Phaser.Game | null>(null);
   const characterCreated = useSettingsStore((s) => s.characterCreated);
   const [customizerOpen, setCustomizerOpen] = useState(false);
+  const isMobile = useIsMobile();
+  const isPortrait = useIsPortrait();
 
   useEffect(() => {
     if (!characterCreated) return;
@@ -67,10 +72,12 @@ export default function App() {
           />
           {import.meta.env.DEV && <EditMode />}
           {import.meta.env.DEV && <NodeDefEditor />}
+          <TouchControls visible={isMobile && !isPortrait} />
         </>
       ) : (
         <CharacterCreator />
       )}
+      <OrientationPrompt visible={isMobile && isPortrait} />
     </div>
   );
 }
