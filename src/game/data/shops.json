@@ -22,6 +22,14 @@
           "restockQuantity": 1
         },
         {
+          "itemId": "bow",
+          "restockQuantity": 1
+        },
+        {
+          "itemId": "arrow",
+          "restockQuantity": 50
+        },
+        {
           "itemId": "rope",
           "restockQuantity": 10
         },

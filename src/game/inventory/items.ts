@@ -63,7 +63,7 @@ export function slotsForFamily(family: SlotFamily): readonly EquipSlot[] {
   return [family] as const;
 }
 
-export type ItemType = "resource" | "weapon" | "armor" | "tool" | "consumable";
+export type ItemType = "resource" | "weapon" | "armor" | "tool" | "consumable" | "ammo";
 
 /**
  * Flat stat deltas applied by equipped items. Missing fields read as 0.
@@ -96,6 +96,18 @@ export interface ConsumableEffect {
   healHp?: number;
 }
 
+/**
+ * Ranged-weapon stats. Present only on weapons that fire a projectile.
+ * `projectile` is the ItemId of the ammo consumed per shot.
+ */
+export interface RangedWeapon {
+  rangePx: number;
+  projectileSpeedPx: number;
+  damage: number;
+  projectile: ItemId;
+  cooldownMs: number;
+}
+
 export interface ItemDef {
   id: ItemId;
   name: string;
@@ -113,6 +125,8 @@ export interface ItemDef {
   visualLayer?: VisualLayer;
   /** Effect applied when the player uses this item from the hotbar. */
   consumable?: ConsumableEffect;
+  /** Ranged-weapon metadata. Present iff this item fires a projectile. */
+  ranged?: RangedWeapon;
   /** Buy price at a shop. Sell price is floor(value / 2). */
   value: number;
 }
@@ -130,6 +144,7 @@ interface RawItem {
   skill?: JobId;
   visualLayer?: VisualLayer;
   consumable?: ConsumableEffect;
+  ranged?: RangedWeapon;
   value: number;
 }
 

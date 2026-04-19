@@ -83,6 +83,7 @@ import {
 } from "../world/GatheringNode";
 import nodesDataRaw from "../data/nodes.json";
 import { Enemy, registerEnemyAnimations } from "../entities/Enemy";
+import { Projectile, rayBlocked } from "../entities/Projectile";
 import type {
   DropTable,
   DropTablesFile,
@@ -162,6 +163,31 @@ interface EditorItemData {
   tileY: number;
 }
 
+/**
+ * Snap a radian angle to the nearest 8-way `Facing`. The player sprite sheets
+ * only ship 8 directions, so every aim angle collapses to the closest octant
+ * for rendering purposes — the projectile still flies at the true angle.
+ */
+function angleToFacing(angle: number): Facing {
+  // Normalize to [0, 2π). 0 rad = "right"; angles grow clockwise in screen
+  // space (+y points down in Phaser world coords).
+  const twoPi = Math.PI * 2;
+  let a = angle % twoPi;
+  if (a < 0) a += twoPi;
+  const octant = Math.round(a / (Math.PI / 4)) % 8;
+  const byOctant: Facing[] = [
+    "right",
+    "down-right",
+    "down",
+    "down-left",
+    "left",
+    "up-left",
+    "up",
+    "up-right",
+  ];
+  return byOctant[octant];
+}
+
 let activeWorldScene: WorldScene | null = null;
 
 export class WorldScene extends Phaser.Scene {
@@ -188,6 +214,11 @@ export class WorldScene extends Phaser.Scene {
   private doors: DoorSpawn[] = [];
   private nodes: GatheringNode[] = [];
   private enemies: Enemy[] = [];
+  private projectiles: Projectile[] = [];
+  /** Monotonic ms remaining until the player may fire their bow again. */
+  private bowCooldownMs = 0;
+  /** Graphics layer for the bow aiming reticle. Hidden unless a bow is equipped. */
+  private bowReticle?: Phaser.GameObjects.Graphics;
   private dropTables = new Map<string, DropTable>();
   /** Owns scene-local sprites for world-mapped NPC models. Interior NPC
    *  sprites are owned by InteriorScene's own reconciler. */
@@ -391,6 +422,10 @@ export class WorldScene extends Phaser.Scene {
           this.onEditPointerDown(pointer.worldX, pointer.worldY);
           return;
         }
+        if (pointer.leftButtonDown()) {
+          this.onLeftClick(pointer.worldX, pointer.worldY);
+          return;
+        }
         if (!pointer.rightButtonDown()) return;
         this.onRightClick(pointer.worldX, pointer.worldY);
       },
@@ -576,6 +611,10 @@ export class WorldScene extends Phaser.Scene {
       if (activeWorldScene === this) activeWorldScene = null;
       for (const e of this.enemies) entityRegistry.remove(e.id);
       this.enemies = [];
+      for (const p of this.projectiles) p.destroy();
+      this.projectiles = [];
+      this.bowReticle?.destroy();
+      this.bowReticle = undefined;
       worldTicker.unregisterWalkable({ kind: "world" });
       this.npcReconciler?.shutdown();
       // Destroy the scene-local sprite; the PlayerModel persists in the
@@ -668,6 +707,8 @@ export class WorldScene extends Phaser.Scene {
         playerCtx,
       );
     }
+    this.updateProjectiles(dtMs);
+    this.updateBowReticle();
     const pTile = this.player.tile();
     this.world.manager.updateOverheadFade(pTile.x, pTile.y, dtMs);
     this.syncPlayerShipDepth();
@@ -941,9 +982,135 @@ export class WorldScene extends Phaser.Scene {
           showToast(`Slain — ${target.def.name}`, 1200);
         }
       });
+    } else if (mainHand === "bow") {
+      showToast("Left-click to fire the bow.", 1500);
     } else {
       showToast("Equip a sword, pickaxe, axe, or rod to act with Q.", 1500);
     }
+  }
+
+  /**
+   * Primary left-click handler for on-foot gameplay. Today this only fires a
+   * bow when equipped; edit-mode clicks are routed earlier in the dispatcher.
+   */
+  private onLeftClick(worldX: number, worldY: number): void {
+    if (this.activeDialogue) return;
+    if (this.sceneState.mode !== "OnFoot") return;
+    const mainHand = useGameStore.getState().equipment.equipped.mainHand;
+    if (mainHand !== "bow") return;
+    this.fireBow(worldX, worldY);
+  }
+
+  private fireBow(worldX: number, worldY: number): void {
+    const def = ITEMS["bow"];
+    const ranged = def?.ranged;
+    if (!ranged) return;
+    if (this.bowCooldownMs > 0) return;
+
+    const slots = useGameStore.getState().inventory.slots;
+    const ammoIdx = slots.findIndex((s) => s && s.itemId === ranged.projectile);
+    if (ammoIdx < 0) {
+      showToast("Out of arrows.", 1200);
+      return;
+    }
+
+    const fromX = this.player.x;
+    const fromY = this.player.y - 10; // eye-ish height so the arrow leaves the torso, not the feet
+    const angle = Math.atan2(worldY - fromY, worldX - fromX);
+    // Snap player sprite to the nearest 8-way facing for the shoot anim.
+    this.player.setFacing(angleToFacing(angle));
+    const ok = this.player.playAction("attack", () => {
+      useGameStore.getState().jobsAddXp("combat", 2);
+    });
+    if (!ok) return;
+
+    const removed = useGameStore.getState().inventoryRemoveAt(ammoIdx, 1);
+    if (removed <= 0) return;
+
+    const projectile = new Projectile(this, {
+      x: fromX,
+      y: fromY,
+      angle,
+      speedPx: ranged.projectileSpeedPx,
+      rangePx: ranged.rangePx,
+      damage: ranged.damage,
+      ownerId: "player",
+    });
+    this.projectiles.push(projectile);
+    this.bowCooldownMs = ranged.cooldownMs;
+  }
+
+  private updateProjectiles(dtMs: number): void {
+    if (this.bowCooldownMs > 0) this.bowCooldownMs = Math.max(0, this.bowCooldownMs - dtMs);
+    if (this.projectiles.length === 0) return;
+    const stillAlive: Projectile[] = [];
+    for (const p of this.projectiles) {
+      const hit = p.update(dtMs, this.enemies, (x, y) => this.world.manager.isBlockedPx(x, y));
+      if (hit) {
+        this.applyArrowHit(hit.enemy, p);
+        p.destroy();
+        continue;
+      }
+      if (p.isAlive()) stillAlive.push(p);
+    }
+    this.projectiles = stillAlive;
+  }
+
+  private applyArrowHit(target: Enemy, projectile: Projectile): void {
+    const dmg = projectile.damage;
+    const killed = target.hit(this, dmg, projectile.x, projectile.y);
+    const enemyHeadY =
+      target.sprite.y - (target.def.sprite.frameHeight * target.def.display.scale) / 2 - 4;
+    spawnFloatingNumber(this, target.sprite.x, enemyHeadY, dmg, {
+      kind: "damage-enemy",
+    });
+    if (killed) {
+      useGameStore.getState().jobsAddXp(target.def.xpSkill, target.def.xpPerKill);
+      this.rollAndDrop(target.def.dropTable, target.x, target.y);
+      target.beginRespawn(this.time.now);
+      showToast(`Slain — ${target.def.name}`, 1200);
+    }
+  }
+
+  private updateBowReticle(): void {
+    const equipped = useGameStore.getState().equipment.equipped.mainHand;
+    const show = equipped === "bow" && this.sceneState.mode === "OnFoot" && !this.activeDialogue;
+    if (!show) {
+      if (this.bowReticle?.visible) this.bowReticle.setVisible(false);
+      return;
+    }
+    if (!this.bowReticle) {
+      this.bowReticle = this.add.graphics().setDepth(9600);
+    }
+    const pointer = this.input.activePointer;
+    const wx = pointer.worldX;
+    const wy = pointer.worldY;
+    const def = ITEMS["bow"];
+    const ranged = def?.ranged;
+    if (!ranged) return;
+    const fromX = this.player.x;
+    const fromY = this.player.y - 10;
+    const dist = Phaser.Math.Distance.Between(fromX, fromY, wx, wy);
+    const inRange = dist <= ranged.rangePx;
+    const blocked = rayBlocked(fromX, fromY, wx, wy, (x, y) => this.world.manager.isBlockedPx(x, y));
+    const color = !inRange || blocked ? 0xff4a4a : 0xffe27a;
+
+    const g = this.bowReticle;
+    g.clear();
+    g.setVisible(true);
+    g.lineStyle(2, color, 1);
+    g.strokeCircle(wx, wy, 8);
+    g.lineStyle(1, color, 0.8);
+    g.beginPath();
+    g.moveTo(wx - 12, wy);
+    g.lineTo(wx - 4, wy);
+    g.moveTo(wx + 4, wy);
+    g.lineTo(wx + 12, wy);
+    g.moveTo(wx, wy - 12);
+    g.lineTo(wx, wy - 4);
+    g.moveTo(wx, wy + 4);
+    g.lineTo(wx, wy + 12);
+    g.strokePath();
   }
 
   private nearestNodeForTool(toolId: string | undefined): GatheringNode | null {
