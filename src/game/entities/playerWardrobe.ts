@@ -1,4 +1,4 @@
-import * as Phaser from "phaser";
+import type * as Phaser from "phaser";
 import {
   CF_FRAME_SIZE,
   cfTextureKey,

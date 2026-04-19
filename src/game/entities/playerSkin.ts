@@ -8,7 +8,7 @@
 // keeps Phaser Frame references valid — animations and live sprites pick
 // up the new pixels on the next render without any reset.
 
-import * as Phaser from "phaser";
+import type * as Phaser from "phaser";
 import { CF_FRAME_SIZE, cfTextureKey } from "./playerAnims";
 
 export type RGB = [number, number, number];

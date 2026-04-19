@@ -1,4 +1,3 @@
-import * as Phaser from "phaser";
 import type { SaveEnvelope, SlotId } from "./save";
 
 export type PlayerMode = "OnFoot" | "Boarding" | "OnDeck" | "AtHelm" | "Anchoring";
@@ -203,15 +202,29 @@ type Events = {
   "player:resetSpawn": () => void;
 };
 
-class TypedEmitter extends Phaser.Events.EventEmitter {
+// Tiny hand-rolled typed event emitter. Kept Phaser-free so importing `bus`
+// from UI code doesn't pull the Phaser runtime into the initial bundle.
+class TypedEmitter {
+  private readonly listeners = new Map<keyof Events, Set<(...args: unknown[]) => void>>();
+
   emitTyped<K extends keyof Events>(event: K, ...args: Parameters<Events[K]>): boolean {
-    return this.emit(event, ...args);
+    const set = this.listeners.get(event);
+    if (!set || set.size === 0) return false;
+    for (const fn of [...set]) fn(...(args as unknown[]));
+    return true;
   }
   onTyped<K extends keyof Events>(event: K, fn: Events[K]): this {
-    return this.on(event, fn as (...args: unknown[]) => void);
+    let set = this.listeners.get(event);
+    if (!set) {
+      set = new Set();
+      this.listeners.set(event, set);
+    }
+    set.add(fn as (...args: unknown[]) => void);
+    return this;
   }
   offTyped<K extends keyof Events>(event: K, fn: Events[K]): this {
-    return this.off(event, fn as (...args: unknown[]) => void);
+    this.listeners.get(event)?.delete(fn as (...args: unknown[]) => void);
+    return this;
   }
 }
 
