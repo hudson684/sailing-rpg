@@ -4,8 +4,6 @@ import { TileRegistry } from "./tileRegistry";
 import {
   parseSpawns,
   type ParsedSpawns,
-  type ItemSpawn,
-  type DoorSpawn,
 } from "./spawns";
 import { ShapeCollider } from "./shapeCollision";
 
@@ -52,6 +50,12 @@ export interface ChunkManagerOptions {
   manifest: WorldManifest;
   /** Phaser cache key prefix for each chunk's cached TMJ (e.g. "chunk_1_0"). */
   chunkKeyPrefix: string;
+  /** Called when a chunk finishes instantiating — i.e. its tilesets are in
+   *  the texture cache and its TilemapLayers exist. Fires synchronously from
+   *  `initialize()` for chunks whose tilesets were preloaded, and later from
+   *  `streamRemainingChunks()` as background loads complete. Use it to
+   *  register the chunk's authored spawns with scene-level systems. */
+  onChunkReady?: (chunk: Chunk, spawns: ParsedSpawns) => void;
 }
 
 /** Phaser cache key for a tileset image, derived from its TMJ-relative path. */
@@ -302,10 +306,13 @@ export class ChunkManager {
     }
   }
 
+  private readonly onChunkReady?: (chunk: Chunk, spawns: ParsedSpawns) => void;
+
   constructor(opts: ChunkManagerOptions) {
     this.scene = opts.scene;
     this.manifest = opts.manifest;
     this.chunkKeyPrefix = opts.chunkKeyPrefix;
+    this.onChunkReady = opts.onChunkReady;
   }
 
   /** Advance animated tile frames. Call from the scene's update(). */
@@ -329,36 +336,28 @@ export class ChunkManager {
     }
   }
 
-  /** Authored chunks whose tilesets aren't loaded yet. They've had spawns
-   *  parsed at initialize() time but won't render until streamRemainingChunks
-   *  pulls their tilesets in. */
+  /** Authored chunks whose tilesets aren't loaded yet. They don't render
+   *  and their spawns aren't parsed until `streamRemainingChunks` pulls
+   *  their tilesets in and `instantiateChunk` runs. */
   private readonly pending = new Map<string, { cx: number; cy: number }>();
   private streamingStarted = false;
 
-  initialize(): ParsedSpawns {
-    const items: ItemSpawn[] = [];
-    const doors: DoorSpawn[] = [];
-
+  initialize(): void {
     for (const key of this.manifest.authoredChunks) {
       const [cxStr, cyStr] = key.split("_");
       const cx = parseInt(cxStr, 10);
       const cy = parseInt(cyStr, 10);
 
-      // Spawn parsing only needs the cached TMJ JSON (no tileset textures),
-      // so we can collect items/doors for every authored chunk up front even
-      // if some chunks won't render until their tilesets arrive.
-      const spawns = this.parseChunkSpawns(cx, cy);
-      items.push(...spawns.items);
-      doors.push(...spawns.doors);
-
       if (this.tilesetsLoaded(cx, cy)) {
+        // Fires `onChunkReady` with parsed spawns once layers exist.
         this.instantiateChunk(cx, cy);
       } else {
+        // Spawns for pending chunks are parsed when the chunk streams in —
+        // see `instantiateChunk`. Pending chunks read as ocean in the
+        // meantime, so their items/doors aren't reachable anyway.
         this.pending.set(key, { cx, cy });
       }
     }
-
-    return { items, doors };
   }
 
   /** Kick off background loads for every tileset image referenced by a
@@ -423,19 +422,6 @@ export class ChunkManager {
       if (!textures.exists(tilesetImageKeyFor(path))) return false;
     }
     return true;
-  }
-
-  private parseChunkSpawns(cx: number, cy: number): ParsedSpawns {
-    const cacheKey = `${this.chunkKeyPrefix}${cx}_${cy}`;
-    // A bare Tilemap (no createLayer / addTilesetImage) gives parseSpawns the
-    // tileWidth/tileHeight + objects layer it needs without touching textures.
-    const tilemap = this.scene.make.tilemap({ key: cacheKey });
-    const spawns = parseSpawns(tilemap, {
-      offsetTx: cx * this.manifest.chunkSize,
-      offsetTy: cy * this.manifest.chunkSize,
-    });
-    tilemap.destroy();
-    return spawns;
   }
 
   isWater(gtx: number, gty: number): boolean {
@@ -625,6 +611,15 @@ export class ChunkManager {
     };
     this.chunks.set(`${cx}_${cy}`, chunk);
     this.collectAnimations(chunk);
+
+    if (this.onChunkReady) {
+      const spawns = parseSpawns(tilemap, {
+        offsetTx: cx * this.manifest.chunkSize,
+        offsetTy: cy * this.manifest.chunkSize,
+      });
+      this.onChunkReady(chunk, spawns);
+    }
+
     return chunk;
   }
 

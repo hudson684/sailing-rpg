@@ -213,6 +213,15 @@ export class WorldScene extends Phaser.Scene {
   });
   private groundItems = new Map<string, GroundItem>();
   private doors: DoorSpawn[] = [];
+  /** Accumulated authored item spawns from every chunk that has been
+   *  instantiated so far. Populated incrementally via the ChunkManager's
+   *  `onChunkReady` callback, so a new entry appears whenever a streamed
+   *  chunk finishes loading its tilesets. */
+  private authoredItems: ItemSpawn[] = [];
+  /** True once `respawnGroundItems()` has run for the first time in this
+   *  scene life. Before that, chunk-ready callbacks skip per-item sprite
+   *  creation because the initial tear-down-and-rebuild will do it in bulk. */
+  private initialGroundItemsBuilt = false;
   private nodes: GatheringNode[] = [];
   private enemies: Enemy[] = [];
   private projectiles: Projectile[] = [];
@@ -334,14 +343,26 @@ export class WorldScene extends Phaser.Scene {
 
   create() {
     const manifest = this.cache.json.get(WORLD_MANIFEST_KEY) as WorldManifest;
+    // Spawns arrive as chunks instantiate — once synchronously here for every
+    // chunk whose tilesets were in the eager preload batch, and again later
+    // for each streamed chunk in `streamRemainingChunks`. Append to
+    // scene-level lists and (when the initial rebuild is done) drop each
+    // new authored item into the world as its own sprite.
+    this.doors = [];
+    this.authoredItems = [];
     this.world = loadWorld({
       scene: this,
       manifest,
       chunkKeyPrefix: CHUNK_KEY_PREFIX,
+      onChunkReady: (_chunk, spawns) => {
+        this.doors.push(...spawns.doors);
+        this.authoredItems.push(...spawns.items);
+        if (this.initialGroundItemsBuilt) {
+          for (const s of spawns.items) this.addGroundItemSprite(s, "authored");
+        }
+      },
     });
 
-    const { items, doors } = this.world.spawns;
-    this.doors = doors;
     const spawnPx = {
       x: (DEFAULT_PLAYER_SPAWN_TILE.x + 0.5) * TILE_SIZE,
       y: (DEFAULT_PLAYER_SPAWN_TILE.y + 0.5) * TILE_SIZE,
@@ -360,7 +381,7 @@ export class WorldScene extends Phaser.Scene {
     }
 
     this.loadEditorItems();
-    this.respawnGroundItems(items);
+    this.respawnGroundItems();
     // Populate the registry before subscribing the reconciler so it picks up
     // existing models via getByMap with this live scene, instead of being
     // triggered by registry mutations from outside the scene lifecycle.
@@ -577,6 +598,7 @@ export class WorldScene extends Phaser.Scene {
         }
         return out;
       },
+      getAuthoredItems: () => this.authoredItems,
     });
     if (import.meta.env.DEV) {
       const overlayKeys: Array<[Phaser.Input.Keyboard.Key, OverlayName]> = [
@@ -1426,50 +1448,23 @@ export class WorldScene extends Phaser.Scene {
 
   /** (Re)spawn ground items from authored data, filtered by the picked-up set.
    *  Also re-spawns editor-placed items tracked in `editorItems`. */
-  private respawnGroundItems(spawns: ItemSpawn[]) {
+  private respawnGroundItems() {
     for (const gi of this.groundItems.values()) gi.sprite.destroy();
     this.groundItems.clear();
 
-    const allSpawns: Array<ItemSpawn & { _source: "authored" | "editor" }> = [];
-    for (const s of spawns) allSpawns.push({ ...s, _source: "authored" });
+    for (const s of this.authoredItems) this.addGroundItemSprite(s, "authored");
     for (const e of this.editorItems.values()) {
-      allSpawns.push({
-        kind: "item_spawn",
-        uid: e.id,
-        tileX: e.tileX,
-        tileY: e.tileY,
-        itemId: e.itemId,
-        quantity: e.quantity,
-        _source: "editor",
-      });
-    }
-
-    for (const s of allSpawns) {
-      if (this.groundItemsState.isPickedUp(s.uid)) continue;
-      const x = (s.tileX + 0.5) * TILE_SIZE;
-      const y = (s.tileY + 0.5) * TILE_SIZE;
-      const sprite = this.add
-        .image(x, y, itemIconTextureKey(s.itemId))
-        .setOrigin(0.5)
-        .setDepth(y);
-      sprite.setDisplaySize(20, 20);
-      this.tweens.add({
-        targets: sprite,
-        y: y - 3,
-        duration: 900,
-        ease: "Sine.easeInOut",
-        yoyo: true,
-        repeat: -1,
-      });
-      this.groundItems.set(s.uid, {
-        uid: s.uid,
-        itemId: s.itemId,
-        quantity: s.quantity,
-        x,
-        y,
-        sprite,
-        source: s._source,
-      });
+      this.addGroundItemSprite(
+        {
+          kind: "item_spawn",
+          uid: e.id,
+          tileX: e.tileX,
+          tileY: e.tileY,
+          itemId: e.itemId,
+          quantity: e.quantity,
+        },
+        "editor",
+      );
     }
 
     // Respawn player-dropped items that haven't expired yet.
@@ -1478,6 +1473,36 @@ export class WorldScene extends Phaser.Scene {
       if (d.expiresAt <= now) continue;
       this.spawnDroppedSprite(d);
     }
+
+    this.initialGroundItemsBuilt = true;
+  }
+
+  private addGroundItemSprite(s: ItemSpawn, source: "authored" | "editor") {
+    if (this.groundItemsState.isPickedUp(s.uid)) return;
+    const x = (s.tileX + 0.5) * TILE_SIZE;
+    const y = (s.tileY + 0.5) * TILE_SIZE;
+    const sprite = this.add
+      .image(x, y, itemIconTextureKey(s.itemId))
+      .setOrigin(0.5)
+      .setDepth(y);
+    sprite.setDisplaySize(20, 20);
+    this.tweens.add({
+      targets: sprite,
+      y: y - 3,
+      duration: 900,
+      ease: "Sine.easeInOut",
+      yoyo: true,
+      repeat: -1,
+    });
+    this.groundItems.set(s.uid, {
+      uid: s.uid,
+      itemId: s.itemId,
+      quantity: s.quantity,
+      x,
+      y,
+      sprite,
+      source,
+    });
   }
 
   private spawnDroppedSprite(d: DroppedItem) {
@@ -1718,7 +1743,7 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    this.respawnGroundItems(this.world.spawns.items);
+    this.respawnGroundItems();
     this.applySceneMode();
     this.emitHud();
   }
@@ -2326,7 +2351,7 @@ export class WorldScene extends Phaser.Scene {
         tileY: req.tileY,
       });
       // Re-render via respawn for sprite consistency.
-      this.respawnGroundItems(this.world.spawns.items);
+      this.respawnGroundItems();
     } else if (req.kind === "ship") {
       const def = this.shipDefs.get(req.defId);
       if (!def) return;

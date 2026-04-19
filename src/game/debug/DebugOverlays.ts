@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
 import type { WorldMap } from "../world/worldMap";
+import type { ItemSpawn } from "../world/spawns";
 import { Ship, type DockedPose, type Heading, headingToRotation, normalizeAngle } from "../entities/Ship";
 
 export type OverlayName = "walkability" | "chunkGrid" | "spawns" | "anchorSearch" | "hitbox";
@@ -27,6 +28,10 @@ export interface DebugOverlayHooks {
   getShipHitboxes: () => Array<{ x: number; y: number; w: number; h: number }>;
   /** All ship helm rects in world pixels (top-left origin). */
   getShipHelms: () => Array<{ x: number; y: number; w: number; h: number }>;
+  /** Currently-known authored item spawns across every loaded chunk. Called
+   *  on every redraw so the overlay reflects chunks that streamed in after
+   *  boot. */
+  getAuthoredItems: () => ItemSpawn[];
 }
 
 export class DebugOverlays {
@@ -246,8 +251,7 @@ export class DebugOverlays {
     const g = this.gfx.spawns;
     g.clear();
     this.disposeLabels(this.spawnLabels);
-    const { items } = this.world.spawns;
-    for (const it of items) {
+    for (const it of this.hooks.getAuthoredItems()) {
       this.markSpawn(g, it.tileX, it.tileY, 0x66ff88, `${it.itemId}${it.quantity > 1 ? `×${it.quantity}` : ""}`);
     }
   }
