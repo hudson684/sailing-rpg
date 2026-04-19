@@ -248,7 +248,8 @@ export class InteriorScene extends Phaser.Scene {
       tx >= this.interior.tilemap.width ||
       ty >= this.interior.tilemap.height
     ) return false;
-    return !this.interior.registry.isBlocked(tx, ty);
+    if (this.interior.registry.isBlocked(tx, ty)) return false;
+    return !this.interior.shapes.isBlockedAtLocalPx(px, py);
   }
 
   private onInteract() {

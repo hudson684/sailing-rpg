@@ -7,13 +7,14 @@ import * as Phaser from "phaser";
  *     on the tileset and apply wherever that tile is painted (e.g. a small
  *     rect around a dock pole). Phaser surfaces them via `Tileset.tileData`.
  *
- *  2. Chunk-level shapes authored as objects on a TMJ object layer named
- *     `collision`. These are one-off world-space obstacles (e.g. a cliff edge
- *     polyline). Read directly from the cached TMJ JSON.
+ *  2. Map-level shapes authored as objects on a TMJ object layer named
+ *     `collision`. These are one-off obstacles for a given map (e.g. a cliff
+ *     edge polyline in a world chunk, or an interior wall). Read directly
+ *     from the cached TMJ JSON.
  *
- * All shapes are stored in the chunk's local pixel space (origin at the
- * chunk's top-left), scaled by `renderScale = TILE_SIZE / tilemap.tileWidth`
- * so authored coords stay authoring-tool-native and match world rendering.
+ * All shapes are stored in the map's local pixel space (origin at the map's
+ * top-left), scaled by `renderScale = TILE_SIZE / tilemap.tileWidth` so
+ * authored coords stay authoring-tool-native and match world rendering.
  *
  * The any-shape-wins rule mirrors the tile-property rule: if any shape from
  * any layer covers the query point, it's blocked.
@@ -98,9 +99,9 @@ export function buildTileShapeMap(tilemap: Phaser.Tilemaps.Tilemap): TileShapeMa
 
 /**
  * Collect shapes from a TMJ object layer named `collision`. Returns [] if the
- * layer is absent. Shapes are in chunk-local authored pixels.
+ * layer is absent. Shapes are in map-local authored pixels.
  */
-export function parseChunkCollisionObjects(raw: RawTmjData | undefined): CollisionShape[] {
+export function parseObjectLayerShapes(raw: RawTmjData | undefined): CollisionShape[] {
   if (!raw?.layers) return [];
   const layer = raw.layers.find(
     (l) => l.type === "objectgroup" && l.name.toLowerCase() === "collision",
@@ -145,40 +146,41 @@ export function pointInShape(px: number, py: number, s: CollisionShape): boolean
 }
 
 /**
- * Per-chunk shape collider. Aggregates per-tile shapes (resolved per painted
- * tile position) and chunk-level object-layer shapes. Queried by chunk-local
- * pixel coordinates, scaled to the rendered world.
+ * Per-map shape collider. Aggregates per-tile shapes (resolved per painted
+ * tile position) and map-level object-layer shapes. Queried by map-local
+ * pixel coordinates, scaled to the rendered world. Used for both world
+ * chunks and interior tilemaps.
  */
 export class ShapeCollider {
   private readonly tileLayers: Phaser.Tilemaps.TilemapLayer[];
   private readonly tileShapes: TileShapeMap;
-  private readonly chunkShapes: CollisionShape[];
+  private readonly mapShapes: CollisionShape[];
   private readonly authoredTileSize: number;
   private readonly renderScale: number;
 
   constructor(params: {
     tilemap: Phaser.Tilemaps.Tilemap;
     tileLayers: Phaser.Tilemaps.TilemapLayer[];
-    /** Cached TMJ JSON for the chunk (or undefined). Typed loosely — we only
+    /** Cached TMJ JSON for the map (or undefined). Typed loosely — we only
      *  read `layers[]` here and guard every field. */
-    chunkRawTmj: unknown;
+    rawTmj: unknown;
     renderScale: number;
   }) {
     this.tileLayers = params.tileLayers;
     this.tileShapes = buildTileShapeMap(params.tilemap);
-    this.chunkShapes = parseChunkCollisionObjects(params.chunkRawTmj as RawTmjData | undefined);
+    this.mapShapes = parseObjectLayerShapes(params.rawTmj as RawTmjData | undefined);
     this.authoredTileSize = params.tilemap.tileWidth;
     this.renderScale = params.renderScale;
   }
 
-  /** True if any shape (per-tile or chunk-level) covers this chunk-local px. */
+  /** True if any shape (per-tile or map-level) covers this map-local px. */
   isBlockedAtLocalPx(lx: number, ly: number): boolean {
     // Authored-space coordinates for shape tests.
     const ax = lx / this.renderScale;
     const ay = ly / this.renderScale;
 
-    // Chunk-level shapes (world-authored, one-offs).
-    for (const s of this.chunkShapes) {
+    // Map-level shapes (authored as objects on the `collision` layer).
+    for (const s of this.mapShapes) {
       if (pointInShape(ax, ay, s)) return true;
     }
 
@@ -208,9 +210,9 @@ export class ShapeCollider {
     return this.tileShapes;
   }
 
-  /** Read-only access for debug overlays. Coords are chunk-local authored px. */
-  debugChunkShapes(): readonly CollisionShape[] {
-    return this.chunkShapes;
+  /** Read-only access for debug overlays. Coords are map-local authored px. */
+  debugMapShapes(): readonly CollisionShape[] {
+    return this.mapShapes;
   }
 
   get authoredTileSizePx(): number {

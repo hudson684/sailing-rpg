@@ -2,6 +2,7 @@ import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
 import { interiorTilemapKey } from "../scenes/BootScene";
 import { tilesetImageKeyFor } from "./chunkManager";
+import { ShapeCollider } from "./shapeCollision";
 import { parseInteriorSpawns, type InteriorExitSpawn } from "./spawns";
 import { TileRegistry } from "./tileRegistry";
 
@@ -13,6 +14,7 @@ export interface InteriorTilemap {
   tilemap: Phaser.Tilemaps.Tilemap;
   layers: Phaser.Tilemaps.TilemapLayer[];
   registry: TileRegistry;
+  shapes: ShapeCollider;
   exits: InteriorExitSpawn[];
 }
 
@@ -29,7 +31,7 @@ export function buildInteriorTilemap(
   }
   const tilemap = scene.make.tilemap({ key: cacheKey });
   const cached = scene.cache.tilemap.get(cacheKey) as
-    | { data?: { tilesets?: Array<{ name: string; image: string }> } }
+    | { data?: unknown & { tilesets?: Array<{ name: string; image: string }> } }
     | undefined;
   const rawTilesets = cached?.data?.tilesets ?? [];
   const imageByName = new Map(rawTilesets.map((t) => [t.name, t.image]));
@@ -61,9 +63,15 @@ export function buildInteriorTilemap(
   });
 
   const registry = new TileRegistry(tilemap);
+  const shapes = new ShapeCollider({
+    tilemap,
+    tileLayers: layers,
+    rawTmj: cached?.data,
+    renderScale,
+  });
   const { exits } = parseInteriorSpawns(tilemap);
 
-  return { key, tilemap, layers, registry, exits };
+  return { key, tilemap, layers, registry, shapes, exits };
 }
 
 export function destroyInteriorTilemap(t: InteriorTilemap): void {
