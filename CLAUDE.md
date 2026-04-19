@@ -26,3 +26,18 @@ Verify changes with:
 
 If a change really needs a live browser to validate, ask the user to
 reload their dev server and tell you what they see — don't spin one up.
+
+## Prefer Phaser 4 solutions
+
+This project is built on Phaser 4. Always consider a Phaser 4 native
+solution first — its scenes, cameras, input, physics, tweens, timers,
+events, GameObjects, and plugin system — before reaching for custom
+code, external libraries, or patterns ported from Phaser 3 or other
+engines. Lean into how Phaser 4 works and use its idioms.
+
+If a proposed plan or user request clashes with the Phaser 4 way of
+doing things (e.g. bypassing the scene lifecycle, reimplementing
+something the framework already provides, or relying on Phaser 3
+behavior that changed in 4), raise it with the user before
+implementing. Explain the clash and suggest the Phaser 4 alternative,
+then let the user decide.
