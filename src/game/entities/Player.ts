@@ -12,6 +12,7 @@ import {
   type Facing,
 } from "./playerAnims";
 import { CF_TOOLS, cfToolAnimKey, type CfToolDef } from "./playerTools";
+import { ensureCfVariantLoaded } from "./playerWardrobe";
 import { PlayerModel, PLAYER_MODEL_ID } from "./PlayerModel";
 import { entityRegistry } from "./registry";
 import type { MapId } from "./mapId";
@@ -120,6 +121,10 @@ export class Player {
   // subsequent calls. Hidden during idle/walk; shown only while the matching
   // action state is animating.
   private cfTool: { def: CfToolDef; sprite: Phaser.GameObjects.Sprite } | null = null;
+  // Most-recently-requested variant per layer. Used to discard stale
+  // lazy-load completions when the player swaps outfits faster than the
+  // loader can finish — only the latest request gets applied.
+  private pendingLayerVariant: Partial<Record<CfLayer, string | null>> = {};
   readonly model: PlayerModel;
 
   get attacking(): boolean {
@@ -207,7 +212,19 @@ export class Player {
       const variant = this.resolveBaseline(layer) ?? DEFAULT_CF_OUTFIT[layer] ?? null;
       if (!variant) continue;
       const key = cfTextureKey(layer, variant);
-      if (!scene.textures.exists(key)) continue;
+      if (!scene.textures.exists(key)) {
+        // Wardrobe variant not preloaded (lazy-loading lives in
+        // playerWardrobe.ts). Kick the load and install the sprite when it
+        // resolves; setLayer handles the in-order insertion.
+        if (layer === "tool") continue;
+        this.pendingLayerVariant[layer] = variant;
+        ensureCfVariantLoaded(scene, layer, variant, () => {
+          if (this.pendingLayerVariant[layer] !== variant) return;
+          if (!this.sprite.scene) return;
+          this.setLayer(layer, variant);
+        });
+        continue;
+      }
       const child = scene.add.sprite(0, 0, key, 0);
       child.setOrigin(0.5, CF_ORIGIN_Y);
       container.add(child);
@@ -401,6 +418,7 @@ export class Player {
   setLayer(layer: CfLayer, variant: string | null): void {
     const scene = this.sprite.scene;
     if (!scene) return;
+    this.pendingLayerVariant[layer] = variant;
     const existing = this.cfLayers.get(layer);
     if (variant === null) {
       if (existing) {
@@ -411,7 +429,14 @@ export class Player {
     }
     const key = cfTextureKey(layer, variant);
     if (!scene.textures.exists(key)) {
-      console.warn(`[Player] CF layer texture missing: ${key}`);
+      // Lazy-loaded wardrobe variant — kick the load and re-apply when the
+      // texture is ready. The `pendingLayerVariant` check drops stale loads
+      // if the player swaps to a different variant before this one finishes.
+      ensureCfVariantLoaded(scene, layer, variant, () => {
+        if (this.pendingLayerVariant[layer] !== variant) return;
+        if (!this.sprite.scene) return;
+        this.setLayer(layer, variant);
+      });
       return;
     }
     if (existing) {

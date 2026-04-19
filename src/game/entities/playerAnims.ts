@@ -1,3 +1,5 @@
+import * as Phaser from "phaser";
+
 // Cute_Fantasy layered player animation config.
 // Single 9-col × 56-row grid of 64×64 frames. Every layer (base, hair,
 // chest, …) shares this grid so they can be played in sync as a paper-doll.
@@ -120,4 +122,33 @@ export function cfTextureKey(layer: CfLayer, variant: string = "default"): strin
 
 export function cfAnimKey(textureKey: string, state: CfState, dir: CfDir): string {
   return `${textureKey}-${state}-${dir}`;
+}
+
+/**
+ * Create the full CF state×direction animation set on a single layer texture.
+ * Idempotent — skips keys that already exist. Safe to call after lazy-loading
+ * an additional layer variant later in the session.
+ */
+export function createCfAnimsForTexture(
+  scene: Phaser.Scene,
+  textureKey: string,
+): void {
+  for (const state of CF_STATES) {
+    const cfg = CF_ANIMS[state];
+    for (const dir of CF_DIRS) {
+      const key = cfAnimKey(textureKey, state, dir);
+      if (scene.anims.exists(key)) continue;
+      const range = cfg.dirs[dir];
+      const start = range.row * CF_SHEET_COLS;
+      scene.anims.create({
+        key,
+        frames: scene.anims.generateFrameNumbers(textureKey, {
+          start,
+          end: start + range.cols - 1,
+        }),
+        frameRate: cfg.fps,
+        repeat: cfg.repeat,
+      });
+    }
+  }
 }

@@ -53,3 +53,4 @@ maps/icons/
 # Scratch / debug screenshots at repo root (keep public/ intentional)
 /chunks-verify.png
 /*.tmp.png
+.tmp

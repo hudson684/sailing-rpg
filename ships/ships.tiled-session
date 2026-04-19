@@ -301,6 +301,12 @@
         "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship parts/combined/up-sailing-wind.tsx": {
             "scaleInDock": 1
         },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship-animations - down-idle-baked.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship-animations - down-sailing-baked.tsx": {
+            "scaleInDock": 1
+        },
         "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/ship/ship-animations-sideways-idle-baked.tsx": {
             "dynamicWrapping": false
         },
@@ -327,51 +333,85 @@
             "scaleInDock": 1
         },
         "galleon-e.tmx": {
-            "scale": 0.75,
-            "selectedLayer": 0,
+            "expandedObjectLayers": [
+                3
+            ],
+            "scale": 3,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 290,
-                "y": 198.66666666666669
+                "x": 152.5,
+                "y": 248.33333333333331
             }
         },
         "galleon-n.tmx": {
-            "scale": 0.5,
-            "selectedLayer": 0,
+            "scale": 1.5,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 315,
-                "y": 480
+                "x": 129,
+                "y": 379.33333333333326
             }
         },
         "galleon-s.tmx": {
-            "scale": 1.061764705882353,
-            "selectedLayer": 0,
+            "expandedObjectLayers": [
+                3
+            ],
+            "scale": 3,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 139.86149584487535,
-                "y": 263.71191135734074
+                "x": 125.16666666666666,
+                "y": 200.66666666666663
+            }
+        },
+        "galleon-w.tmx": {
+            "expandedObjectLayers": [
+                3
+            ],
+            "scale": 2,
+            "selectedLayer": 3,
+            "viewCenter": {
+                "x": 353.25,
+                "y": 218
             }
         },
         "rowboat-e.tmx": {
-            "scale": 1,
-            "selectedLayer": 1,
+            "expandedObjectLayers": [
+                3
+            ],
+            "scale": 3,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 189.5,
-                "y": -63
+                "x": 81.5,
+                "y": 26.333333333333343
             }
         },
         "rowboat-n.tmx": {
-            "scale": 1.5,
-            "selectedLayer": 1,
+            "expandedObjectLayers": [
+                3
+            ],
+            "scale": 3,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 146.33333333333334,
-                "y": 92
+                "x": 91.5,
+                "y": 137.33333333333334
             }
         },
         "rowboat-s.tmx": {
-            "scale": 1.5,
-            "selectedLayer": 1,
+            "expandedObjectLayers": [
+                3
+            ],
+            "scale": 3,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": -102.33333333333331,
-                "y": 246.66666666666669
+                "x": 45.83333333333332,
+                "y": 50
+            }
+        },
+        "rowboat-w.tmx": {
+            "scale": 3.7465625,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 79.93994494953706,
+                "y": 48.04404037033949
             }
         }
     },

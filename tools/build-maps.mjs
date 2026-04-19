@@ -16,6 +16,7 @@ const chunksDir = path.join(mapsDir, "chunks");
 const interiorsDir = path.join(mapsDir, "interiors");
 const shipsDir = path.join(repoRoot, "ships");
 const publicMapsDir = path.join(repoRoot, "public", "maps");
+const gameDataDir = path.join(repoRoot, "src", "game", "data");
 
 export { mapsDir, publicMapsDir, shipsDir };
 
@@ -95,18 +96,96 @@ export function readManifest() {
   return JSON.parse(readFileSync(manifestPath, "utf8"));
 }
 
-/** Write public/maps/world.json with the given tileset-image union and
- *  optional interior/ship map indices. */
-function writeManifest(manifest, tilesetImages, interiors, ships) {
+/** Write public/maps/world.json with the given tileset-image union,
+ *  per-chunk tileset + spawn-ref indices, and optional interior/ship maps.
+ *  The per-chunk indices let the runtime lazy-load each chunk's assets
+ *  without having to first fetch the TMJ to discover its tileset list. */
+function writeManifest(manifest, tilesetImages, chunkTilesets, chunkSpawnRefs, interiors, ships) {
   const outManifest = {
     ...manifest,
     tilesetImages: [...tilesetImages].sort(),
+    ...(chunkTilesets ? { chunkTilesets } : {}),
+    ...(chunkSpawnRefs ? { chunkSpawnRefs } : {}),
     ...(interiors && Object.keys(interiors).length > 0 ? { interiors } : {}),
     ...(ships && Object.keys(ships).length > 0 ? { ships } : {}),
   };
   const outManifestPath = path.join(publicMapsDir, "world.json");
   mkdirSync(path.dirname(outManifestPath), { recursive: true });
   writeFileSync(outManifestPath, JSON.stringify(outManifest));
+}
+
+/** Given a chunkSize in tiles and a global tile coord, return the chunk key
+ *  `"<cx>_<cy>"` it falls inside. Negative tiles floor toward -∞ via
+ *  Math.floor so the mapping is symmetric around the origin. */
+function chunkKeyForTile(chunkSize, tileX, tileY) {
+  const cx = Math.floor(tileX / chunkSize);
+  const cy = Math.floor(tileY / chunkSize);
+  return `${cx}_${cy}`;
+}
+
+/** Read npcs.json / enemies.json / nodes.json and bucket each world-map
+ *  instance's def id into the chunk it falls inside. Interior instances
+ *  (inst.map && inst.map !== "world") are skipped. Chunks with no entity
+ *  refs are simply absent from the result. Graceful if any file is
+ *  missing or malformed so the map build doesn't hard-fail on
+ *  in-progress data edits. */
+function computeChunkSpawnRefs(chunkSize, authoredChunks) {
+  const refs = {};
+  const ensure = (key) => {
+    if (!refs[key]) refs[key] = { npcs: [], enemies: [], nodes: [] };
+    return refs[key];
+  };
+  const readJson = (name) => {
+    try {
+      return JSON.parse(readFileSync(path.join(gameDataDir, name), "utf8"));
+    } catch {
+      return null;
+    }
+  };
+  const authored = new Set(authoredChunks);
+
+  const npcs = readJson("npcs.json");
+  for (const npc of npcs?.npcs ?? []) {
+    if (npc.map && npc.map !== "world") continue;
+    const tx = Number(npc.spawn?.tileX);
+    const ty = Number(npc.spawn?.tileY);
+    if (!Number.isFinite(tx) || !Number.isFinite(ty) || !npc.id) continue;
+    const key = chunkKeyForTile(chunkSize, tx, ty);
+    if (!authored.has(key)) continue;
+    const set = ensure(key).npcs;
+    if (!set.includes(npc.id)) set.push(npc.id);
+  }
+
+  const enemies = readJson("enemies.json");
+  for (const inst of enemies?.instances ?? []) {
+    if (inst.map && inst.map !== "world") continue;
+    const tx = Number(inst.tileX);
+    const ty = Number(inst.tileY);
+    if (!Number.isFinite(tx) || !Number.isFinite(ty) || !inst.defId) continue;
+    const key = chunkKeyForTile(chunkSize, tx, ty);
+    if (!authored.has(key)) continue;
+    const set = ensure(key).enemies;
+    if (!set.includes(inst.defId)) set.push(inst.defId);
+  }
+
+  const nodes = readJson("nodes.json");
+  for (const inst of nodes?.instances ?? []) {
+    if (inst.map && inst.map !== "world") continue;
+    const tx = Number(inst.tileX);
+    const ty = Number(inst.tileY);
+    if (!Number.isFinite(tx) || !Number.isFinite(ty) || !inst.defId) continue;
+    const key = chunkKeyForTile(chunkSize, tx, ty);
+    if (!authored.has(key)) continue;
+    const set = ensure(key).nodes;
+    if (!set.includes(inst.defId)) set.push(inst.defId);
+  }
+
+  for (const key of Object.keys(refs)) {
+    refs[key].npcs.sort();
+    refs[key].enemies.sort();
+    refs[key].nodes.sort();
+  }
+  return refs;
 }
 
 /** List interior TMX basenames (without `.tmx`). Empty if dir absent. */
@@ -151,10 +230,12 @@ export function buildAll() {
 
   const manifest = readManifest();
   const tilesetImages = new Set();
+  const chunkTilesets = {};
   const summaries = [];
   for (const key of manifest.authoredChunks) {
     const summary = buildChunk(key);
     for (const img of summary.tilesetImages) tilesetImages.add(img);
+    chunkTilesets[key] = [...summary.tilesetImages].sort();
     summaries.push(summary);
   }
 
@@ -176,7 +257,8 @@ export function buildAll() {
     ships[key] = { path: `ships/${key}.tmj` };
   }
 
-  writeManifest(manifest, tilesetImages, interiors, ships);
+  const chunkSpawnRefs = computeChunkSpawnRefs(manifest.chunkSize, manifest.authoredChunks);
+  writeManifest(manifest, tilesetImages, chunkTilesets, chunkSpawnRefs, interiors, ships);
   validateWorld(manifest, summaries);
   console.log(
     `Wrote manifest + ${manifest.authoredChunks.length} chunk TMJ file(s) + ${interiorKeys.length} interior + ${shipKeys.length} ship TMJ file(s); ${tilesetImages.size} tileset image(s).`,
@@ -195,11 +277,18 @@ export function buildChunk(key) {
 export function refreshManifestImages() {
   const manifest = readManifest();
   const tilesetImages = new Set();
+  const chunkTilesets = {};
   for (const key of manifest.authoredChunks) {
     const tmjPath = path.join(publicMapsDir, "chunks", `${key}.tmj`);
     if (!existsSync(tmjPath)) continue;
     const tmj = JSON.parse(readFileSync(tmjPath, "utf8"));
-    for (const ts of tmj.tilesets ?? []) if (ts.image) tilesetImages.add(ts.image);
+    const perChunk = [];
+    for (const ts of tmj.tilesets ?? []) {
+      if (!ts.image) continue;
+      tilesetImages.add(ts.image);
+      perChunk.push(ts.image);
+    }
+    chunkTilesets[key] = perChunk.sort();
   }
   const interiors = {};
   for (const key of listInteriorKeys()) {
@@ -217,7 +306,8 @@ export function refreshManifestImages() {
     for (const ts of tmj.tilesets ?? []) if (ts.image) tilesetImages.add(ts.image);
     ships[key] = { path: `ships/${key}.tmj` };
   }
-  writeManifest(manifest, tilesetImages, interiors, ships);
+  const chunkSpawnRefs = computeChunkSpawnRefs(manifest.chunkSize, manifest.authoredChunks);
+  writeManifest(manifest, tilesetImages, chunkTilesets, chunkSpawnRefs, interiors, ships);
 }
 
 /** Validate build-time invariants. Throws on any violation. */

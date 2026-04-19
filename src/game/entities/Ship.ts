@@ -1,7 +1,7 @@
 import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
 import { type VesselTemplate } from "./vessels";
-import { createShipVisual, type ShipVisualLayers } from "./shipTilemap";
+import { createShipVisual, type HitboxRect, type ShipVisualLayers } from "./shipTilemap";
 
 export type Heading = 0 | 1 | 2 | 3; // 0=N, 1=E, 2=S, 3=W
 
@@ -87,27 +87,12 @@ export class Ship {
     return this.y + (hTiles / 2) * TILE_SIZE;
   }
 
-  /** Visual offset (in container-local px) for the current heading. Rotates the
-   *  def's (long, wide) tile offset into X/Y — long = bow axis, wide = starboard. */
-  private visualOffsetPx(): { x: number; y: number } {
-    const off = this.vessel.visualOffset ?? { long: 0, wide: 0 };
-    const longPx = off.long * TILE_SIZE;
-    const widePx = off.wide * TILE_SIZE;
-    switch (this.heading) {
-      case 0: return { x: widePx, y: -longPx };
-      case 1: return { x: longPx, y: widePx };
-      case 2: return { x: -widePx, y: longPx };
-      case 3: return { x: -longPx, y: -widePx };
-    }
-  }
-
   private applyLayerTransforms(): void {
-    const { x: ox, y: oy } = this.visualOffsetPx();
     const depth = this.sortY();
     for (let h = 0; h < 4; h++) {
       const v = this.visuals[h];
-      const topLeftX = this.x - v.widthPx / 2 + ox;
-      const topLeftY = this.y - v.heightPx / 2 + oy;
+      const topLeftX = this.x - v.widthPx / 2;
+      const topLeftY = this.y - v.heightPx / 2;
       v.moving.setPosition(topLeftX, topLeftY);
       v.idle.setPosition(topLeftX, topLeftY);
       v.moving.setDepth(depth);
@@ -217,28 +202,27 @@ export class Ship {
     this.updateVisual();
   }
 
-  /** Tiles overlapped by the hull's bbox at a continuous (x, y, heading). */
-  static occupiedTilesAt(
+  /** Tiles overlapped by the hitbox rect at a continuous ship center (x, y). */
+  static hitboxTilesAt(
     x: number,
     y: number,
-    heading: Heading,
-    dims: VesselDims,
+    hb: HitboxRect,
   ): Array<{ x: number; y: number }> {
-    const eastWest = heading === 1 || heading === 3;
-    const w = eastWest ? dims.tilesLong : dims.tilesWide;
-    const h = eastWest ? dims.tilesWide : dims.tilesLong;
-    const halfW = (w * TILE_SIZE) / 2;
-    const halfH = (h * TILE_SIZE) / 2;
     const eps = 0.001;
-    const tx0 = Math.floor((x - halfW) / TILE_SIZE);
-    const ty0 = Math.floor((y - halfH) / TILE_SIZE);
-    const tx1 = Math.floor((x + halfW - eps) / TILE_SIZE);
-    const ty1 = Math.floor((y + halfH - eps) / TILE_SIZE);
+    const tx0 = Math.floor((x + hb.offX) / TILE_SIZE);
+    const ty0 = Math.floor((y + hb.offY) / TILE_SIZE);
+    const tx1 = Math.floor((x + hb.offX + hb.w - eps) / TILE_SIZE);
+    const ty1 = Math.floor((y + hb.offY + hb.h - eps) / TILE_SIZE);
     const tiles: Array<{ x: number; y: number }> = [];
     for (let tx = tx0; tx <= tx1; tx++) {
       for (let ty = ty0; ty <= ty1; ty++) tiles.push({ x: tx, y: ty });
     }
     return tiles;
+  }
+
+  /** Current hitbox rect (ship-center-relative world px) for the active heading. */
+  hitbox(): HitboxRect {
+    return this.visuals[this.heading].hitbox;
   }
 
   /** Advance physics while sailing. Heading changes are discrete (see `turn()`). */
@@ -255,7 +239,7 @@ export class Ship {
     const nx = this.x + Math.cos(a) * nextSpeed * dtSec;
     const ny = this.y + Math.sin(a) * nextSpeed * dtSec;
 
-    const tiles = Ship.occupiedTilesAt(nx, ny, this.heading, this.dims);
+    const tiles = Ship.hitboxTilesAt(nx, ny, this.hitbox());
     let worst: ShipTileState = "water";
     for (const t of tiles) {
       const s = classify(t.x, t.y);

@@ -20,6 +20,15 @@ export interface WorldManifest {
   /** Runtime-only: all tileset image paths referenced by any chunk, relative to
    *  public/maps/. Populated by the map build; not authored by hand. */
   tilesetImages?: string[];
+  /** Per-chunk tileset image paths (same paths as in `tilesetImages`, but
+   *  bucketed by chunk key `"<cx>_<cy>"`). Lets the runtime lazy-load a
+   *  chunk's tilesets without first fetching the TMJ. Populated by the map
+   *  build; not authored by hand. */
+  chunkTilesets?: Record<string, string[]>;
+  /** Per-chunk entity def ids (NPC / enemy / gathering-node) whose
+   *  instances spawn inside that chunk, derived from src/game/data/*.json
+   *  at build time. Chunks with no entity refs are absent from the map. */
+  chunkSpawnRefs?: Record<string, { npcs: string[]; enemies: string[]; nodes: string[] }>;
   /** Map of interior keys → TMJ path (relative to public/maps/). Populated by
    *  the map build pipeline from maps/interiors/*.tmx. Optional: a world
    *  without any interior buildings will simply omit this. */

@@ -7,13 +7,10 @@ import {
 } from "../entities/vessels";
 import type { Heading } from "../entities/Ship";
 import {
-  CF_ANIMS,
   CF_DIRS,
   CF_FRAME_SIZE,
-  CF_SHEET_COLS,
-  CF_STATES,
-  cfAnimKey,
   cfTextureKey,
+  createCfAnimsForTexture,
   type CfLayer,
 } from "../entities/playerAnims";
 import { npcTextureKey, type NpcData } from "../entities/npcTypes";
@@ -35,7 +32,6 @@ import {
 import { useSettingsStore } from "../store/settingsStore";
 import { ALL_ITEM_IDS, ITEMS } from "../inventory/items";
 import { CF_TOOLS, CF_TOOL_SHEETS, cfToolAnimKey } from "../entities/playerTools";
-import { CF_WARDROBE_OPTIONS } from "../entities/playerWardrobe";
 
 export const itemIconTextureKey = (id: string) => `item_icon_${id}`;
 
@@ -92,29 +88,15 @@ export class BootScene extends Phaser.Scene {
         if (cfSheets.has(key)) return;
         cfSheets.set(key, `cf/${layer}-${variant}.png`);
       };
-      // Default outfit (worn on a fresh character).
+      // Default outfit only (worn on a fresh character). Alternate wardrobe
+      // variants and item-driven visualLayer sheets load lazily via
+      // `ensureCfVariantLoaded` — see src/game/entities/playerWardrobe.ts.
       addSheet("base", "default");
       addSheet("hair", "1-brown");
       addSheet("chest", "og-blue");
       addSheet("legs", "og-brown");
       addSheet("feet", "brown");
       addSheet("hands", "bare");
-      // Eagerly load every wardrobe variant so the customizer's "Apply" can
-      // swap textures without waiting on a download.
-      for (const [layer, variants] of Object.entries(CF_WARDROBE_OPTIONS) as [CfLayer, readonly string[]][]) {
-        for (const variant of variants) addSheet(layer, variant);
-      }
-      // Eagerly load every variant referenced by an item's visualLayer so
-      // equipping never has to wait on a download. Cheap with our handful of
-      // items today; if the catalog grows, switch this to lazy on equip.
-      for (const id of ALL_ITEM_IDS) {
-        const v = ITEMS[id].visualLayer;
-        if (!v) continue;
-        // Tool layers don't share the 9×56 grid — they're loaded by sheet
-        // below from CF_TOOL_SHEETS, not as `cf-<layer>-<variant>.png`.
-        if (v.layer === "tool") continue;
-        addSheet(v.layer as CfLayer, v.variant);
-      }
       for (const [key, file] of cfSheets) {
         // base.png is named just `base.png` (no variant suffix). Other layers
         // follow `<layer>-<variant>.png`.
@@ -231,31 +213,5 @@ export class BootScene extends Phaser.Scene {
 
     this.scene.launch("Systems");
     this.scene.start("World");
-  }
-}
-
-/**
- * Create the full CF state×direction animation set on a single layer texture.
- * Idempotent — skips keys that already exist. Safe to call after lazy-loading
- * an additional layer variant later in the session.
- */
-export function createCfAnimsForTexture(scene: Phaser.Scene, textureKey: string): void {
-  for (const state of CF_STATES) {
-    const cfg = CF_ANIMS[state];
-    for (const dir of CF_DIRS) {
-      const key = cfAnimKey(textureKey, state, dir);
-      if (scene.anims.exists(key)) continue;
-      const range = cfg.dirs[dir];
-      const start = range.row * CF_SHEET_COLS;
-      scene.anims.create({
-        key,
-        frames: scene.anims.generateFrameNumbers(textureKey, {
-          start,
-          end: start + range.cols - 1,
-        }),
-        frameRate: cfg.fps,
-        repeat: cfg.repeat,
-      });
-    }
   }
 }

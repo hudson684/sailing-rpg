@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="3" height="5" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="1">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="3" height="5" tilewidth="32" tileheight="32" infinite="0" nextlayerid="5" nextobjectid="3">
  <tileset firstgid="1" source="../maps/themes/Sea Adventures/props/animated/animated Palm Tree-1.tsx"/>
  <tileset firstgid="421" source="../maps/themes/Sea Adventures/props/animated/animated Palm Tree-1-foliage.tsx"/>
  <tileset firstgid="601" source="../maps/themes/Sea Adventures/props/animated/animated Palm Tree-1-foliage-shadow.tsx"/>
@@ -51,4 +51,10 @@
 5884,5885,5886
 </data>
  </layer>
+ <objectgroup id="3" name="boat-hitbox">
+  <object id="1" x="18" y="30.6667" width="50.3333" height="109.667"/>
+ </objectgroup>
+ <objectgroup id="4" name="helm">
+  <object id="2" x="34.6667" y="96.6667" width="20" height="16.6667"/>
+ </objectgroup>
 </map>

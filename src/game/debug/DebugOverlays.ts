@@ -23,6 +23,8 @@ export interface DebugOverlayHooks {
   getPlayerHitbox: () =>
     | { cx: number; cy: number; w: number; h: number; originY: number }
     | null;
+  /** All ship sailing-collision hitboxes in world pixels (top-left origin). */
+  getShipHitboxes: () => Array<{ x: number; y: number; w: number; h: number }>;
 }
 
 export class DebugOverlays {
@@ -87,6 +89,12 @@ export class DebugOverlays {
     const g = this.gfx.hitbox;
     g.clear();
     this.drawCollisionShapes(g);
+    for (const s of this.hooks.getShipHitboxes()) {
+      g.lineStyle(1, 0xffaa33, 0.9);
+      g.fillStyle(0xffaa33, 0.2);
+      g.fillRect(s.x, s.y, s.w, s.h);
+      g.strokeRect(s.x, s.y, s.w, s.h);
+    }
     const hb = this.hooks.getPlayerHitbox();
     if (!hb) return;
     const { cx, cy, w, h, originY } = hb;

@@ -10,11 +10,7 @@
       "id": "galleon",
       "tmjPrefix": "galleon",
       "tilesLong": 14,
-      "tilesWide": 6,
-      "visualOffset": {
-        "long": 3,
-        "wide": 0
-      }
+      "tilesWide": 6
     }
   ],
   "instances": [

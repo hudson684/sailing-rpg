@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="3" height="5" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="1">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="3" height="5" tilewidth="32" tileheight="32" infinite="0" nextlayerid="5" nextobjectid="6">
  <tileset firstgid="1" source="../maps/themes/Sea Adventures/props/animated/boat-sailing-down.tsx"/>
  <tileset firstgid="1153" source="../maps/themes/Sea Adventures/props/animated/boat-idle-down.tsx"/>
  <layer id="1" name="moving" width="3" height="5">
@@ -20,4 +20,10 @@
 1372,1373,1374
 </data>
  </layer>
+ <objectgroup id="3" name="boat-hitbox">
+  <object id="1" x="15.3333" y="26.3333" width="54.3333" height="91.3333"/>
+ </objectgroup>
+ <objectgroup id="4" name="helm">
+  <object id="5" x="32" y="22.6667" width="24.6667" height="13.6667"/>
+ </objectgroup>
 </map>

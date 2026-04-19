@@ -480,6 +480,14 @@ export class WorldScene extends Phaser.Scene {
               originY: this.player.y,
             }
           : null,
+      getShipHitboxes: () => {
+        const out: Array<{ x: number; y: number; w: number; h: number }> = [];
+        for (const ship of this.ships.values()) {
+          const hb = ship.hitbox();
+          out.push({ x: ship.x + hb.offX, y: ship.y + hb.offY, w: hb.w, h: hb.h });
+        }
+        return out;
+      },
     });
     if (import.meta.env.DEV) {
       const overlayKeys: Array<[Phaser.Input.Keyboard.Key, OverlayName]> = [

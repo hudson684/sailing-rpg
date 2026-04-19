@@ -18,9 +18,6 @@ export interface VesselTemplate {
   /** Logical footprint in tiles when bow faces north. bow/stern axis = tilesLong. */
   tilesLong: number;
   tilesWide: number;
-  /** Optional offset (in tiles) of the visual within the ship container, applied
-   *  along the ship's bow/starboard axes. Positive `long` shifts toward the bow. */
-  visualOffset?: { long: number; wide: number };
 }
 
 export interface ShipInstanceData {

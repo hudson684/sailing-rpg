@@ -12,6 +12,16 @@ export interface ShipVisualLayers {
   widthPx: number;
   /** Pixel height of the tilemap (heightInTiles × TILE_SIZE). */
   heightPx: number;
+  /** Sailing collision rect, in ship-center-relative world pixels. Sourced from
+   *  the `boat-hitbox` object layer in the per-heading tmj. */
+  hitbox: HitboxRect;
+}
+
+export interface HitboxRect {
+  offX: number;
+  offY: number;
+  w: number;
+  h: number;
 }
 
 /** Instantiate a ship's per-heading tilemap and both layers ("moving" + "idle").
@@ -26,9 +36,25 @@ export function createShipVisual(
   const tilemap = scene.make.tilemap({ key: cacheKey });
 
   const cached = scene.cache.tilemap.get(cacheKey) as
-    | { data?: { tilesets?: Array<{ name: string; image: string }> } }
+    | {
+        data?: {
+          tilesets?: Array<{ name: string; image: string }>;
+          layers?: Array<{
+            name: string;
+            type: string;
+            objects?: Array<{
+              x: number;
+              y: number;
+              width?: number;
+              height?: number;
+              polygon?: Array<{ x: number; y: number }>;
+            }>;
+          }>;
+        };
+      }
     | undefined;
   const rawTilesets = cached?.data?.tilesets ?? [];
+  const rawLayers = cached?.data?.layers ?? [];
   if (rawTilesets.length !== tilemap.tilesets.length) {
     throw new Error(
       `Ship tileset count mismatch for ${cacheKey}: raw=${rawTilesets.length} parsed=${tilemap.tilesets.length}`,
@@ -65,11 +91,61 @@ export function createShipVisual(
     idle.setScale(renderScale);
   }
 
+  const widthPx = tilemap.widthInPixels * renderScale;
+  const heightPx = tilemap.heightInPixels * renderScale;
+  const hitbox = extractHitbox(cacheKey, rawLayers, renderScale, widthPx, heightPx);
+
+  return { tilemap, moving, idle, widthPx, heightPx, hitbox };
+}
+
+function extractHitbox(
+  cacheKey: string,
+  rawLayers: Array<{
+    name: string;
+    type: string;
+    objects?: Array<{
+      x: number;
+      y: number;
+      width?: number;
+      height?: number;
+      polygon?: Array<{ x: number; y: number }>;
+    }>;
+  }>,
+  renderScale: number,
+  widthPx: number,
+  heightPx: number,
+): HitboxRect {
+  const layer = rawLayers.find(
+    (l) => l.type === "objectgroup" && l.name === "boat-hitbox",
+  );
+  const obj = layer?.objects?.[0];
+  if (!layer || !obj) {
+    throw new Error(`Ship tilemap ${cacheKey} is missing a 'boat-hitbox' object.`);
+  }
+  let ox = obj.x;
+  let oy = obj.y;
+  let ow = obj.width ?? 0;
+  let oh = obj.height ?? 0;
+  if (Array.isArray(obj.polygon) && obj.polygon.length > 0) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of obj.polygon) {
+      if (p.x < minX) minX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y > maxY) maxY = p.y;
+    }
+    ox = obj.x + minX;
+    oy = obj.y + minY;
+    ow = maxX - minX;
+    oh = maxY - minY;
+  }
+  if (ow <= 0 || oh <= 0) {
+    throw new Error(`Ship tilemap ${cacheKey} has a zero-size boat-hitbox.`);
+  }
   return {
-    tilemap,
-    moving,
-    idle,
-    widthPx: tilemap.widthInPixels * renderScale,
-    heightPx: tilemap.heightInPixels * renderScale,
+    offX: ox * renderScale - widthPx / 2,
+    offY: oy * renderScale - heightPx / 2,
+    w: ow * renderScale,
+    h: oh * renderScale,
   };
 }
