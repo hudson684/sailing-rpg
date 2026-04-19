@@ -21,11 +21,15 @@ export function Hud() {
     staminaMax > 0 ? Math.max(0, Math.min(1, stamina / staminaMax)) : 0;
 
   const hudScale = isMobile && !isPortrait ? 2 : 3;
+  const hotbarScale = isMobile ? 1.25 : 3;
 
   return (
     <div
       className="hud"
-      style={{ ["--hud-scale" as string]: hudScale }}
+      style={{
+        ["--hud-scale" as string]: hudScale,
+        ["--hud-hotbar-h" as string]: `calc(30px * ${hotbarScale})`,
+      }}
     >
       <div className="hud-health" role="status" aria-label={`Health ${hpCurrent} of ${hpMax}`}>
         <img className="hud-health-icon" src={heartIcon} alt="" aria-hidden="true" />
@@ -47,7 +51,7 @@ export function Hud() {
         </div>
       </div>
 
-      <Hotbar variant="hud" scale={hudScale} />
+      <Hotbar variant="hud" scale={hotbarScale} />
 
       {state.prompt && <div className="px-panel hud-prompt">{state.prompt}</div>}
 
