@@ -83,3 +83,34 @@
   margin-top: 4px;
   border-top: 2px dotted var(--pixel-tan-dark);
 }
+
+.pause-mobile-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  background: rgba(241, 214, 172, 0.35);
+  border: 2px solid var(--pixel-tan-dark);
+  border-radius: 2px;
+}
+
+.pause-mobile-label {
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pixel-ink);
+}
+
+.pause-mobile-options {
+  display: flex;
+  gap: 4px;
+}
+
+.pause-mobile-options .px-btn {
+  min-width: 0;
+  padding: 4px 8px 6px;
+  font-size: 13px;
+  border-width: 14px;
+}
