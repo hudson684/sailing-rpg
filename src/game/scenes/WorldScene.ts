@@ -488,6 +488,14 @@ export class WorldScene extends Phaser.Scene {
         }
         return out;
       },
+      getShipHelms: () => {
+        const out: Array<{ x: number; y: number; w: number; h: number }> = [];
+        for (const ship of this.ships.values()) {
+          const h = ship.helm();
+          out.push({ x: ship.x + h.offX, y: ship.y + h.offY, w: h.w, h: h.h });
+        }
+        return out;
+      },
     });
     if (import.meta.env.DEV) {
       const overlayKeys: Array<[Phaser.Input.Keyboard.Key, OverlayName]> = [
@@ -1337,7 +1345,7 @@ export class WorldScene extends Phaser.Scene {
     let bestDist = HELM_INTERACT_RADIUS;
     for (const ship of this.ships.values()) {
       if (ship.mode !== "docked") continue;
-      const helmTile = Ship.helmTile(ship.docked, ship.dims);
+      const helmTile = ship.helmTileForPose(ship.docked);
       const hx = (helmTile.x + 0.5) * TILE_SIZE;
       const hy = (helmTile.y + 0.5) * TILE_SIZE;
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, hx, hy);
@@ -1449,11 +1457,8 @@ export class WorldScene extends Phaser.Scene {
     const ship = this.activeShip;
     if (!ship) return;
     ship.finalizeDock(pose);
-    const helmTile = Ship.helmTile(pose, ship.dims);
-    this.player.setPosition(
-      (helmTile.x + 0.5) * TILE_SIZE,
-      (helmTile.y + 0.5) * TILE_SIZE,
-    );
+    const helm = ship.helmWorldPx();
+    this.player.setPosition(helm.x, helm.y);
     this.player.sprite.setRotation(0);
     this.player.frozen = false;
     this.sceneState.mode = "OnFoot";

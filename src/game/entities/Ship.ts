@@ -1,7 +1,7 @@
 import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
 import { type VesselTemplate } from "./vessels";
-import { createShipVisual, type HitboxRect, type ShipVisualLayers } from "./shipTilemap";
+import { createShipVisual, type HelmRect, type HitboxRect, type ShipVisualLayers } from "./shipTilemap";
 
 export type Heading = 0 | 1 | 2 | 3; // 0=N, 1=E, 2=S, 3=W
 
@@ -153,38 +153,26 @@ export class Ship {
     return { x: (tx + w / 2) * TILE_SIZE, y: (ty + h / 2) * TILE_SIZE };
   }
 
-  /**
-   * Tile occupied by the helm (where the player stands to steer) in a docked pose.
-   * The helm is the stern tile (opposite the bow implied by `heading`), centered
-   * across the beam. Generalized over any tilesLong×tilesWide footprint.
-   */
-  static helmTile(pose: DockedPose, dims: VesselDims): { x: number; y: number } {
-    const { tx, ty, heading } = pose;
-    const L = dims.tilesLong;
-    const W = dims.tilesWide;
-    const centerW = Math.floor((W - 1) / 2);
-    switch (heading) {
-      case 0: return { x: tx + centerW, y: ty + L - 1 };
-      case 1: return { x: tx, y: ty + centerW };
-      case 2: return { x: tx + centerW, y: ty };
-      case 3: return { x: tx + L - 1, y: ty + centerW };
-    }
+  /** Tile containing the helm interaction point for a given docked pose. */
+  helmTileForPose(pose: DockedPose): { x: number; y: number } {
+    const center = Ship.bboxCenterPx(pose, this.dims);
+    const h = this.visuals[pose.heading].helm;
+    const wx = center.x + h.offX + h.w / 2;
+    const wy = center.y + h.offY + h.h / 2;
+    return { x: Math.floor(wx / TILE_SIZE), y: Math.floor(wy / TILE_SIZE) };
   }
 
-  /**
-   * World-pixel position of the helm, for parking the player while sailing/anchoring.
-   * Falls back to the footprint-centered helm tile; per-heading fine-tuning will
-   * move into the .tmx object layer in a follow-up.
-   */
+  /** World-pixel position of the helm (center of the helm object), for parking
+   *  the player while sailing/anchoring. Per-heading, authored in each tmj's
+   *  `helm` object layer. */
   helmWorldPx(): { x: number; y: number } {
-    // Park the player half the length behind center along the bow axis.
-    const half = (this.dims.tilesLong / 2 - 0.5) * TILE_SIZE;
-    switch (this.heading) {
-      case 0: return { x: this.x, y: this.y + half };
-      case 1: return { x: this.x - half, y: this.y };
-      case 2: return { x: this.x, y: this.y - half };
-      case 3: return { x: this.x + half, y: this.y };
-    }
+    const h = this.visuals[this.heading].helm;
+    return { x: this.x + h.offX + h.w / 2, y: this.y + h.offY + h.h / 2 };
+  }
+
+  /** Current helm rect (ship-center-relative world px) for the active heading. */
+  helm(): HelmRect {
+    return this.visuals[this.heading].helm;
   }
 
   /** Whether a player-center pixel is on a deck tile of this ship (docked only). */

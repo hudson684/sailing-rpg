@@ -15,6 +15,9 @@ export interface ShipVisualLayers {
   /** Sailing collision rect, in ship-center-relative world pixels. Sourced from
    *  the `boat-hitbox` object layer in the per-heading tmj. */
   hitbox: HitboxRect;
+  /** Helm interaction / player-placement rect, in ship-center-relative world
+   *  pixels. Sourced from the `helm` object layer in the per-heading tmj. */
+  helm: HelmRect;
 }
 
 export interface HitboxRect {
@@ -23,6 +26,9 @@ export interface HitboxRect {
   w: number;
   h: number;
 }
+
+/** Shape identical to HitboxRect; named separately for call-site clarity. */
+export type HelmRect = HitboxRect;
 
 /** Instantiate a ship's per-heading tilemap and both layers ("moving" + "idle").
  *  Layers live at scene-level (TilemapLayers cannot be Container children) and
@@ -93,12 +99,13 @@ export function createShipVisual(
 
   const widthPx = tilemap.widthInPixels * renderScale;
   const heightPx = tilemap.heightInPixels * renderScale;
-  const hitbox = extractHitbox(cacheKey, rawLayers, renderScale, widthPx, heightPx);
+  const hitbox = extractRectLayer(cacheKey, rawLayers, "boat-hitbox", renderScale, widthPx, heightPx);
+  const helm = extractRectLayer(cacheKey, rawLayers, "helm", renderScale, widthPx, heightPx);
 
-  return { tilemap, moving, idle, widthPx, heightPx, hitbox };
+  return { tilemap, moving, idle, widthPx, heightPx, hitbox, helm };
 }
 
-function extractHitbox(
+function extractRectLayer(
   cacheKey: string,
   rawLayers: Array<{
     name: string;
@@ -111,16 +118,17 @@ function extractHitbox(
       polygon?: Array<{ x: number; y: number }>;
     }>;
   }>,
+  layerName: string,
   renderScale: number,
   widthPx: number,
   heightPx: number,
 ): HitboxRect {
   const layer = rawLayers.find(
-    (l) => l.type === "objectgroup" && l.name === "boat-hitbox",
+    (l) => l.type === "objectgroup" && l.name === layerName,
   );
   const obj = layer?.objects?.[0];
   if (!layer || !obj) {
-    throw new Error(`Ship tilemap ${cacheKey} is missing a 'boat-hitbox' object.`);
+    throw new Error(`Ship tilemap ${cacheKey} is missing a '${layerName}' object.`);
   }
   let ox = obj.x;
   let oy = obj.y;
@@ -140,7 +148,7 @@ function extractHitbox(
     oh = maxY - minY;
   }
   if (ow <= 0 || oh <= 0) {
-    throw new Error(`Ship tilemap ${cacheKey} has a zero-size boat-hitbox.`);
+    throw new Error(`Ship tilemap ${cacheKey} has a zero-size '${layerName}' object.`);
   }
   return {
     offX: ox * renderScale - widthPx / 2,
