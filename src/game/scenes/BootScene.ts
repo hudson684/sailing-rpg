@@ -32,8 +32,44 @@ import {
 import { useSettingsStore } from "../store/settingsStore";
 import { ALL_ITEM_IDS, ITEMS } from "../inventory/items";
 import { CF_TOOLS, CF_TOOL_SHEETS, cfToolAnimKey } from "../entities/playerTools";
+import { putCachedBitmap, takeWarmBitmap } from "../assets/bitmapCache";
 
 export const itemIconTextureKey = (id: string) => `item_icon_${id}`;
+
+/**
+ * Try to adopt a tileset image from the IDB bitmap cache, registering it
+ * directly on Phaser's texture manager. Returns true on hit, in which case
+ * the caller should skip queueing the `load.image()` call.
+ */
+function adoptCachedTileset(scene: Phaser.Scene, imagePath: string): boolean {
+  const bm = takeWarmBitmap(imagePath);
+  if (!bm) return false;
+  const key = tilesetImageKeyFor(imagePath);
+  if (scene.sys.textures.exists(key)) return true;
+  // Phaser's texture upload path accepts anything drawable; a canvas wrapper
+  // is the safest cross-version path since `addImage` is typed for
+  // HTMLImageElement but GL uploads ImageBitmap fine via drawImage.
+  const canvas = document.createElement("canvas");
+  canvas.width = bm.width;
+  canvas.height = bm.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return false;
+  ctx.drawImage(bm, 0, 0);
+  scene.sys.textures.addCanvas(key, canvas);
+  return true;
+}
+
+/**
+ * After Phaser finishes loading a tileset image, hand the source off to the
+ * IDB bitmap cache for future cold starts. Fire-and-forget; errors ignored.
+ */
+export function persistLoadedTileset(scene: Phaser.Scene, imagePath: string): void {
+  const key = tilesetImageKeyFor(imagePath);
+  const tex = scene.sys.textures.get(key);
+  const source = tex?.getSourceImage?.(0) as CanvasImageSource | undefined;
+  if (!source) return;
+  void putCachedBitmap(imagePath, source);
+}
 
 export const WORLD_MANIFEST_KEY = "worldManifest";
 export const CHUNK_KEY_PREFIX = "chunk_";
@@ -59,7 +95,14 @@ export class BootScene extends Phaser.Scene {
       const startKey = `${data.startChunk.cx}_${data.startChunk.cy}`;
       const startTilesets = data.chunkTilesets?.[startKey] ?? data.tilesetImages ?? [];
       for (const imagePath of startTilesets) {
-        this.load.image(tilesetImageKeyFor(imagePath), `maps/${imagePath}`);
+        // Fast path: adopt a cached ImageBitmap if warmBitmapCache found one.
+        // Miss path: queue a normal image load and persist after it completes.
+        if (adoptCachedTileset(this, imagePath)) continue;
+        const key = tilesetImageKeyFor(imagePath);
+        this.load.image(key, `maps/${imagePath}`);
+        this.load.once(`filecomplete-image-${key}`, () => {
+          persistLoadedTileset(this, imagePath);
+        });
       }
       // Chunk TMJs are small JSON; load them all so spawns (items, doors)
       // can be parsed up front without waiting for tilesets.

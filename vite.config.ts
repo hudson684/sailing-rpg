@@ -6,8 +6,16 @@ import sailingMaps from "./tools/vite-plugin-sailing-maps/index.mjs";
 // @ts-expect-error — local plugin, no types
 import editSave from "./tools/vite-plugin-edit-save/index.mjs";
 
+// Changes every build; used by the bitmap cache (src/game/assets/bitmapCache.ts)
+// to invalidate stored ImageBitmaps after a redeploy.
+const BUILD_VERSION =
+  process.env.SAILING_BUILD_VERSION ?? new Date().toISOString();
+
 export default defineConfig({
   base: "./",
+  define: {
+    __BUILD_VERSION__: JSON.stringify(BUILD_VERSION),
+  },
   plugins: [
     react(),
     sailingMaps(),

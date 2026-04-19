@@ -8,6 +8,7 @@ import {
   type DoorSpawn,
 } from "./spawns";
 import { ShapeCollider } from "./shapeCollision";
+import { putCachedBitmap, takeWarmBitmap } from "../assets/bitmapCache";
 
 export interface WorldManifest {
   chunkSize: number;
@@ -378,14 +379,42 @@ export class ChunkManager {
         }
       }
     }
+
+    // Adopt any cached bitmaps first — converts "needed" into "already loaded"
+    // without a network round-trip or PNG decode.
+    for (const path of [...needed]) {
+      const bm = takeWarmBitmap(path);
+      if (!bm) continue;
+      const key = tilesetImageKeyFor(path);
+      if (this.scene.sys.textures.exists(key)) {
+        needed.delete(path);
+        continue;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = bm.width;
+      canvas.height = bm.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) continue;
+      ctx.drawImage(bm, 0, 0);
+      this.scene.sys.textures.addCanvas(key, canvas);
+      needed.delete(path);
+    }
+
     if (needed.size === 0) {
-      // Tilesets already cached (e.g. shared with start chunk) — flush now.
+      // Everything either shared with the start chunk or served from bitmap
+      // cache — flush pending instantiations now.
       this.flushReadyPending();
       return;
     }
 
     for (const path of needed) {
-      this.scene.load.image(tilesetImageKeyFor(path), `maps/${path}`);
+      const key = tilesetImageKeyFor(path);
+      this.scene.load.image(key, `maps/${path}`);
+      this.scene.load.once(`filecomplete-image-${key}`, () => {
+        const tex = this.scene.sys.textures.get(key);
+        const source = tex?.getSourceImage?.(0) as CanvasImageSource | undefined;
+        if (source) void putCachedBitmap(path, source);
+      });
     }
     // Re-check pending whenever a tileset image finishes so chunks whose deps
     // are all in cache pop in as soon as they're ready, instead of waiting for

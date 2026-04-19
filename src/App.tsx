@@ -36,12 +36,26 @@ export default function App() {
     if (!characterCreated) return;
     if (!parentRef.current || gameRef.current) return;
     let cancelled = false;
-    void Promise.all([import("phaser"), import("./game/config")]).then(
-      ([PhaserMod, { createGameConfig }]) => {
-        if (cancelled || !parentRef.current || gameRef.current) return;
-        gameRef.current = new PhaserMod.Game(createGameConfig(parentRef.current));
-      },
-    );
+    // Warm the IDB bitmap cache in parallel with Phaser's chunk import. The
+    // warm fetches world.json and any cached ImageBitmaps into memory so
+    // BootScene.preload can read them synchronously. A failure here just
+    // skips the cache — the normal loader path still works.
+    void Promise.all([
+      import("phaser"),
+      import("./game/config"),
+      import("./game/assets/bitmapCache").then(async (m) => {
+        try {
+          const manifest = await fetch("maps/world.json").then((r) => r.json());
+          const paths: string[] = manifest.tilesetImages ?? [];
+          await m.warmBitmapCache(paths);
+        } catch {
+          // Network or parse failure — fall through to the normal loader.
+        }
+      }),
+    ]).then(([PhaserMod, { createGameConfig }]) => {
+      if (cancelled || !parentRef.current || gameRef.current) return;
+      gameRef.current = new PhaserMod.Game(createGameConfig(parentRef.current));
+    });
     return () => {
       cancelled = true;
       gameRef.current?.destroy(true);
