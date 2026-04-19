@@ -524,7 +524,7 @@ export class ChunkManager {
     const shapes = new ShapeCollider({
       tilemap,
       tileLayers: layers,
-      chunkRawTmj: cached?.data,
+      rawTmj: cached?.data,
       renderScale,
     });
     const chunk: Chunk = {

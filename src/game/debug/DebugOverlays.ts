@@ -130,7 +130,7 @@ export class DebugOverlays {
     g.strokeCircle(cx, originY, 1);
   }
 
-  /** Render every per-tile and chunk-level collision shape in the view. */
+  /** Render every per-tile and map-level collision shape in the view. */
   private drawCollisionShapes(g: Phaser.GameObjects.Graphics): void {
     const view = this.cameraTileRect();
     const chunks = this.world.manager.chunksInTileRect(view.tx0, view.ty0, view.tx1, view.ty1);
@@ -139,8 +139,8 @@ export class DebugOverlays {
     for (const { chunk, chunkPxX, chunkPxY } of chunks) {
       const scale = chunk.shapes.renderScaleFactor;
 
-      // Chunk-level shapes (option 3).
-      for (const s of chunk.shapes.debugChunkShapes()) {
+      // Map-level object-layer shapes.
+      for (const s of chunk.shapes.debugMapShapes()) {
         this.drawShape(g, s, chunkPxX, chunkPxY, scale);
       }
 
