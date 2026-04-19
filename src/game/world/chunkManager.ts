@@ -329,6 +329,12 @@ export class ChunkManager {
     }
   }
 
+  /** Authored chunks whose tilesets aren't loaded yet. They've had spawns
+   *  parsed at initialize() time but won't render until streamRemainingChunks
+   *  pulls their tilesets in. */
+  private readonly pending = new Map<string, { cx: number; cy: number }>();
+  private streamingStarted = false;
+
   initialize(): ParsedSpawns {
     const items: ItemSpawn[] = [];
     const doors: DoorSpawn[] = [];
@@ -337,17 +343,99 @@ export class ChunkManager {
       const [cxStr, cyStr] = key.split("_");
       const cx = parseInt(cxStr, 10);
       const cy = parseInt(cyStr, 10);
-      const chunk = this.instantiateChunk(cx, cy);
 
-      const spawns = parseSpawns(chunk.tilemap, {
-        offsetTx: cx * this.manifest.chunkSize,
-        offsetTy: cy * this.manifest.chunkSize,
-      });
+      // Spawn parsing only needs the cached TMJ JSON (no tileset textures),
+      // so we can collect items/doors for every authored chunk up front even
+      // if some chunks won't render until their tilesets arrive.
+      const spawns = this.parseChunkSpawns(cx, cy);
       items.push(...spawns.items);
       doors.push(...spawns.doors);
+
+      if (this.tilesetsLoaded(cx, cy)) {
+        this.instantiateChunk(cx, cy);
+      } else {
+        this.pending.set(key, { cx, cy });
+      }
     }
 
     return { items, doors };
+  }
+
+  /** Kick off background loads for every tileset image referenced by a
+   *  pending chunk, then instantiate each chunk as soon as all of its
+   *  tilesets are available. Idempotent — safe to call once after
+   *  WorldScene.create() finishes. */
+  streamRemainingChunks(): void {
+    if (this.streamingStarted || this.pending.size === 0) return;
+    this.streamingStarted = true;
+
+    const needed = new Set<string>();
+    for (const { cx, cy } of this.pending.values()) {
+      const paths = this.manifest.chunkTilesets?.[`${cx}_${cy}`] ?? [];
+      for (const path of paths) {
+        if (!this.scene.sys.textures.exists(tilesetImageKeyFor(path))) {
+          needed.add(path);
+        }
+      }
+    }
+    if (needed.size === 0) {
+      // Tilesets already cached (e.g. shared with start chunk) — flush now.
+      this.flushReadyPending();
+      return;
+    }
+
+    for (const path of needed) {
+      this.scene.load.image(tilesetImageKeyFor(path), `maps/${path}`);
+    }
+    // Re-check pending whenever a tileset image finishes so chunks whose deps
+    // are all in cache pop in as soon as they're ready, instead of waiting for
+    // the entire batch. Phaser's catch-all `filecomplete` event fires for
+    // every loaded file; filter by type + our key prefix.
+    const onFile = (key: string, type: string) => {
+      if (type !== "image" || !key.startsWith("tileset:")) return;
+      this.flushReadyPending();
+    };
+    this.scene.load.on("filecomplete", onFile);
+    this.scene.load.once("complete", () => {
+      this.flushReadyPending();
+      this.scene.load.off("filecomplete", onFile);
+    });
+    this.scene.load.start();
+  }
+
+  private flushReadyPending(): void {
+    if (this.pending.size === 0) return;
+    for (const [key, { cx, cy }] of [...this.pending]) {
+      if (!this.tilesetsLoaded(cx, cy)) continue;
+      this.instantiateChunk(cx, cy);
+      this.pending.delete(key);
+    }
+  }
+
+  private tilesetsLoaded(cx: number, cy: number): boolean {
+    const paths = this.manifest.chunkTilesets?.[`${cx}_${cy}`];
+    if (!paths) {
+      // No per-chunk metadata — assume the legacy global preload was used.
+      return true;
+    }
+    const textures = this.scene.sys.textures;
+    for (const path of paths) {
+      if (!textures.exists(tilesetImageKeyFor(path))) return false;
+    }
+    return true;
+  }
+
+  private parseChunkSpawns(cx: number, cy: number): ParsedSpawns {
+    const cacheKey = `${this.chunkKeyPrefix}${cx}_${cy}`;
+    // A bare Tilemap (no createLayer / addTilesetImage) gives parseSpawns the
+    // tileWidth/tileHeight + objects layer it needs without touching textures.
+    const tilemap = this.scene.make.tilemap({ key: cacheKey });
+    const spawns = parseSpawns(tilemap, {
+      offsetTx: cx * this.manifest.chunkSize,
+      offsetTy: cy * this.manifest.chunkSize,
+    });
+    tilemap.destroy();
+    return spawns;
   }
 
   isWater(gtx: number, gty: number): boolean {
