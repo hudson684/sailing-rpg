@@ -395,6 +395,12 @@ export class WorldScene extends Phaser.Scene {
       this.scale.off("resize", this.onScaleResize, this);
     });
 
+    // Stream remaining chunk tilesets in the background; pending chunks pop in
+    // as their assets arrive. Keeps the post-character-creation wait short by
+    // letting the player into the start chunk before the rest of the world's
+    // tileset PNGs are downloaded.
+    this.world.manager.streamRemainingChunks();
+
     this.keys = {
       up: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.UP),
       down: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN),

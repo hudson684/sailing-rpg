@@ -1,4 +1,4 @@
-import * as Phaser from "phaser";
+import type * as Phaser from "phaser";
 
 // Cute_Fantasy layered player animation config.
 // Single 9-col × 56-row grid of 64×64 frames. Every layer (base, hair,

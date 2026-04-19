@@ -52,10 +52,17 @@ export class BootScene extends Phaser.Scene {
   preload() {
     this.load.json(WORLD_MANIFEST_KEY, "maps/world.json");
     this.load.on(`filecomplete-json-${WORLD_MANIFEST_KEY}`, (_k: string, _t: string, data: WorldManifest) => {
-      const images = data.tilesetImages ?? [];
-      for (const imagePath of images) {
+      // Eager: only the starting chunk's tileset images. Tilesets for the
+      // remaining authored chunks stream in after WorldScene boots — see
+      // `ChunkManager.streamRemainingChunks`. Falls back to all images if
+      // the per-chunk metadata is unavailable (older manifests).
+      const startKey = `${data.startChunk.cx}_${data.startChunk.cy}`;
+      const startTilesets = data.chunkTilesets?.[startKey] ?? data.tilesetImages ?? [];
+      for (const imagePath of startTilesets) {
         this.load.image(tilesetImageKeyFor(imagePath), `maps/${imagePath}`);
       }
+      // Chunk TMJs are small JSON; load them all so spawns (items, doors)
+      // can be parsed up front without waiting for tilesets.
       for (const key of data.authoredChunks) {
         this.load.tilemapTiledJSON(`${CHUNK_KEY_PREFIX}${key}`, `maps/chunks/${key}.tmj`);
       }
