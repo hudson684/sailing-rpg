@@ -41,33 +41,44 @@
   line-height: 1;
 }
 
-/* D-pad in a plus layout, anchored bottom-left. */
-.touch-dpad {
+/* Drag joystick anchored bottom-left. Whole circle is a single drag surface. */
+.touch-dragpad {
+  pointer-events: auto;
   position: absolute;
   left: 24px;
   bottom: 24px;
-  width: 192px;
-  height: 192px;
+  width: 176px;
+  height: 176px;
+  border-radius: 50%;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.touch-dpad-up {
-  top: 0;
-  left: 64px;
+.touch-dragpad-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  background: rgba(0, 0, 0, 0.38);
+  pointer-events: none;
 }
 
-.touch-dpad-down {
-  bottom: 0;
-  left: 64px;
+.touch-dragpad-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.18);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: background 80ms ease;
 }
 
-.touch-dpad-left {
-  top: 64px;
-  left: 0;
-}
-
-.touch-dpad-right {
-  top: 64px;
-  right: 0;
+.touch-dragpad-knob-active {
+  background: rgba(255, 255, 255, 0.32);
 }
 
 /* Action buttons in the bottom-right, arranged with Q above, E below, sprint to the side. */
@@ -105,9 +116,8 @@
 
 /* On very small screens, shrink a bit so buttons don't overflow. */
 @media (max-height: 420px) {
-  .touch-dpad { width: 168px; height: 168px; }
-  .touch-dpad-up, .touch-dpad-down { left: 56px; }
-  .touch-dpad-left, .touch-dpad-right { top: 56px; }
+  .touch-dragpad { width: 148px; height: 148px; }
+  .touch-dragpad-knob { width: 60px; height: 60px; }
   .touch-btn { width: 56px; height: 56px; font-size: 18px; }
   .touch-action { width: 64px; height: 64px; }
 }

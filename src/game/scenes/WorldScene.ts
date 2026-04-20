@@ -278,6 +278,7 @@ export class WorldScene extends Phaser.Scene {
     quicksave: Phaser.Input.Keyboard.Key;
     quickload: Phaser.Input.Keyboard.Key;
     sprint: Phaser.Input.Keyboard.Key;
+    reverse: Phaser.Input.Keyboard.Key;
   };
 
   private unsubVirtualInput: (() => void) | null = null;
@@ -438,6 +439,7 @@ export class WorldScene extends Phaser.Scene {
       quicksave: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F5),
       quickload: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F9),
       sprint: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT),
+      reverse: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.R),
     };
 
     this.input.keyboard!.addCapture([
@@ -451,6 +453,10 @@ export class WorldScene extends Phaser.Scene {
     // Touch controls dispatch virtual keys; route through the same Phaser
     // Key objects the keyboard populates, so `isDown` and "down" listeners
     // both fire without any special-casing elsewhere.
+    // Touch controls dispatch virtual keys, which funnel through the same
+    // Phaser Key objects the keyboard populates. Helm-mode keys alias the
+    // sailing controls (WASD / Shift / R / E), so a single update path
+    // handles both input sources.
     const virtualKeyMap: Record<VirtualKey, Phaser.Input.Keyboard.Key> = {
       up: this.keys.up,
       down: this.keys.down,
@@ -459,6 +465,13 @@ export class WorldScene extends Phaser.Scene {
       attack: this.keys.attack,
       interact: this.keys.interact,
       sprint: this.keys.sprint,
+      helmN: this.keys.w,
+      helmE: this.keys.d,
+      helmS: this.keys.s,
+      helmW: this.keys.a,
+      helmThrottleUp: this.keys.sprint,
+      helmThrottleDown: this.keys.reverse,
+      helmAnchor: this.keys.interact,
     };
     this.unsubVirtualInput = onVirtualKey((name, pressed) => {
       const key = virtualKeyMap[name];
@@ -546,18 +559,6 @@ export class WorldScene extends Phaser.Scene {
         this.lastWheelAt = this.time.now;
       },
     );
-
-    // Cardinal-only helm input: tap A/D (or ←/→) to turn 90° port/starboard.
-    const turnPort = () => {
-      if (this.sceneState.mode === "AtHelm" && this.activeShip) this.activeShip.turn(-1);
-    };
-    const turnStarboard = () => {
-      if (this.sceneState.mode === "AtHelm" && this.activeShip) this.activeShip.turn(1);
-    };
-    this.keys.a.on("down", turnPort);
-    this.keys.left.on("down", turnPort);
-    this.keys.d.on("down", turnStarboard);
-    this.keys.right.on("down", turnStarboard);
 
     this.editHighlight = this.add.graphics().setDepth(9500).setVisible(false);
 
@@ -826,7 +827,17 @@ export class WorldScene extends Phaser.Scene {
       const saved = byId.get(ship.id);
       if (saved) ship.hydrate(saved);
     }
-    if (this.sceneState.mode !== "AtHelm" && this.sceneState.mode !== "Anchoring") {
+    if (this.sceneState.mode === "AtHelm" || this.sceneState.mode === "Anchoring") {
+      // Rebind the active ship from whichever one restored to a non-docked
+      // mode; the player was at its helm when the save was taken.
+      this.activeShip = null;
+      for (const ship of this.ships.values()) {
+        if (ship.mode === "sailing" || ship.mode === "anchoring") {
+          this.activeShip = ship;
+          break;
+        }
+      }
+    } else {
       this.activeShip = null;
     }
   }
@@ -1613,7 +1624,7 @@ export class WorldScene extends Phaser.Scene {
     ship.startSailing();
     this.sceneState.mode = "AtHelm";
     this.cameras.main.startFollow(ship.container, true, 0.1, 0.1);
-    showToast("W/S throttle, A/D turn 90°, E to drop anchor.", 4500);
+    showToast("WASD to steer, Shift speed up, R slow/reverse, E anchor.", 4500);
     void this.saveController.autosave();
   }
 
@@ -1622,19 +1633,35 @@ export class WorldScene extends Phaser.Scene {
   private updateAtHelm(dt: number) {
     const ship = this.activeShip;
     if (!ship) return;
-    if (this.keys.w.isDown || this.keys.up.isDown) {
+
+    // Shift ramps throttle forward, R ramps it backward (into reverse).
+    // Throttle persists when no direction is held, so the stick-shift feel
+    // survives pauses between WASD taps.
+    if (this.keys.sprint.isDown) {
       ship.targetThrottle = Math.min(1, ship.targetThrottle + 0.6 * dt);
-    } else if (this.keys.s.isDown || this.keys.down.isDown) {
+    }
+    if (this.keys.reverse.isDown) {
       ship.targetThrottle = Math.max(-1, ship.targetThrottle - 0.6 * dt);
     }
 
-    const step = ship.updateSailing(dt, (tx, ty) => this.world.manager.shipTileState(tx, ty));
+    // 8-directional input vector from WASD / arrows. Same shape as the
+    // player's on-foot movement.
+    let dx = 0;
+    let dy = 0;
+    if (this.keys.w.isDown || this.keys.up.isDown) dy -= 1;
+    if (this.keys.s.isDown || this.keys.down.isDown) dy += 1;
+    if (this.keys.a.isDown || this.keys.left.isDown) dx -= 1;
+    if (this.keys.d.isDown || this.keys.right.isDown) dx += 1;
+    const active = dx !== 0 || dy !== 0;
+    if (active) ship.setMoveAngle(Math.atan2(dy, dx));
+
+    const step = ship.updateSailing(dt, active, (tx, ty) => this.world.manager.shipTileState(tx, ty));
     if (step.blocked) {
       if (!this.wasBlocked) showToast("Ran aground! Turn to clear water.", 2500);
       this.wasBlocked = true;
       this.wasBeached = false;
     } else if (step.beached) {
-      if (!this.wasBeached) showToast("Run aground on the beach. Back off with S.", 2500);
+      if (!this.wasBeached) showToast("Run aground on the beach. Back off with R.", 2500);
       this.wasBeached = true;
       this.wasBlocked = false;
     } else {

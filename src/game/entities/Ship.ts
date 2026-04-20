@@ -38,13 +38,17 @@ export class Ship {
   public readonly vessel: VesselTemplate;
   public readonly dims: VesselDims;
 
-  /** Continuous position; heading is the single source of truth for orientation. */
+  /** Continuous position. `heading` is the cardinal visual facing (one of N/E/S/W),
+   *  snapped from `moveAngle` each tick. `moveAngle` is the continuous direction
+   *  of travel in radians (0 = east, π/2 = south), allowing 8-directional (and
+   *  smoother) movement without needing diagonal ship art. */
   public x: number;
   public y: number;
   public heading: Heading;
+  public moveAngle: number;
 
   public speed = 0;
-  public targetThrottle = 0; // 0..1
+  public targetThrottle = 0; // -1..1; sign indicates reverse
 
   /** Lightweight anchor for camera follow and global visibility. Tilemap layers
    *  cannot be Container children, so they live at scene level and are
@@ -61,6 +65,7 @@ export class Ship {
     this.dims = { tilesLong: vessel.tilesLong, tilesWide: vessel.tilesWide };
     this.docked = { ...docked };
     this.heading = docked.heading;
+    this.moveAngle = headingToRotation(this.heading);
     const c = Ship.bboxCenterPx(docked, this.dims);
     this.x = c.x;
     this.y = c.y;
@@ -128,7 +133,22 @@ export class Ship {
   turn(dir: -1 | 1): void {
     if (this.mode !== "sailing") return;
     this.heading = ((((this.heading + dir) % 4) + 4) % 4) as Heading;
+    this.moveAngle = headingToRotation(this.heading);
     this.updateVisual();
+  }
+
+  /** Set the continuous direction of travel (radians). Snaps `heading` to the
+   *  nearest cardinal so the visual/hitbox uses existing 4-way art even when
+   *  moving diagonally. */
+  setMoveAngle(angle: number): void {
+    if (this.mode !== "sailing") return;
+    this.moveAngle = angle;
+    // headingToRotation(h) = (h - 1) * π/2, so h = round(angle/(π/2)) + 1.
+    const cardinal = ((Math.round(angle / (Math.PI / 2)) + 1) % 4 + 4) % 4 as Heading;
+    if (cardinal !== this.heading) {
+      this.heading = cardinal;
+      this.updateVisual();
+    }
   }
 
   /** Footprint tiles occupied by the ship in a given docked pose. */
@@ -187,6 +207,7 @@ export class Ship {
     this.mode = "sailing";
     this.speed = 0;
     this.targetThrottle = 0;
+    this.moveAngle = headingToRotation(this.heading);
     this.updateVisual();
   }
 
@@ -213,17 +234,22 @@ export class Ship {
     return this.visuals[this.heading].hitbox;
   }
 
-  /** Advance physics while sailing. Heading changes are discrete (see `turn()`). */
+  /** Advance physics while sailing. Velocity direction comes from `moveAngle`
+   *  (set via `setMoveAngle()` or `turn()`). When `active` is false (no
+   *  direction input held) the ship decelerates to a stop — same accel rate
+   *  as when throttling, so release-to-stop feels like walking. */
   updateSailing(
     dtSec: number,
+    active: boolean,
     classify: (tx: number, ty: number) => ShipTileState,
   ): SailingStepResult {
-    const targetSpeed = this.targetThrottle * (this.targetThrottle < 0 ? SHIP_REVERSE_MAX : SHIP_MAX_SPEED);
+    const throttleSpeed = this.targetThrottle * (this.targetThrottle < 0 ? SHIP_REVERSE_MAX : SHIP_MAX_SPEED);
+    const targetSpeed = active ? throttleSpeed : 0;
     let nextSpeed = this.speed;
     if (nextSpeed < targetSpeed) nextSpeed = Math.min(targetSpeed, nextSpeed + SHIP_ACCEL * dtSec);
     else nextSpeed = Math.max(targetSpeed, nextSpeed - SHIP_ACCEL * dtSec);
 
-    const a = headingToRotation(this.heading);
+    const a = this.moveAngle;
     const nx = this.x + Math.cos(a) * nextSpeed * dtSec;
     const ny = this.y + Math.sin(a) * nextSpeed * dtSec;
 
@@ -284,6 +310,7 @@ export class Ship {
     this.mode = "docked";
     this.speed = 0;
     this.targetThrottle = 0;
+    this.moveAngle = headingToRotation(pose.heading);
     this.setPose(c.x, c.y, pose.heading);
     // setPose only updateVisuals if heading changed; force in case it didn't.
     this.updateVisual();
@@ -309,6 +336,7 @@ export class Ship {
     this.speed = data.speed;
     this.targetThrottle = data.targetThrottle;
     this.heading = data.heading;
+    this.moveAngle = headingToRotation(data.heading);
     this.x = data.x;
     this.y = data.y;
     this.updateVisual();
