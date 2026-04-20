@@ -1798,6 +1798,20 @@ export class WorldScene extends Phaser.Scene {
       );
       this.resetShipsAndParkPlayer();
       showToast("Your ship's state couldn't be restored. Returned to port.", 4000);
+    } else if (
+      this.sceneState.mode === "OnFoot" &&
+      !this.isWalkablePx(this.player.x, this.player.y)
+    ) {
+      // OnFoot but the hydrated player position isn't walkable. Happens when
+      // a broken load degraded AtHelm → OnFoot and then autosave persisted
+      // that state, leaving the player saved at ocean coords with no ship
+      // nearby. Rescue them to the nearest dock — otherwise reloading keeps
+      // regurgitating the stuck state.
+      console.warn(
+        "[WorldScene] Hydrated player position is not walkable — returning to port.",
+      );
+      this.resetShipsAndParkPlayer();
+      showToast("You were adrift at sea. Returned to port.", 4000);
     }
 
     this.respawnGroundItems();
