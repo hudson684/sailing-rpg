@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { bus } from "../../game/bus";
 import { dispatchVirtualKey, type VirtualKey } from "../../game/input/virtualInput";
 import { useUIStore } from "../store/uiStore";
 import "./TouchControls.css";
@@ -17,7 +16,6 @@ export function TouchControls({ visible }: Props) {
   return (
     <div className="touch-controls" aria-hidden="true">
       <DragPad mode={atHelm ? "helm" : "walk"} />
-      <PauseButton />
       {atHelm ? (
         <div className="touch-actions">
           <TouchButton vkey="helmThrottleUp" className="touch-action touch-action-q" label="Q" />
@@ -32,33 +30,6 @@ export function TouchControls({ visible }: Props) {
         </div>
       )}
     </div>
-  );
-}
-
-function PauseButton() {
-  const onPointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
-    e.currentTarget.classList.add("touch-btn-active");
-  }, []);
-  const onPointerUp = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
-    e.currentTarget.classList.remove("touch-btn-active");
-  }, []);
-  const onClick = useCallback(() => {
-    bus.emitTyped("pause:toggle");
-  }, []);
-  return (
-    <button
-      type="button"
-      className="touch-btn touch-pause"
-      aria-label="Pause"
-      onPointerDown={onPointerDown}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-      onPointerLeave={onPointerUp}
-      onClick={onClick}
-      onContextMenu={(e) => e.preventDefault()}
-    >
-      <span className="touch-btn-label">☰</span>
-    </button>
   );
 }
 

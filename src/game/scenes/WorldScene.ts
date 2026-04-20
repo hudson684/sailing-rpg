@@ -37,7 +37,8 @@ import {
   type Heading,
 } from "../entities/Ship";
 import { loadShipsFile, type ShipInstanceData, type VesselTemplate } from "../entities/vessels";
-import { onVirtualKey, type VirtualKey } from "../input/virtualInput";
+import type { VirtualKey } from "../input/virtualInput";
+import { bindSceneToVirtualInput } from "../input/virtualInputBridge";
 
 const SPRINT_SPEED_MULT = 1.35;
 
@@ -444,13 +445,8 @@ export class WorldScene extends Phaser.Scene {
       Phaser.Input.Keyboard.KeyCodes.RIGHT,
     ]);
 
-    // Touch controls dispatch virtual keys; route through the same Phaser
-    // Key objects the keyboard populates, so `isDown` and "down" listeners
-    // both fire without any special-casing elsewhere.
-    // Touch controls dispatch virtual keys, which funnel through the same
-    // Phaser Key objects the keyboard populates. Helm-mode keys alias the
-    // sailing controls (WASD / Shift / R / E), so a single update path
-    // handles both input sources.
+    // Helm-mode keys alias the sailing controls (WASD / Shift / R / E) so a
+    // single update path handles both keyboard and touch input.
     const virtualKeyMap: Record<VirtualKey, Phaser.Input.Keyboard.Key> = {
       up: this.keys.up,
       down: this.keys.down,
@@ -467,21 +463,7 @@ export class WorldScene extends Phaser.Scene {
       helmThrottleDown: this.keys.reverse,
       helmAnchor: this.keys.interact,
     };
-    this.unsubVirtualInput = onVirtualKey((name, pressed) => {
-      const key = virtualKeyMap[name];
-      const event = {
-        keyCode: key.keyCode,
-        timeStamp: performance.now(),
-        altKey: false,
-        ctrlKey: false,
-        shiftKey: false,
-        metaKey: false,
-        preventDefault: () => {},
-        stopImmediatePropagation: () => {},
-      } as unknown as KeyboardEvent;
-      if (pressed) key.onDown(event);
-      else key.onUp(event);
-    });
+    this.unsubVirtualInput = bindSceneToVirtualInput(this, virtualKeyMap);
 
     this.keys.interact.on("down", () => this.onInteract());
 

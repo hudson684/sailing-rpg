@@ -1,0 +1,51 @@
+.pause-btn {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  background: rgba(0, 0, 0, 0.42);
+  color: rgba(255, 255, 255, 0.92);
+  font-family: inherit;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  font-size: 24px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 60ms ease, background 60ms ease;
+}
+
+.pause-btn.pause-btn-active,
+.pause-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.pause-btn.pause-btn-active {
+  transform: scale(0.94);
+}
+
+.pause-btn-label {
+  pointer-events: none;
+  line-height: 1;
+}
+
+@media (max-height: 420px) {
+  .pause-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+    top: 16px;
+    right: 16px;
+  }
+}

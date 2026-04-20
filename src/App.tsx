@@ -5,6 +5,7 @@ import { CharacterCreator } from "./ui/CharacterCreator";
 import { useSettingsStore } from "./game/store/settingsStore";
 import { useUIStore } from "./ui/store/uiStore";
 import { TouchControls } from "./ui/mobile/TouchControls";
+import { PauseButton } from "./ui/PauseButton";
 import { OrientationPrompt } from "./ui/mobile/OrientationPrompt";
 import { useIsMobile, useIsPortrait } from "./ui/mobile/useMobile";
 import "./ui/pixel-ui.css";
@@ -104,6 +105,7 @@ export default function App() {
             {import.meta.env.DEV && <EditMode />}
             {import.meta.env.DEV && <NodeDefEditor />}
             <TouchControls visible={isMobile && !isPortrait} />
+            <PauseButton />
           </>
         ) : null}
       </Suspense>

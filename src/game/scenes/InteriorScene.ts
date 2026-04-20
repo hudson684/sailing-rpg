@@ -25,6 +25,7 @@ import {
 } from "../world/interiorTilemap";
 import type { InteriorExitSpawn } from "../world/spawns";
 import { getActiveSaveController } from "../save/activeController";
+import { bindSceneToVirtualInput } from "../input/virtualInputBridge";
 
 const SPRINT_SPEED_MULT = 1.35;
 const DOOR_INTERACT_RADIUS = TILE_SIZE * 0.9;
@@ -171,6 +172,17 @@ export class InteriorScene extends Phaser.Scene {
     ]);
 
     this.keys.interact.on("down", () => this.onInteract());
+
+    // Route mobile touch controls through the same Phaser Key objects the
+    // keyboard populates, so `isDown` polling and `"down"` handlers both fire.
+    bindSceneToVirtualInput(this, {
+      up: this.keys.up,
+      down: this.keys.down,
+      left: this.keys.left,
+      right: this.keys.right,
+      interact: this.keys.interact,
+      sprint: this.keys.sprint,
+    });
     this.keys.quicksave.on("down", () => {
       bus.emitTyped("save:request", { type: "save", slot: "quicksave" });
     });
