@@ -25,11 +25,13 @@ export function Shop() {
   const slots = useGameStore(selectInventorySlots);
   const [tab, setTab] = useState<Tab>("buy");
   const [now, setNow] = useState(() => Date.now());
+  const [qtyByKey, setQtyByKey] = useState<Record<string, number>>({});
 
   // Listen for ESC to close, and subscribe to shop:open just to reset tab.
   useEffect(() => {
     if (!openShopId) return;
     setTab("buy");
+    setQtyByKey({});
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.stopPropagation();
@@ -78,6 +80,15 @@ export function Shop() {
   const close = () => {
     useShopStore.getState().closeShop();
     bus.emitTyped("shop:close");
+  };
+
+  const getQty = (key: string, max: number) => {
+    const raw = qtyByKey[key] ?? 1;
+    return Math.max(1, Math.min(max > 0 ? max : 1, raw));
+  };
+  const setQty = (key: string, value: number, max: number) => {
+    const clamped = Math.max(1, Math.min(max > 0 ? max : 1, Math.floor(value) || 1));
+    setQtyByKey((prev) => ({ ...prev, [key]: clamped }));
   };
 
   const toastOutcome = (res: { ok: boolean; reason?: string }, success: string) => {
@@ -143,23 +154,29 @@ export function Shop() {
               stockRows.map((row) => {
                 const def = ITEMS[row.itemId];
                 if (!def) return null;
-                const price = def.value;
-                const canAfford = gold >= price;
+                const unit = def.value;
+                const affordable = unit > 0 ? Math.floor(gold / unit) : row.quantity;
+                const max = Math.max(0, Math.min(row.quantity, affordable));
+                const key = `buy:${row.itemId}`;
+                const n = getQty(key, max);
                 return (
                   <Row
                     key={`buy-${row.itemId}`}
                     icon={def.icon}
                     name={def.name}
                     sub={def.description}
-                    qty={row.quantity}
-                    price={price}
+                    stockQty={row.quantity}
+                    unitPrice={unit}
                     priceLabel="buy"
                     action="Buy"
-                    disabled={!canAfford || row.quantity <= 0}
+                    n={n}
+                    max={max}
+                    onQtyChange={(v) => setQty(key, v, max)}
+                    disabled={max <= 0}
                     onClick={() =>
                       toastOutcome(
-                        useShopStore.getState().buy(openShopId, row.itemId, 1),
-                        `Bought 1 ${def.name}.`,
+                        useShopStore.getState().buy(openShopId, row.itemId, n),
+                        `Bought ${n} ${def.name}.`,
                       )
                     }
                   />
@@ -174,24 +191,30 @@ export function Shop() {
               sellRows.map((row) => {
                 const def = ITEMS[row.itemId];
                 if (!def) return null;
-                const price = itemSellPrice(row.itemId);
+                const unit = itemSellPrice(row.itemId);
+                const max = Math.max(0, row.quantity);
+                const key = `sell:${row.inventoryIndex}`;
+                const n = getQty(key, max);
                 return (
                   <Row
                     key={`sell-${row.inventoryIndex}`}
                     icon={def.icon}
                     name={def.name}
                     sub={`Owned ×${row.quantity}`}
-                    qty={row.quantity}
-                    price={price}
+                    stockQty={row.quantity}
+                    unitPrice={unit}
                     priceLabel="sell"
                     action="Sell"
-                    disabled={price <= 0}
+                    n={n}
+                    max={max}
+                    onQtyChange={(v) => setQty(key, v, max)}
+                    disabled={unit <= 0 || max <= 0}
                     onClick={() =>
                       toastOutcome(
                         useShopStore
                           .getState()
-                          .sell(openShopId, row.inventoryIndex, 1),
-                        `Sold 1 ${def.name}.`,
+                          .sell(openShopId, row.inventoryIndex, n),
+                        `Sold ${n} ${def.name}.`,
                       )
                     }
                   />
@@ -206,26 +229,32 @@ export function Shop() {
               buybackRows.map((row) => {
                 const def = ITEMS[row.itemId];
                 if (!def) return null;
-                const price = itemSellPrice(row.itemId);
-                const canAfford = gold >= price;
+                const unit = itemSellPrice(row.itemId);
+                const affordable = unit > 0 ? Math.floor(gold / unit) : row.quantity;
+                const max = Math.max(0, Math.min(row.quantity, affordable));
                 const ttl = Math.max(0, Math.ceil((row.expiresAt - now) / 1000));
+                const key = `bb:${row.itemId}`;
+                const n = getQty(key, max);
                 return (
                   <Row
                     key={`bb-${row.itemId}`}
                     icon={def.icon}
                     name={def.name}
                     sub={`Expires in ${formatDuration(ttl)}`}
-                    qty={row.quantity}
-                    price={price}
+                    stockQty={row.quantity}
+                    unitPrice={unit}
                     priceLabel="buy"
                     action="Repurchase"
-                    disabled={!canAfford}
+                    n={n}
+                    max={max}
+                    onQtyChange={(v) => setQty(key, v, max)}
+                    disabled={max <= 0}
                     onClick={() =>
                       toastOutcome(
                         useShopStore
                           .getState()
-                          .buybackBuy(openShopId, row.itemId, 1),
-                        `Bought back 1 ${def.name}.`,
+                          .buybackBuy(openShopId, row.itemId, n),
+                        `Bought back ${n} ${def.name}.`,
                       )
                     }
                   />
@@ -261,26 +290,66 @@ function Row(props: {
   icon: string;
   name: string;
   sub?: string;
-  qty: number;
-  price: number;
+  stockQty: number;
+  unitPrice: number;
   priceLabel: "buy" | "sell";
   action: string;
+  n: number;
+  max: number;
+  onQtyChange: (v: number) => void;
   disabled?: boolean;
   onClick: () => void;
 }) {
+  const total = props.unitPrice * props.n;
+  const stepDisabled = props.max <= 1;
   return (
     <div className="shop-row">
       <div className="px-slot shop-row-slot">
         <img className="shop-row-icon" src={props.icon} alt="" draggable={false} />
-        {props.qty > 1 && <span className="px-slot-qty">{props.qty}</span>}
+        {props.stockQty > 1 && <span className="px-slot-qty">{props.stockQty}</span>}
       </div>
       <div className="shop-row-info">
         <div className="shop-row-name">{props.name}</div>
         {props.sub && <div className="shop-row-sub">{props.sub}</div>}
       </div>
+      <div className="shop-row-qty">
+        <button
+          className="px-btn shop-qty-btn"
+          disabled={stepDisabled || props.n <= 1}
+          onClick={() => props.onQtyChange(props.n - 1)}
+          aria-label="Decrease quantity"
+        >
+          −
+        </button>
+        <input
+          className="shop-qty-input"
+          type="number"
+          min={1}
+          max={Math.max(1, props.max)}
+          value={props.n}
+          onChange={(e) => props.onQtyChange(Number(e.target.value))}
+          aria-label="Quantity"
+        />
+        <button
+          className="px-btn shop-qty-btn"
+          disabled={stepDisabled || props.n >= props.max}
+          onClick={() => props.onQtyChange(props.n + 1)}
+          aria-label="Increase quantity"
+        >
+          +
+        </button>
+        <button
+          className="px-btn shop-qty-max"
+          disabled={props.max <= 1 || props.n >= props.max}
+          onClick={() => props.onQtyChange(props.max)}
+          aria-label="Max quantity"
+        >
+          Max
+        </button>
+      </div>
       <div className="shop-row-price">
         <span className={`shop-row-coin shop-row-coin-${props.priceLabel}`}>
-          {props.price}g
+          {total}g
         </span>
       </div>
       <button
@@ -288,7 +357,7 @@ function Row(props: {
         disabled={props.disabled}
         onClick={props.onClick}
       >
-        {props.action}
+        {props.action} ×{props.n}
       </button>
     </div>
   );

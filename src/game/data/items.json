@@ -152,8 +152,9 @@
         "projectileSpeedPx": 480,
         "damage": 2,
         "projectile": "arrow",
-        "cooldownMs": 350
+        "cooldownMs": 500
       },
+      "visualLayer": { "layer": "tool", "variant": "wooden-bow" },
       "value": 3
     },
     {

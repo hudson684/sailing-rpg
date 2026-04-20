@@ -123,6 +123,133 @@
       }
     },
     {
+      "id": "skeleton",
+      "name": "Skeleton",
+      "sprite": {
+        "sheet": "sprites/enemies/skeleton.png",
+        "frameWidth": 32,
+        "frameHeight": 32,
+        "sheetCols": 6,
+        "anims": {
+          "idle": {
+            "row": 1,
+            "frames": 6,
+            "frameRate": 6
+          },
+          "move": {
+            "row": 4,
+            "frames": 6,
+            "frameRate": 10
+          },
+          "attack": {
+            "row": 4,
+            "frames": 6,
+            "frameRate": 10,
+            "repeat": 0
+          },
+          "death": {
+            "row": 6,
+            "frames": 6,
+            "frameRate": 8,
+            "repeat": 0
+          }
+        }
+      },
+      "display": {
+        "scale": 1.4,
+        "originY": 0.95
+      },
+      "hp": 6,
+      "respawnSec": 45,
+      "hurtRadiusPx": 26,
+      "dropTable": "skeleton",
+      "xpSkill": "combat",
+      "xpPerKill": 22,
+      "movement": {
+        "type": "wander",
+        "radiusTiles": 5,
+        "moveSpeed": 30,
+        "pauseMs": 1500,
+        "stepMs": 2000
+      },
+      "combat": {
+        "attackRangePx": 26,
+        "aggroRadiusPx": 110,
+        "leashRadiusPx": 220,
+        "chaseSpeedPx": 55,
+        "regenPerSec": 0.4,
+        "damageMin": 1,
+        "damageMax": 2,
+        "cooldownMs": 1400
+      }
+    },
+    {
+      "id": "skeleton_swordsman",
+      "name": "Skeleton Swordsman",
+      "sprite": {
+        "sheet": "sprites/enemies/skeleton-swordsman.png",
+        "frameWidth": 32,
+        "frameHeight": 32,
+        "sheetCols": 8,
+        "anims": {
+          "idle": {
+            "row": 1,
+            "frames": 6,
+            "frameRate": 6
+          },
+          "move": {
+            "row": 4,
+            "frames": 6,
+            "frameRate": 10
+          },
+          "attack": {
+            "sheet": "sprites/enemies/skeleton-swordsman-attack.png",
+            "frameWidth": 64,
+            "frameHeight": 64,
+            "sheetCols": 4,
+            "row": 1,
+            "frames": 4,
+            "frameRate": 12,
+            "repeat": 0,
+            "originY": 0.75
+          },
+          "death": {
+            "row": 6,
+            "frames": 8,
+            "frameRate": 8,
+            "repeat": 0
+          }
+        }
+      },
+      "display": {
+        "scale": 1.5,
+        "originY": 0.95
+      },
+      "hp": 12,
+      "respawnSec": 60,
+      "hurtRadiusPx": 30,
+      "dropTable": "skeleton_swordsman",
+      "xpSkill": "combat",
+      "xpPerKill": 45,
+      "movement": {
+        "type": "wander",
+        "radiusTiles": 5,
+        "moveSpeed": 30,
+        "pauseMs": 1600,
+        "stepMs": 2000
+      },
+      "combat": {
+        "attackRangePx": 34,
+        "aggroRadiusPx": 130,
+        "leashRadiusPx": 240,
+        "chaseSpeedPx": 58,
+        "regenPerSec": 0.6,
+        "damageMin": 2,
+        "damageMax": 4,
+        "cooldownMs": 1500
+      }
+    },
+    {
       "id": "slime_medium_red",
       "name": "Red Slime",
       "sprite": {
@@ -188,32 +315,32 @@
     {
       "id": "e_slime_1",
       "defId": "slime_small_green",
-      "tileX": 52,
-      "tileY": 8
+      "tileX": 47,
+      "tileY": 9
     },
     {
       "id": "e_slime_2",
       "defId": "slime_small_green",
-      "tileX": 54,
-      "tileY": 4
+      "tileX": 53,
+      "tileY": 5
     },
     {
       "id": "e_slime_3",
       "defId": "slime_small_blue",
-      "tileX": 48,
-      "tileY": 8
+      "tileX": 46,
+      "tileY": 6
     },
     {
       "id": "e_slime_4",
       "defId": "slime_small_blue",
-      "tileX": 41,
+      "tileX": 40,
       "tileY": 14
     },
     {
       "id": "e_slime_5",
       "defId": "slime_medium_red",
-      "tileX": 50,
-      "tileY": 6
+      "tileX": 47,
+      "tileY": 9
     },
     {
       "id": "slime_small_green-1",
@@ -230,8 +357,38 @@
     {
       "id": "slime_small_green-3",
       "defId": "slime_small_green",
-      "tileX": 42,
-      "tileY": 76
+      "tileX": 40,
+      "tileY": 74
+    },
+    {
+      "id": "skeleton-7",
+      "defId": "skeleton",
+      "tileX": 72,
+      "tileY": 70
+    },
+    {
+      "id": "skeleton_swordsman-8",
+      "defId": "skeleton_swordsman",
+      "tileX": 74,
+      "tileY": 69
+    },
+    {
+      "id": "skeleton-10",
+      "defId": "skeleton",
+      "tileX": 67,
+      "tileY": 69
+    },
+    {
+      "id": "skeleton-8",
+      "defId": "skeleton",
+      "tileX": 58,
+      "tileY": 69
+    },
+    {
+      "id": "skeleton-9",
+      "defId": "skeleton",
+      "tileX": 59,
+      "tileY": 73
     }
   ]
 }

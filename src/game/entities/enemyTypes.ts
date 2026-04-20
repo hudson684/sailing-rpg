@@ -10,6 +10,18 @@ export interface EnemyAnimSheet {
   frameRate: number;
   /** Repeat: -1 = loop, 0 = play once. Defaults loop for idle/move, once otherwise. */
   repeat?: number;
+  /** Optional per-anim sheet override. Used when an anim (e.g. an attack with
+   *  a long slash arc) ships in frames larger than the base sheet's grid.
+   *  When `sheet` is set, all four of `sheet`/`frameWidth`/`frameHeight`/
+   *  `sheetCols` must be present and the anim is loaded as its own texture. */
+  sheet?: string;
+  frameWidth?: number;
+  frameHeight?: number;
+  sheetCols?: number;
+  /** Optional origin override for this anim only. Used when an override
+   *  sheet has different whitespace padding and the default `display.originY`
+   *  would shift the sprite's feet off the ground. Fraction of frame height. */
+  originY?: number;
 }
 
 export interface EnemySprite {
@@ -115,6 +127,13 @@ export interface DropTablesFile {
 
 export function enemyTextureKey(defId: string): string {
   return `enemy-${defId}`;
+}
+
+/** Texture key for an anim that has its own sheet override. Each per-anim
+ *  override is loaded under this key so Phaser can swap the sprite's
+ *  texture when the override anim plays. */
+export function enemyAnimTextureKey(defId: string, state: EnemyAnimState): string {
+  return `enemy-${defId}-${state}-tex`;
 }
 
 export function enemyAnimKey(defId: string, state: EnemyAnimState): string {

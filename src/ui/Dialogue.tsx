@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { bus, type DialogueState } from "../game/bus";
+import { useShopStore } from "../game/store/shopStore";
 import "./Dialogue.css";
+
+function requestOpenShop(shopId: string) {
+  useShopStore.getState().openShop(shopId);
+  bus.emitTyped("shop:open", { shopId });
+  bus.emitTyped("dialogue:action", { type: "close" });
+}
 
 const EMPTY: DialogueState = { visible: false, speaker: "", pages: [], page: 0 };
 
@@ -28,7 +35,7 @@ export function Dialogue() {
         bus.emitTyped("dialogue:action", { type: "close" });
       } else if ((e.key === "t" || e.key === "T") && state.shopId) {
         e.preventDefault();
-        bus.emitTyped("dialogue:action", { type: "openShop" });
+        requestOpenShop(state.shopId);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -46,7 +53,7 @@ export function Dialogue() {
   };
   const onTrade = (e: React.MouseEvent) => {
     e.stopPropagation();
-    bus.emitTyped("dialogue:action", { type: "openShop" });
+    if (state.shopId) requestOpenShop(state.shopId);
   };
 
   return (

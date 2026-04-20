@@ -37,8 +37,7 @@ export class NpcSprite {
   }
 
   sortY(): number {
-    const { display, sprite } = this.model.def;
-    return this.sprite.y + (1 - display.originY) * sprite.idle.frameHeight * display.scale;
+    return this.sprite.y;
   }
 
   destroy() {

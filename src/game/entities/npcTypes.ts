@@ -53,6 +53,9 @@ export interface NpcDef {
   dialogue: string;
   /** If set, right-clicking this NPC opens the referenced shop. */
   shopId?: string;
+  /** Per-NPC override of the dialogue interact radius, in tiles. Defaults
+   *  to the global NPC_INTERACT_RADIUS when omitted. */
+  interactRadiusTiles?: number;
 }
 
 /** True if `def` belongs to the currently active map (either "world" or the

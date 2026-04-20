@@ -12,6 +12,12 @@ import {
   type Facing,
 } from "./playerAnims";
 import { CF_TOOLS, cfToolAnimKey, type CfToolDef } from "./playerTools";
+import {
+  CF_MOUNTS,
+  cfMountAnimKey,
+  type CfMountDef,
+  type CfMountState,
+} from "./playerMounts";
 import { ensureCfVariantLoaded } from "./playerWardrobe";
 import { PlayerModel, PLAYER_MODEL_ID } from "./PlayerModel";
 import { entityRegistry } from "./registry";
@@ -121,6 +127,9 @@ export class Player {
   // subsequent calls. Hidden during idle/walk; shown only while the matching
   // action state is animating.
   private cfTool: { def: CfToolDef; sprite: Phaser.GameObjects.Sprite } | null = null;
+  // Active mount sprite (horse, etc). Inserted at the back of the container so
+  // the rider's body/clothing composites on top. Null when unmounted.
+  private cfMount: { def: CfMountDef; sprite: Phaser.GameObjects.Sprite } | null = null;
   // Most-recently-requested variant per layer. Used to discard stale
   // lazy-load completions when the player swaps outfits faster than the
   // loader can finish — only the latest request gets applied.
@@ -153,8 +162,11 @@ export class Player {
    * animation once, then reverts to idle. No-op if another action is already
    * playing or the player is frozen.
    */
-  playAction(state: "attack" | "mine" | "chop" | "fish", onComplete?: () => void): boolean {
+  playAction(state: "attack" | "mine" | "chop" | "fish" | "shoot", onComplete?: () => void): boolean {
     if (this.model.actionLock || this.model.frozen) return false;
+    // Actions (swinging a sword, drawing the bow, fishing, …) aren't supported
+    // while mounted — the rider pose keeps playing and the action is dropped.
+    if (this.model.cfMountId) return false;
     this.model.actionLock = true;
     this.model.animState = state;
     this.applyAnim();
@@ -235,6 +247,10 @@ export class Player {
     // Restore tool overlay if one was equipped before the scene swap.
     if (this.model.cfToolId) {
       this.installToolSprite(this.model.cfToolId);
+    }
+    // Restore mount sprite if the player was mounted before the scene swap.
+    if (this.model.cfMountId) {
+      this.installMountSprite(this.model.cfMountId);
     }
     container.setDepth(this.sortY());
     this.applyAnim();
@@ -324,8 +340,68 @@ export class Player {
     }
     const intended = facingFromDelta(dx, dy);
     if (intended) this.model.facing = intended;
-    this.setAnimState(moved ? "walk" : "idle");
+    const mounted = this.model.cfMountId !== null;
+    const next: CfState = mounted
+      ? moved
+        ? "ride-gallop"
+        : "ride-idle"
+      : moved
+        ? "walk"
+        : "idle";
+    this.setAnimState(next);
     this.applyDepth();
+  }
+
+  get mounted(): boolean {
+    return this.model.cfMountId !== null;
+  }
+
+  /** Install (or remove) a mount. Pass a mount id from CF_MOUNTS, or null to
+   *  dismount. The mount sprite sits behind every player layer. */
+  setMount(mountId: string | null): void {
+    this.model.cfMountId = mountId;
+    this.installMountSprite(mountId);
+    // Snap the current anim state to (or out of) the ride pose so the player
+    // doesn't freeze on a stale "walk" or "ride-gallop" frame after the
+    // toggle — tryMove will refine it on the next movement frame.
+    const cur = this.model.animState;
+    if (mountId) {
+      if (cur !== "ride-idle" && cur !== "ride-gallop") this.setAnimState("ride-idle");
+    } else {
+      if (cur === "ride-idle" || cur === "ride-gallop") this.setAnimState("idle");
+    }
+  }
+
+  private installMountSprite(mountId: string | null): void {
+    if (mountId === null) {
+      if (this.cfMount) {
+        this.cfMount.sprite.destroy();
+        this.cfMount = null;
+      }
+      return;
+    }
+    const def = CF_MOUNTS[mountId];
+    if (!def) {
+      console.warn(`[Player] Unknown CF mount id: ${mountId}`);
+      return;
+    }
+    const scene = this.sprite.scene;
+    if (!scene) return;
+    if (!scene.textures.exists(def.textureKey)) {
+      console.warn(`[Player] CF mount texture missing: ${def.textureKey}`);
+      return;
+    }
+    const container = this.sprite;
+    if (this.cfMount) {
+      this.cfMount.def = def;
+      this.cfMount.sprite.setTexture(def.textureKey, 0);
+    } else {
+      const sprite = scene.add.sprite(0, 0, def.textureKey, 0);
+      sprite.setOrigin(0.5, CF_ORIGIN_Y);
+      container.addAt(sprite, 0); // back of container → drawn below every layer
+      this.cfMount = { def, sprite };
+    }
+    this.applyAnim();
   }
 
   /**
@@ -485,6 +561,27 @@ export class Player {
     if (!CF_ANIMS[this.model.animState]) return;
     for (const layer of this.cfLayers.keys()) this.applyAnimToLayer(layer);
     this.applyToolAnim();
+    this.applyMountAnim();
+  }
+
+  private applyMountAnim() {
+    if (!this.cfMount) return;
+    const { def, sprite } = this.cfMount;
+    const cfState = this.model.animState;
+    // Mount sprite is hidden while on foot — e.g. a stale horse lingering
+    // after a scene wake shouldn't show unless the model says the player is
+    // still mounted.
+    const isRiding = cfState === "ride-idle" || cfState === "ride-gallop";
+    if (!isRiding) {
+      if (sprite.visible) sprite.setVisible(false);
+      sprite.anims.stop();
+      return;
+    }
+    const { dir, flipX } = facingToCfDir(this.model.facing);
+    const mountState: CfMountState = cfState === "ride-gallop" ? "gallop" : "idle";
+    sprite.setFlipX(flipX);
+    sprite.setVisible(true);
+    sprite.anims.play(cfMountAnimKey(def.id, mountState, dir), true);
   }
 
   private applyToolAnim() {

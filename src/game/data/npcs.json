@@ -60,16 +60,20 @@
         "scale": 2,
         "originY": 0.506
       },
+      "map": {
+        "interior": "cabin"
+      },
       "spawn": {
-        "tileX": 51,
-        "tileY": 19
+        "tileX": 7,
+        "tileY": 6
       },
       "facing": "right",
       "movement": {
         "type": "static"
       },
       "dialogue": "mera_vendor",
-      "shopId": "mera_general"
+      "shopId": "mera_general",
+      "interactRadiusTiles": 2.5
     },
     {
       "id": "garra_chef",
@@ -171,8 +175,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 48,
-        "tileY": 24
+        "tileX": 46,
+        "tileY": 20
       },
       "facing": "right",
       "movement": {
@@ -226,7 +230,7 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 45,
+        "tileX": 46,
         "tileY": 20
       },
       "facing": "left",

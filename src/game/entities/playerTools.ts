@@ -6,6 +6,7 @@ import { CF_FRAME_SIZE } from "./playerAnims";
 import ironSwordSheet from "../../assets/sprites/character/cf/tools/iron-sword.png";
 import ironToolsSheet from "../../assets/sprites/character/cf/tools/iron-tools.png";
 import woodenFishingRodSheet from "../../assets/sprites/character/cf/tools/wooden-fishing-rod.png";
+import woodenBowSheet from "../../assets/sprites/character/cf/tools/wooden-bow.png";
 
 /**
  * Cute_Fantasy tool overlays.
@@ -66,6 +67,13 @@ export const CF_TOOL_SHEETS: Record<string, CfToolSheet> = {
     frameWidth: CF_FRAME_SIZE,
     frameHeight: CF_FRAME_SIZE,
   },
+  // 384×192 → 6 cols × 3 rows. Rows 0-2 = draw + release (forward/right/back).
+  woodenBow: {
+    textureKey: "cf-tool-wooden-bow",
+    file: woodenBowSheet,
+    frameWidth: CF_FRAME_SIZE,
+    frameHeight: CF_FRAME_SIZE,
+  },
 };
 
 export const CF_TOOLS: Record<string, CfToolDef> = {
@@ -104,6 +112,15 @@ export const CF_TOOLS: Record<string, CfToolDef> = {
     textureKey: CF_TOOL_SHEETS.woodenFishingRod.textureKey,
     actionState: "fish",
     cols: 9,
+    rows: { forward: 0, right: 1, back: 2 },
+    fps: 12,
+  },
+  // 384×192 → 6 cols × 3 rows. Rows 0-2 = bow draw + release (matches CF_ANIMS.shoot).
+  "wooden-bow": {
+    id: "wooden-bow",
+    textureKey: CF_TOOL_SHEETS.woodenBow.textureKey,
+    actionState: "shoot",
+    cols: 6,
     rows: { forward: 0, right: 1, back: 2 },
     fps: 12,
   },

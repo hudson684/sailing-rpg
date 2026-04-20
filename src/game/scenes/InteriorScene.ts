@@ -107,16 +107,22 @@ export class InteriorScene extends Phaser.Scene {
     const npcData = npcDataRaw as NpcData;
     this.dialogues = npcData.dialogues ?? {};
 
-    // Player: bind to the shared model, position at entry tile.
+    // Player: bind to the shared model, position one tile north of the
+    // interior_exit if present — the exit object is the authoritative door
+    // location inside the interior. Fall back to the door's entryTx/entryTy
+    // only when the interior has no exit object.
+    const exit = this.interior.exits[0];
+    const entryTx = exit ? exit.tileX : this.launchData.entryTx;
+    const entryTy = exit ? exit.tileY - 1 : this.launchData.entryTy;
     const model = getOrCreatePlayerModel();
     const mapId: MapId = { kind: "interior", key: this.launchData.interiorKey };
     entityRegistry.setMap(model.id, mapId);
-    model.x = (this.launchData.entryTx + 0.5) * TILE_SIZE;
-    model.y = (this.launchData.entryTy + 0.5) * TILE_SIZE;
+    model.x = (entryTx + 0.5) * TILE_SIZE;
+    model.y = (entryTy + 0.5) * TILE_SIZE;
     model.facing = "up";
     model.frozen = false;
     this.player = new Player(this, model);
-    this.lastExitTile = { x: this.launchData.entryTx, y: this.launchData.entryTy };
+    this.lastExitTile = { x: entryTx, y: entryTy };
 
     // Camera: bounds to interior, center on player, restore persisted zoom.
     const { w: wPx, h: hPx } = interiorPixelSize(this.interior);
@@ -277,12 +283,15 @@ export class InteriorScene extends Phaser.Scene {
   private nearestNpc(): NpcModel | null {
     const mapId: MapId = { kind: "interior", key: this.launchData.interiorKey };
     let best: NpcModel | null = null;
-    let bestDist = NPC_INTERACT_RADIUS;
+    let bestDist = Infinity;
     for (const m of entityRegistry.getByMap(mapId)) {
       if (m.kind !== "npc") continue;
       const npc = m as NpcModel;
+      const radius = npc.def.interactRadiusTiles != null
+        ? npc.def.interactRadiusTiles * TILE_SIZE
+        : NPC_INTERACT_RADIUS;
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.x, npc.y);
-      if (d <= bestDist) {
+      if (d <= radius && d < bestDist) {
         best = npc;
         bestDist = d;
       }
@@ -352,10 +361,6 @@ export class InteriorScene extends Phaser.Scene {
   private onDialogueAction = (action: DialogueAction) => {
     if (!this.activeDialogue) return;
     if (action.type === "close") {
-      this.closeDialogue();
-      return;
-    }
-    if (action.type === "openShop") {
       this.closeDialogue();
       return;
     }

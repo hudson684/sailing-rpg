@@ -280,6 +280,7 @@ export class WorldScene extends Phaser.Scene {
     quickload: Phaser.Input.Keyboard.Key;
     sprint: Phaser.Input.Keyboard.Key;
     reverse: Phaser.Input.Keyboard.Key;
+    mount: Phaser.Input.Keyboard.Key;
   };
 
   private unsubVirtualInput: (() => void) | null = null;
@@ -292,15 +293,6 @@ export class WorldScene extends Phaser.Scene {
     if (!this.activeDialogue) return;
     if (action.type === "close") {
       this.closeDialogue();
-      return;
-    }
-    if (action.type === "openShop") {
-      const shopId = this.activeDialogue.shopId;
-      this.closeDialogue();
-      if (shopId) {
-        useShopStore.getState().openShop(shopId);
-        bus.emitTyped("shop:open", { shopId });
-      }
       return;
     }
     // advance
@@ -441,6 +433,7 @@ export class WorldScene extends Phaser.Scene {
       quickload: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F9),
       sprint: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT),
       reverse: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.R),
+      mount: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M),
     };
 
     this.input.keyboard!.addCapture([
@@ -537,6 +530,7 @@ export class WorldScene extends Phaser.Scene {
     this.keys.debugXp.on("down", () => this.grantDebugXp());
     this.keys.quicksave.on("down", () => void this.saveController.save("quicksave"));
     this.keys.quickload.on("down", () => void this.saveController.load("quicksave"));
+    this.keys.mount.on("down", () => this.toggleMount());
 
     // Camera zoom: mouse wheel + `+`/`=` and `-` keys.
     const zoomInPlus = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.PLUS);
@@ -868,9 +862,12 @@ export class WorldScene extends Phaser.Scene {
       dy *= inv;
     }
     const moving = dx !== 0 || dy !== 0;
-    const sprinting = moving && this.keys.sprint.isDown && stamina.current > 0;
+    const mounted = this.player.mounted;
+    // Mounts cruise at sprint speed without burning stamina — that's the
+    // whole point of climbing onto one.
+    const sprinting = !mounted && moving && this.keys.sprint.isDown && stamina.current > 0;
     if (sprinting) stamina.drain(dt);
-    const speed = PLAYER_SPEED * (sprinting ? SPRINT_SPEED_MULT : 1);
+    const speed = PLAYER_SPEED * (mounted || sprinting ? SPRINT_SPEED_MULT : 1);
     this.player.tryMove(dx * speed * dt, dy * speed * dt, (px, py) =>
       this.isWalkablePx(px, py),
     );
@@ -1002,6 +999,8 @@ export class WorldScene extends Phaser.Scene {
    *  return payload is delivered back via SCENE_WAKE on exit. */
   private enterInterior(door: DoorSpawn) {
     if (this.activeDialogue) this.closeDialogue();
+    // Horses stay outside — force dismount before crossing into an interior.
+    if (this.player.mounted) this.player.setMount(null);
     const returnFacing = this.player.facing;
     this.sceneState.interior = {
       interiorKey: door.interiorKey,
@@ -1128,7 +1127,7 @@ export class WorldScene extends Phaser.Scene {
     const angle = Math.atan2(worldY - fromY, worldX - fromX);
     // Snap player sprite to the nearest 8-way facing for the shoot anim.
     this.player.setFacing(angleToFacing(angle));
-    const ok = this.player.playAction("attack", () => {
+    const ok = this.player.playAction("shoot", () => {
       useGameStore.getState().jobsAddXp("combat", 2);
     });
     if (!ok) return;
@@ -1136,16 +1135,22 @@ export class WorldScene extends Phaser.Scene {
     const removed = useGameStore.getState().inventoryRemoveAt(ammoIdx, 1);
     if (removed <= 0) return;
 
-    const projectile = new Projectile(this, {
-      x: fromX,
-      y: fromY,
-      angle,
-      speedPx: ranged.projectileSpeedPx,
-      rangePx: ranged.rangePx,
-      damage: ranged.damage,
-      ownerId: "player",
+    // Release the arrow mid-animation (frame ~4 of 6 @ 12 fps) so it leaves
+    // the bow when the string snaps forward, not on the first draw frame.
+    const releaseDelayMs = 330;
+    this.time.delayedCall(releaseDelayMs, () => {
+      if (!this.scene.isActive()) return;
+      const projectile = new Projectile(this, {
+        x: this.player.x,
+        y: this.player.y - 10,
+        angle,
+        speedPx: ranged.projectileSpeedPx,
+        rangePx: ranged.rangePx,
+        damage: ranged.damage,
+        ownerId: "player",
+      });
+      this.projectiles.push(projectile);
     });
-    this.projectiles.push(projectile);
     this.bowCooldownMs = ranged.cooldownMs;
   }
 
@@ -1176,6 +1181,12 @@ export class WorldScene extends Phaser.Scene {
     if (killed) {
       useGameStore.getState().jobsAddXp(target.def.xpSkill, target.def.xpPerKill);
       this.rollAndDrop(target.def.dropTable, target.x, target.y);
+      if (Math.random() < 0.5) {
+        const ox = (Math.random() - 0.5) * TILE_SIZE * 0.6;
+        const oy = (Math.random() - 0.5) * TILE_SIZE * 0.4;
+        const entry = this.droppedItemsState.add("arrow", 1, target.x + ox, target.y + oy);
+        this.spawnDroppedSprite(entry);
+      }
       target.beginRespawn(this.time.now);
       showToast(`Slain — ${target.def.name}`, 1200);
     }
@@ -1183,7 +1194,11 @@ export class WorldScene extends Phaser.Scene {
 
   private updateBowReticle(): void {
     const equipped = useGameStore.getState().equipment.equipped.mainHand;
-    const show = equipped === "bow" && this.sceneState.mode === "OnFoot" && !this.activeDialogue;
+    const show =
+      equipped === "bow" &&
+      this.sceneState.mode === "OnFoot" &&
+      !this.activeDialogue &&
+      !this.player.mounted;
     if (!show) {
       if (this.bowReticle?.visible) this.bowReticle.setVisible(false);
       return;
@@ -1192,8 +1207,9 @@ export class WorldScene extends Phaser.Scene {
       this.bowReticle = this.add.graphics().setDepth(9600);
     }
     const pointer = this.input.activePointer;
-    const wx = pointer.worldX;
-    const wy = pointer.worldY;
+    const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    const wx = worldPoint.x;
+    const wy = worldPoint.y;
     const def = ITEMS["bow"];
     const ranged = def?.ranged;
     if (!ranged) return;
@@ -1381,7 +1397,13 @@ export class WorldScene extends Phaser.Scene {
         this.pickUp(pickup);
         return;
       }
-      if (this.isNearHelm()) this.takeHelm();
+      if (this.isNearHelm()) {
+        if (this.player.mounted) {
+          showToast("Dismount before taking the helm.", 1500);
+        } else {
+          this.takeHelm();
+        }
+      }
     } else if (this.sceneState.mode === "AtHelm") {
       this.beginAnchoring();
     }
@@ -1437,10 +1459,13 @@ export class WorldScene extends Phaser.Scene {
 
   private nearestNpc(): NpcModel | null {
     let best: NpcModel | null = null;
-    let bestDist = NPC_INTERACT_RADIUS;
+    let bestDist = Infinity;
     for (const npc of this.activeNpcModels()) {
+      const radius = npc.def.interactRadiusTiles != null
+        ? npc.def.interactRadiusTiles * TILE_SIZE
+        : NPC_INTERACT_RADIUS;
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.x, npc.y);
-      if (d <= bestDist) {
+      if (d <= radius && d < bestDist) {
         best = npc;
         bestDist = d;
       }
@@ -1638,6 +1663,22 @@ export class WorldScene extends Phaser.Scene {
 
   private isNearHelm(): boolean {
     return this.shipAtHelm() !== null;
+  }
+
+  // ─── Mount toggle ──────────────────────────────────────────────────
+  // Pressing M summons / dismisses a horse. Only allowed on-foot; you can't
+  // mount up mid-helm, mid-anchor, or during a forced dialogue freeze.
+  private toggleMount(): void {
+    if (this.sceneState.mode !== "OnFoot") return;
+    if (this.activeDialogue) return;
+    if (this.player.frozen) return;
+    if (this.player.mounted) {
+      this.player.setMount(null);
+      showToast("Dismounted.", 1000);
+    } else {
+      this.player.setMount("horse-brown");
+      showToast("Mounted.", 1000);
+    }
   }
 
   // ─── Transition: OnFoot → AtHelm ──────────────────────────────────
@@ -2030,9 +2071,9 @@ export class WorldScene extends Phaser.Scene {
           const def = ITEMS[pickup.itemId];
           const qty = pickup.quantity > 1 ? ` ×${pickup.quantity}` : "";
           prompt = `Press E to pick up ${def.name}${qty}`;
-        } else if (this.isNearHelm()) {
+        } else if (this.isNearHelm() && !this.player.mounted) {
           prompt = "Press E to take the helm";
-        } else {
+        } else if (!this.player.mounted) {
           const enemy = this.nearestEnemyInReach(TILE_SIZE * 1.4);
           const mainHandPeek = useGameStore.getState().equipment.equipped.mainHand;
           if (enemy) {
@@ -2112,8 +2153,14 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private nextEditId(prefix: string): string {
-    this.editAutoIncrement += 1;
-    return `${prefix}-${this.editAutoIncrement}`;
+    // `editAutoIncrement` is only seeded from `ed-N` item ids, so enemy /
+    // node / ship ids authored in previous sessions (e.g. `skeleton-7`) may
+    // collide. Bump past any taken id before returning.
+    for (;;) {
+      this.editAutoIncrement += 1;
+      const candidate = `${prefix}-${this.editAutoIncrement}`;
+      if (!entityRegistry.get(candidate)) return candidate;
+    }
   }
 
   private onEditToggle = () => {

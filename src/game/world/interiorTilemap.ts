@@ -16,6 +16,68 @@ export interface InteriorTilemap {
   registry: TileRegistry;
   shapes: ShapeCollider;
   exits: InteriorExitSpawn[];
+  /** Per-tile images extracted from layers flagged with the `y-sort` custom
+   *  property — each one gets its own depth so it sorts against the player
+   *  (and other entities) by world y. */
+  ySortImages: Phaser.GameObjects.Image[];
+}
+
+function layerHasYSort(layerData: Phaser.Tilemaps.LayerData): boolean {
+  const props = layerData.properties as unknown;
+  if (!props) return false;
+  if (Array.isArray(props)) {
+    for (const p of props as Array<{ name?: string; value?: unknown }>) {
+      if (p?.name === "y-sort" && p.value === true) return true;
+    }
+    return false;
+  }
+  if (typeof props === "object") {
+    return (props as Record<string, unknown>)["y-sort"] === true;
+  }
+  return false;
+}
+
+/** Replace a tilemap layer's visible render with per-tile Image game objects
+ *  whose depth = the tile's bottom world y. The underlying tilemap layer is
+ *  kept (for collision/registry queries) but hidden. */
+function extractYSortImages(
+  scene: Phaser.Scene,
+  layer: Phaser.Tilemaps.TilemapLayer,
+  renderScale: number,
+): Phaser.GameObjects.Image[] {
+  const out: Phaser.GameObjects.Image[] = [];
+  const tmap = layer.tilemap;
+  for (let ty = 0; ty < tmap.height; ty++) {
+    for (let tx = 0; tx < tmap.width; tx++) {
+      const tile = layer.getTileAt(tx, ty);
+      if (!tile || tile.index < 0) continue;
+      const tileset = tile.tileset;
+      if (!tileset) continue;
+      const coords = tileset.getTileTextureCoordinates(tile.index) as
+        | { x: number; y: number }
+        | null;
+      if (!coords) continue;
+      const imageKey = tileset.image?.key;
+      if (!imageKey) continue;
+      const tw = tileset.tileWidth;
+      const th = tileset.tileHeight;
+      const frameName = `ysort:${tile.index}`;
+      const texture = scene.textures.get(imageKey);
+      if (!texture.has(frameName)) {
+        texture.add(frameName, 0, coords.x, coords.y, tw, th);
+      }
+      const wx = tx * tmap.tileWidth * renderScale;
+      const wy = ty * tmap.tileHeight * renderScale;
+      const img = scene.add
+        .image(wx, wy, imageKey, frameName)
+        .setOrigin(0, 0)
+        .setScale(renderScale)
+        .setDepth(wy + th * renderScale);
+      out.push(img);
+    }
+  }
+  layer.setVisible(false);
+  return out;
 }
 
 /** Build an interior tilemap from a cached TMJ. Shared by WorldScene (legacy
@@ -51,6 +113,7 @@ export function buildInteriorTilemap(
 
   const renderScale = TILE_SIZE / tilemap.tileWidth;
   const layers: Phaser.Tilemaps.TilemapLayer[] = [];
+  const ySortImages: Phaser.GameObjects.Image[] = [];
   tilemap.layers.forEach((layerData, idx) => {
     const layer = tilemap.createLayer(layerData.name, boundTilesets, 0, 0) as
       | Phaser.Tilemaps.TilemapLayer
@@ -60,6 +123,10 @@ export function buildInteriorTilemap(
     const overhead = INTERIOR_OVERHEAD_LAYERS.has(layerData.name.toLowerCase());
     layer.setDepth(overhead ? INTERIOR_OVERHEAD_DEPTH_BASE + idx : idx);
     layers.push(layer);
+    if (layerHasYSort(layerData)) {
+      const imgs = extractYSortImages(scene, layer, renderScale);
+      for (const img of imgs) ySortImages.push(img);
+    }
   });
 
   const registry = new TileRegistry(tilemap);
@@ -71,10 +138,11 @@ export function buildInteriorTilemap(
   });
   const { exits } = parseInteriorSpawns(tilemap);
 
-  return { key, tilemap, layers, registry, shapes, exits };
+  return { key, tilemap, layers, registry, shapes, exits, ySortImages };
 }
 
 export function destroyInteriorTilemap(t: InteriorTilemap): void {
+  for (const img of t.ySortImages) img.destroy();
   for (const layer of t.layers) layer.destroy();
   t.tilemap.destroy();
 }

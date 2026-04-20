@@ -22,7 +22,12 @@ import {
 import { npcTextureKey, type NpcData } from "../entities/npcTypes";
 import { registerNpcAnimations } from "../entities/NpcSprite";
 import npcDataRaw from "../data/npcs.json";
-import { enemyTextureKey, type EnemiesFile } from "../entities/enemyTypes";
+import {
+  enemyAnimTextureKey,
+  enemyTextureKey,
+  type EnemiesFile,
+  type EnemyAnimState,
+} from "../entities/enemyTypes";
 import enemiesDataRaw from "../data/enemies.json";
 import {
   loadNodesFile,
@@ -38,6 +43,12 @@ import {
 import { useSettingsStore } from "../store/settingsStore";
 import { ALL_ITEM_IDS, ITEMS } from "../inventory/items";
 import { CF_TOOLS, CF_TOOL_SHEETS, cfToolAnimKey } from "../entities/playerTools";
+import {
+  CF_MOUNTS,
+  CF_MOUNT_SHEETS,
+  cfMountAnimKey,
+  type CfMountState,
+} from "../entities/playerMounts";
 
 /**
  * Single source of truth for the game's eager asset loads.
@@ -68,6 +79,7 @@ export function queueAllAssets(scene: Phaser.Scene): void {
   queueWorldManifestAndChunks(scene);
   queuePlayerDefaultLayers(scene);
   queueToolSheets(scene);
+  queueMountSheets(scene);
   queueItemIcons(scene);
   queueEnemySheets(scene);
   queueNodeSheets(scene);
@@ -185,6 +197,17 @@ function queueToolSheets(scene: Phaser.Scene): void {
   }
 }
 
+/** Mount sheets — horses (and future other mounts) ship their own small
+ *  grids, separate from both the 9×56 layer grid and the per-tool grids. */
+function queueMountSheets(scene: Phaser.Scene): void {
+  for (const sheet of Object.values(CF_MOUNT_SHEETS)) {
+    scene.load.spritesheet(sheet.textureKey, sheet.file, {
+      frameWidth: sheet.frameWidth,
+      frameHeight: sheet.frameHeight,
+    });
+  }
+}
+
 function queueItemIcons(scene: Phaser.Scene): void {
   for (const id of ALL_ITEM_IDS) {
     scene.load.image(itemIconTextureKey(id), ITEMS[id].icon);
@@ -197,6 +220,14 @@ function queueEnemySheets(scene: Phaser.Scene): void {
       frameWidth: def.sprite.frameWidth,
       frameHeight: def.sprite.frameHeight,
     });
+    for (const state of Object.keys(def.sprite.anims) as EnemyAnimState[]) {
+      const anim = def.sprite.anims[state];
+      if (!anim.sheet) continue;
+      scene.load.spritesheet(enemyAnimTextureKey(def.id, state), anim.sheet, {
+        frameWidth: anim.frameWidth ?? def.sprite.frameWidth,
+        frameHeight: anim.frameHeight ?? def.sprite.frameHeight,
+      });
+    }
   }
 }
 
@@ -233,6 +264,7 @@ export function runPostLoadSetup(scene: Phaser.Scene): void {
   bakePlayerSkinSafely(scene);
   setupCfLayerAnims(scene);
   setupToolAnims(scene);
+  setupMountAnims(scene);
   setupNodeAnims(scene);
   setupNpcAnims(scene);
 }
@@ -258,6 +290,7 @@ function setupCfLayerAnims(scene: Phaser.Scene): void {
   for (const key of scene.textures.getTextureKeys()) {
     if (!key.startsWith("cf-")) continue;
     if (key.startsWith("cf-tool-")) continue;
+    if (key.startsWith("cf-mount-")) continue;
     createCfAnimsForTexture(scene, key);
   }
 }
@@ -279,6 +312,30 @@ function setupToolAnims(scene: Phaser.Scene): void {
         frameRate: tool.fps,
         repeat: 0,
       });
+    }
+  }
+}
+
+/** Per-mount anims. Idle + gallop × 3 directions for each mount sheet. */
+function setupMountAnims(scene: Phaser.Scene): void {
+  const states: CfMountState[] = ["idle", "gallop"];
+  for (const mount of Object.values(CF_MOUNTS)) {
+    for (const state of states) {
+      for (const dir of CF_DIRS) {
+        const key = cfMountAnimKey(mount.id, state, dir);
+        if (scene.anims.exists(key)) continue;
+        const range = mount.states[state][dir];
+        const start = range.row * mount.sheetCols;
+        scene.anims.create({
+          key,
+          frames: scene.anims.generateFrameNumbers(mount.textureKey, {
+            start,
+            end: start + range.cols - 1,
+          }),
+          frameRate: range.fps,
+          repeat: -1,
+        });
+      }
     }
   }
 }

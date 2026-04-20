@@ -30,6 +30,9 @@ export class PlayerModel implements EntityModel {
   cfBaseline: Partial<Record<CfLayer, string | null>> = {};
   /** Currently-equipped tool id (CF_TOOLS key) or null. */
   cfToolId: string | null = null;
+  /** Currently-active mount id (CF_MOUNTS key) or null. Not persisted — the
+   *  player auto-dismounts on reload for the time being. */
+  cfMountId: string | null = null;
 
   constructor(mapId: MapId = { kind: "world" }) {
     this.mapId = mapId;

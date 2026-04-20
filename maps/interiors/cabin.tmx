@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="19" height="14" tilewidth="32" tileheight="32" infinite="0" nextlayerid="15" nextobjectid="19">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="19" height="14" tilewidth="32" tileheight="32" infinite="0" nextlayerid="15" nextobjectid="21">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
  <tileset firstgid="4097" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <tileset firstgid="4607" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx"/>
@@ -38,22 +38,28 @@
  </layer>
  <layer id="2" name="overlay" width="19" height="14">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFo2AUjAL8AAAEKAAB
+   eJxjYBgFgw1UOjAwVAFxtcMAOwQJLLNmYFgOxCuAeKU1REzNhoFB3WZg3TUK6AMAEG4Gfg==
   </data>
  </layer>
  <layer id="3" name="props_low" width="19" height="14">
+  <properties>
+   <property name="y-sort" type="bool" value="true"/>
+  </properties>
   <data encoding="base64" compression="zlib">
-   eJxjYBi5QNmBgUEFiFUdMOUOWJFmlh/QDH8gDkAzazqQPwOIZ2KxAx1MgtpZCVRbBcTVaHoOAfmHgfgIEWbtI9H9uMBNDgaGVySYBVKPC0hykmY3qepHAe0AAAbgEIE=
+   eJxjYBi5QNmBgUEFiFUdMOUOWJFmlh/QDH8gDkAzazqQPwOIZ2KxAx1MImDnIaAZh4H4CBFm7SPR/bjATQ4GhlckmAVSjwtIcpJmN6nqRwHtAABxbg5T
   </data>
  </layer>
  <layer id="12" name="shopfront" width="19" height="14">
+  <properties>
+   <property name="y-sort" type="bool" value="true"/>
+  </properties>
   <data encoding="base64" compression="zlib">
-   eJxjYBgFgwkEWDMwBAJxEBAHWyPEL1rj1oMLVAP11IDMs2FgqIPq/w2k/5Bh1jKgnuVAvAKIV0L1qwHNVbch3axRMPQAADw+DK4=
+   eJxjYBgFgwkEWDMwBAJxEBAHWyPEL1rj1oMLVAP11IDMs2FgqIPq/w2k/5Bh1igY2QAAxVsIXw==
   </data>
  </layer>
- <layer id="4" name="props_high" width="19" height="14">
+ <layer id="4" name="props_mid" width="19" height="14">
   <data encoding="base64" compression="zlib">
-   eJxjYBh54B83A8N/bkzxvYwMDPsYqWPHX6A5/4D4HgcEP+IgTl8yM3bxdKC4HCcEK3FS7j5lJlSaGiAZiFOAOBWH/E0iwwAEFgPxEiBeikNeksQwIFX9KEAFADewDhQ=
+   eJxjYBh54B83A8N/bkzxvYwMDPsYqWPHX6A5/8gwK5kZu3g6DnFygTITKk0NkAzEKUCcikP+JgfxZi0G4iVAvBSHvCQnKS4jXf0oQAUAjWwK5Q==
   </data>
  </layer>
  <layer id="5" name="roof" width="19" height="14">
@@ -62,7 +68,7 @@
   </data>
  </layer>
  <objectgroup id="6" name="objects">
-  <object id="16" name="interior_exit" type="interior_exit" x="350.75" y="372" width="67.5" height="12">
+  <object id="16" name="interior_exit" type="interior_exit" x="356.932" y="353.818" width="53.5" height="30.1818">
    <properties>
     <property name="promptOnly" type="bool" value="true"/>
     <property name="uid" value="d383fd29-b313-4b22-869e-618e5bfceec1"/>
@@ -72,17 +78,19 @@
  <objectgroup id="14" name="COLLISION">
   <object id="1" x="160" y="210" width="118.667" height="22.6667"/>
   <object id="3" x="160" y="180" width="24.6667" height="32"/>
-  <object id="4" x="359.333" y="179" width="24.3333" height="19"/>
+  <object id="4" x="359.333" y="179" width="24.3333" height="41"/>
   <object id="5" x="329.667" y="210.333" width="53.6667" height="23"/>
-  <object id="6" x="385" y="139.667" width="29" height="83"/>
+  <object id="6" x="381.5" y="139.667" width="34" height="84"/>
   <object id="7" x="447" y="137.667" width="33.3333" height="84"/>
-  <object id="8" x="403.667" y="139" width="59.3333" height="48.3333"/>
+  <object id="8" x="403.667" y="139" width="59.3333" height="60.5833"/>
   <object id="9" x="130" y="77.5" width="349" height="81.5"/>
-  <object id="10" x="479.5" y="78.5" width="65" height="273.5"/>
+  <object id="10" x="469.167" y="78.5" width="75.3333" height="297.833"/>
   <object id="11" x="416.5" y="352" width="97.5" height="28.5"/>
   <object id="12" x="96" y="352.5" width="253.5" height="31"/>
-  <object id="13" x="63.5" y="64.5" width="64.5" height="285.5"/>
+  <object id="13" x="63.5" y="64.5" width="75.8333" height="298.75"/>
   <object id="14" x="134.546" y="166.364" width="19.0909" height="68.5455"/>
   <object id="15" x="199.75" y="156.25" width="81" height="18.75"/>
+  <object id="19" x="328.333" y="382" width="103.333" height="22"/>
+  <object id="20" x="425" y="391.667"/>
  </objectgroup>
 </map>

@@ -418,7 +418,7 @@ export function buildMap(tmxRelPath, outRelPath, opts = {}) {
       } else {
         throw new Error(`Layer encoding ${encoding} unsupported`);
       }
-      layers.push({
+      const tileLayer = {
         type: "tilelayer",
         id: int(attrs["@_id"]),
         name: attrs["@_name"],
@@ -430,7 +430,10 @@ export function buildMap(tmxRelPath, outRelPath, opts = {}) {
         y: 0,
         data: gids,
         order: layerOrder++,
-      });
+      };
+      const tileLayerProps = parseTiledProperties(c.layer);
+      if (tileLayerProps && tileLayerProps.length > 0) tileLayer.properties = tileLayerProps;
+      layers.push(tileLayer);
     } else if (c.objectgroup !== undefined) {
       const attrs = c[":@"];
       const objects = [];
@@ -438,7 +441,7 @@ export function buildMap(tmxRelPath, outRelPath, opts = {}) {
         if (child.object === undefined) continue;
         objects.push(objectToTiled(child[":@"], child.object));
       }
-      layers.push({
+      const objLayer = {
         type: "objectgroup",
         id: int(attrs["@_id"]),
         name: attrs["@_name"],
@@ -448,7 +451,10 @@ export function buildMap(tmxRelPath, outRelPath, opts = {}) {
         y: 0,
         objects,
         order: layerOrder++,
-      });
+      };
+      const objLayerProps = parseTiledProperties(c.objectgroup);
+      if (objLayerProps && objLayerProps.length > 0) objLayer.properties = objLayerProps;
+      layers.push(objLayer);
     }
   }
   layers.sort((a, b) => a.order - b.order).forEach((l) => delete l.order);
@@ -624,20 +630,28 @@ function objectToTiled(attrs, children) {
   if (polyEntry) obj.polygon = parsePoints(polyEntry[":@"]?.["@_points"]);
   const polylineEntry = childArr.find((c) => c.polyline !== undefined);
   if (polylineEntry) obj.polyline = parsePoints(polylineEntry[":@"]?.["@_points"]);
-  const propsEntry = childArr.find((c) => c.properties);
-  if (propsEntry) {
-    obj.properties = [];
-    for (const p of propsEntry.properties) {
-      if (p.property === undefined) continue;
-      const pa = p[":@"];
-      obj.properties.push({
-        name: pa["@_name"],
-        type: pa["@_type"] ?? "string",
-        value: coerce(pa["@_type"], pa["@_value"]),
-      });
-    }
-  }
+  const props = parseTiledProperties(childArr);
+  if (props) obj.properties = props;
   return obj;
+}
+
+/** Parse a `<properties>` child list from any Tiled element (layer, object,
+ *  tile, …) into Tiled's JSON `properties` array form. Returns null if no
+ *  `<properties>` block is present. */
+function parseTiledProperties(children) {
+  const propsEntry = (children ?? []).find((c) => c.properties);
+  if (!propsEntry) return null;
+  const out = [];
+  for (const p of propsEntry.properties) {
+    if (p.property === undefined) continue;
+    const pa = p[":@"];
+    out.push({
+      name: pa["@_name"],
+      type: pa["@_type"] ?? "string",
+      value: coerce(pa["@_type"], pa["@_value"]),
+    });
+  }
+  return out;
 }
 
 /** Parse Tiled's `points="x1,y1 x2,y2 …"` into `[{x,y}, …]`. */

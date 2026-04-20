@@ -2,6 +2,7 @@ import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
 import {
   enemyAnimKey,
+  enemyAnimTextureKey,
   enemyTextureKey,
   type EnemyAnimState,
   type EnemyCombat,
@@ -102,6 +103,24 @@ export class Enemy implements EntityModel {
     const w = this.def.sprite.frameWidth * this.def.display.scale * 0.45;
     const h = this.def.sprite.frameHeight * this.def.display.scale * 0.35;
     const cy = this.sprite.y - 2;
+    return (
+      px >= this.sprite.x - w / 2 &&
+      px <= this.sprite.x + w / 2 &&
+      py >= cy - h / 2 &&
+      py <= cy + h / 2
+    );
+  }
+
+  /**
+   * Larger, more forgiving footprint for arrow/projectile hits. Covers most of
+   * the sprite (head to feet) so shots that visually pass over the enemy count
+   * as hits even when the cursor was aimed just behind them.
+   */
+  arrowHitPx(px: number, py: number): boolean {
+    if (!this.isAlive()) return false;
+    const w = this.def.sprite.frameWidth * this.def.display.scale * 0.75;
+    const h = this.def.sprite.frameHeight * this.def.display.scale * 0.7;
+    const cy = this.sprite.y - this.def.sprite.frameHeight * this.def.display.scale * 0.25;
     return (
       px >= this.sprite.x - w / 2 &&
       px <= this.sprite.x + w / 2 &&
@@ -492,6 +511,12 @@ export class Enemy implements EntityModel {
 
   private applyAnim() {
     this.sprite.setFlipX(this.facing === "left");
+    // Per-anim origin override: oversized anim sheets (e.g. the swordsman's
+    // 64×64 attack arc) have different padding than the base 32×32 grid, so
+    // the default feet-anchor originY would shift the sprite mid-animation.
+    const cfg = this.def.sprite.anims[this.animState];
+    const originY = cfg.originY ?? this.def.display.originY;
+    this.sprite.setOrigin(0.5, originY);
     this.sprite.anims.play(enemyAnimKey(this.def.id, this.animState), true);
   }
 
@@ -508,12 +533,18 @@ export function registerEnemyAnimations(scene: Phaser.Scene, def: EnemyDef) {
     const key = enemyAnimKey(def.id, state);
     if (scene.anims.exists(key)) scene.anims.remove(key);
     const cfg = def.sprite.anims[state];
-    const start = cfg.row * def.sprite.sheetCols;
+    // Anims with a `sheet` override live on their own texture, with their
+    // own grid dimensions. Everything else uses the base sheet.
+    const textureKey = cfg.sheet
+      ? enemyAnimTextureKey(def.id, state)
+      : enemyTextureKey(def.id);
+    const cols = cfg.sheet ? (cfg.sheetCols ?? def.sprite.sheetCols) : def.sprite.sheetCols;
+    const start = cfg.row * cols;
     const end = start + cfg.frames - 1;
     const repeat = cfg.repeat ?? (state === "idle" || state === "move" ? -1 : 0);
     scene.anims.create({
       key,
-      frames: scene.anims.generateFrameNumbers(enemyTextureKey(def.id), { start, end }),
+      frames: scene.anims.generateFrameNumbers(textureKey, { start, end }),
       frameRate: cfg.frameRate,
       repeat,
     });

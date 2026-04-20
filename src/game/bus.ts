@@ -43,8 +43,7 @@ export interface DialogueState {
 
 export type DialogueAction =
   | { type: "advance" }
-  | { type: "close" }
-  | { type: "openShop" };
+  | { type: "close" };
 
 import type { SkinPaletteId } from "./entities/playerSkin";
 import type { CfLayer } from "./entities/playerAnims";

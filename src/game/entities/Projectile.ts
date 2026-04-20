@@ -43,14 +43,27 @@ export class Projectile {
     this.vy = Math.sin(opts.angle) * opts.speedPx;
 
     const g = scene.add.graphics();
-    g.fillStyle(0xffe27a, 1);
-    g.lineStyle(1, 0x3a2a08, 1);
-    // Draw a thin arrow-shaped diamond pointing +X; container is rotated to
-    // match the shot angle so the tip always leads.
+    // Shaft
+    g.fillStyle(0x6b4a1f, 1);
+    g.lineStyle(1, 0x2a1a06, 1);
+    g.fillRect(-10, -1, 18, 2);
+    g.strokeRect(-10, -1, 18, 2);
+    // Fletching
+    g.fillStyle(0xd94a3a, 1);
     g.beginPath();
-    g.moveTo(8, 0);
-    g.lineTo(-4, -2);
-    g.lineTo(-4, 2);
+    g.moveTo(-12, 0);
+    g.lineTo(-8, -4);
+    g.lineTo(-6, 0);
+    g.lineTo(-8, 4);
+    g.closePath();
+    g.fillPath();
+    g.strokePath();
+    // Head
+    g.fillStyle(0xf0e6c8, 1);
+    g.beginPath();
+    g.moveTo(14, 0);
+    g.lineTo(6, -4);
+    g.lineTo(6, 4);
     g.closePath();
     g.fillPath();
     g.strokePath();
@@ -76,29 +89,55 @@ export class Projectile {
   ): HitResult | null {
     if (!this.alive) return null;
     const dt = dtMs / 1000;
-    const nx = this.sprite.x + this.vx * dt;
-    const ny = this.sprite.y + this.vy * dt;
-    const step = Math.hypot(nx - this.sprite.x, ny - this.sprite.y);
-    this.travelled += step;
-    this.sprite.setPosition(nx, ny);
-    this.sprite.setDepth(ny + 1);
+    const ox = this.sprite.x;
+    const oy = this.sprite.y;
+    const fullDx = this.vx * dt;
+    const fullDy = this.vy * dt;
+    const fullStep = Math.hypot(fullDx, fullDy);
+    if (fullStep < 0.001) return null;
 
-    if (this.travelled >= this.rangePx) {
-      this.destroy();
-      return null;
+    // Sweep in small substeps so fast arrows can't tunnel past generous enemy
+    // hitboxes, and so an arrow that passes *over* an enemy counts as a hit
+    // even if the per-frame endpoint lands behind them.
+    const subPx = 4;
+    const subs = Math.max(1, Math.ceil(fullStep / subPx));
+    const sx = fullDx / subs;
+    const sy = fullDy / subs;
+
+    for (let i = 1; i <= subs; i++) {
+      const px = ox + sx * i;
+      const py = oy + sy * i;
+      const advanced = (fullStep * i) / subs;
+
+      if (this.travelled + advanced >= this.rangePx) {
+        this.sprite.setPosition(px, py);
+        this.sprite.setDepth(py + 1);
+        this.travelled += advanced;
+        this.destroy();
+        return null;
+      }
+      if (isBlockedPx(px, py)) {
+        this.sprite.setPosition(px, py);
+        this.sprite.setDepth(py + 1);
+        this.travelled += advanced;
+        this.destroy();
+        return null;
+      }
+      for (const enemy of enemies) {
+        if (!enemy.isAlive()) continue;
+        if (this.hitIds.has(enemy.id)) continue;
+        if (!enemy.arrowHitPx(px, py)) continue;
+        this.hitIds.add(enemy.id);
+        this.sprite.setPosition(px, py);
+        this.sprite.setDepth(py + 1);
+        this.travelled += advanced;
+        return { killed: false, enemy };
+      }
     }
-    if (isBlockedPx(nx, ny)) {
-      this.destroy();
-      return null;
-    }
-    // Overlap check against each living enemy. First hit consumes the arrow.
-    for (const enemy of enemies) {
-      if (!enemy.isAlive()) continue;
-      if (this.hitIds.has(enemy.id)) continue;
-      if (!enemy.blocksPx(nx, ny)) continue;
-      this.hitIds.add(enemy.id);
-      return { killed: false, enemy };
-    }
+
+    this.sprite.setPosition(ox + fullDx, oy + fullDy);
+    this.sprite.setDepth(oy + fullDy + 1);
+    this.travelled += fullStep;
     return null;
   }
 

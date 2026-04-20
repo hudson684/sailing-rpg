@@ -37,7 +37,17 @@ export const FACING_VALUES: readonly Facing[] = [
   "up-left",
 ];
 
-export const CF_STATES = ["idle", "walk", "attack", "mine", "chop", "fish"] as const;
+export const CF_STATES = [
+  "idle",
+  "walk",
+  "attack",
+  "mine",
+  "chop",
+  "fish",
+  "shoot",
+  "ride-idle",
+  "ride-gallop",
+] as const;
 export type CfState = (typeof CF_STATES)[number];
 
 export const CF_LAYERS = [
@@ -112,6 +122,33 @@ export const CF_ANIMS: Record<CfState, CfStateConfig> = {
       forward: { row: 44, cols: 9 },
       right:   { row: 45, cols: 9 },
       back:    { row: 46, cols: 9 },
+    },
+  },
+  // Shoot: draw + release bow (rows 29/30/31).
+  shoot: {
+    fps: 12, repeat: 0,
+    dirs: {
+      forward: { row: 29, cols: 6 },
+      right:   { row: 30, cols: 6 },
+      back:    { row: 31, cols: 6 },
+    },
+  },
+  // Mounted idle: rider sits on horse (rows 50/51/52, 2 frames).
+  "ride-idle": {
+    fps: 4, repeat: -1,
+    dirs: {
+      forward: { row: 50, cols: 2 },
+      right:   { row: 51, cols: 2 },
+      back:    { row: 52, cols: 2 },
+    },
+  },
+  // Mounted gallop: rider + horse gallop cycle (rows 53/54/55, 6 frames).
+  "ride-gallop": {
+    fps: 12, repeat: -1,
+    dirs: {
+      forward: { row: 53, cols: 6 },
+      right:   { row: 54, cols: 6 },
+      back:    { row: 55, cols: 6 },
     },
   },
 };

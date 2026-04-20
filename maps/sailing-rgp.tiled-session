@@ -60,8 +60,8 @@
             "scale": 0.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 2397,
-                "y": 2044
+                "x": 512,
+                "y": 511
             }
         },
         "chunks/1_2.tmx": {
@@ -74,8 +74,8 @@
             "scale": 1.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 422.99999999999994,
-                "y": -0.6666666666666288
+                "x": 512,
+                "y": 512.3333333333333
             }
         },
         "chunks/1_3.tmx": {
@@ -709,6 +709,7 @@
         "chunks/1_4.tmx"
     ],
     "project": "sailing-rgp.tiled-project",
+    "property.type": "bool",
     "recentFiles": [
         "chunks/1_4.tmx",
         "chunks/4_2.tmx",
