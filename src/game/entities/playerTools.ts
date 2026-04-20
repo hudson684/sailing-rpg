@@ -1,5 +1,11 @@
 import type { CfDir, CfState } from "./playerAnims";
 import { CF_FRAME_SIZE } from "./playerAnims";
+// Tool sheets are imported via Vite so the bundler content-hashes them
+// (`iron-sword.<hash>.png`) and they can be served with immutable cache
+// headers. JSON-driven sprite paths still live under `public/`.
+import ironSwordSheet from "../../assets/sprites/character/cf/tools/iron-sword.png";
+import ironToolsSheet from "../../assets/sprites/character/cf/tools/iron-tools.png";
+import woodenFishingRodSheet from "../../assets/sprites/character/cf/tools/wooden-fishing-rod.png";
 
 /**
  * Cute_Fantasy tool overlays.
@@ -43,20 +49,20 @@ export interface CfToolSheet {
 export const CF_TOOL_SHEETS: Record<string, CfToolSheet> = {
   ironSword: {
     textureKey: "cf-tool-iron-sword",
-    file: "cf/tools/iron-sword.png",
+    file: ironSwordSheet,
     frameWidth: CF_FRAME_SIZE,
     frameHeight: CF_FRAME_SIZE,
   },
   // 384×768 → 6 cols × 12 rows. Holds pickaxe + axe + (likely) hoe + watering can.
   ironTools: {
     textureKey: "cf-tool-iron-tools",
-    file: "cf/tools/iron-tools.png",
+    file: ironToolsSheet,
     frameWidth: CF_FRAME_SIZE,
     frameHeight: CF_FRAME_SIZE,
   },
   woodenFishingRod: {
     textureKey: "cf-tool-wooden-fishing-rod",
-    file: "cf/tools/wooden-fishing-rod.png",
+    file: woodenFishingRodSheet,
     frameWidth: CF_FRAME_SIZE,
     frameHeight: CF_FRAME_SIZE,
   },
