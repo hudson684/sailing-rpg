@@ -48,21 +48,30 @@ export class TitleScene extends Phaser.Scene {
 
     let started = false;
     let offVirtualKey: (() => void) | undefined;
+    const onDomGesture = () => start();
     const start = () => {
       if (started) return;
       started = true;
       offVirtualKey?.();
+      window.removeEventListener("pointerdown", onDomGesture, true);
+      window.removeEventListener("keydown", onDomGesture, true);
       this.scene.launch("Systems");
       this.scene.start("World");
     };
 
-    this.input.once("pointerdown", start);
-    this.input.keyboard?.once("keydown", start);
+    // Listen at the window level (capture phase) rather than on the Phaser
+    // scene input: clicks that land on React HUD overlays (e.g. the hotbar)
+    // never reach the canvas, so a scene-level `pointerdown` listener alone
+    // leaves the player stuck on the title with no way to dismiss it.
+    window.addEventListener("pointerdown", onDomGesture, true);
+    window.addEventListener("keydown", onDomGesture, true);
     offVirtualKey = onVirtualKey((_key, pressed) => {
       if (pressed) start();
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       offVirtualKey?.();
+      window.removeEventListener("pointerdown", onDomGesture, true);
+      window.removeEventListener("keydown", onDomGesture, true);
     });
   }
 }
