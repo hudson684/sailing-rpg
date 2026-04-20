@@ -54,48 +54,50 @@ export function PauseMenu() {
           <span className="px-header-title">Paused</span>
           <button className="px-close" onClick={resume} aria-label="Resume">×</button>
         </div>
-        <div className="pause-slots">
-          {rows.map((row) => (
-            <SlotRow key={row.slot} row={row} />
-          ))}
-        </div>
-        <MobileModeRow />
-        <div className="pause-actions">
-          <button className="px-btn px-btn-green" onClick={resume}>Resume</button>
-          <button
-            className="px-btn px-btn-orange"
-            onClick={() => {
-              bus.emitTyped("pause:toggle");
-              window.dispatchEvent(new CustomEvent("character:open"));
-            }}
-          >
-            Customize
-          </button>
-          <button className="px-btn px-btn-red" onClick={newGame}>New Game</button>
-          {import.meta.env.DEV && (
+        <div className="pause-body">
+          <div className="pause-slots">
+            {rows.map((row) => (
+              <SlotRow key={row.slot} row={row} />
+            ))}
+          </div>
+          <MobileModeRow />
+          <div className="pause-actions">
+            <button className="px-btn px-btn-green" onClick={resume}>Resume</button>
             <button
-              className="px-btn px-btn-grey"
+              className="px-btn px-btn-orange"
               onClick={() => {
-                bus.emitTyped("player:resetSpawn");
                 bus.emitTyped("pause:toggle");
+                window.dispatchEvent(new CustomEvent("character:open"));
               }}
             >
-              Reset to Spawn
+              Customize
             </button>
-          )}
-          {import.meta.env.DEV && (
-            <button
-              className="px-btn px-btn-grey"
-              onClick={() => {
-                bus.emitTyped("ships:resetAll");
-                bus.emitTyped("pause:toggle");
-              }}
-            >
-              Reset Ship Positions
-            </button>
-          )}
+            <button className="px-btn px-btn-red" onClick={newGame}>New Game</button>
+            {import.meta.env.DEV && (
+              <button
+                className="px-btn px-btn-grey"
+                onClick={() => {
+                  bus.emitTyped("player:resetSpawn");
+                  bus.emitTyped("pause:toggle");
+                }}
+              >
+                Reset to Spawn
+              </button>
+            )}
+            {import.meta.env.DEV && (
+              <button
+                className="px-btn px-btn-grey"
+                onClick={() => {
+                  bus.emitTyped("ships:resetAll");
+                  bus.emitTyped("pause:toggle");
+                }}
+              >
+                Reset Ship Positions
+              </button>
+            )}
+          </div>
+          <div className="px-footer">ESC: toggle · F5: quicksave · F9: quickload</div>
         </div>
-        <div className="px-footer">ESC: toggle · F5: quicksave · F9: quickload</div>
       </div>
     </div>
   );

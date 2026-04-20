@@ -12,10 +12,22 @@
 .pause-panel {
   position: relative;
   width: min(600px, 94vw);
+  max-height: min(88vh, 720px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .pause-header {
   font-size: 28px;
+  flex: 0 0 auto;
+}
+
+.pause-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .pause-slots {
