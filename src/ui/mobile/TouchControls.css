@@ -114,6 +114,14 @@
   font-size: 18px;
 }
 
+.touch-action-mount {
+  right: 8px;
+  top: 8px;
+  width: 56px;
+  height: 56px;
+  font-size: 18px;
+}
+
 /* On very small screens, shrink a bit so buttons don't overflow. */
 @media (max-height: 420px) {
   .touch-dragpad { width: 148px; height: 148px; }

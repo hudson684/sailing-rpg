@@ -13,6 +13,7 @@ export type VirtualKey =
   | "attack"
   | "interact"
   | "sprint"
+  | "mount"
   // Helm-mode (mobile touch) keys. Decoupled from on-foot keys so that
   // e.g. the "slow down" button doesn't also trigger anchoring (which is
   // what the on-foot `interact` key does while at the helm).
