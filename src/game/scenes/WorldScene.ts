@@ -1111,7 +1111,7 @@ export class WorldScene extends Phaser.Scene {
     // Snap player sprite to the nearest 8-way facing for the shoot anim.
     this.player.setFacing(angleToFacing(angle));
     const ok = this.player.playAction("shoot", () => {
-      useGameStore.getState().jobsAddXp("combat", 2);
+      useGameStore.getState().jobsAddXp("ranger", 2);
     });
     if (!ok) return;
 
@@ -1162,7 +1162,8 @@ export class WorldScene extends Phaser.Scene {
       kind: "damage-enemy",
     });
     if (killed) {
-      useGameStore.getState().jobsAddXp(target.def.xpSkill, target.def.xpPerKill);
+      // Bow kills train ranger, not the enemy's default combat xpSkill.
+      useGameStore.getState().jobsAddXp("ranger", target.def.xpPerKill);
       this.rollAndDrop(target.def.dropTable, target.x, target.y);
       if (Math.random() < 0.5) {
         const ox = (Math.random() - 0.5) * TILE_SIZE * 0.6;
