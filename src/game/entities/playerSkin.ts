@@ -74,7 +74,7 @@ export function installPlayerSkinCanvases(textures: Phaser.Textures.TextureManag
   const canvas = document.createElement("canvas");
   canvas.width = w;
   canvas.height = h;
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) return;
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(original as CanvasImageSource, 0, 0);

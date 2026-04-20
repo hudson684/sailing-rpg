@@ -83,6 +83,17 @@ export function PauseMenu() {
               Reset to Spawn
             </button>
           )}
+          {import.meta.env.DEV && (
+            <button
+              className="px-btn px-btn-grey"
+              onClick={() => {
+                bus.emitTyped("ships:resetAll");
+                bus.emitTyped("pause:toggle");
+              }}
+            >
+              Reset Ship Positions
+            </button>
+          )}
         </div>
         <div className="px-footer">ESC: toggle · F5: quicksave · F9: quickload</div>
       </div>

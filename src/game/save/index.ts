@@ -1,5 +1,5 @@
 export { SaveManager, type SaveManagerOptions } from "./SaveManager";
-export { SaveController } from "./SaveController";
+export { SaveController, pickLatestEnvelope } from "./SaveController";
 export { SceneState, type SceneMode } from "./sceneState";
 export type { Saveable } from "./Saveable";
 export { migrateTo } from "./Saveable";

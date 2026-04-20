@@ -127,8 +127,8 @@ const ShipDataSchema = z.object({
   y: z.number(),
   heading: HeadingSchema,
   mode: ShipModeSchema,
-  speed: z.number(),
-  targetThrottle: z.number().min(0).max(1),
+  vx: z.number(),
+  vy: z.number(),
   docked: DockedPoseSchema,
 });
 

@@ -19,9 +19,8 @@ export interface VesselDims {
   tilesWide: number;
 }
 
-const SHIP_MAX_SPEED = 120; // px/s at full throttle
-const SHIP_REVERSE_MAX = 30; // px/s when backing off a beach (negative throttle)
-const SHIP_ACCEL = 60; // px/s^2
+const SHIP_MAX_SPEED = 120; // px/s cap on velocity magnitude
+const SHIP_ACCEL = 60; // px/s^2 — thrust and drag rate
 
 export type ShipTileState = "water" | "beach" | "blocked";
 
@@ -38,17 +37,15 @@ export class Ship {
   public readonly vessel: VesselTemplate;
   public readonly dims: VesselDims;
 
-  /** Continuous position. `heading` is the cardinal visual facing (one of N/E/S/W),
-   *  snapped from `moveAngle` each tick. `moveAngle` is the continuous direction
-   *  of travel in radians (0 = east, π/2 = south), allowing 8-directional (and
-   *  smoother) movement without needing diagonal ship art. */
+  /** Continuous position. `heading` is the cardinal visual facing (N/E/S/W),
+   *  independent of velocity — the scene chooses it from thrust input with a
+   *  sticky-axis preference, and reverse thrust leaves it alone. Velocity is a
+   *  2D vector with momentum; thrust accelerates it and drag slows it. */
   public x: number;
   public y: number;
   public heading: Heading;
-  public moveAngle: number;
-
-  public speed = 0;
-  public targetThrottle = 0; // -1..1; sign indicates reverse
+  public vx = 0;
+  public vy = 0;
 
   /** Lightweight anchor for camera follow and global visibility. Tilemap layers
    *  cannot be Container children, so they live at scene level and are
@@ -65,7 +62,6 @@ export class Ship {
     this.dims = { tilesLong: vessel.tilesLong, tilesWide: vessel.tilesWide };
     this.docked = { ...docked };
     this.heading = docked.heading;
-    this.moveAngle = headingToRotation(this.heading);
     const c = Ship.bboxCenterPx(docked, this.dims);
     this.x = c.x;
     this.y = c.y;
@@ -133,22 +129,35 @@ export class Ship {
   turn(dir: -1 | 1): void {
     if (this.mode !== "sailing") return;
     this.heading = ((((this.heading + dir) % 4) + 4) % 4) as Heading;
-    this.moveAngle = headingToRotation(this.heading);
     this.updateVisual();
   }
 
-  /** Set the continuous direction of travel (radians). Snaps `heading` to the
-   *  nearest cardinal so the visual/hitbox uses existing 4-way art even when
-   *  moving diagonally. */
-  setMoveAngle(angle: number): void {
+  /** Pick a cardinal heading from a thrust input (dx, dy), preferring to keep
+   *  the axis of the current heading. Diagonal inputs do not flip to the other
+   *  axis unless the current axis component is zero — so a ship already moving
+   *  east that gets W+S stays horizontal (snaps to W), and one moving south
+   *  that gets S+E stays vertical. */
+  setHeadingFromInput(dx: number, dy: number): void {
     if (this.mode !== "sailing") return;
-    this.moveAngle = angle;
-    // headingToRotation(h) = (h - 1) * π/2, so h = round(angle/(π/2)) + 1.
-    const cardinal = ((Math.round(angle / (Math.PI / 2)) + 1) % 4 + 4) % 4 as Heading;
-    if (cardinal !== this.heading) {
-      this.heading = cardinal;
+    if (dx === 0 && dy === 0) return;
+    const headingIsHorizontal = this.heading === 1 || this.heading === 3;
+    let next: Heading = this.heading;
+    if (headingIsHorizontal) {
+      if (dx !== 0) next = dx > 0 ? 1 : 3;
+      else next = dy > 0 ? 2 : 0;
+    } else {
+      if (dy !== 0) next = dy > 0 ? 2 : 0;
+      else next = dx > 0 ? 1 : 3;
+    }
+    if (next !== this.heading) {
+      this.heading = next;
       this.updateVisual();
     }
+  }
+
+  /** Current velocity magnitude (px/s). */
+  get speed(): number {
+    return Math.hypot(this.vx, this.vy);
   }
 
   /** Footprint tiles occupied by the ship in a given docked pose. */
@@ -205,9 +214,8 @@ export class Ship {
 
   startSailing(): void {
     this.mode = "sailing";
-    this.speed = 0;
-    this.targetThrottle = 0;
-    this.moveAngle = headingToRotation(this.heading);
+    this.vx = 0;
+    this.vy = 0;
     this.updateVisual();
   }
 
@@ -234,56 +242,96 @@ export class Ship {
     return this.visuals[this.heading].hitbox;
   }
 
-  /** Advance physics while sailing. Velocity direction comes from `moveAngle`
-   *  (set via `setMoveAngle()` or `turn()`). When `active` is false (no
-   *  direction input held) the ship decelerates to a stop — same accel rate
-   *  as when throttling, so release-to-stop feels like walking. */
+  /** Advance physics while sailing. `thrust` is a (possibly non-unit) vector;
+   *  null means no input (the ship drifts and drag slows it). Collision is
+   *  axis-separated so that grazing a beach on one axis doesn't kill motion on
+   *  the other — you can slide along a shore. A beach tile only blocks the
+   *  axis if traversing it would raise the ship's beach-tile count (i.e. you
+   *  are being pushed *further* into the beach); parallel or outward motion
+   *  along the same beach is allowed. */
   updateSailing(
     dtSec: number,
-    active: boolean,
+    thrust: { x: number; y: number } | null,
     classify: (tx: number, ty: number) => ShipTileState,
   ): SailingStepResult {
-    const throttleSpeed = this.targetThrottle * (this.targetThrottle < 0 ? SHIP_REVERSE_MAX : SHIP_MAX_SPEED);
-    const targetSpeed = active ? throttleSpeed : 0;
-    let nextSpeed = this.speed;
-    if (nextSpeed < targetSpeed) nextSpeed = Math.min(targetSpeed, nextSpeed + SHIP_ACCEL * dtSec);
-    else nextSpeed = Math.max(targetSpeed, nextSpeed - SHIP_ACCEL * dtSec);
-
-    const a = this.moveAngle;
-    const nx = this.x + Math.cos(a) * nextSpeed * dtSec;
-    const ny = this.y + Math.sin(a) * nextSpeed * dtSec;
-
-    const tiles = Ship.hitboxTilesAt(nx, ny, this.hitbox());
-    let worst: ShipTileState = "water";
-    for (const t of tiles) {
-      const s = classify(t.x, t.y);
-      if (s === "blocked") { worst = "blocked"; break; }
-      if (s === "beach") worst = "beach";
+    const dv = SHIP_ACCEL * dtSec;
+    if (thrust) {
+      this.vx += thrust.x * dv;
+      this.vy += thrust.y * dv;
+    } else {
+      const sp = Math.hypot(this.vx, this.vy);
+      if (sp > 0) {
+        const decel = Math.min(sp, dv);
+        const k = (sp - decel) / sp;
+        this.vx *= k;
+        this.vy *= k;
+      }
+    }
+    const sp = Math.hypot(this.vx, this.vy);
+    if (sp > SHIP_MAX_SPEED) {
+      const k = SHIP_MAX_SPEED / sp;
+      this.vx *= k;
+      this.vy *= k;
     }
 
-    if (worst === "blocked") {
-      this.speed = 0;
-      this.targetThrottle = 0;
-      this.syncTransform();
-      return { beached: false, blocked: true };
+    const hb = this.hitbox();
+    const curBeach = Ship.beachCount(this.x, this.y, hb, classify);
+
+    // X axis first.
+    let nx = this.x + this.vx * dtSec;
+    const xRes = Ship.classifyAt(nx, this.y, hb, classify);
+    if (xRes.worst === "blocked" || (xRes.worst === "beach" && xRes.beachCount > curBeach)) {
+      this.vx = 0;
+      nx = this.x;
+    }
+    // Y axis from the (possibly updated) x.
+    const beachAfterX = Ship.beachCount(nx, this.y, hb, classify);
+    let ny = this.y + this.vy * dtSec;
+    const yRes = Ship.classifyAt(nx, ny, hb, classify);
+    if (yRes.worst === "blocked" || (yRes.worst === "beach" && yRes.beachCount > beachAfterX)) {
+      this.vy = 0;
+      ny = this.y;
     }
 
-    if (worst === "beach") {
-      // Soft grounding: forward thrust dies, reverse off only.
-      if (this.targetThrottle > 0) this.targetThrottle = 0;
-      if (nextSpeed > 0) nextSpeed = 0;
-      this.speed = nextSpeed;
-      this.x += Math.cos(a) * this.speed * dtSec;
-      this.y += Math.sin(a) * this.speed * dtSec;
-      this.syncTransform();
-      return { beached: true, blocked: false };
-    }
-
-    this.speed = nextSpeed;
     this.x = nx;
     this.y = ny;
     this.syncTransform();
-    return { beached: false, blocked: false };
+
+    const finalRes = Ship.classifyAt(this.x, this.y, hb, classify);
+    return {
+      beached: finalRes.worst === "beach",
+      blocked: finalRes.worst === "blocked",
+    };
+  }
+
+  private static classifyAt(
+    x: number,
+    y: number,
+    hb: HitboxRect,
+    classify: (tx: number, ty: number) => ShipTileState,
+  ): { worst: ShipTileState; beachCount: number } {
+    const tiles = Ship.hitboxTilesAt(x, y, hb);
+    let worst: ShipTileState = "water";
+    let beachCount = 0;
+    for (const t of tiles) {
+      const s = classify(t.x, t.y);
+      if (s === "blocked") { worst = "blocked"; }
+      else if (s === "beach") { beachCount++; if (worst !== "blocked") worst = "beach"; }
+    }
+    return { worst, beachCount };
+  }
+
+  private static beachCount(
+    x: number,
+    y: number,
+    hb: HitboxRect,
+    classify: (tx: number, ty: number) => ShipTileState,
+  ): number {
+    let n = 0;
+    for (const t of Ship.hitboxTilesAt(x, y, hb)) {
+      if (classify(t.x, t.y) === "beach") n++;
+    }
+    return n;
   }
 
   private syncTransform(): void {
@@ -308,9 +356,8 @@ export class Ship {
     this.docked = { ...pose };
     const c = Ship.bboxCenterPx(pose, this.dims);
     this.mode = "docked";
-    this.speed = 0;
-    this.targetThrottle = 0;
-    this.moveAngle = headingToRotation(pose.heading);
+    this.vx = 0;
+    this.vy = 0;
     this.setPose(c.x, c.y, pose.heading);
     // setPose only updateVisuals if heading changed; force in case it didn't.
     this.updateVisual();
@@ -324,8 +371,8 @@ export class Ship {
       y: this.y,
       heading: this.heading,
       mode: this.mode,
-      speed: this.speed,
-      targetThrottle: this.targetThrottle,
+      vx: this.vx,
+      vy: this.vy,
       docked: { ...this.docked },
     };
   }
@@ -333,10 +380,9 @@ export class Ship {
   hydrate(data: ShipSavedState): void {
     this.docked = { ...data.docked };
     this.mode = data.mode;
-    this.speed = data.speed;
-    this.targetThrottle = data.targetThrottle;
+    this.vx = data.vx;
+    this.vy = data.vy;
     this.heading = data.heading;
-    this.moveAngle = headingToRotation(data.heading);
     this.x = data.x;
     this.y = data.y;
     this.updateVisual();
@@ -361,8 +407,8 @@ export interface ShipSavedState {
   y: number;
   heading: Heading;
   mode: ShipMode;
-  speed: number;
-  targetThrottle: number;
+  vx: number;
+  vy: number;
   docked: DockedPose;
 }
 

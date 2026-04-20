@@ -200,6 +200,7 @@ type Events = {
   "edit:requestExport": () => void;
   "edit:export": (payload: { files: Array<{ name: string; content: string }> }) => void;
   "player:resetSpawn": () => void;
+  "ships:resetAll": () => void;
 };
 
 // Tiny hand-rolled typed event emitter. Kept Phaser-free so importing `bus`

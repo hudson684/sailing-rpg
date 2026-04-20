@@ -2,10 +2,30 @@ import { bus, type SaveRequest } from "../bus";
 import { showToast } from "../../ui/store/ui";
 import { SaveManager, type SaveManagerOptions } from "./SaveManager";
 import { IDBSaveStore } from "./store/IDBSaveStore";
+import type { SaveStore } from "./store/SaveStore";
 import { getOrCreatePlayerId } from "./playerId";
 import { PlaytimeTracker } from "./playtime";
 import { SLOT_IDS, slotKey, type SaveEnvelope, type SlotId } from "./envelope";
 import type { Saveable } from "./Saveable";
+
+/**
+ * Read all slots from `store` and return the most recently updated envelope,
+ * or null if no saves exist. Used both by `SaveController.loadLatest()` and
+ * by the preload screen to prefetch the save before the world scene starts.
+ */
+export async function pickLatestEnvelope(
+  store: SaveStore,
+): Promise<SaveEnvelope | null> {
+  const envelopes = await Promise.all(
+    SLOT_IDS.map((slot) => store.get(slotKey(slot))),
+  );
+  let latest: SaveEnvelope | null = null;
+  for (const env of envelopes) {
+    if (!env) continue;
+    if (!latest || env.updatedAt > latest.updatedAt) latest = env;
+  }
+  return latest;
+}
 
 const GAME_VERSION = "0.0.1";
 const AUTOSAVE_INTERVAL_MS = 10_000;
@@ -88,18 +108,22 @@ export class SaveController {
 
   async loadLatest(): Promise<SaveEnvelope | null> {
     if (!this.manager) return null;
-    const envelopes = await Promise.all(
-      SLOT_IDS.map((slot) => this.store.get(slotKey(slot))),
-    );
-    let latest: SaveEnvelope | null = null;
-    for (const env of envelopes) {
-      if (!env) continue;
-      if (!latest || env.updatedAt > latest.updatedAt) latest = env;
-    }
+    const latest = await pickLatestEnvelope(this.store);
     if (!latest) return null;
     const applied = await this.manager.load(latest.slot);
     if (applied) this.opts.onApplied(applied);
     return applied;
+  }
+
+  /**
+   * Hydrate from an envelope that was already fetched from IDB (e.g. prefetched
+   * during the preload screen). Skips the IDB read on the critical path so the
+   * world hydrates the moment the player dismisses the title.
+   */
+  loadPrefetched(env: SaveEnvelope | null): void {
+    if (!this.manager || !env) return;
+    this.manager.hydrateFrom(env);
+    this.opts.onApplied(env);
   }
 
   async autosave(): Promise<void> {

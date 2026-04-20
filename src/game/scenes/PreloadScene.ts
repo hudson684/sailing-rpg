@@ -1,17 +1,28 @@
 import * as Phaser from "phaser";
 import { queueAllAssets, runPostLoadSetup } from "../assets/manifest";
+import { IDBSaveStore, pickLatestEnvelope } from "../save";
+
+/** Registry key for the envelope prefetched by PreloadScene and consumed
+ *  by WorldScene's save init. See `PreloadScene` / `WorldScene.initSave`. */
+export const PREFETCHED_SAVE_REGISTRY_KEY = "prefetchedSave";
 
 /**
  * Loads every asset the game needs to start: world manifest + chunk TMJs +
  * starting-chunk tilesets, player default outfit + tool sheets, item icons,
  * enemy/node/NPC sprite sheets. Renders a Phaser-native progress bar via
- * `this.load` events while loading. After `complete`, runs all post-load
- * texture baking + animation registration, then transitions to `Title`.
+ * `this.load` events while loading. In parallel, prefetches the latest save
+ * envelope from IDB so the world can hydrate synchronously when the player
+ * dismisses the title (no mid-gameplay "default world then rebuild" hitch).
+ * After both complete, runs all post-load texture baking + animation
+ * registration, then transitions to `Title`.
  *
  * Asset paths and per-category load logic live in `assets/manifest.ts`;
  * this scene is just the lifecycle host.
  */
 export class PreloadScene extends Phaser.Scene {
+  private savePrefetch: Promise<void> | null = null;
+  private setStatus: ((text: string) => void) | null = null;
+
   constructor() {
     super("Preload");
   }
@@ -19,11 +30,26 @@ export class PreloadScene extends Phaser.Scene {
   preload() {
     this.drawProgressBar();
     queueAllAssets(this);
+    this.savePrefetch = this.prefetchSave();
   }
 
   create() {
     runPostLoadSetup(this);
-    this.scene.start("Title");
+    this.setStatus?.("Loading save…");
+    void (this.savePrefetch ?? Promise.resolve()).then(() => {
+      this.scene.start("Title");
+    });
+  }
+
+  private async prefetchSave(): Promise<void> {
+    try {
+      const env = await pickLatestEnvelope(new IDBSaveStore());
+      this.game.registry.set(PREFETCHED_SAVE_REGISTRY_KEY, env);
+    } catch (err) {
+      // Same fallback as a cold start: no save, fresh world.
+      console.warn("[preload] save prefetch failed, continuing without:", err);
+      this.game.registry.set(PREFETCHED_SAVE_REGISTRY_KEY, null);
+    }
   }
 
   private drawProgressBar(): void {
@@ -57,6 +83,8 @@ export class PreloadScene extends Phaser.Scene {
       })
       .setOrigin(0.5, 0);
 
+    this.setStatus = (text: string) => fileText.setText(text);
+
     this.load.on("progress", (value: number) => {
       fill.clear();
       fill.fillStyle(0x9ec5ff, 1);
@@ -68,10 +96,18 @@ export class PreloadScene extends Phaser.Scene {
     });
 
     this.load.once("complete", () => {
+      // Top off the bar so a slow save prefetch doesn't look stuck at <100%.
+      fill.clear();
+      fill.fillStyle(0x9ec5ff, 1);
+      fill.fillRect(barX, barY, barW, barH);
+    });
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       frame.destroy();
       fill.destroy();
       titleText.destroy();
       fileText.destroy();
+      this.setStatus = null;
     });
   }
 }

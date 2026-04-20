@@ -107,6 +107,7 @@ import {
   type SaveEnvelope,
 } from "../save";
 import { setActiveSaveController } from "../save/activeController";
+import { PREFETCHED_SAVE_REGISTRY_KEY } from "./PreloadScene";
 
 const HELM_INTERACT_RADIUS = TILE_SIZE * 0.7;
 const DOOR_INTERACT_RADIUS = TILE_SIZE * 0.9;
@@ -624,6 +625,7 @@ export class WorldScene extends Phaser.Scene {
       bus.onTyped("edit:shopUpdate", this.onEditShopUpdate);
       bus.onTyped("edit:requestExport", this.onEditRequestExport);
       bus.onTyped("player:resetSpawn", this.onResetSpawn);
+      bus.onTyped("ships:resetAll", this.onResetAllShips);
       const editKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F7);
       editKey.on("down", () => bus.emitTyped("edit:toggle"));
     }
@@ -674,6 +676,7 @@ export class WorldScene extends Phaser.Scene {
         bus.offTyped("edit:shopUpdate", this.onEditShopUpdate);
         bus.offTyped("edit:requestExport", this.onEditRequestExport);
         bus.offTyped("player:resetSpawn", this.onResetSpawn);
+        bus.offTyped("ships:resetAll", this.onResetAllShips);
       }
       unsubEquipment();
       unsubWardrobe();
@@ -723,7 +726,18 @@ export class WorldScene extends Phaser.Scene {
       saveSystems.shopsSaveable(),
     ]);
     await this.saveController.refreshMenu();
-    await this.saveController.loadLatest();
+    // If PreloadScene prefetched the latest envelope while the title was up,
+    // hydrate from it synchronously here — no IDB round-trip on the critical
+    // path. We pop it from the registry so a later scene re-entry can't apply
+    // a stale snapshot.
+    const registry = this.game.registry;
+    if (registry.has(PREFETCHED_SAVE_REGISTRY_KEY)) {
+      const prefetched = registry.get(PREFETCHED_SAVE_REGISTRY_KEY) as SaveEnvelope | null;
+      registry.remove(PREFETCHED_SAVE_REGISTRY_KEY);
+      this.saveController.loadPrefetched(prefetched);
+    } else {
+      await this.saveController.loadLatest();
+    }
   }
 
   update(_time: number, dtMs: number) {
@@ -957,6 +971,23 @@ export class WorldScene extends Phaser.Scene {
       (DEFAULT_PLAYER_SPAWN_TILE.y + 0.5) * TILE_SIZE,
     );
     showToast("Teleported to default spawn.", 1500);
+  };
+
+  private onResetAllShips = () => {
+    if (this.activeShip) {
+      this.activeShip = null;
+      this.sceneState.mode = "OnFoot";
+    }
+    for (const inst of this.shipInstanceData) {
+      const ship = this.ships.get(inst.id);
+      if (!ship) continue;
+      ship.finalizeDock({
+        tx: inst.tileX,
+        ty: inst.tileY,
+        heading: inst.heading,
+      });
+    }
+    showToast("Reset ship positions.", 1500);
   };
 
   private handlePlayerDeath() {
@@ -1624,7 +1655,7 @@ export class WorldScene extends Phaser.Scene {
     ship.startSailing();
     this.sceneState.mode = "AtHelm";
     this.cameras.main.startFollow(ship.container, true, 0.1, 0.1);
-    showToast("WASD to steer, Shift speed up, R slow/reverse, E anchor.", 4500);
+    showToast("WASD to steer, R to reverse, E to anchor.", 4500);
     void this.saveController.autosave();
   }
 
@@ -1634,34 +1665,38 @@ export class WorldScene extends Phaser.Scene {
     const ship = this.activeShip;
     if (!ship) return;
 
-    // Shift ramps throttle forward, R ramps it backward (into reverse).
-    // Throttle persists when no direction is held, so the stick-shift feel
-    // survives pauses between WASD taps.
-    if (this.keys.sprint.isDown) {
-      ship.targetThrottle = Math.min(1, ship.targetThrottle + 0.6 * dt);
-    }
-    if (this.keys.reverse.isDown) {
-      ship.targetThrottle = Math.max(-1, ship.targetThrottle - 0.6 * dt);
-    }
-
     // 8-directional input vector from WASD / arrows. Same shape as the
-    // player's on-foot movement.
+    // player's on-foot movement. A held direction both thrusts and sets the
+    // ship's facing (with a sticky-axis preference on diagonals). R thrusts
+    // opposite the current heading without changing it — momentum does the
+    // rest, so pressing R while moving forward first decelerates, then backs up.
     let dx = 0;
     let dy = 0;
     if (this.keys.w.isDown || this.keys.up.isDown) dy -= 1;
     if (this.keys.s.isDown || this.keys.down.isDown) dy += 1;
     if (this.keys.a.isDown || this.keys.left.isDown) dx -= 1;
     if (this.keys.d.isDown || this.keys.right.isDown) dx += 1;
-    const active = dx !== 0 || dy !== 0;
-    if (active) ship.setMoveAngle(Math.atan2(dy, dx));
 
-    const step = ship.updateSailing(dt, active, (tx, ty) => this.world.manager.shipTileState(tx, ty));
+    let thrust: { x: number; y: number } | null = null;
+    if (dx !== 0 || dy !== 0) {
+      ship.setHeadingFromInput(dx, dy);
+      const len = Math.hypot(dx, dy);
+      thrust = { x: dx / len, y: dy / len };
+    } else if (this.keys.reverse.isDown) {
+      const h = ship.heading;
+      thrust = {
+        x: h === 1 ? -1 : h === 3 ? 1 : 0,
+        y: h === 2 ? -1 : h === 0 ? 1 : 0,
+      };
+    }
+
+    const step = ship.updateSailing(dt, thrust, (tx, ty) => this.world.manager.shipTileState(tx, ty));
     if (step.blocked) {
       if (!this.wasBlocked) showToast("Ran aground! Turn to clear water.", 2500);
       this.wasBlocked = true;
       this.wasBeached = false;
     } else if (step.beached) {
-      if (!this.wasBeached) showToast("Run aground on the beach. Back off with R.", 2500);
+      if (!this.wasBeached) showToast("Run aground on the beach. Steer away or press R.", 2500);
       this.wasBeached = true;
       this.wasBlocked = false;
     } else {
@@ -1696,7 +1731,8 @@ export class WorldScene extends Phaser.Scene {
 
     this.sceneState.mode = "Anchoring";
     ship.mode = "anchoring";
-    ship.targetThrottle = 0;
+    ship.vx = 0;
+    ship.vy = 0;
 
     const targetCenter = Ship.bboxCenterPx(target, ship.dims);
     ship.setPose(ship.x, ship.y, target.heading);

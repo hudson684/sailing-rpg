@@ -188,32 +188,32 @@
     {
       "id": "e_slime_1",
       "defId": "slime_small_green",
-      "tileX": 51,
+      "tileX": 52,
       "tileY": 8
     },
     {
       "id": "e_slime_2",
       "defId": "slime_small_green",
       "tileX": 54,
-      "tileY": 5
+      "tileY": 4
     },
     {
       "id": "e_slime_3",
       "defId": "slime_small_blue",
-      "tileX": 50,
+      "tileX": 48,
       "tileY": 8
     },
     {
       "id": "e_slime_4",
       "defId": "slime_small_blue",
-      "tileX": 39,
+      "tileX": 41,
       "tileY": 14
     },
     {
       "id": "e_slime_5",
       "defId": "slime_medium_red",
-      "tileX": 54,
-      "tileY": 12
+      "tileX": 50,
+      "tileY": 6
     },
     {
       "id": "slime_small_green-1",
@@ -230,7 +230,7 @@
     {
       "id": "slime_small_green-3",
       "defId": "slime_small_green",
-      "tileX": 41,
+      "tileX": 42,
       "tileY": 76
     }
   ]
