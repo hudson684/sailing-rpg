@@ -1,0 +1,140 @@
+/* Touch-first inventory variant. Reuses the sliced-panel pieces from
+   InventoryPremade.css (class names prefixed .inv-premade-*) but swaps
+   in its own root so mobile-specific sizing doesn't fight the desktop
+   component's scale cap. */
+
+.inv-touch-root {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* Leave generous headroom below the panel for the action bar (~96px)
+     and side margins for the virtual joystick / action buttons when
+     rendered alongside TouchControls. */
+  --inv-fit: min(
+    0.7,
+    calc((100vw - 440px) / 800),
+    calc((100vh - 180px) / 680)
+  );
+  transform: translate(-50%, -50%) scale(var(--inv-fit));
+  transform-origin: center center;
+  image-rendering: pixelated;
+  pointer-events: auto;
+  user-select: none;
+  font-family: var(--pixel-font);
+  color: var(--pixel-ink);
+  z-index: 20;
+}
+
+/* When TouchControls are hidden (portrait / smaller devices) the panel
+   can use more horizontal room. */
+@media (orientation: portrait) {
+  .inv-touch-root {
+    --inv-fit: min(
+      0.8,
+      calc((100vw - 32px) / 800),
+      calc((100vh - 220px) / 680)
+    );
+  }
+}
+
+/* Touch slots get a pointer cursor so they read as tappable targets,
+   and a clear selection ring when chosen. The selection ring is larger
+   and higher-contrast than the desktop hover outline so it's legible
+   through a finger. */
+.inv-touch-slot {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.inv-touch-slot.is-selected {
+  outline: 4px solid var(--pixel-gold);
+  outline-offset: -4px;
+  border-radius: 4px;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.45);
+}
+
+/* ── Bottom action bar ─────────────────────────────────────────────── */
+
+.inv-touch-actionbar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 12px;
+  background: var(--pixel-parchment);
+  border: 4px solid var(--pixel-ink);
+  box-shadow:
+    inset 0 -3px 0 var(--pixel-tan-dark),
+    inset 0 3px 0 #fbe8c8,
+    0 4px 0 rgba(0, 0, 0, 0.4);
+  font-family: var(--pixel-font);
+  color: var(--pixel-ink);
+  z-index: 21;
+  pointer-events: auto;
+  max-width: calc(100vw - 24px);
+}
+
+.inv-touch-actionbar__label {
+  font-family: var(--pixel-display-font);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.inv-touch-actionbar__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.inv-touch-btn {
+  min-width: 96px;
+  min-height: 48px;
+  padding: 0 16px;
+  background: var(--pixel-tan);
+  border: 3px solid var(--pixel-ink);
+  box-shadow:
+    inset 0 -3px 0 var(--pixel-tan-dark),
+    inset 0 3px 0 var(--pixel-parchment),
+    0 3px 0 rgba(0, 0, 0, 0.4);
+  font-family: var(--pixel-display-font);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--pixel-ink);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.inv-touch-btn:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 -3px 0 var(--pixel-tan-dark),
+    inset 0 3px 0 var(--pixel-parchment),
+    0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.inv-touch-btn--primary {
+  background: var(--pixel-gold);
+}
+.inv-touch-btn--primary:active {
+  background: var(--pixel-gold);
+}
+
+.inv-touch-btn--danger {
+  background: var(--pixel-accent-red);
+  color: #fff1ea;
+  box-shadow:
+    inset 0 -3px 0 #8a2a2a,
+    inset 0 3px 0 #e57878,
+    0 3px 0 rgba(0, 0, 0, 0.4);
+}
+.inv-touch-btn--danger:active {
+  box-shadow:
+    inset 0 -3px 0 #8a2a2a,
+    inset 0 3px 0 #e57878,
+    0 1px 0 rgba(0, 0, 0, 0.4);
+}
