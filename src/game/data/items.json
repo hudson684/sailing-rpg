@@ -154,7 +154,7 @@
         "projectile": "arrow",
         "cooldownMs": 350
       },
-      "value": 80
+      "value": 3
     },
     {
       "id": "arrow",
