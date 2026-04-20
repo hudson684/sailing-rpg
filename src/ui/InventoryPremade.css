@@ -19,6 +19,19 @@
   z-index: 20;
 }
 
+/* Touch devices: cap the panel well under full scale and reserve space
+   on both sides for the virtual joystick / action buttons (~200px each
+   in landscape). */
+@media (pointer: coarse) {
+  .inv-premade-root {
+    --inv-fit: min(
+      0.6,
+      calc((100vw - 440px) / 800),
+      calc((100vh - 40px) / 680)
+    );
+  }
+}
+
 /* Each sliced panel is positioned absolutely and paints its own sprite. */
 .inv-premade-panel {
   position: absolute;
