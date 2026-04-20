@@ -2,7 +2,15 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
+  /* 768×616 at scale=4, plus ~20px overflow for the close button and
+     ~32px for the hint line — keep a little margin so nothing clips. */
+  --inv-fit: min(
+    1,
+    calc((100vw - 32px) / 800),
+    calc((100vh - 80px) / 680)
+  );
+  transform: translate(-50%, -50%) scale(var(--inv-fit));
+  transform-origin: center center;
   image-rendering: pixelated;
   pointer-events: auto;
   user-select: none;
