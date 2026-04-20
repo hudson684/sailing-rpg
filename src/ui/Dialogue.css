@@ -7,6 +7,9 @@
   justify-content: center;
   pointer-events: none;
   padding: 0 24px 32px;
+  /* Sit above the HUD (z-index: 10) so health/stamina bars don't paint
+     over dialogue text. */
+  z-index: 15;
 }
 
 .dialogue-root .dialogue-box {
@@ -14,6 +17,19 @@
   width: min(760px, 100%);
   pointer-events: auto;
   cursor: pointer;
+}
+
+/* Touch devices get a smaller dialogue so it doesn't swallow the screen
+   in landscape. Scaling from center-bottom keeps the panel anchored to
+   its layout slot while shrinking borders, text and buttons together. */
+@media (pointer: coarse) {
+  .dialogue-root {
+    padding: 0 12px 16px;
+  }
+  .dialogue-root .dialogue-box {
+    transform-origin: center bottom;
+    transform: scale(0.6);
+  }
 }
 
 .dialogue-text {
