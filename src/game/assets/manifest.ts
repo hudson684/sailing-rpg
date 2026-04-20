@@ -104,7 +104,26 @@ function queueWorldManifestAndChunks(scene: Phaser.Scene): void {
               `Ship tilemap '${mapKey}' missing from world manifest — check ships/${mapKey}.tmx exists and the map build ran.`,
             );
           }
-          scene.load.tilemapTiledJSON(shipTilemapKey(vessel, h), `maps/${ref.path}`);
+          const tilemapKey = shipTilemapKey(vessel, h);
+          scene.load.tilemapTiledJSON(tilemapKey, `maps/${ref.path}`);
+          // Ship TMJs embed their own tilesets. The world manifest's
+          // `chunkTilesets` only covers chunk tilesets, so the ship's
+          // tileset images would otherwise never be queued and
+          // `createShipVisual` crashes in `WorldScene.create`. Walk the
+          // freshly-parsed TMJ and queue each referenced tileset image;
+          // Phaser's loader dedupes by key, so overlaps with chunk
+          // tilesets are fine.
+          scene.load.once(
+            `filecomplete-tilemapJSON-${tilemapKey}`,
+            (_k: string, _t: string, tmj: { tilesets?: Array<{ image?: string }> }) => {
+              for (const ts of tmj.tilesets ?? []) {
+                if (!ts.image) continue;
+                const imgKey = tilesetImageKeyFor(ts.image);
+                if (scene.sys.textures.exists(imgKey)) continue;
+                scene.load.image(imgKey, `maps/${ts.image}`);
+              }
+            },
+          );
         }
       }
     },
