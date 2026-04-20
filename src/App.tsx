@@ -14,6 +14,9 @@ import "./App.css";
 const InventoryPremade = lazy(() =>
   import("./ui/InventoryPremade").then((m) => ({ default: m.InventoryPremade })),
 );
+const InventoryTouch = lazy(() =>
+  import("./ui/InventoryTouch").then((m) => ({ default: m.InventoryTouch })),
+);
 const Jobs = lazy(() => import("./ui/Jobs").then((m) => ({ default: m.Jobs })));
 const PauseMenu = lazy(() => import("./ui/PauseMenu").then((m) => ({ default: m.PauseMenu })));
 const Dialogue = lazy(() => import("./ui/Dialogue").then((m) => ({ default: m.Dialogue })));
@@ -92,7 +95,7 @@ export default function App() {
         ) : titleDismissed ? (
           <>
             <Hud />
-            <InventoryPremade />
+            {isMobile ? <InventoryTouch /> : <InventoryPremade />}
             <Jobs />
             <PauseMenu />
             <Dialogue />
