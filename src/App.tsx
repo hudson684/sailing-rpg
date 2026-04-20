@@ -37,6 +37,7 @@ export default function App() {
   // HUD/touch-control overlays on top of the canvas — they'd mislead the
   // player (fake stats) and eat taps meant to dismiss the title.
   const titleDismissed = useUIStore((s) => s.titleDismissed);
+  const inventoryOpen = useUIStore((s) => s.inventoryOpen);
   const [customizerOpen, setCustomizerOpen] = useState(false);
   const [phaserBooting, setPhaserBooting] = useState(false);
   const isMobile = useIsMobile();
@@ -107,7 +108,7 @@ export default function App() {
             />
             {import.meta.env.DEV && <EditMode />}
             {import.meta.env.DEV && <NodeDefEditor />}
-            <TouchControls visible={isMobile && !isPortrait} />
+            <TouchControls visible={isMobile && !isPortrait && !inventoryOpen} />
             <PauseButton />
           </>
         ) : null}

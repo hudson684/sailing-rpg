@@ -23,9 +23,14 @@ export interface UIState {
   // Not persisted: every page load shows the title screen again, so the
   // React HUD / touch controls must start hidden each session.
   titleDismissed: boolean;
+  // Touch inventory is a full-screen modal on mobile. Tracked here so
+  // TouchControls can hide itself while the modal is up (the backdrop
+  // would swallow its input anyway).
+  inventoryOpen: boolean;
 
   setHud: (patch: Partial<HudState>) => void;
   setTitleDismissed: (v: boolean) => void;
+  setInventoryOpen: (v: boolean) => void;
   addToast: (text: string, opts?: { ttlMs?: number; kind?: ToastKind }) => number;
   dismissToast: (id: number) => void;
   pruneExpiredToasts: (now?: number) => void;
@@ -47,10 +52,13 @@ export const useUIStore = create<UIState>()((set, get) => ({
   hud: INITIAL_HUD,
   toasts: [],
   titleDismissed: false,
+  inventoryOpen: false,
 
   setHud: (patch) => set((s) => ({ hud: { ...s.hud, ...patch } })),
 
   setTitleDismissed: (v) => set({ titleDismissed: v }),
+
+  setInventoryOpen: (v) => set({ inventoryOpen: v }),
 
   addToast: (text, opts) => {
     const id = nextToastId++;

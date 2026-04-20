@@ -1,57 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
 import { bus } from "../game/bus";
 import {
-  EQUIP_SLOTS,
   ITEMS,
   slotsForFamily,
   type EquipSlot,
 } from "../game/inventory/items";
 import { HOTBAR_SIZE, type Slot } from "../game/inventory/types";
+import type { Equipped } from "../game/equipment/operations";
 import {
   selectEquipped,
   selectInventorySlots,
   useGameStore,
 } from "../game/store/gameStore";
-import { Hotbar } from "./Hotbar";
+import { useUIStore } from "./store/uiStore";
 import { showToast } from "./store/ui";
-import "./InventoryPremade.css";
 import "./InventoryTouch.css";
 
 /**
- * Touch-first inventory. Mirrors `InventoryPremade`'s paper-doll +
- * backpack + hotbar layout, but replaces drag/drop, right-click menus
- * and double-click shortcuts with a tap-to-select + bottom action bar
- * model that works reliably with fingers.
+ * Mobile-first inventory. A full-screen modal (not a scaled-down desktop
+ * panel) with two tabs — Equipped and Bag — plus a persistent hotbar
+ * strip so items can be assigned to quick slots from either tab.
  *
- * Tap rules:
- *   - Tap a filled slot  → select it (highlighted).
+ * Selection model (carried over from the previous touch variant):
+ *   - Tap a filled slot  → select it.
  *   - Tap the selected   → deselect.
- *   - Tap a second inv   → move/swap the selected inv item into it.
- *   - Tap a fitting      → equip the selected inv item into that slot.
- *     equip slot
+ *   - Tap another slot   → move/swap (inv ↔ inv, inv → hotbar, inv →
+ *                           fitting equip, etc.).
  *   - Bottom action bar  → explicit Equip / Unequip / Drop / Cancel.
  */
-
-const SCALE = 4;
-const SLOT_SIZE = 16;
-
-const EQUIP_PANEL = { x: 0, y: 0, w: 75, h: 83 };
-const INFO_PANEL = { x: 0, y: 82, w: 68, h: 68 };
-const INV_GRID = { x: 72, y: 0, w: 120, h: 125 };
-const HOTBAR = { x: 72, y: 124, w: 120, h: 30 };
-const INFO_TOGGLE = { x: 28, y: 69, w: 16, h: 10 };
-
-const EQUIP_POS: Record<EquipSlot, { x: number; y: number }> = {
-  head:     { x: 28, y:  6 },
-  body:     { x: 28, y: 28 },
-  legs:     { x: 28, y: 50 },
-  mainHand: { x:  6, y: 17 },
-  offHand:  { x:  6, y: 39 },
-  ringL:    { x: 50, y: 17 },
-  ringR:    { x: 50, y: 39 },
-  trinketL: { x:  6, y: 61 },
-  trinketR: { x: 50, y: 61 },
-};
 
 const EQUIP_LABELS: Record<EquipSlot, string> = {
   head: "Head",
@@ -65,21 +41,19 @@ const EQUIP_LABELS: Record<EquipSlot, string> = {
   trinketR: "Trinket (Right)",
 };
 
-const INV_COLS = [78, 101, 124, 147, 170];
-const INV_ROWS = [6, 29, 52, 75, 98];
+// Paper-doll layout: 3 cols × 4 rows. Centre column holds head/body/legs;
+// hands flank body; rings flank legs; trinkets sit on the bottom row.
+const PAPER_DOLL_GRID: (EquipSlot | null)[][] = [
+  [null,       "head",  null     ],
+  ["mainHand", "body",  "offHand"],
+  ["ringL",    "legs",  "ringR"  ],
+  ["trinketL", null,    "trinketR"],
+];
 
-const TOTAL_W = Math.max(
-  EQUIP_PANEL.x + EQUIP_PANEL.w,
-  INFO_PANEL.x + INFO_PANEL.w,
-  INV_GRID.x + INV_GRID.w,
-  HOTBAR.x + HOTBAR.w,
-);
-const TOTAL_H = Math.max(
-  EQUIP_PANEL.y + EQUIP_PANEL.h,
-  INFO_PANEL.y + INFO_PANEL.h,
-  INV_GRID.y + INV_GRID.h,
-  HOTBAR.y + HOTBAR.h,
-);
+const BAG_COLS = 5;
+const BAG_ROWS = 5;
+
+type Tab = "equipped" | "bag";
 
 type Selection =
   | { kind: "inv"; index: number }
@@ -88,8 +62,9 @@ type Selection =
 export function InventoryTouch() {
   const slots = useGameStore(selectInventorySlots);
   const equipped = useGameStore(selectEquipped);
+  const setInventoryOpen = useUIStore((s) => s.setInventoryOpen);
   const [open, setOpen] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(true);
+  const [tab, setTab] = useState<Tab>("equipped");
   const [selected, setSelected] = useState<Selection | null>(null);
 
   useEffect(() => {
@@ -121,10 +96,10 @@ export function InventoryTouch() {
     };
   }, []);
 
-  // Clear selection whenever the panel closes so reopening starts fresh.
   useEffect(() => {
+    setInventoryOpen(open);
     if (!open) setSelected(null);
-  }, [open]);
+  }, [open, setInventoryOpen]);
 
   const goldCount = useMemo(() => {
     let total = 0;
@@ -173,35 +148,29 @@ export function InventoryTouch() {
 
   const handleInvTap = (index: number) => {
     const slot = slots[index] ?? null;
-    // Tapping the already-selected inv slot deselects.
     if (selected?.kind === "inv" && selected.index === index) {
       setSelected(null);
       return;
     }
-    // If an inv item is selected, use this tap as the move destination.
     if (selected?.kind === "inv") {
       moveSlot(selected.index, index);
       setSelected(null);
       return;
     }
-    // Otherwise, select this slot if it has an item.
     if (slot) setSelected({ kind: "inv", index });
     else setSelected(null);
   };
 
   const handleEquipTap = (equipSlot: EquipSlot) => {
-    // If an inv item of the right family is selected, equip it here.
     if (selected?.kind === "inv" && selectedFamily &&
         slotsForFamily(selectedFamily).includes(equipSlot)) {
       equipSelectedInv();
       return;
     }
-    // Tapping the same equip selection deselects.
     if (selected?.kind === "equip" && selected.slot === equipSlot) {
       setSelected(null);
       return;
     }
-    // Otherwise select the equip slot if it has an item.
     if (equipped[equipSlot]) setSelected({ kind: "equip", slot: equipSlot });
     else setSelected(null);
   };
@@ -209,126 +178,77 @@ export function InventoryTouch() {
   return (
     <>
       <div
-        className="inv-touch-root"
-        role="region"
-        aria-label="Inventory"
-        style={{
-          ["--scale" as string]: SCALE,
-          width: `calc(${TOTAL_W}px * var(--scale))`,
-          height: `calc(${TOTAL_H}px * var(--scale))`,
+        className="inv-touch-backdrop"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setOpen(false);
         }}
       >
-        <button
-          className="inv-premade-close"
-          onClick={() => setOpen(false)}
-          aria-label="Close inventory"
-        >
-          ×
-        </button>
-
-        {/* Equipment paper-doll panel */}
-        <div className="inv-premade-panel" style={panelStyle(EQUIP_PANEL, "/ui/premade-equipment.png")}>
-          {EQUIP_SLOTS.map((slot) => {
-            const pos = EQUIP_POS[slot];
-            const id = equipped[slot];
-            const def = id ? ITEMS[id] : null;
-            const fits =
-              selectedFamily !== undefined && slotsForFamily(selectedFamily).includes(slot);
-            const isSelected = selected?.kind === "equip" && selected.slot === slot;
-            return (
-              <button
-                key={slot}
-                className={
-                  "inv-premade-slot inv-touch-slot" +
-                  (def ? " is-filled" : "") +
-                  (isSelected ? " is-selected" : "") +
-                  (fits ? " is-target" : "")
-                }
-                style={innerCellStyle(pos.x - EQUIP_PANEL.x, pos.y - EQUIP_PANEL.y)}
-                onClick={() => handleEquipTap(slot)}
-                aria-label={
-                  def ? `${def.name} equipped in ${EQUIP_LABELS[slot]}` : `${EQUIP_LABELS[slot]} (empty)`
-                }
-              >
-                {def && (
-                  <img className="inv-premade-icon" src={def.icon} alt="" draggable={false} />
-                )}
-              </button>
-            );
-          })}
-
-          <button
-            className={"inv-premade-info-toggle" + (infoOpen ? " is-open" : "")}
-            style={{
-              left: `calc(${INFO_TOGGLE.x - EQUIP_PANEL.x}px * var(--scale))`,
-              top: `calc(${INFO_TOGGLE.y - EQUIP_PANEL.y}px * var(--scale))`,
-              width: `calc(${INFO_TOGGLE.w}px * var(--scale))`,
-              height: `calc(${INFO_TOGGLE.h}px * var(--scale))`,
-            }}
-            onClick={() => setInfoOpen((v) => !v)}
-            aria-label={infoOpen ? "Collapse equipped summary" : "Expand equipped summary"}
-          />
-        </div>
-
-        {infoOpen && (
-          <div className="inv-premade-panel" style={panelStyle(INFO_PANEL, "/ui/premade-info.png")}>
-            <div className="inv-premade-info-text inv-premade-info-gold">{goldCount}</div>
-            <div className="inv-premade-info-text inv-premade-info-main">
-              {equippedMainName ?? "—"}
-            </div>
-            <div className="inv-premade-info-text inv-premade-info-off">
-              {equippedOffName ?? "—"}
-            </div>
-          </div>
-        )}
-
-        <div className="inv-premade-panel" style={panelStyle(INV_GRID, "/ui/premade-inv-grid.png")}>
-          {INV_ROWS.map((rowY, row) =>
-            INV_COLS.map((colX, col) => {
-              const i = HOTBAR_SIZE + row * 5 + col;
-              const slot = slots[i] ?? null;
-              const def = slot ? ITEMS[slot.itemId] : null;
-              const isSelected = selected?.kind === "inv" && selected.index === i;
-              return (
-                <button
-                  key={i}
-                  className={
-                    "inv-premade-slot inv-touch-slot" +
-                    (slot ? " is-filled" : "") +
-                    (isSelected ? " is-selected" : "")
-                  }
-                  style={innerCellStyle(colX - INV_GRID.x, rowY - INV_GRID.y)}
-                  onClick={() => handleInvTap(i)}
-                  aria-label={def && slot ? `${def.name} ×${slot.quantity}` : "Empty slot"}
-                >
-                  {def && slot && (
-                    <>
-                      <img className="inv-premade-icon" src={def.icon} alt="" draggable={false} />
-                      {slot.quantity > 1 && (
-                        <span className="inv-premade-qty">{formatQty(slot.quantity)}</span>
-                      )}
-                    </>
-                  )}
-                </button>
-              );
-            }),
-          )}
-        </div>
-
         <div
-          className="inv-premade-hotbar-mount"
-          style={{
-            left: `calc(${HOTBAR.x}px * var(--scale))`,
-            top: `calc(${HOTBAR.y}px * var(--scale))`,
-            width: `calc(${HOTBAR.w}px * var(--scale))`,
-            height: `calc(${HOTBAR.h}px * var(--scale))`,
-          }}
+          className="px-panel inv-touch-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Inventory"
         >
-          <Hotbar variant="embedded" scale={SCALE} />
-        </div>
+          <div className="inv-touch-header">
+            <div className="inv-touch-title">Inventory</div>
+            <div className="inv-touch-summary">
+              <span className="inv-touch-summary-chip">
+                <span className="inv-touch-summary-label">Gold</span>
+                <span className="inv-touch-summary-value">{goldCount}</span>
+              </span>
+              <span className="inv-touch-summary-chip">
+                <span className="inv-touch-summary-label">Main</span>
+                <span className="inv-touch-summary-value">{equippedMainName ?? "—"}</span>
+              </span>
+              <span className="inv-touch-summary-chip">
+                <span className="inv-touch-summary-label">Off</span>
+                <span className="inv-touch-summary-value">{equippedOffName ?? "—"}</span>
+              </span>
+            </div>
+            <button
+              className="px-close inv-touch-close"
+              onClick={() => setOpen(false)}
+              aria-label="Close inventory"
+            >
+              ×
+            </button>
+          </div>
 
-        <div className="inv-premade-hint">
-          Tap to select · tap another slot to move or equip
+          <div className="inv-touch-tabs" role="tablist">
+            <TabButton active={tab === "equipped"} onClick={() => setTab("equipped")}>
+              Equipped
+            </TabButton>
+            <TabButton active={tab === "bag"} onClick={() => setTab("bag")}>
+              Bag
+            </TabButton>
+          </div>
+
+          <div className="inv-touch-body">
+            {tab === "equipped" ? (
+              <PaperDoll
+                equipped={equipped}
+                selected={selected}
+                selectedFamily={selectedFamily}
+                onTap={handleEquipTap}
+              />
+            ) : (
+              <BagGrid
+                slots={slots}
+                selected={selected}
+                onTap={handleInvTap}
+              />
+            )}
+          </div>
+
+          <HotbarStrip
+            slots={slots}
+            selected={selected}
+            onTap={handleInvTap}
+          />
+
+          <div className="inv-touch-hint">
+            Tap to select · tap another slot to move or equip
+          </div>
         </div>
       </div>
 
@@ -342,6 +262,185 @@ export function InventoryTouch() {
         onCancel={() => setSelected(null)}
       />
     </>
+  );
+}
+
+interface TabButtonProps {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}
+
+function TabButton({ active, onClick, children }: TabButtonProps) {
+  return (
+    <button
+      role="tab"
+      aria-selected={active}
+      className={"px-btn inv-touch-tab" + (active ? " is-active" : "")}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
+interface PaperDollProps {
+  equipped: Equipped;
+  selected: Selection | null;
+  selectedFamily: string | undefined;
+  onTap: (slot: EquipSlot) => void;
+}
+
+function PaperDoll({ equipped, selected, selectedFamily, onTap }: PaperDollProps) {
+  return (
+    <div className="inv-touch-paperdoll" role="group" aria-label="Equipped items">
+      {PAPER_DOLL_GRID.map((row, ri) =>
+        row.map((slot, ci) => {
+          if (!slot) return <div key={`${ri}-${ci}`} className="inv-touch-paperdoll-spacer" />;
+          return (
+            <EquipSlotCell
+              key={slot}
+              slot={slot}
+              equipped={equipped}
+              selected={selected}
+              selectedFamily={selectedFamily}
+              onTap={onTap}
+            />
+          );
+        }),
+      )}
+    </div>
+  );
+}
+
+interface EquipSlotCellProps {
+  slot: EquipSlot;
+  equipped: Equipped;
+  selected: Selection | null;
+  selectedFamily: string | undefined;
+  onTap: (slot: EquipSlot) => void;
+}
+
+function EquipSlotCell({ slot, equipped, selected, selectedFamily, onTap }: EquipSlotCellProps) {
+  const id = equipped[slot];
+  const def = id ? ITEMS[id] : null;
+  const fits =
+    selectedFamily !== undefined &&
+    slotsForFamily(selectedFamily as Parameters<typeof slotsForFamily>[0]).includes(slot);
+  const isSelected = selected?.kind === "equip" && selected.slot === slot;
+  return (
+    <button
+      className={
+        "px-slot inv-touch-cell" +
+        (def ? " px-slot-filled" : "") +
+        (isSelected ? " is-selected" : "") +
+        (fits ? " is-target" : "")
+      }
+      onClick={() => onTap(slot)}
+      aria-label={
+        def ? `${def.name} equipped in ${EQUIP_LABELS[slot]}` : `${EQUIP_LABELS[slot]} (empty)`
+      }
+    >
+      <span className="inv-touch-cell-label">{EQUIP_LABELS[slot]}</span>
+      {def && <img className="inv-touch-icon" src={def.icon} alt="" draggable={false} />}
+    </button>
+  );
+}
+
+interface BagGridProps {
+  slots: (Slot | null)[];
+  selected: Selection | null;
+  onTap: (index: number) => void;
+}
+
+function BagGrid({ slots, selected, onTap }: BagGridProps) {
+  const cells: number[] = [];
+  for (let i = 0; i < BAG_COLS * BAG_ROWS; i++) cells.push(HOTBAR_SIZE + i);
+  return (
+    <div
+      className="inv-touch-bag"
+      role="grid"
+      aria-label="Inventory bag"
+      style={{ gridTemplateColumns: `repeat(${BAG_COLS}, 1fr)` }}
+    >
+      {cells.map((i) => (
+        <BagCell key={i} index={i} slot={slots[i] ?? null} selected={selected} onTap={onTap} />
+      ))}
+    </div>
+  );
+}
+
+interface BagCellProps {
+  index: number;
+  slot: Slot | null;
+  selected: Selection | null;
+  onTap: (index: number) => void;
+}
+
+function BagCell({ index, slot, selected, onTap }: BagCellProps) {
+  const def = slot ? ITEMS[slot.itemId] : null;
+  const isSelected = selected?.kind === "inv" && selected.index === index;
+  return (
+    <button
+      className={
+        "px-slot inv-touch-cell" +
+        (slot ? " px-slot-filled" : "") +
+        (isSelected ? " is-selected" : "")
+      }
+      onClick={() => onTap(index)}
+      aria-label={def && slot ? `${def.name} ×${slot.quantity}` : "Empty slot"}
+    >
+      {def && slot && (
+        <>
+          <img className="inv-touch-icon" src={def.icon} alt="" draggable={false} />
+          {slot.quantity > 1 && (
+            <span className="px-slot-qty inv-touch-qty">{formatQty(slot.quantity)}</span>
+          )}
+        </>
+      )}
+    </button>
+  );
+}
+
+interface HotbarStripProps {
+  slots: (Slot | null)[];
+  selected: Selection | null;
+  onTap: (index: number) => void;
+}
+
+function HotbarStrip({ slots, selected, onTap }: HotbarStripProps) {
+  const cells: number[] = [];
+  for (let i = 0; i < HOTBAR_SIZE; i++) cells.push(i);
+  return (
+    <div className="inv-touch-hotbar" role="group" aria-label="Hotbar">
+      {cells.map((i) => {
+        const slot = slots[i] ?? null;
+        const def = slot ? ITEMS[slot.itemId] : null;
+        const isSelected = selected?.kind === "inv" && selected.index === i;
+        return (
+          <button
+            key={i}
+            className={
+              "px-slot inv-touch-cell inv-touch-hotbar-cell" +
+              (slot ? " px-slot-filled" : "") +
+              (isSelected ? " is-selected" : "")
+            }
+            onClick={() => onTap(i)}
+            aria-label={def && slot ? `Hotbar ${i + 1}: ${def.name} ×${slot.quantity}` : `Hotbar ${i + 1} (empty)`}
+          >
+            <span className="inv-touch-hotbar-key">{i + 1}</span>
+            {def && slot && (
+              <>
+                <img className="inv-touch-icon" src={def.icon} alt="" draggable={false} />
+                {slot.quantity > 1 && (
+                  <span className="px-slot-qty inv-touch-qty">{formatQty(slot.quantity)}</span>
+                )}
+              </>
+            )}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -370,7 +469,7 @@ function TouchActionBar(props: TouchActionBarProps) {
       <div className="inv-touch-actionbar__buttons">
         {selected.kind === "inv" && selectedDef?.slot && (
           <button
-            className="inv-touch-btn inv-touch-btn--primary"
+            className="px-btn px-btn-green"
             onClick={props.onEquip}
           >
             Equip
@@ -378,7 +477,7 @@ function TouchActionBar(props: TouchActionBarProps) {
         )}
         {selected.kind === "inv" && (
           <button
-            className="inv-touch-btn inv-touch-btn--danger"
+            className="px-btn px-btn-red"
             onClick={props.onDrop}
           >
             {selectedQuantity > 1 ? `Drop ×${selectedQuantity}` : "Drop"}
@@ -386,40 +485,18 @@ function TouchActionBar(props: TouchActionBarProps) {
         )}
         {selected.kind === "equip" && (
           <button
-            className="inv-touch-btn inv-touch-btn--primary"
+            className="px-btn px-btn-green"
             onClick={props.onUnequip}
           >
             Unequip
           </button>
         )}
-        <button className="inv-touch-btn" onClick={props.onCancel}>
+        <button className="px-btn px-btn-grey" onClick={props.onCancel}>
           Cancel
         </button>
       </div>
     </div>
   );
-}
-
-function panelStyle(
-  p: { x: number; y: number; w: number; h: number },
-  img: string,
-): React.CSSProperties {
-  return {
-    left: `calc(${p.x}px * var(--scale))`,
-    top: `calc(${p.y}px * var(--scale))`,
-    width: `calc(${p.w}px * var(--scale))`,
-    height: `calc(${p.h}px * var(--scale))`,
-    backgroundImage: `url(${img})`,
-  };
-}
-
-function innerCellStyle(x: number, y: number): React.CSSProperties {
-  return {
-    left: `calc(${x}px * var(--scale))`,
-    top: `calc(${y}px * var(--scale))`,
-    width: `calc(${SLOT_SIZE}px * var(--scale))`,
-    height: `calc(${SLOT_SIZE}px * var(--scale))`,
-  };
 }
 
 function formatQty(n: number): string {
