@@ -92,7 +92,23 @@ function queueWorldManifestAndChunks(scene: Phaser.Scene): void {
         scene.load.tilemapTiledJSON(`${CHUNK_KEY_PREFIX}${key}`, `maps/chunks/${key}.tmj`);
       }
       for (const [key, ref] of Object.entries(data.interiors ?? {})) {
-        scene.load.tilemapTiledJSON(interiorTilemapKey(key), `maps/${ref.path}`);
+        const tilemapKey = interiorTilemapKey(key);
+        scene.load.tilemapTiledJSON(tilemapKey, `maps/${ref.path}`);
+        // Interior TMJs embed their own tilesets, which are not guaranteed
+        // to overlap with any chunk's tileset list (e.g. `Interiors_tilesets.png`
+        // is used only inside buildings). Walk the parsed TMJ and queue each
+        // referenced image; Phaser's loader dedupes by key.
+        scene.load.once(
+          `filecomplete-tilemapJSON-${tilemapKey}`,
+          (_k: string, _t: string, tmj: { tilesets?: Array<{ image?: string }> }) => {
+            for (const ts of tmj.tilesets ?? []) {
+              if (!ts.image) continue;
+              const imgKey = tilesetImageKeyFor(ts.image);
+              if (scene.sys.textures.exists(imgKey)) continue;
+              scene.load.image(imgKey, `maps/${ts.image}`);
+            }
+          },
+        );
       }
       const shipsManifest = data.ships ?? {};
       for (const vessel of loadShipsFile().defs.values()) {
