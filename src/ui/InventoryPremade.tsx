@@ -121,8 +121,13 @@ export function InventoryPremade() {
         });
       }
     };
+    const onToggle = () => setOpen((v) => !v);
     window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
+    window.addEventListener("inventory:toggle", onToggle);
+    return () => {
+      window.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("inventory:toggle", onToggle);
+    };
   }, []);
 
   const goldCount = useMemo(() => {

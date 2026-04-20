@@ -1,3 +1,4 @@
+/* Pause/menu button — matches the pixel-art tan frame UI. */
 .pause-btn {
   position: fixed;
   top: 24px;
@@ -8,44 +9,45 @@
   justify-content: center;
   padding: 0;
   margin: 0;
-  border: 2px solid rgba(255, 255, 255, 0.55);
-  background: rgba(0, 0, 0, 0.42);
-  color: rgba(255, 255, 255, 0.92);
-  font-family: inherit;
+  background: none;
+  color: var(--pixel-ink);
+  font-family: var(--pixel-display-font);
   font-weight: 700;
-  border-radius: 50%;
-  width: 56px;
-  height: 56px;
-  font-size: 24px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  touch-action: none;
+  border-style: solid;
+  border-width: 20px;
+  border-image-source: url("/ui/panel-tan.png");
+  border-image-slice: 16 fill;
+  border-image-width: 1;
+  border-image-repeat: stretch;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.35));
+  width: 64px;
+  height: 64px;
+  font-size: 28px;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
-  transition: transform 60ms ease, background 60ms ease;
+  transition: transform 60ms ease-out, filter 60ms ease-out;
 }
 
-.pause-btn.pause-btn-active,
-.pause-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-
-.pause-btn.pause-btn-active {
-  transform: scale(0.94);
-}
+.pause-btn:hover { filter: brightness(1.08) drop-shadow(0 4px 0 rgba(0, 0, 0, 0.35)); }
+.pause-btn.pause-btn-active { transform: translateY(1px); filter: brightness(0.92) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.35)); }
 
 .pause-btn-label {
   pointer-events: none;
   line-height: 1;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.4));
 }
 
 @media (max-height: 420px) {
   .pause-btn {
-    width: 48px;
-    height: 48px;
-    font-size: 20px;
+    width: 52px;
+    height: 52px;
+    font-size: 22px;
     top: 16px;
     right: 16px;
+    border-width: 16px;
   }
 }

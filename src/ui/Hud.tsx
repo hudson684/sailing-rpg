@@ -48,6 +48,20 @@ export function Hud() {
       </div>
 
       <Hotbar variant="hud" scale={hudScale} />
+      <button
+        type="button"
+        className="hud-inventory-btn"
+        style={{ ["--hotbar-scale" as string]: hudScale }}
+        aria-label="Open inventory"
+        onPointerDown={(e) => e.currentTarget.classList.add("is-active")}
+        onPointerUp={(e) => e.currentTarget.classList.remove("is-active")}
+        onPointerCancel={(e) => e.currentTarget.classList.remove("is-active")}
+        onPointerLeave={(e) => e.currentTarget.classList.remove("is-active")}
+        onClick={() => window.dispatchEvent(new CustomEvent("inventory:toggle"))}
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        <span className="hud-inventory-btn-label">🎒</span>
+      </button>
 
       {state.prompt && <div className="px-panel hud-prompt">{state.prompt}</div>}
 
