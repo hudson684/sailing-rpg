@@ -114,10 +114,20 @@
   font-size: 18px;
 }
 
+/* Pause button in the top-right — opens the pause menu on mobile. */
+.touch-pause {
+  top: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  font-size: 24px;
+}
+
 /* On very small screens, shrink a bit so buttons don't overflow. */
 @media (max-height: 420px) {
   .touch-dragpad { width: 148px; height: 148px; }
   .touch-dragpad-knob { width: 60px; height: 60px; }
   .touch-btn { width: 56px; height: 56px; font-size: 18px; }
   .touch-action { width: 64px; height: 64px; }
+  .touch-pause { width: 48px; height: 48px; font-size: 20px; top: 16px; right: 16px; }
 }
