@@ -18,10 +18,10 @@ import "./InventoryTouch.css";
 
 /**
  * Mobile-first inventory. A full-screen modal (not a scaled-down desktop
- * panel) with two tabs — Equipped and Bag — plus a persistent hotbar
- * strip so items can be assigned to quick slots from either tab.
+ * panel) with three tabs — Equipped, Hotbar, and Inventory — each
+ * rendering as its own full page so the slots get enough room.
  *
- * Selection model (carried over from the previous touch variant):
+ * Selection model:
  *   - Tap a filled slot  → select it.
  *   - Tap the selected   → deselect.
  *   - Tap another slot   → move/swap (inv ↔ inv, inv → hotbar, inv →
@@ -53,7 +53,7 @@ const PAPER_DOLL_GRID: (EquipSlot | null)[][] = [
 const BAG_COLS = 5;
 const BAG_ROWS = 5;
 
-type Tab = "equipped" | "bag";
+type Tab = "equipped" | "hotbar" | "inventory";
 
 type Selection =
   | { kind: "inv"; index: number }
@@ -64,7 +64,7 @@ export function InventoryTouch() {
   const equipped = useGameStore(selectEquipped);
   const setInventoryOpen = useUIStore((s) => s.setInventoryOpen);
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<Tab>("equipped");
+  const [tab, setTab] = useState<Tab>("inventory");
   const [selected, setSelected] = useState<Selection | null>(null);
 
   useEffect(() => {
@@ -218,20 +218,31 @@ export function InventoryTouch() {
             <TabButton active={tab === "equipped"} onClick={() => setTab("equipped")}>
               Equipped
             </TabButton>
-            <TabButton active={tab === "bag"} onClick={() => setTab("bag")}>
-              Bag
+            <TabButton active={tab === "hotbar"} onClick={() => setTab("hotbar")}>
+              Hotbar
+            </TabButton>
+            <TabButton active={tab === "inventory"} onClick={() => setTab("inventory")}>
+              Inventory
             </TabButton>
           </div>
 
           <div className="inv-touch-body">
-            {tab === "equipped" ? (
+            {tab === "equipped" && (
               <PaperDoll
                 equipped={equipped}
                 selected={selected}
                 selectedFamily={selectedFamily}
                 onTap={handleEquipTap}
               />
-            ) : (
+            )}
+            {tab === "hotbar" && (
+              <HotbarPage
+                slots={slots}
+                selected={selected}
+                onTap={handleInvTap}
+              />
+            )}
+            {tab === "inventory" && (
               <BagGrid
                 slots={slots}
                 selected={selected}
@@ -239,12 +250,6 @@ export function InventoryTouch() {
               />
             )}
           </div>
-
-          <HotbarStrip
-            slots={slots}
-            selected={selected}
-            onTap={handleInvTap}
-          />
 
           <div className="inv-touch-hint">
             Tap to select · tap another slot to move or equip
@@ -402,13 +407,13 @@ function BagCell({ index, slot, selected, onTap }: BagCellProps) {
   );
 }
 
-interface HotbarStripProps {
+interface HotbarPageProps {
   slots: (Slot | null)[];
   selected: Selection | null;
   onTap: (index: number) => void;
 }
 
-function HotbarStrip({ slots, selected, onTap }: HotbarStripProps) {
+function HotbarPage({ slots, selected, onTap }: HotbarPageProps) {
   const cells: number[] = [];
   for (let i = 0; i < HOTBAR_SIZE; i++) cells.push(i);
   return (

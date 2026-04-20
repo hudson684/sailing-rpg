@@ -1,7 +1,8 @@
 /* Mobile-first inventory. A full-screen modal built on the `.px-panel`
-   9-slice wood frame, with two tabs (Equipped / Bag) and a persistent
-   hotbar strip. Completely independent of InventoryPremade.css so the
-   desktop and mobile layouts can diverge freely. */
+   9-slice wood frame, with three tabs (Equipped / Hotbar / Inventory)
+   each rendering as its own page. Completely independent of
+   InventoryPremade.css so the desktop and mobile layouts can diverge
+   freely. */
 
 .inv-touch-backdrop {
   position: fixed;
@@ -94,14 +95,16 @@
 
 .inv-touch-tabs {
   display: flex;
-  gap: 8px;
-  justify-content: center;
+  gap: 6px;
+  justify-content: stretch;
 }
 
 .inv-touch-tab {
-  min-width: 120px;
-  min-height: 48px;
-  padding: 6px 18px 8px;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 38px;
+  padding: 4px 10px 6px;
+  font-size: 14px;
   filter: grayscale(0.35) brightness(0.95);
 }
 
@@ -145,14 +148,14 @@
   padding: 4px;
 }
 
-/* ── Hotbar strip (bottom of modal) ──────────────────────────────── */
+/* ── Hotbar page (tab content) ───────────────────────────────────── */
 
 .inv-touch-hotbar {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 8px;
-  padding: 8px 4px 4px;
-  border-top: 2px dashed rgba(42, 27, 23, 0.25);
+  width: min(520px, 100%);
+  padding: 4px;
 }
 
 .inv-touch-hotbar-cell {
@@ -296,7 +299,7 @@
     max-height: calc(100vh - 12px);
   }
   .inv-touch-title { font-size: 18px; }
-  .inv-touch-tab { min-height: 40px; min-width: 96px; padding: 4px 14px 6px; }
+  .inv-touch-tab { min-height: 32px; padding: 2px 8px 4px; font-size: 13px; }
   .inv-touch-hint { display: none; }
   .inv-touch-summary-chip { padding: 2px 6px; font-size: 12px; }
 }
