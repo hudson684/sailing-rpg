@@ -2,6 +2,7 @@ import { createRegistry } from "../data/createRegistry";
 import iconSailor from "../../ui/icons/jobs/job_sailor.png";
 import iconFisher from "../../ui/icons/jobs/job_fisher.png";
 import iconWarrior from "../../ui/icons/jobs/job_warrior.png";
+import iconRanger from "../../ui/icons/jobs/job_ranger.png";
 import iconOrecheologist from "../../ui/icons/jobs/job_orecheologist.png";
 import iconLumberjack from "../../ui/icons/jobs/job_lumberjack.png";
 
@@ -14,6 +15,7 @@ export type JobId =
   | "sailing"
   | "fishing"
   | "combat"
+  | "ranger"
   | "orecheologist"
   | "lumberjack";
 
@@ -68,6 +70,14 @@ const DEFS: ReadonlyArray<JobDef> = [
     color: "#c94e4e",
     category: "combat",
     description: "Swordplay, boarding actions, and staying alive.",
+  },
+  {
+    id: "ranger",
+    name: "Ranger",
+    icon: iconRanger,
+    color: "#4e8a55",
+    category: "combat",
+    description: "Marksmanship with bow and arrow. Gained by ranged combat.",
   },
 ];
 

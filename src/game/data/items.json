@@ -145,7 +145,7 @@
       "description": "A simple shortbow. Equip, then left-click to fire arrows.",
       "type": "weapon",
       "slot": "mainHand",
-      "skill": "combat",
+      "skill": "ranger",
       "stats": { "attack": 2 },
       "ranged": {
         "rangePx": 320,
