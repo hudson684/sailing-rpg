@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
-import { interiorTilemapKey } from "../scenes/BootScene";
+import { interiorTilemapKey } from "../assets/keys";
 import { tilesetImageKeyFor } from "./chunkManager";
 import { ShapeCollider } from "./shapeCollision";
 import { parseInteriorSpawns, type InteriorExitSpawn } from "./spawns";

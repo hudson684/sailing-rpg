@@ -6,6 +6,7 @@ import {
   type ParsedSpawns,
 } from "./spawns";
 import { ShapeCollider } from "./shapeCollision";
+import { emitLoaderEvent } from "../assets/loaderBus";
 
 export interface WorldManifest {
   chunkSize: number;
@@ -386,18 +387,34 @@ export class ChunkManager {
     for (const path of needed) {
       this.scene.load.image(tilesetImageKeyFor(path), `maps/${path}`);
     }
+    const total = needed.size;
+    let loaded = 0;
+    emitLoaderEvent(this.scene, {
+      kind: "stream-start",
+      reason: "chunk-tilesets",
+      total,
+    });
     // Re-check pending whenever a tileset image finishes so chunks whose deps
     // are all in cache pop in as soon as they're ready, instead of waiting for
     // the entire batch. Phaser's catch-all `filecomplete` event fires for
     // every loaded file; filter by type + our key prefix.
     const onFile = (key: string, type: string) => {
       if (type !== "image" || !key.startsWith("tileset:")) return;
+      loaded++;
+      emitLoaderEvent(this.scene, {
+        kind: "stream-progress",
+        progress: total === 0 ? 1 : loaded / total,
+      });
       this.flushReadyPending();
     };
     this.scene.load.on("filecomplete", onFile);
     this.scene.load.once("complete", () => {
       this.flushReadyPending();
       this.scene.load.off("filecomplete", onFile);
+      emitLoaderEvent(this.scene, {
+        kind: "stream-complete",
+        reason: "chunk-tilesets",
+      });
     });
     this.scene.load.start();
   }

@@ -29,6 +29,7 @@ export default function App() {
   const gameRef = useRef<Phaser.Game | null>(null);
   const characterCreated = useSettingsStore((s) => s.characterCreated);
   const [customizerOpen, setCustomizerOpen] = useState(false);
+  const [phaserBooting, setPhaserBooting] = useState(false);
   const isMobile = useIsMobile();
   const isPortrait = useIsPortrait();
 
@@ -36,16 +37,19 @@ export default function App() {
     if (!characterCreated) return;
     if (!parentRef.current || gameRef.current) return;
     let cancelled = false;
+    setPhaserBooting(true);
     void Promise.all([import("phaser"), import("./game/config")]).then(
       ([PhaserMod, { createGameConfig }]) => {
         if (cancelled || !parentRef.current || gameRef.current) return;
         gameRef.current = new PhaserMod.Game(createGameConfig(parentRef.current));
+        setPhaserBooting(false);
       },
     );
     return () => {
       cancelled = true;
       gameRef.current?.destroy(true);
       gameRef.current = null;
+      setPhaserBooting(false);
     };
   }, [characterCreated]);
 
@@ -70,6 +74,12 @@ export default function App() {
   return (
     <div className="app-root">
       <div ref={parentRef} className="game-canvas" />
+      {phaserBooting && (
+        <div className="boot-spinner" aria-label="Loading game">
+          <div className="boot-spinner__ring" />
+          <div>Loading game…</div>
+        </div>
+      )}
       <Suspense fallback={null}>
         {characterCreated ? (
           <>

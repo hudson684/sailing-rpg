@@ -1,5 +1,7 @@
 import * as Phaser from "phaser";
 import { BootScene } from "./scenes/BootScene";
+import { PreloadScene } from "./scenes/PreloadScene";
+import { TitleScene } from "./scenes/TitleScene";
 import { WorldScene } from "./scenes/WorldScene";
 import { InteriorScene } from "./scenes/InteriorScene";
 import { SystemsScene } from "./scenes/SystemsScene";
@@ -23,6 +25,6 @@ export function createGameConfig(parent: HTMLElement): Phaser.Types.Core.GameCon
       width: VIEWPORT_W,
       height: VIEWPORT_H,
     },
-    scene: [BootScene, SystemsScene, WorldScene, InteriorScene],
+    scene: [BootScene, PreloadScene, TitleScene, SystemsScene, WorldScene, InteriorScene],
   };
 }

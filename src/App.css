@@ -15,3 +15,32 @@
   display: block;
   image-rendering: pixelated;
 }
+
+.boot-spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #0a1a2f;
+  color: #cfe2ff;
+  font-family: monospace;
+  font-size: 13px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.boot-spinner__ring {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(158, 197, 255, 0.25);
+  border-top-color: #9ec5ff;
+  border-radius: 50%;
+  animation: boot-spinner-spin 0.9s linear infinite;
+}
+
+@keyframes boot-spinner-spin {
+  to { transform: rotate(360deg); }
+}

@@ -59,7 +59,7 @@ import {
   CHUNK_KEY_PREFIX,
   WORLD_MANIFEST_KEY,
   itemIconTextureKey,
-} from "./BootScene";
+} from "../assets/keys";
 import { NpcSprite, NPC_INTERACT_RADIUS, registerNpcAnimations } from "../entities/NpcSprite";
 import { NpcModel } from "../entities/NpcModel";
 import { SpriteReconciler } from "../entities/SpriteReconciler";
