@@ -1,63 +1,255 @@
-/* Touch-first inventory variant. Reuses the sliced-panel pieces from
-   InventoryPremade.css (class names prefixed .inv-premade-*) but swaps
-   in its own root so mobile-specific sizing doesn't fight the desktop
-   component's scale cap. */
+/* Mobile-first inventory. A full-screen modal built on the `.px-panel`
+   9-slice wood frame, with two tabs (Equipped / Bag) and a persistent
+   hotbar strip. Completely independent of InventoryPremade.css so the
+   desktop and mobile layouts can diverge freely. */
 
-.inv-touch-root {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  /* Leave generous headroom below the panel for the action bar (~96px)
-     and side margins for the virtual joystick / action buttons when
-     rendered alongside TouchControls. */
-  --inv-fit: min(
-    0.7,
-    calc((100vw - 440px) / 800),
-    calc((100vh - 180px) / 680)
-  );
-  transform: translate(-50%, -50%) scale(var(--inv-fit));
-  transform-origin: center center;
-  image-rendering: pixelated;
+.inv-touch-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  z-index: 20;
   pointer-events: auto;
-  user-select: none;
   font-family: var(--pixel-font);
   color: var(--pixel-ink);
-  z-index: 20;
 }
 
-/* When TouchControls are hidden (portrait / smaller devices) the panel
-   can use more horizontal room. */
-@media (orientation: portrait) {
-  .inv-touch-root {
-    --inv-fit: min(
-      0.8,
-      calc((100vw - 32px) / 800),
-      calc((100vh - 220px) / 680)
-    );
-  }
+.inv-touch-modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(720px, 100%);
+  max-height: calc(100vh - 24px);
+  padding: 14px 18px 16px;
 }
 
-/* Touch slots get a pointer cursor so they read as tappable targets,
-   and a clear selection ring when chosen. The selection ring is larger
-   and higher-contrast than the desktop hover outline so it's legible
-   through a finger. */
-.inv-touch-slot {
+/* ── Header ──────────────────────────────────────────────────────── */
+
+.inv-touch-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.inv-touch-title {
+  font-family: var(--pixel-display-font);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pixel-ink);
+}
+
+.inv-touch-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
+}
+
+.inv-touch-summary-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(42, 27, 23, 0.08);
+  border-radius: 2px;
+  font-size: 14px;
+  max-width: 40%;
+  min-width: 0;
+}
+
+.inv-touch-summary-label {
+  color: var(--pixel-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  flex: 0 0 auto;
+}
+
+.inv-touch-summary-value {
+  color: var(--pixel-ink);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inv-touch-close {
+  font-size: 28px;
+  line-height: 1;
+  min-width: 44px;
+  min-height: 44px;
+  flex: 0 0 auto;
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────── */
+
+.inv-touch-tabs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.inv-touch-tab {
+  min-width: 120px;
+  min-height: 48px;
+  padding: 6px 18px 8px;
+  filter: grayscale(0.35) brightness(0.95);
+}
+
+.inv-touch-tab.is-active {
+  filter: none;
+  transform: translateY(-2px);
+}
+
+/* ── Body (swappable tab content) ────────────────────────────────── */
+
+.inv-touch-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 4px 0;
+}
+
+/* ── Paper-doll (Equipped tab) ───────────────────────────────────── */
+
+.inv-touch-paperdoll {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  width: min(420px, 100%);
+  padding: 4px;
+}
+
+.inv-touch-paperdoll-spacer {
+  aspect-ratio: 1;
+}
+
+/* ── Bag grid ────────────────────────────────────────────────────── */
+
+.inv-touch-bag {
+  display: grid;
+  gap: 8px;
+  width: min(520px, 100%);
+  padding: 4px;
+}
+
+/* ── Hotbar strip (bottom of modal) ──────────────────────────────── */
+
+.inv-touch-hotbar {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding: 8px 4px 4px;
+  border-top: 2px dashed rgba(42, 27, 23, 0.25);
+}
+
+.inv-touch-hotbar-cell {
+  position: relative;
+}
+
+.inv-touch-hotbar-key {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--pixel-ink);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── Cells (shared by paper-doll, bag, hotbar) ───────────────────── */
+
+.inv-touch-cell {
+  position: relative;
+  background: none;
   cursor: pointer;
   touch-action: manipulation;
-}
-.inv-touch-slot.is-selected {
-  outline: 4px solid var(--pixel-gold);
-  outline-offset: -4px;
-  border-radius: 4px;
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.45);
+  padding: 0;
+  aspect-ratio: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
-/* ── Bottom action bar ─────────────────────────────────────────────── */
+.inv-touch-cell.is-selected {
+  outline: 4px solid var(--pixel-gold);
+  outline-offset: -14px;
+  filter: brightness(1.05);
+}
+
+.inv-touch-cell.is-target {
+  outline: 3px dashed var(--pixel-gold);
+  outline-offset: -14px;
+}
+
+.inv-touch-cell:active {
+  transform: translateY(1px);
+}
+
+.inv-touch-cell-label {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pixel-ink-soft);
+  text-align: center;
+  pointer-events: none;
+  padding: 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inv-touch-cell.px-slot-filled .inv-touch-cell-label {
+  opacity: 0;
+}
+
+.inv-touch-icon {
+  width: 68%;
+  height: 68%;
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.4));
+  pointer-events: none;
+  object-fit: contain;
+}
+
+.inv-touch-qty {
+  bottom: 2px;
+  right: 4px;
+  font-size: 12px;
+}
+
+/* ── Footer hint ─────────────────────────────────────────────────── */
+
+.inv-touch-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--pixel-ink-soft);
+  letter-spacing: 0.04em;
+}
+
+/* ── Bottom action bar (floats under the modal) ──────────────────── */
 
 .inv-touch-actionbar {
   position: fixed;
   left: 50%;
-  bottom: 16px;
+  bottom: 12px;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
@@ -92,49 +284,19 @@
   gap: 8px;
 }
 
-.inv-touch-btn {
-  min-width: 96px;
-  min-height: 48px;
-  padding: 0 16px;
-  background: var(--pixel-tan);
-  border: 3px solid var(--pixel-ink);
-  box-shadow:
-    inset 0 -3px 0 var(--pixel-tan-dark),
-    inset 0 3px 0 var(--pixel-parchment),
-    0 3px 0 rgba(0, 0, 0, 0.4);
-  font-family: var(--pixel-display-font);
-  font-weight: 700;
-  font-size: 16px;
-  color: var(--pixel-ink);
-  cursor: pointer;
-  touch-action: manipulation;
-}
-.inv-touch-btn:active {
-  transform: translateY(2px);
-  box-shadow:
-    inset 0 -3px 0 var(--pixel-tan-dark),
-    inset 0 3px 0 var(--pixel-parchment),
-    0 1px 0 rgba(0, 0, 0, 0.4);
-}
+/* ── Tight / landscape-phone tuning ─────────────────────────────── */
 
-.inv-touch-btn--primary {
-  background: var(--pixel-gold);
-}
-.inv-touch-btn--primary:active {
-  background: var(--pixel-gold);
-}
-
-.inv-touch-btn--danger {
-  background: var(--pixel-accent-red);
-  color: #fff1ea;
-  box-shadow:
-    inset 0 -3px 0 #8a2a2a,
-    inset 0 3px 0 #e57878,
-    0 3px 0 rgba(0, 0, 0, 0.4);
-}
-.inv-touch-btn--danger:active {
-  box-shadow:
-    inset 0 -3px 0 #8a2a2a,
-    inset 0 3px 0 #e57878,
-    0 1px 0 rgba(0, 0, 0, 0.4);
+/* On short viewports (typical landscape phone ~360px tall) trim the
+   padding and hide ornament chrome that eats vertical space. */
+@media (max-height: 480px) {
+  .inv-touch-backdrop { padding: 6px; }
+  .inv-touch-modal {
+    padding: 10px 12px;
+    gap: 6px;
+    max-height: calc(100vh - 12px);
+  }
+  .inv-touch-title { font-size: 18px; }
+  .inv-touch-tab { min-height: 40px; min-width: 96px; padding: 4px 14px 6px; }
+  .inv-touch-hint { display: none; }
+  .inv-touch-summary-chip { padding: 2px 6px; font-size: 12px; }
 }
