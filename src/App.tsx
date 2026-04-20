@@ -3,6 +3,7 @@ import type * as Phaser from "phaser";
 import { Hud } from "./ui/Hud";
 import { CharacterCreator } from "./ui/CharacterCreator";
 import { useSettingsStore } from "./game/store/settingsStore";
+import { useUIStore } from "./ui/store/uiStore";
 import { TouchControls } from "./ui/mobile/TouchControls";
 import { OrientationPrompt } from "./ui/mobile/OrientationPrompt";
 import { useIsMobile, useIsPortrait } from "./ui/mobile/useMobile";
@@ -28,6 +29,10 @@ export default function App() {
   const parentRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const characterCreated = useSettingsStore((s) => s.characterCreated);
+  // Title screen lives inside Phaser; while it's up, React must not render
+  // HUD/touch-control overlays on top of the canvas — they'd mislead the
+  // player (fake stats) and eat taps meant to dismiss the title.
+  const titleDismissed = useUIStore((s) => s.titleDismissed);
   const [customizerOpen, setCustomizerOpen] = useState(false);
   const [phaserBooting, setPhaserBooting] = useState(false);
   const isMobile = useIsMobile();
@@ -55,7 +60,7 @@ export default function App() {
 
   // Hotkey C + custom event from PauseMenu open the customizer.
   useEffect(() => {
-    if (!characterCreated) return;
+    if (!characterCreated || !titleDismissed) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() !== "c") return;
       const target = e.target as HTMLElement | null;
@@ -69,7 +74,7 @@ export default function App() {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("character:open", onOpen);
     };
-  }, [characterCreated]);
+  }, [characterCreated, titleDismissed]);
 
   return (
     <div className="app-root">
@@ -81,7 +86,9 @@ export default function App() {
         </div>
       )}
       <Suspense fallback={null}>
-        {characterCreated ? (
+        {!characterCreated ? (
+          <CharacterCreator />
+        ) : titleDismissed ? (
           <>
             <Hud />
             <InventoryPremade />
@@ -98,9 +105,7 @@ export default function App() {
             {import.meta.env.DEV && <NodeDefEditor />}
             <TouchControls visible={isMobile && !isPortrait} />
           </>
-        ) : (
-          <CharacterCreator />
-        )}
+        ) : null}
       </Suspense>
       <OrientationPrompt visible={isMobile && isPortrait} />
     </div>

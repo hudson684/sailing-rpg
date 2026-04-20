@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import { onVirtualKey } from "../input/virtualInput";
+import { useUIStore } from "../../ui/store/uiStore";
 
 /**
  * One-shot splash between asset preload and gameplay. Gives the player a
@@ -16,6 +17,10 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create() {
+    // In case we're re-entering Title (e.g. HMR in dev), make sure React
+    // treats us as "not started yet" so the HUD/touch controls stay hidden.
+    useUIStore.getState().setTitleDismissed(false);
+
     const cam = this.cameras.main;
     const cx = cam.width / 2;
     const cy = cam.height / 2;
@@ -55,6 +60,7 @@ export class TitleScene extends Phaser.Scene {
       offVirtualKey?.();
       window.removeEventListener("pointerdown", onDomGesture, true);
       window.removeEventListener("keydown", onDomGesture, true);
+      useUIStore.getState().setTitleDismissed(true);
       this.scene.launch("Systems");
       this.scene.start("World");
     };
