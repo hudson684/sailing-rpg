@@ -19,8 +19,13 @@ export interface Toast {
 export interface UIState {
   hud: HudState;
   toasts: Toast[];
+  // Whether the TitleScene has been dismissed and gameplay has begun.
+  // Not persisted: every page load shows the title screen again, so the
+  // React HUD / touch controls must start hidden each session.
+  titleDismissed: boolean;
 
   setHud: (patch: Partial<HudState>) => void;
+  setTitleDismissed: (v: boolean) => void;
   addToast: (text: string, opts?: { ttlMs?: number; kind?: ToastKind }) => number;
   dismissToast: (id: number) => void;
   pruneExpiredToasts: (now?: number) => void;
@@ -41,8 +46,11 @@ let nextToastId = 1;
 export const useUIStore = create<UIState>()((set, get) => ({
   hud: INITIAL_HUD,
   toasts: [],
+  titleDismissed: false,
 
   setHud: (patch) => set((s) => ({ hud: { ...s.hud, ...patch } })),
+
+  setTitleDismissed: (v) => set({ titleDismissed: v }),
 
   addToast: (text, opts) => {
     const id = nextToastId++;
