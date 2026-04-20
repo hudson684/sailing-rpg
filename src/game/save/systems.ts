@@ -140,10 +140,25 @@ export function shipsSaveable(
 ): Saveable<z.infer<typeof ShipsDataSchema>> {
   return {
     id: "ships",
-    version: 1,
+    version: 2,
     schema: ShipsDataSchema,
     serialize: () => getShips().map((s) => s.serialize()),
     hydrate: (data) => hydrate(data),
+    migrations: {
+      // v1 stored throttle-based physics (speed/targetThrottle); v2 stores a
+      // 2D velocity vector (vx/vy). Velocity is transient — zeroing it on load
+      // preserves the player's sailing position + heading without guessing at
+      // the old throttle-to-velocity mapping, which isn't lossless.
+      1: (from) => {
+        if (!Array.isArray(from)) return from;
+        return from.map((entry) => {
+          if (!entry || typeof entry !== "object") return entry;
+          const { speed: _speed, targetThrottle: _targetThrottle, ...rest } =
+            entry as Record<string, unknown>;
+          return { ...rest, vx: 0, vy: 0 };
+        });
+      },
+    },
   };
 }
 

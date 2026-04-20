@@ -841,18 +841,15 @@ export class WorldScene extends Phaser.Scene {
       const saved = byId.get(ship.id);
       if (saved) ship.hydrate(saved);
     }
-    if (this.sceneState.mode === "AtHelm" || this.sceneState.mode === "Anchoring") {
-      // Rebind the active ship from whichever one restored to a non-docked
-      // mode; the player was at its helm when the save was taken.
-      this.activeShip = null;
-      for (const ship of this.ships.values()) {
-        if (ship.mode === "sailing" || ship.mode === "anchoring") {
-          this.activeShip = ship;
-          break;
-        }
+    // Rebind activeShip from the hydrated ship modes directly. Gating this on
+    // sceneState.mode would be order-dependent: sceneSaveable hydrates after
+    // shipsSaveable, so sceneState would still be at its default here.
+    this.activeShip = null;
+    for (const ship of this.ships.values()) {
+      if (ship.mode === "sailing" || ship.mode === "anchoring") {
+        this.activeShip = ship;
+        break;
       }
-    } else {
-      this.activeShip = null;
     }
   }
 
@@ -1785,30 +1782,51 @@ export class WorldScene extends Phaser.Scene {
       useShopStore.getState().reset();
       this.groundItemsState.reset();
       this.droppedItemsState.reset();
-      this.sceneState.mode = "OnFoot";
-      // Reset each ship to its initial placement.
-      for (const inst of this.shipInstanceData) {
-        const ship = this.ships.get(inst.id);
-        if (!ship) continue;
-        ship.finalizeDock({
-          tx: inst.tileX,
-          ty: inst.tileY,
-          heading: inst.heading,
-        });
-      }
-      // Park the player next to the first ship instance (if any).
-      const first = this.shipInstanceData[0];
-      if (first) {
-        this.player.setPosition(
-          (first.tileX + 0.5) * TILE_SIZE,
-          (first.tileY + 1.5) * TILE_SIZE,
-        );
-      }
+      this.resetShipsAndParkPlayer();
+    } else if (
+      (this.sceneState.mode === "AtHelm" || this.sceneState.mode === "Anchoring") &&
+      this.activeShip === null
+    ) {
+      // Save says the player was at a helm but no ship hydrated into
+      // sailing/anchoring mode — e.g. the ships block failed schema validation
+      // in SaveManager.hydrateFrom() and was silently skipped. Without a
+      // rescue, the player is stranded in open water with no ship to board.
+      // Reset ships to their ships.json defaults and park the player beside
+      // the first one so the game is playable again.
+      console.warn(
+        "[WorldScene] Saved scene mode expected an active ship but none was hydrated — resetting ships to defaults.",
+      );
+      this.resetShipsAndParkPlayer();
+      showToast("Your ship's state couldn't be restored. Returned to port.", 4000);
     }
 
     this.respawnGroundItems();
     this.applySceneMode();
     this.emitHud();
+  }
+
+  /** Force every ship back to its ships.json initial dock pose and park the
+   *  player beside the first ship. Used both on fresh starts (no save) and
+   *  as a rescue when the saved ship state is unrecoverable. */
+  private resetShipsAndParkPlayer(): void {
+    this.sceneState.mode = "OnFoot";
+    this.activeShip = null;
+    for (const inst of this.shipInstanceData) {
+      const ship = this.ships.get(inst.id);
+      if (!ship) continue;
+      ship.finalizeDock({
+        tx: inst.tileX,
+        ty: inst.tileY,
+        heading: inst.heading,
+      });
+    }
+    const first = this.shipInstanceData[0];
+    if (first) {
+      this.player.setPosition(
+        (first.tileX + 0.5) * TILE_SIZE,
+        (first.tileY + 1.5) * TILE_SIZE,
+      );
+    }
   }
 
   /** Re-enter the current scene mode to fix up camera, freeze, helm parking. */
@@ -1844,7 +1862,10 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     if (this.sceneState.mode === "AtHelm") {
-      const ship = this.activeShip ?? this.shipAtPlayer();
+      // activeShip is bound by hydrateShips() from the hydrated ship modes.
+      // If it's still null here, applyAfterLoad's consistency check has
+      // already rescued the player — this branch is just a paranoia guard.
+      const ship = this.activeShip;
       if (!ship) {
         this.sceneState.mode = "OnFoot";
         this.player.frozen = false;
@@ -1852,7 +1873,6 @@ export class WorldScene extends Phaser.Scene {
         this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
         return;
       }
-      this.activeShip = ship;
       this.player.frozen = true;
       ship.mode = "sailing";
       const helm = ship.helmWorldPx();
