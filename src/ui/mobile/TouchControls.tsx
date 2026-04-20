@@ -27,6 +27,7 @@ export function TouchControls({ visible }: Props) {
           <TouchButton vkey="attack" className="touch-action touch-action-q" label="Q" />
           <TouchButton vkey="interact" className="touch-action touch-action-e" label="E" />
           <TouchButton vkey="sprint" className="touch-action touch-action-sprint" label="⇧" />
+          <TouchButton vkey="mount" className="touch-action touch-action-mount" label="M" />
         </div>
       )}
     </div>

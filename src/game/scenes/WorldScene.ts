@@ -455,6 +455,7 @@ export class WorldScene extends Phaser.Scene {
       attack: this.keys.attack,
       interact: this.keys.interact,
       sprint: this.keys.sprint,
+      mount: this.keys.mount,
       helmN: this.keys.w,
       helmE: this.keys.d,
       helmS: this.keys.s,
