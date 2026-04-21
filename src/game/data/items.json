@@ -217,6 +217,66 @@
       "value": 6
     },
     {
+      "id": "hopeite_ingot",
+      "name": "Hopeite Ingot",
+      "color": "#c68a3a",
+      "stackable": true,
+      "maxStack": 50,
+      "description": "A smelted bar of hopeite. Ready for the anvil.",
+      "type": "resource",
+      "value": 22
+    },
+    {
+      "id": "hopeite_sword",
+      "name": "Hopeite Sword",
+      "color": "#c68a3a",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "Sharper than a plain iron blade. Forged at the anvil.",
+      "type": "weapon",
+      "slot": "mainHand",
+      "stats": { "attack": 6 },
+      "visualLayer": { "layer": "tool", "variant": "iron-sword" },
+      "value": 180
+    },
+    {
+      "id": "hopeite_pickaxe",
+      "name": "Hopeite Pickaxe",
+      "color": "#c68a3a",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "A hefty pickaxe tipped with hopeite.",
+      "type": "tool",
+      "slot": "mainHand",
+      "skill": "orecheologist",
+      "visualLayer": { "layer": "tool", "variant": "iron-pickaxe" },
+      "value": 140
+    },
+    {
+      "id": "hopeite_axe",
+      "name": "Hopeite Axe",
+      "color": "#c68a3a",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "A felling axe with a keen hopeite edge.",
+      "type": "tool",
+      "slot": "mainHand",
+      "skill": "lumberjack",
+      "visualLayer": { "layer": "tool", "variant": "iron-axe" },
+      "value": 140
+    },
+    {
+      "id": "smithing_hammer",
+      "name": "Smithing Hammer",
+      "color": "#9a6b3a",
+      "stackable": false,
+      "maxStack": 1,
+      "description": "A cross-peen hammer. Lets you work the anvil more cleanly (future Blacksmith stat bonus).",
+      "type": "tool",
+      "skill": "blacksmith",
+      "value": 35
+    },
+    {
       "id": "signet_ring",
       "name": "Captain's Signet",
       "color": "#e5c14a",

@@ -1,0 +1,42 @@
+{
+  "defs": [
+    {
+      "id": "blacksmith_smelter",
+      "name": "Smelter",
+      "kind": "smelter",
+      "skill": "blacksmith",
+      "bgColor": "#3a2a20",
+      "accentColor": "#e0823a",
+      "labelColor": "#f0b060",
+      "width": 26,
+      "height": 22,
+      "blocks": true
+    },
+    {
+      "id": "blacksmith_anvil",
+      "name": "Anvil",
+      "kind": "anvil",
+      "skill": "blacksmith",
+      "bgColor": "#202028",
+      "accentColor": "#9aa0b0",
+      "labelColor": "#d8dce8",
+      "width": 22,
+      "height": 14,
+      "blocks": true
+    }
+  ],
+  "instances": [
+    {
+      "id": "station_smelter_1",
+      "defId": "blacksmith_smelter",
+      "tileX": 50,
+      "tileY": 18
+    },
+    {
+      "id": "station_anvil_1",
+      "defId": "blacksmith_anvil",
+      "tileX": 52,
+      "tileY": 18
+    }
+  ]
+}

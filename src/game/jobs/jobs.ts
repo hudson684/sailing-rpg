@@ -17,9 +17,22 @@ export type JobId =
   | "combat"
   | "ranger"
   | "orecheologist"
-  | "lumberjack";
+  | "lumberjack"
+  | "blacksmith";
 
-export type JobCategory = "seafaring" | "gathering" | "combat";
+export type JobCategory = "seafaring" | "gathering" | "combat" | "crafting";
+
+function emojiJobIcon(glyph: string): string {
+  // SVG data-URL fallback for jobs without a shipped PNG. Kept inline so the
+  // bundler doesn't have to resolve an import. Matches the approach used by
+  // itemIcons.ts for placeholder item icons.
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>` +
+    `<text x='16' y='24' font-size='22' text-anchor='middle'` +
+    ` font-family='Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif'>` +
+    `${glyph}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
 
 export interface JobDef {
   id: JobId;
@@ -78,6 +91,14 @@ const DEFS: ReadonlyArray<JobDef> = [
     color: "#4e8a55",
     category: "combat",
     description: "Marksmanship with bow and arrow. Gained by ranged combat.",
+  },
+  {
+    id: "blacksmith",
+    name: "Blacksmith",
+    icon: emojiJobIcon("⚒️"),
+    color: "#a05a2a",
+    category: "crafting",
+    description: "Smelting ore and shaping steel at the forge.",
   },
 ];
 

@@ -1,0 +1,90 @@
+{
+  "recipes": [
+    {
+      "id": "smelt_hopeite_ingot",
+      "name": "Hopeite Ingot",
+      "skill": "blacksmith",
+      "station": "smelter",
+      "inputs": [{ "itemId": "hopeite_ore", "qty": 3 }],
+      "output": { "itemId": "hopeite_ingot", "qty": 1 },
+      "levelReq": 1,
+      "xpReward": 12
+    },
+    {
+      "id": "forge_hopeite_sword",
+      "name": "Hopeite Sword",
+      "skill": "blacksmith",
+      "station": "anvil",
+      "inputs": [
+        { "itemId": "hopeite_ingot", "qty": 2 },
+        { "itemId": "plank", "qty": 1 }
+      ],
+      "output": { "itemId": "hopeite_sword", "qty": 1 },
+      "levelReq": 2,
+      "xpReward": 45,
+      "minigame": {
+        "moveBudget": 8,
+        "windowSize": 0.22,
+        "sweepSpeed": 0.8,
+        "actions": ["strike", "strike", "strike", "strike"]
+      }
+    },
+    {
+      "id": "forge_hopeite_pickaxe",
+      "name": "Hopeite Pickaxe",
+      "skill": "blacksmith",
+      "station": "anvil",
+      "inputs": [
+        { "itemId": "hopeite_ingot", "qty": 2 },
+        { "itemId": "plank", "qty": 1 }
+      ],
+      "output": { "itemId": "hopeite_pickaxe", "qty": 1 },
+      "levelReq": 2,
+      "xpReward": 45,
+      "minigame": {
+        "moveBudget": 8,
+        "windowSize": 0.22,
+        "sweepSpeed": 0.8,
+        "actions": ["strike", "strike", "strike", "strike"]
+      }
+    },
+    {
+      "id": "forge_hopeite_axe",
+      "name": "Hopeite Axe",
+      "skill": "blacksmith",
+      "station": "anvil",
+      "inputs": [
+        { "itemId": "hopeite_ingot", "qty": 2 },
+        { "itemId": "plank", "qty": 1 }
+      ],
+      "output": { "itemId": "hopeite_axe", "qty": 1 },
+      "levelReq": 2,
+      "xpReward": 45,
+      "minigame": {
+        "moveBudget": 8,
+        "windowSize": 0.22,
+        "sweepSpeed": 0.8,
+        "actions": ["strike", "strike", "strike", "strike"]
+      }
+    },
+    {
+      "id": "forge_smithing_hammer",
+      "name": "Smithing Hammer",
+      "skill": "blacksmith",
+      "station": "anvil",
+      "inputs": [
+        { "itemId": "hopeite_ingot", "qty": 1 },
+        { "itemId": "plank", "qty": 1 }
+      ],
+      "output": { "itemId": "smithing_hammer", "qty": 1 },
+      "levelReq": 1,
+      "xpReward": 20,
+      "minigame": {
+        "moveBudget": 6,
+        "windowSize": 0.28,
+        "sweepSpeed": 0.7,
+        "actions": ["strike", "strike", "strike"]
+      }
+    }
+  ]
+}

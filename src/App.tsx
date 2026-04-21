@@ -21,6 +21,9 @@ const Jobs = lazy(() => import("./ui/Jobs").then((m) => ({ default: m.Jobs })));
 const PauseMenu = lazy(() => import("./ui/PauseMenu").then((m) => ({ default: m.PauseMenu })));
 const Dialogue = lazy(() => import("./ui/Dialogue").then((m) => ({ default: m.Dialogue })));
 const Shop = lazy(() => import("./ui/Shop").then((m) => ({ default: m.Shop })));
+const CraftingModal = lazy(() =>
+  import("./ui/CraftingModal").then((m) => ({ default: m.CraftingModal })),
+);
 const CharacterCustomizer = lazy(() =>
   import("./ui/CharacterCustomizer").then((m) => ({ default: m.CharacterCustomizer })),
 );
@@ -101,6 +104,7 @@ export default function App() {
             <PauseMenu />
             <Dialogue />
             <Shop />
+            <CraftingModal />
             <CharacterCustomizer
               mode="edit"
               open={customizerOpen}
