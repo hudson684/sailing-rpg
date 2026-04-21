@@ -28,8 +28,8 @@
             "scale": 0.75,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 512,
-                "y": 512.6666666666666
+                "x": 512.6666666666666,
+                "y": 512
             }
         },
         "chunks/0_2.tmx": {
@@ -234,6 +234,14 @@
                 "y": 224.33333333333331
             }
         },
+        "interiors/starter_dungeon.tmx": {
+            "scale": 0.75,
+            "selectedLayer": 7,
+            "viewCenter": {
+                "x": 431.3333333333333,
+                "y": 480
+            }
+        },
         "ships/galleon-e.tmx": {
             "scale": 1,
             "selectedLayer": 0,
@@ -401,8 +409,33 @@
         "themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass(transparency) - river orientation.tsx": {
             "scaleInDock": 1
         },
+        "themes/Old Prison/TiledMap Editor New/Tilesets/Blood pool - standard style - with spikes - transparency.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Old Prison/TiledMap Editor New/Tilesets/Blood pool - standard style - with spikes.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Old Prison/TiledMap Editor New/Tilesets/Blood pool - style2 - with spikes - transparency.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Old Prison/TiledMap Editor New/Tilesets/Blood pool - style2 - with spikes.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Old Prison/TiledMap Editor New/Tilesets/Tileset - wall 1.tsx": {
+            "scaleInDock": 0.75
+        },
+        "themes/Old Prison/TiledMap Editor New/Tilesets/Tileset - wall 2.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Old Prison/TiledMap Editor New/Tilesets/Tileset-Terrain-old prison.tsx": {
+            "scaleInDock": 1.5
+        },
         "themes/Old Prison/TiledMap Editor New/Tilesets/atlas-props-sprites.tsx": {
-            "dynamicWrapping": true
+            "dynamicWrapping": true,
+            "scaleInDock": 1
+        },
+        "themes/Old Prison/TiledMap Editor New/Tilesets/atlas-props.tsx": {
+            "scaleInDock": 0.33
         },
         "themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props-sprites.tsx": {
             "dynamicWrapping": true,
