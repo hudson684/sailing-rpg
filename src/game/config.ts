@@ -5,6 +5,7 @@ import { TitleScene } from "./scenes/TitleScene";
 import { WorldScene } from "./scenes/WorldScene";
 import { InteriorScene } from "./scenes/InteriorScene";
 import { SystemsScene } from "./scenes/SystemsScene";
+import { CraftingScene } from "./scenes/CraftingScene";
 import { VIEWPORT_W, VIEWPORT_H } from "./constants";
 
 export function createGameConfig(parent: HTMLElement): Phaser.Types.Core.GameConfig {
@@ -25,6 +26,6 @@ export function createGameConfig(parent: HTMLElement): Phaser.Types.Core.GameCon
       width: VIEWPORT_W,
       height: VIEWPORT_H,
     },
-    scene: [BootScene, PreloadScene, TitleScene, SystemsScene, WorldScene, InteriorScene],
+    scene: [BootScene, PreloadScene, TitleScene, SystemsScene, WorldScene, InteriorScene, CraftingScene],
   };
 }

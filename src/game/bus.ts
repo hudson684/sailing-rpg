@@ -1,4 +1,5 @@
 import type { SaveEnvelope, SlotId } from "./save";
+import type { CraftOutcomeTier } from "./crafting/types";
 
 export type PlayerMode = "OnFoot" | "Boarding" | "OnDeck" | "AtHelm" | "Anchoring";
 
@@ -50,6 +51,25 @@ import type { CfLayer } from "./entities/playerAnims";
 
 export interface ShopOpenRequest {
   shopId: string;
+}
+
+/** Generic crafting flow. Emitted by React modal → consumed by WorldScene,
+ *  then WorldScene → CraftingScene (minigame) → WorldScene (apply result).
+ *  Payloads are skill-agnostic so every crafting skill reuses the same path. */
+export interface CraftingOpenRequest {
+  stationDefId: string;
+}
+export interface CraftingBeginRequest {
+  stationDefId: string;
+  recipeId: string;
+}
+export type CraftingOutcomeTier = CraftOutcomeTier;
+export interface CraftingCompleteResult {
+  stationDefId: string;
+  recipeId: string;
+  tier: CraftOutcomeTier;
+  /** Strikes used out of budget. Informational; tier captures the actual grade. */
+  movesUsed: number;
 }
 
 export interface WardrobeApply {
@@ -188,6 +208,11 @@ type Events = {
   "wardrobe:apply": (change: WardrobeApply) => void;
   "shop:open": (request: ShopOpenRequest) => void;
   "shop:close": () => void;
+  "crafting:open": (request: CraftingOpenRequest) => void;
+  "crafting:close": () => void;
+  "crafting:begin": (request: CraftingBeginRequest) => void;
+  "crafting:complete": (result: CraftingCompleteResult) => void;
+  "crafting:cancel": () => void;
   "edit:toggle": () => void;
   "edit:state": (state: EditState) => void;
   "edit:click": (click: EditClick) => void;

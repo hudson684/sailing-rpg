@@ -84,6 +84,22 @@ import {
   loadNodesFile,
 } from "../world/GatheringNode";
 import nodesDataRaw from "../data/nodes.json";
+import {
+  CraftingStation,
+  STATION_INTERACT_RADIUS,
+} from "../world/CraftingStation";
+import {
+  craftingStations,
+  craftingStationInstances,
+} from "../crafting/stations";
+import { recipes as recipeRegistry } from "../crafting/recipes";
+import { applyCraft, hasAllInputs } from "../crafting/operations";
+import type { RecipeDef } from "../crafting/types";
+import { useCraftingStore } from "../store/craftingStore";
+import type {
+  CraftingBeginRequest,
+  CraftingCompleteResult,
+} from "../bus";
 import { Enemy, registerEnemyAnimations } from "../entities/Enemy";
 import { Projectile, rayBlocked } from "../entities/Projectile";
 import type {
@@ -225,6 +241,7 @@ export class WorldScene extends Phaser.Scene {
    *  creation because the initial tear-down-and-rebuild will do it in bulk. */
   private initialGroundItemsBuilt = false;
   private nodes: GatheringNode[] = [];
+  private craftingStations: CraftingStation[] = [];
   private enemies: Enemy[] = [];
   private projectiles: Projectile[] = [];
   /** Monotonic ms remaining until the player may fire their bow again. */
@@ -383,6 +400,7 @@ export class WorldScene extends Phaser.Scene {
     bootstrapNpcs(this.npcData);
     this.setupNpcReconciler();
     this.spawnGatheringNodes();
+    this.spawnCraftingStations();
     this.loadDropTables();
     this.spawnEnemies();
     this.shopsForEdit = (shopsDataRaw as ShopsFile).shops.map((s) => ({
@@ -593,6 +611,9 @@ export class WorldScene extends Phaser.Scene {
     bus.onTyped("inventory:action", this.onInventoryAction);
     bus.onTyped("dialogue:action", this.onDialogueAction);
     bus.onTyped("skin:apply", this.onSkinApply);
+    bus.onTyped("crafting:begin", this.onCraftingBegin);
+    bus.onTyped("crafting:complete", this.onCraftingComplete);
+    bus.onTyped("crafting:cancel", this.onCraftingCancel);
     if (import.meta.env.DEV) {
       bus.onTyped("edit:toggle", this.onEditToggle);
       bus.onTyped("edit:requestSnapshot", this.onEditRequestSnapshot);
@@ -644,6 +665,9 @@ export class WorldScene extends Phaser.Scene {
       bus.offTyped("inventory:action", this.onInventoryAction);
       bus.offTyped("dialogue:action", this.onDialogueAction);
       bus.offTyped("skin:apply", this.onSkinApply);
+      bus.offTyped("crafting:begin", this.onCraftingBegin);
+      bus.offTyped("crafting:complete", this.onCraftingComplete);
+      bus.offTyped("crafting:cancel", this.onCraftingCancel);
       if (import.meta.env.DEV) {
         bus.offTyped("edit:toggle", this.onEditToggle);
         bus.offTyped("edit:requestSnapshot", this.onEditRequestSnapshot);
@@ -1359,6 +1383,138 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  private spawnCraftingStations() {
+    for (const inst of craftingStationInstances) {
+      const def = craftingStations.tryGet(inst.defId);
+      if (!def) {
+        console.warn(`Unknown crafting station defId: ${inst.defId}`);
+        continue;
+      }
+      this.craftingStations.push(new CraftingStation(this, def, inst));
+    }
+  }
+
+  private nearestCraftingStation(): CraftingStation | null {
+    let best: CraftingStation | null = null;
+    let bestDist = STATION_INTERACT_RADIUS;
+    for (const st of this.craftingStations) {
+      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, st.x, st.y);
+      if (d <= bestDist) {
+        best = st;
+        bestDist = d;
+      }
+    }
+    return best;
+  }
+
+  private openCraftingStation(station: CraftingStation) {
+    bus.emitTyped("crafting:open", { stationDefId: station.def.id });
+    useCraftingStore.getState().openStation(station.def.id);
+  }
+
+  /** Emitted by the React modal when the player clicks "Craft" on a recipe.
+   *  Instant (smelter-style) crafts are applied directly here; minigame
+   *  (anvil-style) crafts pause World and hand off to CraftingScene. */
+  private onCraftingBegin = (req: CraftingBeginRequest) => {
+    const recipe = recipeRegistry.tryGet(req.recipeId);
+    if (!recipe) {
+      showToast("Unknown recipe.", 1500, "error");
+      return;
+    }
+    const slots = useGameStore.getState().inventory.slots;
+    if (!hasAllInputs(slots, recipe)) {
+      showToast("Missing materials.", 1500, "warn");
+      return;
+    }
+    if (recipe.minigame) {
+      this.scene.pause();
+      this.scene.launch("Crafting", {
+        stationDefId: req.stationDefId,
+        recipeId: req.recipeId,
+      });
+      return;
+    }
+    // Instant craft — consume inputs, grant output, award XP, toast.
+    this.applyCraftResult(req.recipeId, "normal");
+  };
+
+  private onCraftingComplete = (res: CraftingCompleteResult) => {
+    if (this.scene.isPaused()) this.scene.resume();
+    this.applyCraftResult(res.recipeId, res.tier);
+  };
+
+  private onCraftingCancel = () => {
+    if (this.scene.isPaused()) this.scene.resume();
+  };
+
+  /** Tier → XP multiplier. Failing a craft still grants a smidge so the
+   *  player doesn't feel robbed, but most of the reward is gated behind a
+   *  clean finish. Output quantity is NOT tier-scaled for MVP. */
+  private craftXpMultiplier(tier: CraftingCompleteResult["tier"]): number {
+    switch (tier) {
+      case "perfect": return 2;
+      case "great": return 1.5;
+      case "good": return 1;
+      case "normal": return 0.75;
+      case "fail": return 0.25;
+    }
+  }
+
+  private applyCraftResult(recipeId: string, tier: CraftingCompleteResult["tier"]) {
+    const recipe = recipeRegistry.tryGet(recipeId);
+    if (!recipe) return;
+    const store = useGameStore.getState();
+    const xpMult = this.craftXpMultiplier(tier);
+    const xp = Math.max(1, Math.floor(recipe.xpReward * xpMult));
+
+    if (tier === "fail") {
+      // Consume inputs (stakes) but grant no output. A consolation XP drip
+      // keeps the player progressing while still making failure sting.
+      this.consumeInputs(recipe);
+      store.jobsAddXp(recipe.skill, xp);
+      showToast(`Ruined ${recipe.name} — materials lost.`, 1800, "warn");
+      return;
+    }
+
+    const applied = applyCraft(store.inventory.slots, recipe, 1);
+    if (!applied.ok) {
+      showToast("Missing materials.", 1500, "warn");
+      return;
+    }
+    if (applied.leftoverOutput && applied.leftoverOutput > 0) {
+      showToast("Inventory full — no room for output.", 1800, "warn");
+      return;
+    }
+    store.inventoryHydrate(applied.slots);
+    store.jobsAddXp(recipe.skill, xp);
+
+    const tierLabel = tier === "normal" ? "" : ` (${tier})`;
+    showToast(
+      `+${recipe.output.qty} ${ITEMS[recipe.output.itemId].name}${tierLabel}`,
+      1600,
+      "success",
+    );
+  }
+
+  /** Remove the recipe's input items from inventory without producing output.
+   *  Re-reads the slots array each iteration because Zustand replaces it on
+   *  every mutation — stale snapshots would wrong-count after the first take. */
+  private consumeInputs(recipe: RecipeDef) {
+    for (const inp of recipe.inputs) {
+      let remaining = inp.qty;
+      const len = useGameStore.getState().inventory.slots.length;
+      for (let i = 0; i < len && remaining > 0; i++) {
+        const s = useGameStore.getState().inventory.slots[i];
+        if (!s || s.itemId !== inp.itemId) continue;
+        const removed = useGameStore.getState().inventoryRemoveAt(
+          i,
+          Math.min(s.quantity, remaining),
+        );
+        remaining -= removed;
+      }
+    }
+  }
+
   private onInteract() {
     if (this.activeDialogue) {
       // Let the dialogue UI handle advance via its own keybind; E here advances too.
@@ -1369,6 +1525,11 @@ export class WorldScene extends Phaser.Scene {
       const npc = this.nearestNpc();
       if (npc) {
         this.openDialogueWith(npc);
+        return;
+      }
+      const station = this.nearestCraftingStation();
+      if (station) {
+        this.openCraftingStation(station);
         return;
       }
       const door = this.nearestDoor();
@@ -1968,6 +2129,9 @@ export class WorldScene extends Phaser.Scene {
     for (const node of this.nodes) {
       if (node.blocksPx(px, py)) return false;
     }
+    for (const st of this.craftingStations) {
+      if (st.blocksPx(px, py)) return false;
+    }
     // Enemies only collide with each other — players and enemies pass through freely.
     if (ignoreEnemy) {
       for (const enemy of this.enemies) {
@@ -2045,8 +2209,11 @@ export class WorldScene extends Phaser.Scene {
     let prompt: string | null = null;
     if (this.sceneState.mode === "OnFoot" && !this.activeDialogue) {
       const npc = this.nearestNpc();
+      const station = this.nearestCraftingStation();
       if (npc) {
         prompt = `Press E to talk to ${npc.def.name}`;
+      } else if (station) {
+        prompt = `Press E to use ${station.def.name}`;
       } else if (this.nearestDoor()) {
         prompt = "Press E to go inside";
       } else {
