@@ -19,6 +19,8 @@ import iconHopeiteOre from "../../ui/icons/inventory/item_hopeite_ore.png";
 import iconSlimeGoo from "../../ui/icons/inventory/item_slime_goo.png";
 import iconHealthPotion from "../../ui/icons/inventory/item_health_potion.png";
 import iconRing from "../../ui/icons/inventory/item_ring.png";
+import iconArrow from "../../ui/icons/inventory/item_arrow.png";
+import iconBow from "../../ui/icons/inventory/item_bow.png";
 
 function emojiIcon(glyph: string): string {
   const svg =
@@ -49,8 +51,8 @@ export const ITEM_ICONS: Record<string, string> = {
   hopeite_ore: iconHopeiteOre,
   slime_goo: iconSlimeGoo,
   health_potion: iconHealthPotion,
-  bow: emojiIcon("🏹"),
-  arrow: emojiIcon("➷"),
+  bow: iconBow,
+  arrow: iconArrow,
   hopeite_ingot: emojiIcon("🧈"),
   hopeite_sword: iconSword,
   hopeite_pickaxe: iconPickaxe,
