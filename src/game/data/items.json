@@ -271,9 +271,11 @@
       "color": "#9a6b3a",
       "stackable": false,
       "maxStack": 1,
-      "description": "A cross-peen hammer. Lets you work the anvil more cleanly (future Blacksmith stat bonus).",
+      "description": "A cross-peen hammer. Equip to work the anvil more cleanly — each successful hit fills the crafting bar faster.",
       "type": "tool",
+      "slot": "mainHand",
       "skill": "blacksmith",
+      "stats": { "craftFillBonus": 0.25 },
       "value": 35
     },
     {

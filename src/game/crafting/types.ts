@@ -14,9 +14,10 @@ export type StationKind =
   /** Minigame-driven station (e.g. anvil, oven, loom, workbench). */
   | "anvil";
 
-/** Minigame action kinds. Strike is the only one wired today; leaving the
- *  type open so later stations can ship new action behaviors (hold, quench…). */
-export type MinigameActionKind = "strike";
+/** Minigame action kinds. Strike = press-timing on a sweeping bar.
+ *  Heat = hold SPACE, release when a shrinking ring hits a target band.
+ *  Quench = tap SPACE rapidly inside a short window. */
+export type MinigameActionKind = "strike" | "heat" | "quench";
 
 export interface MinigameConfig {
   /** Total strikes the player gets. Running out before filling the bar = fail. */

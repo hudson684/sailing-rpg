@@ -29,7 +29,8 @@
       "blocks": true,
       "ySortOffset": -57.71429443359375,
       "collisionOffsetX": 3.28573608398438,
-      "collisionOffsetY": -52
+      "collisionOffsetY": -52,
+      "interactRadiusMul": 1.5
     },
     {
       "id": "ore_hopeite",

@@ -84,6 +84,7 @@ export function computeEquippedStats(equipped: Equipped): Required<ItemStats> {
     defense: 0,
     moveSpeed: 0,
     sailSpeed: 0,
+    craftFillBonus: 0,
   };
   for (const id of Object.values(equipped)) {
     if (!id) continue;
@@ -94,6 +95,7 @@ export function computeEquippedStats(equipped: Equipped): Required<ItemStats> {
     total.defense += stats.defense ?? 0;
     total.moveSpeed += stats.moveSpeed ?? 0;
     total.sailSpeed += stats.sailSpeed ?? 0;
+    total.craftFillBonus += stats.craftFillBonus ?? 0;
   }
   return total;
 }

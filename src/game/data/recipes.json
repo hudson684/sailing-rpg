@@ -26,7 +26,7 @@
         "moveBudget": 8,
         "windowSize": 0.22,
         "sweepSpeed": 0.8,
-        "actions": ["strike", "strike", "strike", "strike"]
+        "actions": ["strike", "heat", "strike", "quench"]
       }
     },
     {
