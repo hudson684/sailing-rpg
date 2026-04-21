@@ -1298,17 +1298,12 @@ export class WorldScene extends Phaser.Scene {
     const offsetY = TILE_SIZE * 0.4 + Math.random() * 6;
     const x = node.x + offsetX;
     const y = node.y + offsetY;
-    const entry = this.droppedItemsState.add(
-      node.def.drop.itemId,
-      node.def.drop.quantity,
-      x,
-      y,
-    );
+    const { itemId, quantity: qMin, quantityMax } = node.def.drop;
+    const qMax = quantityMax ?? qMin;
+    const quantity = qMin + Math.floor(Math.random() * (qMax - qMin + 1));
+    const entry = this.droppedItemsState.add(itemId, quantity, x, y);
     this.spawnDroppedSprite(entry);
-    showToast(
-      `+${node.def.drop.quantity} ${ITEMS[node.def.drop.itemId].name}`,
-      1500,
-    );
+    showToast(`+${quantity} ${ITEMS[itemId].name}`, 1500);
   }
 
   private loadDropTables() {

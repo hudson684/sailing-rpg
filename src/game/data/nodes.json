@@ -56,7 +56,8 @@
       "xpPerHit": 5,
       "drop": {
         "itemId": "hopeite_ore",
-        "quantity": 1
+        "quantity": 3,
+        "quantityMax": 4
       },
       "blocks": true
     },

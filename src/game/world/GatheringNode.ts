@@ -19,7 +19,7 @@ export interface NodeDef {
   requiredTool: ItemId;
   skill: JobId;
   xpPerHit: number;
-  drop: { itemId: ItemId; quantity: number };
+  drop: { itemId: ItemId; quantity: number; quantityMax?: number };
   /** If true, the node's footprint blocks player movement while alive. */
   blocks: boolean;
   /** Pixel offset of the collision box center from the node anchor. */
