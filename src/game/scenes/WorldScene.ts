@@ -1451,7 +1451,7 @@ export class WorldScene extends Phaser.Scene {
 
   /** Tier → XP multiplier. Failing a craft still grants a smidge so the
    *  player doesn't feel robbed, but most of the reward is gated behind a
-   *  clean finish. Output quantity is NOT tier-scaled for MVP. */
+   *  clean finish. */
   private craftXpMultiplier(tier: CraftingCompleteResult["tier"]): number {
     switch (tier) {
       case "perfect": return 2;
@@ -1459,6 +1459,18 @@ export class WorldScene extends Phaser.Scene {
       case "good": return 1;
       case "normal": return 0.75;
       case "fail": return 0.25;
+    }
+  }
+
+  /** Tier → output-qty multiplier. Perfect doubles; Great has a 50% chance of
+   *  a bonus copy; good/normal are 1×; fail produces nothing (handled earlier). */
+  private craftOutputMultiplier(tier: CraftingCompleteResult["tier"]): number {
+    switch (tier) {
+      case "perfect": return 2;
+      case "great": return Math.random() < 0.5 ? 2 : 1;
+      case "good": return 1;
+      case "normal": return 1;
+      case "fail": return 0;
     }
   }
 
@@ -1478,7 +1490,8 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
 
-    const applied = applyCraft(store.inventory.slots, recipe, 1);
+    const outputMult = this.craftOutputMultiplier(tier);
+    const applied = applyCraft(store.inventory.slots, recipe, outputMult);
     if (!applied.ok) {
       showToast("Missing materials.", 1500, "warn");
       return;
@@ -1490,9 +1503,10 @@ export class WorldScene extends Phaser.Scene {
     store.inventoryHydrate(applied.slots);
     store.jobsAddXp(recipe.skill, xp);
 
+    const producedQty = Math.max(1, Math.floor(recipe.output.qty * outputMult));
     const tierLabel = tier === "normal" ? "" : ` (${tier})`;
     showToast(
-      `+${recipe.output.qty} ${ITEMS[recipe.output.itemId].name}${tierLabel}`,
+      `+${producedQty} ${ITEMS[recipe.output.itemId].name}${tierLabel}`,
       1600,
       "success",
     );

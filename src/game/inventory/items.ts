@@ -77,6 +77,9 @@ export interface ItemStats {
   moveSpeed?: number;
   /** Flat bonus to ship speed when at the helm. */
   sailSpeed?: number;
+  /** Fractional bonus to crafting-minigame fill per non-miss hit (0.25 = +25%).
+   *  Read off the equipped mainHand by CraftingScene — no aggregation needed. */
+  craftFillBonus?: number;
 }
 
 /**
