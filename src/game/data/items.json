@@ -165,7 +165,8 @@
       "maxStack": 99,
       "description": "Ammunition for a bow.",
       "type": "ammo",
-      "value": 1
+      "value": 1,
+      "bundle": { "quantity": 15, "buyPrice": 5, "sellPrice": 2 }
     },
     {
       "id": "pickaxe",

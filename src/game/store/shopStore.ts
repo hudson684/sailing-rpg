@@ -2,7 +2,11 @@ import { create } from "zustand";
 import {
   CURRENCY_ITEM_ID,
   ITEMS,
-  itemSellPrice,
+  itemBuyLot,
+  itemBuyPriceFor,
+  itemIsSellable,
+  itemSellLot,
+  itemSellPriceFor,
   type ItemId,
 } from "../inventory/items";
 import {
@@ -103,6 +107,8 @@ export const useShopStore = create<ShopsState>()((set, get) => ({
     if (!def) return { ok: false, reason: "unknown_shop" };
     const itemDef = ITEMS[itemId];
     if (!itemDef) return { ok: false, reason: "unknown_item" };
+    const lot = itemBuyLot(itemId);
+    if (qty % lot !== 0) return { ok: false, reason: "out_of_stock" };
 
     const now = Date.now();
     const current = get().touchShop(shopId, now);
@@ -113,7 +119,7 @@ export const useShopStore = create<ShopsState>()((set, get) => ({
       .reduce((t, s) => t + s.quantity, 0);
     if (haveStock < qty) return { ok: false, reason: "out_of_stock" };
 
-    const price = itemDef.value * qty;
+    const price = itemBuyPriceFor(itemId, qty);
     const store = useGameStore.getState();
     const slots = store.inventory.slots;
     if (countCurrency(slots) < price) return { ok: false, reason: "not_enough_coins" };
@@ -147,10 +153,12 @@ export const useShopStore = create<ShopsState>()((set, get) => ({
     if (slot.itemId === CURRENCY_ITEM_ID) return { ok: false, reason: "not_sellable" };
     const itemDef = ITEMS[slot.itemId];
     if (!itemDef) return { ok: false, reason: "unknown_item" };
-    const unitPrice = itemSellPrice(slot.itemId);
-    if (unitPrice <= 0) return { ok: false, reason: "not_sellable" };
+    if (!itemIsSellable(slot.itemId)) return { ok: false, reason: "not_sellable" };
 
-    const takeQty = Math.min(qty, slot.quantity);
+    const lot = itemSellLot(slot.itemId);
+    // Snap to the largest whole lot the player can actually deliver.
+    const takeQty = Math.min(qty, slot.quantity) - (Math.min(qty, slot.quantity) % lot);
+    if (takeQty <= 0) return { ok: false, reason: "not_sellable" };
     const { slots: afterRemove, removed } = removeFromSlot(
       store.inventory.slots,
       inventoryIndex,
@@ -158,7 +166,7 @@ export const useShopStore = create<ShopsState>()((set, get) => ({
     );
     if (removed <= 0) return { ok: false, reason: "not_owned" };
 
-    const payout = unitPrice * removed;
+    const payout = itemSellPriceFor(slot.itemId, removed);
     const { slots: afterPay, leftover } = addToSlots(afterRemove, CURRENCY_ITEM_ID, payout);
     // Unlikely, but if coins can't fit at all, bail without mutating state.
     if (leftover === payout) return { ok: false, reason: "inventory_full" };
@@ -185,6 +193,8 @@ export const useShopStore = create<ShopsState>()((set, get) => ({
     if (!def) return { ok: false, reason: "unknown_shop" };
     const itemDef = ITEMS[itemId];
     if (!itemDef) return { ok: false, reason: "unknown_item" };
+    const lot = itemSellLot(itemId);
+    if (qty % lot !== 0) return { ok: false, reason: "out_of_stock" };
 
     const now = Date.now();
     const current = get().touchShop(shopId, now);
@@ -195,7 +205,7 @@ export const useShopStore = create<ShopsState>()((set, get) => ({
     if (available < qty) return { ok: false, reason: "out_of_stock" };
 
     // Buyback price = the original sell price — same amount the player got back.
-    const price = itemSellPrice(itemId) * qty;
+    const price = itemSellPriceFor(itemId, qty);
     const store = useGameStore.getState();
     const slots = store.inventory.slots;
     if (countCurrency(slots) < price) return { ok: false, reason: "not_enough_coins" };
