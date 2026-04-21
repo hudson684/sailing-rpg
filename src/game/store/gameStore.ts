@@ -25,6 +25,7 @@ import {
   type JobXp,
 } from "../jobs/operations";
 import { showToast } from "../../ui/store/ui";
+import { bus } from "../bus";
 
 /**
  * Global game store. This owns discrete game state (inventory, and later
@@ -157,6 +158,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
     const { xp } = get().jobs;
     const { xp: nextXp, prevLevel, nextLevel } = addXpOp(xp, jobId, amount);
     set({ jobs: { xp: nextXp } });
+    bus.emitTyped("jobs:xpGained", { jobId, amount: Math.max(0, Math.floor(amount)) });
     if (nextLevel > prevLevel) {
       const def = JOBS[jobId];
       showToast(`${def.name} level ${nextLevel}!`, 2500, "success");

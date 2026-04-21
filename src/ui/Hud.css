@@ -218,6 +218,60 @@
 .hud-toasts .hud-toast-warn    { border-image-source: url("/ui/panel-orange.png"); }
 .hud-toasts .hud-toast-error   { border-image-source: url("/ui/panel-red.png");    color: #2a0d0d; }
 
+.hud-xp-ring {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 60px;
+  pointer-events: none;
+  font-family: var(--pixel-font);
+}
+.hud-xp-ring-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.45));
+}
+.hud-xp-ring-track {
+  fill: rgba(0, 0, 0, 0.45);
+  stroke: var(--pixel-ink, #2b1d12);
+  stroke-width: 4;
+}
+.hud-xp-ring-fill {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dasharray 160ms ease-out;
+}
+.hud-xp-ring-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+.hud-xp-ring-level {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  min-width: 16px;
+  padding: 1px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--pixel-parchment, #f3e3c2);
+  background: var(--pixel-ink, #2b1d12);
+  border-radius: 6px;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;

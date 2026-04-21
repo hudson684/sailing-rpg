@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
 
-export type FloatingTextKind = "damage-enemy" | "damage-player" | "damage-node" | "heal";
+export type FloatingTextKind = "damage-enemy" | "damage-player" | "damage-node" | "heal" | "xp";
 
 interface FloatOpts {
   kind?: FloatingTextKind;
@@ -13,6 +13,7 @@ const COLORS: Record<FloatingTextKind, { fill: string; stroke: string }> = {
   "damage-player": { fill: "#ff6868", stroke: "#3a0808" }, // angry red
   "damage-node":   { fill: "#ffffff", stroke: "#2a1a08" }, // chip white
   "heal":          { fill: "#9bff9b", stroke: "#0a3a0a" }, // green
+  "xp":            { fill: "#ffd84a", stroke: "#3a2608" }, // golden
 };
 
 /** Spawn a cartoony damage number that floats up and fades out. */
@@ -25,7 +26,14 @@ export function spawnFloatingNumber(
 ): void {
   const kind = opts.kind ?? "damage-enemy";
   const colors = COLORS[kind];
-  const text = amount === 0 ? "MISS" : (kind === "heal" ? `+${amount}` : `${amount}`);
+  const text =
+    kind === "xp"
+      ? `+${amount}xp`
+      : amount === 0
+        ? "MISS"
+        : kind === "heal"
+          ? `+${amount}`
+          : `${amount}`;
 
   const jx = opts.jitter === false ? 0 : (Math.random() - 0.5) * 14;
   const startX = x + jx;

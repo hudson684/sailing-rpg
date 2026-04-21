@@ -1,7 +1,16 @@
+import { useEffect, useState } from "react";
 import { selectHud, selectToasts, useUIStore } from "./store/uiStore";
-import { computeMaxHp, useGameStore } from "../game/store/gameStore";
+import { computeMaxHp, selectJobXp, useGameStore } from "../game/store/gameStore";
 import { Hotbar } from "./Hotbar";
 import { useIsMobile, useIsPortrait } from "./mobile/useMobile";
+import { bus } from "../game/bus";
+import { JOBS, type JobId } from "../game/jobs/jobs";
+import {
+  MAX_LEVEL,
+  levelFromXp,
+  xpInCurrentLevel,
+  xpToNextLevel,
+} from "../game/jobs/xpTable";
 import heartIcon from "./icons/hud/hud_heart.png";
 import inventoryIcon from "./icons/hud/hud_inventory.png";
 import "./Hud.css";
@@ -64,6 +73,8 @@ export function Hud() {
         <img className="hud-inventory-btn-label" src={inventoryIcon} alt="" aria-hidden="true" />
       </button>
 
+      <XpRing />
+
       {state.prompt && <div className="px-panel hud-prompt">{state.prompt}</div>}
 
       {toasts.length > 0 && (
@@ -75,6 +86,53 @@ export function Hud() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function XpRing() {
+  const xpByJob = useGameStore(selectJobXp);
+  const [lastJob, setLastJob] = useState<JobId | null>(null);
+
+  useEffect(() => {
+    const onXp = ({ jobId }: { jobId: JobId; amount: number }) => setLastJob(jobId);
+    bus.onTyped("jobs:xpGained", onXp);
+    return () => {
+      bus.offTyped("jobs:xpGained", onXp);
+    };
+  }, []);
+
+  if (!lastJob) return null;
+  const def = JOBS[lastJob];
+  const totalXp = xpByJob[lastJob] ?? 0;
+  const level = levelFromXp(totalXp);
+  const atMax = level >= MAX_LEVEL;
+  const intoLevel = atMax ? 0 : xpInCurrentLevel(totalXp, level);
+  const needed = atMax ? 1 : xpToNextLevel(level);
+  const pct = atMax ? 1 : Math.max(0, Math.min(1, intoLevel / needed));
+  const R = 22;
+  const C = 2 * Math.PI * R;
+
+  return (
+    <div
+      className="hud-xp-ring"
+      role="status"
+      aria-label={`${def.name} level ${level}, ${Math.round(pct * 100)}% to next`}
+      title={`${def.name} Lv ${level} — ${intoLevel} / ${needed} XP`}
+    >
+      <svg className="hud-xp-ring-svg" viewBox="0 0 52 52" aria-hidden="true">
+        <circle className="hud-xp-ring-track" cx="26" cy="26" r={R} />
+        <circle
+          className="hud-xp-ring-fill"
+          cx="26"
+          cy="26"
+          r={R}
+          stroke={def.color}
+          strokeDasharray={`${C * pct} ${C}`}
+        />
+      </svg>
+      <img className="hud-xp-ring-icon" src={def.icon} alt="" draggable={false} />
+      <span className="hud-xp-ring-level">{level}</span>
     </div>
   );
 }

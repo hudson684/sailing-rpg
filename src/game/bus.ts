@@ -1,5 +1,6 @@
 import type { SaveEnvelope, SlotId } from "./save";
 import type { CraftOutcomeTier } from "./crafting/types";
+import type { JobId } from "./jobs/jobs";
 
 export type PlayerMode = "OnFoot" | "Boarding" | "OnDeck" | "AtHelm" | "Anchoring";
 
@@ -225,6 +226,7 @@ type Events = {
   "edit:export": (payload: { files: Array<{ name: string; content: string }> }) => void;
   "player:resetSpawn": () => void;
   "ships:resetAll": () => void;
+  "jobs:xpGained": (payload: { jobId: JobId; amount: number }) => void;
 };
 
 // Tiny hand-rolled typed event emitter. Kept Phaser-free so importing `bus`

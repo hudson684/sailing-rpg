@@ -12,7 +12,7 @@ import {
   type InventoryAction,
 } from "../bus";
 import { ALL_ITEM_IDS, ITEMS } from "../inventory/items";
-import { ALL_JOB_IDS } from "../jobs/jobs";
+import { ALL_JOB_IDS, type JobId } from "../jobs/jobs";
 import { useGameStore } from "../store/gameStore";
 import { useShopStore } from "../store/shopStore";
 import { useSettingsStore } from "../store/settingsStore";
@@ -614,6 +614,7 @@ export class WorldScene extends Phaser.Scene {
     bus.onTyped("crafting:begin", this.onCraftingBegin);
     bus.onTyped("crafting:complete", this.onCraftingComplete);
     bus.onTyped("crafting:cancel", this.onCraftingCancel);
+    bus.onTyped("jobs:xpGained", this.onXpGained);
     if (import.meta.env.DEV) {
       bus.onTyped("edit:toggle", this.onEditToggle);
       bus.onTyped("edit:requestSnapshot", this.onEditRequestSnapshot);
@@ -668,6 +669,7 @@ export class WorldScene extends Phaser.Scene {
       bus.offTyped("crafting:begin", this.onCraftingBegin);
       bus.offTyped("crafting:complete", this.onCraftingComplete);
       bus.offTyped("crafting:cancel", this.onCraftingCancel);
+      bus.offTyped("jobs:xpGained", this.onXpGained);
       if (import.meta.env.DEV) {
         bus.offTyped("edit:toggle", this.onEditToggle);
         bus.offTyped("edit:requestSnapshot", this.onEditRequestSnapshot);
@@ -1442,6 +1444,13 @@ export class WorldScene extends Phaser.Scene {
 
   private onCraftingCancel = () => {
     if (this.scene.isPaused()) this.scene.resume();
+  };
+
+  private onXpGained = (payload: { jobId: JobId; amount: number }) => {
+    if (!this.player || payload.amount <= 0) return;
+    spawnFloatingNumber(this, this.player.x, this.player.y - 22, payload.amount, {
+      kind: "xp",
+    });
   };
 
   /** Tier → XP multiplier. Failing a craft still grants a smidge so the
