@@ -108,6 +108,17 @@ export interface RangedWeapon {
   cooldownMs: number;
 }
 
+/**
+ * Shop pricing sold in fixed lots (e.g. "15 arrows for 5g"). When present,
+ * the shop buys and sells this item only in multiples of `quantity`, at
+ * `buyPrice` / `sellPrice` per bundle — `value` is ignored for shop math.
+ */
+export interface ItemBundle {
+  quantity: number;
+  buyPrice: number;
+  sellPrice: number;
+}
+
 export interface ItemDef {
   id: ItemId;
   name: string;
@@ -127,8 +138,10 @@ export interface ItemDef {
   consumable?: ConsumableEffect;
   /** Ranged-weapon metadata. Present iff this item fires a projectile. */
   ranged?: RangedWeapon;
-  /** Buy price at a shop. Sell price is floor(value / 2). */
+  /** Buy price at a shop. Sell price is floor(value / 2). Overridden by `bundle` when present. */
   value: number;
+  /** Optional lot pricing — used instead of `value` when set. */
+  bundle?: ItemBundle;
 }
 
 interface RawItem {
@@ -146,6 +159,7 @@ interface RawItem {
   consumable?: ConsumableEffect;
   ranged?: RangedWeapon;
   value: number;
+  bundle?: ItemBundle;
 }
 
 const RAW = (itemData as unknown as { items: RawItem[] }).items;
@@ -164,11 +178,47 @@ export const ITEMS: Record<ItemId, ItemDef> = Object.fromEntries(
 
 export const ALL_ITEM_IDS: ItemId[] = DEFS.map((d) => d.id);
 
-/** Sell price a shop pays the player for one unit. */
-export function itemSellPrice(id: ItemId): number {
+/**
+ * Minimum purchasable lot size. Normal items are sold one at a time; items
+ * with a `bundle` only sell in multiples of `bundle.quantity`.
+ */
+export function itemBuyLot(id: ItemId): number {
+  return items.tryGet(id)?.bundle?.quantity ?? 1;
+}
+
+/** Minimum sellable lot size. Mirrors `itemBuyLot` today. */
+export function itemSellLot(id: ItemId): number {
+  return items.tryGet(id)?.bundle?.quantity ?? 1;
+}
+
+/**
+ * Total buy price for `qty` of this item. Callers must ensure `qty` is a
+ * multiple of `itemBuyLot(id)` — fractional lots are floored.
+ */
+export function itemBuyPriceFor(id: ItemId, qty: number): number {
   const def = items.tryGet(id);
   if (!def) return 0;
-  return Math.floor(def.value / 2);
+  if (def.bundle) return Math.floor(qty / def.bundle.quantity) * def.bundle.buyPrice;
+  return def.value * qty;
+}
+
+/**
+ * Total price a shop pays the player for selling `qty` of this item. Callers
+ * must ensure `qty` is a multiple of `itemSellLot(id)`.
+ */
+export function itemSellPriceFor(id: ItemId, qty: number): number {
+  const def = items.tryGet(id);
+  if (!def) return 0;
+  if (def.bundle) return Math.floor(qty / def.bundle.quantity) * def.bundle.sellPrice;
+  return Math.floor(def.value / 2) * qty;
+}
+
+/** Does any shop pay anything for this item? Used to hide zero-value items in the sell tab. */
+export function itemIsSellable(id: ItemId): boolean {
+  const def = items.tryGet(id);
+  if (!def) return false;
+  if (def.bundle) return def.bundle.sellPrice > 0;
+  return Math.floor(def.value / 2) > 0;
 }
 
 /** Currency item id. Kept in one place so every buy/sell reads the same. */

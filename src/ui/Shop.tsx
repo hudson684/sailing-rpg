@@ -3,7 +3,11 @@ import { bus } from "../game/bus";
 import {
   CURRENCY_ITEM_ID,
   ITEMS,
-  itemSellPrice,
+  itemBuyLot,
+  itemBuyPriceFor,
+  itemIsSellable,
+  itemSellLot,
+  itemSellPriceFor,
   type ItemId,
 } from "../game/inventory/items";
 import { selectInventorySlots, useGameStore } from "../game/store/gameStore";
@@ -73,7 +77,7 @@ export function Shop() {
   for (let i = 0; i < slots.length; i++) {
     const s = slots[i];
     if (!s || s.itemId === CURRENCY_ITEM_ID) continue;
-    if (itemSellPrice(s.itemId) <= 0) continue;
+    if (!itemIsSellable(s.itemId)) continue;
     sellRows.push({ inventoryIndex: i, itemId: s.itemId, quantity: s.quantity });
   }
 
@@ -82,13 +86,18 @@ export function Shop() {
     bus.emitTyped("shop:close");
   };
 
-  const getQty = (key: string, max: number) => {
-    const raw = qtyByKey[key] ?? 1;
-    return Math.max(1, Math.min(max > 0 ? max : 1, raw));
+  // Quantity stepper — snaps to multiples of `lot` so bundle-priced items
+  // (e.g. arrows, sold 15 at a time) can't be bought or sold in partial lots.
+  const getQty = (key: string, max: number, lot: number) => {
+    const raw = qtyByKey[key] ?? lot;
+    const clamped = Math.max(lot, Math.min(max > 0 ? max : lot, raw));
+    return clamped - (clamped % lot);
   };
-  const setQty = (key: string, value: number, max: number) => {
-    const clamped = Math.max(1, Math.min(max > 0 ? max : 1, Math.floor(value) || 1));
-    setQtyByKey((prev) => ({ ...prev, [key]: clamped }));
+  const setQty = (key: string, value: number, max: number, lot: number) => {
+    const floored = Math.max(lot, Math.floor(value) || lot);
+    const bounded = Math.min(max > 0 ? max : lot, floored);
+    const snapped = bounded - (bounded % lot);
+    setQtyByKey((prev) => ({ ...prev, [key]: Math.max(lot, snapped) }));
   };
 
   const toastOutcome = (res: { ok: boolean; reason?: string }, success: string) => {
@@ -154,24 +163,30 @@ export function Shop() {
               stockRows.map((row) => {
                 const def = ITEMS[row.itemId];
                 if (!def) return null;
-                const unit = def.value;
-                const affordable = unit > 0 ? Math.floor(gold / unit) : row.quantity;
-                const max = Math.max(0, Math.min(row.quantity, affordable));
+                const lot = itemBuyLot(row.itemId);
+                const lotPrice = itemBuyPriceFor(row.itemId, lot);
+                const affordableLots = lotPrice > 0 ? Math.floor(gold / lotPrice) : Math.floor(row.quantity / lot);
+                const stockLots = Math.floor(row.quantity / lot);
+                const max = Math.max(0, Math.min(stockLots, affordableLots)) * lot;
                 const key = `buy:${row.itemId}`;
-                const n = getQty(key, max);
+                const n = getQty(key, max, lot);
+                const sub = lot > 1
+                  ? `${def.description} — ${lot} for ${lotPrice}g`
+                  : def.description;
                 return (
                   <Row
                     key={`buy-${row.itemId}`}
                     icon={def.icon}
                     name={def.name}
-                    sub={def.description}
+                    sub={sub}
                     stockQty={row.quantity}
-                    unitPrice={unit}
+                    total={itemBuyPriceFor(row.itemId, n)}
                     priceLabel="buy"
                     action="Buy"
                     n={n}
                     max={max}
-                    onQtyChange={(v) => setQty(key, v, max)}
+                    lot={lot}
+                    onQtyChange={(v) => setQty(key, v, max, lot)}
                     disabled={max <= 0}
                     onClick={() =>
                       toastOutcome(
@@ -191,24 +206,30 @@ export function Shop() {
               sellRows.map((row) => {
                 const def = ITEMS[row.itemId];
                 if (!def) return null;
-                const unit = itemSellPrice(row.itemId);
-                const max = Math.max(0, row.quantity);
+                const lot = itemSellLot(row.itemId);
+                const lotPrice = itemSellPriceFor(row.itemId, lot);
+                // Only full lots are sellable, so cap max at the largest whole lot the player owns.
+                const max = Math.floor(row.quantity / lot) * lot;
                 const key = `sell:${row.inventoryIndex}`;
-                const n = getQty(key, max);
+                const n = getQty(key, max, lot);
+                const sub = lot > 1
+                  ? `Owned ×${row.quantity} — ${lot} for ${lotPrice}g`
+                  : `Owned ×${row.quantity}`;
                 return (
                   <Row
                     key={`sell-${row.inventoryIndex}`}
                     icon={def.icon}
                     name={def.name}
-                    sub={`Owned ×${row.quantity}`}
+                    sub={sub}
                     stockQty={row.quantity}
-                    unitPrice={unit}
+                    total={itemSellPriceFor(row.itemId, n)}
                     priceLabel="sell"
                     action="Sell"
                     n={n}
                     max={max}
-                    onQtyChange={(v) => setQty(key, v, max)}
-                    disabled={unit <= 0 || max <= 0}
+                    lot={lot}
+                    onQtyChange={(v) => setQty(key, v, max, lot)}
+                    disabled={lotPrice <= 0 || max <= 0}
                     onClick={() =>
                       toastOutcome(
                         useShopStore
@@ -229,12 +250,14 @@ export function Shop() {
               buybackRows.map((row) => {
                 const def = ITEMS[row.itemId];
                 if (!def) return null;
-                const unit = itemSellPrice(row.itemId);
-                const affordable = unit > 0 ? Math.floor(gold / unit) : row.quantity;
-                const max = Math.max(0, Math.min(row.quantity, affordable));
+                const lot = itemSellLot(row.itemId);
+                const lotPrice = itemSellPriceFor(row.itemId, lot);
+                const affordableLots = lotPrice > 0 ? Math.floor(gold / lotPrice) : Math.floor(row.quantity / lot);
+                const stockLots = Math.floor(row.quantity / lot);
+                const max = Math.max(0, Math.min(stockLots, affordableLots)) * lot;
                 const ttl = Math.max(0, Math.ceil((row.expiresAt - now) / 1000));
                 const key = `bb:${row.itemId}`;
-                const n = getQty(key, max);
+                const n = getQty(key, max, lot);
                 return (
                   <Row
                     key={`bb-${row.itemId}`}
@@ -242,12 +265,13 @@ export function Shop() {
                     name={def.name}
                     sub={`Expires in ${formatDuration(ttl)}`}
                     stockQty={row.quantity}
-                    unitPrice={unit}
+                    total={itemSellPriceFor(row.itemId, n)}
                     priceLabel="buy"
                     action="Repurchase"
                     n={n}
                     max={max}
-                    onQtyChange={(v) => setQty(key, v, max)}
+                    lot={lot}
+                    onQtyChange={(v) => setQty(key, v, max, lot)}
                     disabled={max <= 0}
                     onClick={() =>
                       toastOutcome(
@@ -291,17 +315,17 @@ function Row(props: {
   name: string;
   sub?: string;
   stockQty: number;
-  unitPrice: number;
+  total: number;
   priceLabel: "buy" | "sell";
   action: string;
   n: number;
   max: number;
+  lot: number;
   onQtyChange: (v: number) => void;
   disabled?: boolean;
   onClick: () => void;
 }) {
-  const total = props.unitPrice * props.n;
-  const stepDisabled = props.max <= 1;
+  const stepDisabled = props.max <= props.lot;
   return (
     <div className="shop-row">
       <div className="px-slot shop-row-slot">
@@ -315,8 +339,8 @@ function Row(props: {
       <div className="shop-row-qty">
         <button
           className="px-btn shop-qty-btn"
-          disabled={stepDisabled || props.n <= 1}
-          onClick={() => props.onQtyChange(props.n - 1)}
+          disabled={stepDisabled || props.n <= props.lot}
+          onClick={() => props.onQtyChange(props.n - props.lot)}
           aria-label="Decrease quantity"
         >
           −
@@ -324,8 +348,9 @@ function Row(props: {
         <input
           className="shop-qty-input"
           type="number"
-          min={1}
-          max={Math.max(1, props.max)}
+          min={props.lot}
+          max={Math.max(props.lot, props.max)}
+          step={props.lot}
           value={props.n}
           onChange={(e) => props.onQtyChange(Number(e.target.value))}
           aria-label="Quantity"
@@ -333,14 +358,14 @@ function Row(props: {
         <button
           className="px-btn shop-qty-btn"
           disabled={stepDisabled || props.n >= props.max}
-          onClick={() => props.onQtyChange(props.n + 1)}
+          onClick={() => props.onQtyChange(props.n + props.lot)}
           aria-label="Increase quantity"
         >
           +
         </button>
         <button
           className="px-btn shop-qty-max"
-          disabled={props.max <= 1 || props.n >= props.max}
+          disabled={props.max <= props.lot || props.n >= props.max}
           onClick={() => props.onQtyChange(props.max)}
           aria-label="Max quantity"
         >
@@ -349,7 +374,7 @@ function Row(props: {
       </div>
       <div className="shop-row-price">
         <span className={`shop-row-coin shop-row-coin-${props.priceLabel}`}>
-          {total}g
+          {props.total}g
         </span>
       </div>
       <button
