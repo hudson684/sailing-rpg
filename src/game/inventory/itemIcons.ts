@@ -3,7 +3,6 @@
 // inside a plain JSON file. Emoji items use inline SVG data URLs.
 
 import iconRope from "../../ui/icons/inventory/item_rope.png";
-import iconWood from "../../ui/icons/inventory/item_wood.png";
 import iconFish from "../../ui/icons/inventory/item_fish.png";
 import iconCoin from "../../ui/icons/inventory/item_coin.png";
 import iconCompass from "../../ui/icons/inventory/item_compass.png";
@@ -21,6 +20,7 @@ import iconHealthPotion from "../../ui/icons/inventory/item_health_potion.png";
 import iconRing from "../../ui/icons/inventory/item_ring.png";
 import iconArrow from "../../ui/icons/inventory/item_arrow.png";
 import iconBow from "../../ui/icons/inventory/item_bow.png";
+import iconPlank from "../../ui/icons/inventory/item_plank.png";
 
 function emojiIcon(glyph: string): string {
   const svg =
@@ -35,7 +35,7 @@ const FALLBACK_ICON = emojiIcon("❓");
 
 export const ITEM_ICONS: Record<string, string> = {
   rope: iconRope,
-  plank: iconWood,
+  plank: iconPlank,
   fish: iconFish,
   coin: iconCoin,
   compass: iconCompass,

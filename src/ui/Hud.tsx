@@ -3,6 +3,7 @@ import { computeMaxHp, useGameStore } from "../game/store/gameStore";
 import { Hotbar } from "./Hotbar";
 import { useIsMobile, useIsPortrait } from "./mobile/useMobile";
 import heartIcon from "./icons/hud/hud_heart.png";
+import inventoryIcon from "./icons/hud/hud_inventory.png";
 import "./Hud.css";
 
 export function Hud() {
@@ -60,7 +61,7 @@ export function Hud() {
         onClick={() => window.dispatchEvent(new CustomEvent("inventory:toggle"))}
         onContextMenu={(e) => e.preventDefault()}
       >
-        <span className="hud-inventory-btn-label">🎒</span>
+        <img className="hud-inventory-btn-label" src={inventoryIcon} alt="" aria-hidden="true" />
       </button>
 
       {state.prompt && <div className="px-panel hud-prompt">{state.prompt}</div>}

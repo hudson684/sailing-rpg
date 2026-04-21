@@ -175,6 +175,10 @@
   pointer-events: none;
   line-height: 1;
   filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.4));
+  width: calc(14px * var(--hotbar-scale, 3));
+  height: calc(14px * var(--hotbar-scale, 3));
+  image-rendering: pixelated;
+  display: block;
 }
 
 .hud .hud-prompt {

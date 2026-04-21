@@ -1249,12 +1249,13 @@ export class WorldScene extends Phaser.Scene {
   private nearestNodeForTool(toolId: string | undefined): GatheringNode | null {
     if (!toolId) return null;
     let best: GatheringNode | null = null;
-    let bestDist = NODE_INTERACT_RADIUS;
+    let bestDist = Infinity;
     for (const node of this.nodes) {
       if (!node.isAlive()) continue;
       if (node.def.requiredTool !== toolId) continue;
+      const reach = NODE_INTERACT_RADIUS * (node.def.interactRadiusMul ?? 1);
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, node.x, node.y);
-      if (d <= bestDist) {
+      if (d <= reach && d <= bestDist) {
         best = node;
         bestDist = d;
       }
@@ -1264,11 +1265,12 @@ export class WorldScene extends Phaser.Scene {
 
   private nearestAnyNodeInReach(): GatheringNode | null {
     let best: GatheringNode | null = null;
-    let bestDist = NODE_INTERACT_RADIUS;
+    let bestDist = Infinity;
     for (const node of this.nodes) {
       if (!node.isAlive()) continue;
+      const reach = NODE_INTERACT_RADIUS * (node.def.interactRadiusMul ?? 1);
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, node.x, node.y);
-      if (d <= bestDist) {
+      if (d <= reach && d <= bestDist) {
         best = node;
         bestDist = d;
       }

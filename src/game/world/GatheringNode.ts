@@ -29,6 +29,8 @@ export interface NodeDef {
   ySortOffset?: number;
   /** Optional animated sprite to render in place of the color rectangle. */
   sprite?: NodeSpriteDef;
+  /** Multiplier on NODE_INTERACT_RADIUS for this node. Defaults to 1. */
+  interactRadiusMul?: number;
 }
 
 export interface NodeSpriteDef {
