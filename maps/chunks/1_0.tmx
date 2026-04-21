@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="18" nextobjectid="30">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="18" nextobjectid="31">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
  <tileset firstgid="226" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <tileset firstgid="736" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
@@ -38,6 +38,7 @@
  <tileset firstgid="27872" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset - wall1.tsx"/>
  <tileset firstgid="28112" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass - transparency.tsx"/>
  <tileset firstgid="32072" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx"/>
+ <tileset firstgid="36032" source="../themes/The Village/TiledMap Editor/tilesets/house-decorations.tsx"/>
  <layer id="13" name="shallow water" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMA6DVe7LVXo+jYC+pqqqq+voA8lpALg==
@@ -70,7 +71,7 @@
  </layer>
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzTsOglAQheHpMcF7t6UFmPh2TeIDH6g7kgJYjpV/YUJjYjOFxfmTr5vMMVNKKaXUv/YMZg1adKjD97tX0vMsiWZDBEQMou//X43Yy5BjgvFnf5qazTDHAkussMYm9dneslVghz0OOKLEiY0zLriiwg13PJz2lVJKKe/e7JQW5A==
+   eJztzTsOAWEUhuHTj2T8U8xgSxRI3K3J/c5i0FJgHViAyltIkEg0fzLN9yZPd3I+M/XZNjbbYR+ns39l94Z7Svu5xCyPQpLOvlJKqe8OzuyEMy44ut93j+DNZ0FkloVDhEzk9/+/iuyVUUEVpdd+LTSro4EmWmijg27oZ7vHVh8DDDHCGBNM2ZhhjgWWWGGNjad9pZRSyndPJCEdAg==
   </data>
  </layer>
  <layer id="2" name="overlay" width="32" height="32">
@@ -129,6 +130,14 @@
     <property name="uid" value="cf439ab8-00b8-42ff-a022-a6d67b7e3f60"/>
    </properties>
    <point/>
+  </object>
+  <object id="30" name="starter_dungeon_entrance" type="door" x="159.333" y="97" width="65.3333" height="31.3333">
+   <properties>
+    <property name="entryTx" type="int" value="9"/>
+    <property name="entryTy" type="int" value="7"/>
+    <property name="interiorKey" value="starter_dungeon"/>
+       <property name="uid" value="dff9b79f-bb71-4913-902a-cf8554d444e3"/>
+   </properties>
   </object>
  </objectgroup>
  <objectgroup id="15" name="COLLISION">

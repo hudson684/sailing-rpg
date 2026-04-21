@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="3">
  <tileset firstgid="1" source="../themes/Old Prison/TiledMap Editor New/Tilesets/atlas-props.tsx"/>
- <tileset firstgid="2715" source="../themes/Old Prison/TiledMap Editor New/Tilesets/atlas-props-sprites.tsx"/>
  <tileset firstgid="3606" source="../themes/Old Prison/TiledMap Editor New/Tilesets/Blood pool - standard style - with spikes - transparency.tsx"/>
  <tileset firstgid="3916" source="../themes/Old Prison/TiledMap Editor New/Tilesets/Blood pool - standard style - with spikes.tsx"/>
  <tileset firstgid="4226" source="../themes/Old Prison/TiledMap Editor New/Tilesets/Blood pool - style2 - with spikes - transparency.tsx"/>
@@ -261,8 +260,8 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup id="8" name="Object Layer 1">
-  <object id="1" name="interior_exit" type="interior_exit" x="168" y="123.333" width="89.3333" height="44.3333">
+ <objectgroup id="8" name="objects">
+  <object id="1" name="interior_exit" type="interior_exit" x="256" y="192" width="89.3333" height="44.3333">
    <properties>
     <property name="uid" value="decd283d-6842-46ef-bdd8-0a467e4643ab"/>
    </properties>

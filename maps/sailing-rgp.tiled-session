@@ -1,5 +1,5 @@
 {
-    "activeFile": "chunks/4_2.tmx",
+    "activeFile": "interiors/starter_dungeon.tmx",
     "expandedProjectPaths": [
         "themes/The Village/TiledMap Editor",
         "themes/grassland/TiledMap Editor/Tilesets",
@@ -11,6 +11,7 @@
         "themes/Grass Land",
         "themes/The Village",
         "themes/grassland",
+        "interiors",
         ".",
         "ships"
     ],
@@ -49,11 +50,14 @@
             }
         },
         "chunks/1_0.tmx": {
-            "scale": 1.5,
-            "selectedLayer": 8,
+            "expandedObjectLayers": [
+                6
+            ],
+            "scale": 3,
+            "selectedLayer": 11,
             "viewCenter": {
-                "x": 512,
-                "y": 512.3333333333333
+                "x": 171.83333333333331,
+                "y": 137.33333333333334
             }
         },
         "chunks/1_1.tmx": {
@@ -67,9 +71,6 @@
         "chunks/1_2.tmx": {
             "expandedGroupLayers": [
                 14
-            ],
-            "expandedObjectLayers": [
-                17
             ],
             "scale": 0.75,
             "selectedLayer": 10,
@@ -235,11 +236,14 @@
             }
         },
         "interiors/starter_dungeon.tmx": {
-            "scale": 0.75,
-            "selectedLayer": 7,
+            "expandedObjectLayers": [
+                8
+            ],
+            "scale": 3,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": 431.3333333333333,
-                "y": 480
+                "x": 209.83333333333331,
+                "y": 185.33333333333331
             }
         },
         "ships/galleon-e.tmx": {
@@ -294,7 +298,7 @@
             "scaleInDock": 1
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet1.tsx": {
-            "scaleInDock": 0.5
+            "scaleInDock": 0.75
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2-sprites.tsx": {
             "scaleInDock": 1
@@ -311,7 +315,7 @@
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet4.tsx": {
             "dynamicWrapping": false,
-            "scaleInDock": 0.75
+            "scaleInDock": 0.33
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-props-sheet3-sprites.tsx": {
             "scaleInDock": 1
@@ -370,7 +374,7 @@
             "scaleInDock": 1
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/hole3.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 0.5
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/platform - grass - coast - godot.tsx": {
             "scaleInDock": 1
@@ -593,7 +597,7 @@
             "scaleInDock": 1
         },
         "themes/The Village/TiledMap Editor/tilesets/Free_Premade_houses.tsx": {
-            "scaleInDock": 0.75
+            "scaleInDock": 0.5
         },
         "themes/The Village/TiledMap Editor/tilesets/Premade_houses.tsx": {
             "scaleInDock": 0.25
@@ -602,14 +606,14 @@
             "scaleInDock": 1
         },
         "themes/The Village/TiledMap Editor/tilesets/Premade_houses3.tsx": {
-            "scaleInDock": 0.5,
+            "scaleInDock": 0.33,
             "scaleInEditor": 0.5
         },
         "themes/The Village/TiledMap Editor/tilesets/Update 1.2 - recolored roof.tsx": {
-            "scaleInDock": 0.33
+            "scaleInDock": 0.25
         },
         "themes/The Village/TiledMap Editor/tilesets/house-decorations.tsx": {
-            "scaleInDock": 2
+            "scaleInDock": 0.75
         },
         "themes/The Village/TiledMap Editor/tilesets/props(as sprites).tsx": {
             "dynamicWrapping": true,
@@ -617,7 +621,7 @@
         },
         "themes/The Village/TiledMap Editor/tilesets/props.tsx": {
             "dynamicWrapping": false,
-            "scaleInDock": 1.5
+            "scaleInDock": 1
         },
         "themes/The Village/TiledMap Editor/tilesets/roofs1.tsx": {
             "dynamicWrapping": false,
@@ -712,7 +716,7 @@
             "scaleInEditor": 1
         },
         "tilesets/furniture_and_props.tsx": {
-            "scaleInDock": 0.33,
+            "scaleInDock": 0.5,
             "scaleInEditor": 1
         },
         "tilesets/roguelike.tsx": {
@@ -746,7 +750,8 @@
         "interiors/cabin.tmx",
         "chunks/0_1.tmx",
         "chunks/4_2.tmx",
-        "chunks/1_4.tmx"
+        "chunks/1_4.tmx",
+        "interiors/starter_dungeon.tmx"
     ],
     "project": "sailing-rgp.tiled-project",
     "property.type": "bool",
