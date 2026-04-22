@@ -79,6 +79,13 @@ import {
   type DialogueDef,
 } from "../entities/npcTypes";
 import npcDataRaw from "../data/npcs.json";
+import cutsceneDataRaw from "../data/cutscenes.json";
+import {
+  CutsceneDirector,
+  type CutsceneActor,
+  type CutsceneHost,
+} from "../cutscenes/CutsceneDirector";
+import type { CutsceneData, CutsceneFacing } from "../cutscenes/types";
 import { DebugOverlays, type OverlayName } from "../debug/DebugOverlays";
 import { GroundItemsState } from "../world/groundItemsState";
 import { DroppedItemsState, type DroppedItem } from "../world/droppedItemsState";
@@ -267,6 +274,13 @@ export class WorldScene extends Phaser.Scene implements EditHost {
   private npcData: NpcData = npcDataRaw as NpcData;
   private dialogues: Record<string, DialogueDef> = {};
   private activeDialogue: { speaker: string; pages: string[]; page: number; shopId?: string } | null = null;
+  /** Director for scripted scenes. Created in `create`, drives NPCs/player
+   *  via setPositionPx + setFacing while it's running. */
+  private cutsceneDirector!: CutsceneDirector;
+  private cutsceneData: CutsceneData = cutsceneDataRaw as CutsceneData;
+  private onCutscenePlay = (payload: { id: string }) => {
+    void this.playCutsceneById(payload.id);
+  };
 
   // ── Edit mode ──────────────────────────────────────────────────
   /** Owns F7, pointer, highlights, snapshot/bus wiring. This scene acts as
@@ -610,10 +624,18 @@ export class WorldScene extends Phaser.Scene implements EditHost {
         [this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F6), "hitbox"],
       ];
       for (const [key, name] of overlayKeys) key.on("down", () => this.debug.toggle(name));
+      // Dev shortcut: play the demo cutscene from anywhere in the world.
+      const cutsceneKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F8);
+      cutsceneKey.on("down", () => {
+        bus.emitTyped("cutscene:play", { id: "demo_blacksmith_chat" });
+      });
     }
+
+    this.cutsceneDirector = new CutsceneDirector(this, this.cutsceneHost);
 
     bus.onTyped("inventory:action", this.onInventoryAction);
     bus.onTyped("dialogue:action", this.onDialogueAction);
+    bus.onTyped("cutscene:play", this.onCutscenePlay);
     bus.onTyped("skin:apply", this.onSkinApply);
     bus.onTyped("crafting:begin", this.onCraftingBegin);
     bus.onTyped("crafting:complete", this.onCraftingComplete);
@@ -661,7 +683,9 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       bus.offTyped("inventory:action", this.onInventoryAction);
       bus.offTyped("dialogue:action", this.onDialogueAction);
+      bus.offTyped("cutscene:play", this.onCutscenePlay);
       bus.offTyped("skin:apply", this.onSkinApply);
+      this.cutsceneDirector?.stop();
       bus.offTyped("crafting:begin", this.onCraftingBegin);
       bus.offTyped("crafting:complete", this.onCraftingComplete);
       bus.offTyped("crafting:cancel", this.onCraftingCancel);
@@ -1710,6 +1734,81 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       page: this.activeDialogue.page,
       shopId: this.activeDialogue.shopId,
     });
+  }
+
+  /** Resolve a cutscene actor reference. `"player"` → the local player
+   *  (wrapped); anything else is matched against an NPC model id, falling
+   *  back to a bare def id (so scripts can write `"brom_blacksmith"`
+   *  instead of `"npc:brom_blacksmith"`). */
+  private resolveCutsceneActor(ref: string): CutsceneActor | undefined {
+    if (ref === "player") {
+      const player = this.player;
+      const wasFrozen = { value: player.frozen };
+      return {
+        get x() { return player.x; },
+        get y() { return player.y; },
+        setPositionPx: (x, y) => player.setPosition(x, y),
+        setFacing: (dir: CutsceneFacing) => {
+          player.setFacing(dir);
+        },
+        // Player anim is driven by its own state machine; ignore anim hints
+        // from cutscenes for now.
+        setAnimState: () => {},
+        setScripted: (scripted) => {
+          if (scripted) {
+            wasFrozen.value = player.frozen;
+            player.frozen = true;
+          } else {
+            player.frozen = wasFrozen.value;
+          }
+        },
+      };
+    }
+    const direct = entityRegistry.get(ref);
+    const candidate =
+      (direct && direct.kind === "npc" ? (direct as NpcModel) : undefined) ??
+      (entityRegistry.get(`npc:${ref}`) as NpcModel | undefined);
+    if (!candidate) return undefined;
+    return {
+      get x() { return candidate.x; },
+      get y() { return candidate.y; },
+      setPositionPx: (x, y) => candidate.setPositionPx(x, y),
+      setFacing: (dir: CutsceneFacing) => {
+        // NpcFacing is left/right only — clamp 8-way dirs onto the closest
+        // axis. Vertical hints fall back to whatever the NPC was facing.
+        if (dir === "left" || dir === "right") candidate.setFacing(dir);
+      },
+      setAnimState: (state) => {
+        candidate.animState = state;
+      },
+      setScripted: (scripted) => {
+        candidate.scripted = scripted;
+        if (scripted) candidate.animState = "idle";
+      },
+    };
+  }
+
+  private cutsceneHost: CutsceneHost = {
+    getActor: (ref) => this.resolveCutsceneActor(ref),
+  };
+
+  private async playCutsceneById(id: string): Promise<void> {
+    const def = this.cutsceneData.cutscenes.find((c) => c.id === id);
+    if (!def) {
+      showToast(`Unknown cutscene: ${id}`, 1500);
+      return;
+    }
+    if (this.activeDialogue) this.closeDialogue();
+    // Always lock player input during a cutscene so the player can't walk
+    // off and trigger a regular NPC dialogue while a script is running.
+    // Restored in the `finally` so a thrown step still releases control.
+    const wasFrozen = this.player.frozen;
+    this.player.frozen = true;
+    try {
+      await this.cutsceneDirector.play(def);
+    } finally {
+      this.player.frozen = wasFrozen;
+    }
   }
 
   /** (Re)spawn ground items from authored data, filtered by the picked-up set.

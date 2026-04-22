@@ -21,6 +21,9 @@ export class NpcModel implements EntityModel {
   def: NpcDef;
   facing: NpcFacing;
   animState: NpcAnimState = "idle";
+  /** When true, autonomous movement (`tick`) is suppressed so a cutscene
+   *  director can drive position/facing/anim without the AI fighting it. */
+  scripted = false;
 
   private phase: Phase = "pausing";
   private phaseTimer = 0;
@@ -56,6 +59,7 @@ export class NpcModel implements EntityModel {
   }
 
   tick(dtMs: number, isWalkablePx: WalkableProbe) {
+    if (this.scripted) return;
     const move = this.def.movement;
     if (move.type === "static") return;
 
