@@ -62,7 +62,9 @@ export type CraftOutcomeTier = "fail" | "normal" | "good" | "great" | "perfect";
 export interface CraftingStationDef {
   id: string;
   name: string;
-  kind: StationKind;
+  /** One station can expose multiple kinds (e.g. a forge that both smelts
+   *  ingots and forges tools). Recipes of any listed kind show in the modal. */
+  kinds: StationKind[];
   skill: JobId;
   /** Theming used by both the React modal header and the Phaser minigame HUD. */
   bgColor: string;
@@ -74,6 +76,9 @@ export interface CraftingStationDef {
   labelColor: string;
   /** If true, the station's footprint blocks player movement. */
   blocks: boolean;
+  /** If true, the placeholder rectangle/label are not drawn — the station is
+   *  purely an interaction point layered over existing tilemap art. */
+  invisible?: boolean;
   collisionOffsetX?: number;
   collisionOffsetY?: number;
 }

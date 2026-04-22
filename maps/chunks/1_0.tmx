@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="18" nextobjectid="31">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="20" nextobjectid="31">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
  <tileset firstgid="226" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <tileset firstgid="736" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
@@ -39,6 +39,7 @@
  <tileset firstgid="28112" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass - transparency.tsx"/>
  <tileset firstgid="32072" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx"/>
  <tileset firstgid="36032" source="../themes/The Village/TiledMap Editor/tilesets/house-decorations.tsx"/>
+ <tileset firstgid="39424" source="../tilesets/blacksmith-building.tsx"/>
  <layer id="13" name="shallow water" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMA6DVe7LVXo+jYC+pqqqq+voA8lpALg==
@@ -71,17 +72,27 @@
  </layer>
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzTsOAWEUhuHTj2T8U8xgSxRI3K3J/c5i0FJgHViAyltIkEg0fzLN9yZPd3I+M/XZNjbbYR+ns39l94Z7Svu5xCyPQpLOvlJKqe8OzuyEMy44ut93j+DNZ0FkloVDhEzk9/+/iuyVUUEVpdd+LTSro4EmWmijg27oZ7vHVh8DDDHCGBNM2ZhhjgWWWGGNjad9pZRSyndPJCEdAg==
+   eJztzksOwVAUh/Ezr6R6By12wTYYIPG2Jo96PxaDKQNswAawACPfQELSJiY37eR8yW92c/5XRPtt54vscfDT2b+z+8Azpf1cIJJHIUhnX9M0Laluxagkc0pRcR09kTMuuOLkxb97OV9W/2lEsvBgkDF27/+rzF4VNdRR+ew3XJEmWmijgy566Lt2tgdsDTHCGCEmmGLGxhwLLLHCGhtsLe1rmqZpmu3e4gEjgw==
+  </data>
+ </layer>
+ <layer id="18" name="bridge_fixed" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztzbENgDAQBMETECC68ZcNBEAx2AGiFi5wDZ+wI228EgAA+dYibW53hzvdVfL+t1/VNff03sT/ENLoJjf3lsj7AwCA//kAoYgMyw==
+  </data>
+ </layer>
+ <layer id="19" name="bridge_fixed_front" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztztsJACAMxdC7UutjxM7jiBZ0BguSA/mPBABArWWnsOqTd8wlz9qtZyObXn0GAAB+tQHYuQVA
   </data>
  </layer>
  <layer id="2" name="overlay" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzjEKwCAQRNGBBDanMnbm/geKbhVUbCw0zX8wxcDCrAQAADBm1vbLxnerpG7vqfp7SNmjc+tLn+C7tyf+tA8AwKwCXMEDiw==
+   eJztzqsNACAMRVEcbAb7MAieFfjMSAUGAgmqmHuSiqdujQEAADizdt1u7ph1+n7rh7mTUv+mSL/KNbn++RcAAF4NTPAICw==
   </data>
  </layer>
  <layer id="4" name="props_high" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztz7sJgEAURNGXC+qqdfnduvxXYwmCPXkzkzWTDWQO3HgYMxERkbDUmWWUk6OCSqpcnP2anYZa6qingXyk/ZGdiWZaaKWN9sD+kTx95Xz5eUX6LyIiIv9yA4ctDBM=
+   eJztz8sNgkAYReF/byKOUpcPpBOBMpgZZEUplEBCT56dG3BFhpjck3zrm2umlFJKLXd0ZhlOcDjjgtyl2b+yc8MdDxR4oky037LjERDR4Y1+YX88fG3VtPJzTvT/V6/BrEKNZki/79kMiOh22FdKKaX+sQ/iuxT3
   </data>
  </layer>
  <layer id="5" name="roof" width="32" height="32">
@@ -136,7 +147,7 @@
     <property name="entryTx" type="int" value="9"/>
     <property name="entryTy" type="int" value="7"/>
     <property name="interiorKey" value="starter_dungeon"/>
-       <property name="uid" value="dff9b79f-bb71-4913-902a-cf8554d444e3"/>
+    <property name="uid" value="dff9b79f-bb71-4913-902a-cf8554d444e3"/>
    </properties>
   </object>
  </objectgroup>
@@ -146,7 +157,7 @@
   <object id="7" x="842.5" y="670" width="8.25" height="18"/>
   <object id="8" x="808.75" y="575" width="119" height="15.5"/>
   <object id="9" x="864.5" y="614.5" width="62.75" height="10"/>
-  <object id="10" x="562.727" y="552.909" width="70.9091" height="44.3636"/>
+  <object id="10" x="544.477" y="565.409" width="77.4091" height="25.6136"/>
   <object id="12" x="640.333" y="479.583" width="94.6667" height="29.0833"/>
   <object id="16" x="319.25" y="383" width="160.25" height="175.5"/>
   <object id="25" x="449.273" y="558.727" width="28.9091" height="14.9091"/>

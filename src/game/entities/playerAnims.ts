@@ -44,6 +44,7 @@ export const CF_STATES = [
   "mine",
   "chop",
   "fish",
+  "fish-reel",
   "shoot",
   "ride-idle",
   "ride-gallop",
@@ -122,6 +123,15 @@ export const CF_ANIMS: Record<CfState, CfStateConfig> = {
       forward: { row: 44, cols: 9 },
       right:   { row: 45, cols: 9 },
       back:    { row: 46, cols: 9 },
+    },
+  },
+  // Fish reel: pull the caught fish out of the water (rows 47/48/49).
+  "fish-reel": {
+    fps: 12, repeat: 0,
+    dirs: {
+      forward: { row: 47, cols: 8 },
+      right:   { row: 48, cols: 8 },
+      back:    { row: 49, cols: 8 },
     },
   },
   // Shoot: draw + release bow (rows 29/30/31).

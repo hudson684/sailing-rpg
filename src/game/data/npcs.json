@@ -175,7 +175,7 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 46,
+        "tileX": 54,
         "tileY": 20
       },
       "facing": "right",
@@ -230,8 +230,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 46,
-        "tileY": 20
+        "tileX": 45,
+        "tileY": 18
       },
       "facing": "left",
       "movement": {

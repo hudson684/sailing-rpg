@@ -5,12 +5,15 @@ import {
   type DialogueAction,
   type EditDeleteRequest,
   type EditEntityKind,
+  type EditMapId,
   type EditMoveRequest,
   type EditPlaceRequest,
   type EditShopUpdate,
   type EditSnapshot,
   type InventoryAction,
 } from "../bus";
+import { EditSystem } from "../edit/EditSystem";
+import type { EditEntityRef, EditHost } from "../edit/EditHost";
 import { ALL_ITEM_IDS, ITEMS } from "../inventory/items";
 import { ALL_JOB_IDS, type JobId } from "../jobs/jobs";
 import { useGameStore } from "../store/gameStore";
@@ -92,6 +95,7 @@ import {
   craftingStations,
   craftingStationInstances,
 } from "../crafting/stations";
+import type { CraftingStationInstanceData } from "../crafting/types";
 import { recipes as recipeRegistry } from "../crafting/recipes";
 import { applyCraft, hasAllInputs } from "../crafting/operations";
 import type { RecipeDef } from "../crafting/types";
@@ -117,6 +121,8 @@ import type { NodeDef, NodeInstanceData } from "../world/GatheringNode";
 import type { ShopDef } from "../shops/types";
 import type { ItemId } from "../inventory/items";
 import { spawnFloatingNumber } from "../fx/floatingText";
+import { FishingSession } from "../fishing/fishingSession";
+import { bobberOffsetPx, type FishingSurface } from "../fishing/fishingSurface";
 import {
   SaveController,
   SceneState,
@@ -209,7 +215,7 @@ function angleToFacing(angle: number): Facing {
 
 let activeWorldScene: WorldScene | null = null;
 
-export class WorldScene extends Phaser.Scene {
+export class WorldScene extends Phaser.Scene implements EditHost {
   private world!: WorldMap;
   private player!: Player;
   /** All ship instances, keyed by instance id. */
@@ -241,7 +247,9 @@ export class WorldScene extends Phaser.Scene {
    *  creation because the initial tear-down-and-rebuild will do it in bulk. */
   private initialGroundItemsBuilt = false;
   private nodes: GatheringNode[] = [];
+  private fishingSession: FishingSession | null = null;
   private craftingStations: CraftingStation[] = [];
+  private stationInstanceData: CraftingStationInstanceData[] = [];
   private enemies: Enemy[] = [];
   private projectiles: Projectile[] = [];
   /** Monotonic ms remaining until the player may fire their bow again. */
@@ -259,11 +267,9 @@ export class WorldScene extends Phaser.Scene {
   private activeDialogue: { speaker: string; pages: string[]; page: number; shopId?: string } | null = null;
 
   // ── Edit mode ──────────────────────────────────────────────────
-  private editMode = false;
-  private editHighlight?: Phaser.GameObjects.Graphics;
-  private editDrag:
-    | { kind: EditEntityKind; id: string; startWorldX: number; startWorldY: number; moved: boolean }
-    | null = null;
+  /** Owns F7, pointer, highlights, snapshot/bus wiring. This scene acts as
+   *  the `EditHost`. DEV-only. */
+  private editSystem?: EditSystem;
   /** Editor-placed ground items (sidecar to TMJ-authored items). Keyed by uid.
    *  Survives across edit-mode toggles inside one session; serialized to
    *  itemInstances.json on save. */
@@ -428,6 +434,14 @@ export class WorldScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off("resize", this.onScaleResize, this);
     });
+    this.events.on(Phaser.Scenes.Events.SLEEP, () => {
+      this.fishingSession?.cancel("scene");
+      this.fishingSession = null;
+    });
+    this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.fishingSession?.cancel("scene");
+      this.fishingSession = null;
+    });
 
     // Stream remaining chunk tilesets in the background; pending chunks pop in
     // as their assets arrive. Keeps the post-character-creation wait short by
@@ -493,10 +507,8 @@ export class WorldScene extends Phaser.Scene {
     this.input.on(
       "pointerdown",
       (pointer: Phaser.Input.Pointer) => {
-        if (this.editMode && pointer.leftButtonDown()) {
-          this.onEditPointerDown(pointer.worldX, pointer.worldY);
-          return;
-        }
+        // While edit mode is on, EditSystem consumes all pointer events.
+        if (this.editSystem?.isActive()) return;
         if (pointer.leftButtonDown()) {
           this.onLeftClick(pointer.worldX, pointer.worldY);
           return;
@@ -505,14 +517,6 @@ export class WorldScene extends Phaser.Scene {
         this.onRightClick(pointer.worldX, pointer.worldY);
       },
     );
-    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
-      if (!this.editMode || !this.editDrag) return;
-      this.onEditPointerMove(pointer.worldX, pointer.worldY);
-    });
-    this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-      if (!this.editMode) return;
-      this.onEditPointerUp(pointer.worldX, pointer.worldY);
-    });
     this.keys.attack.on("down", () => this.onAttack());
 
     // Number keys 1–5 quick-equip the corresponding hotbar slot's item.
@@ -555,8 +559,6 @@ export class WorldScene extends Phaser.Scene {
         this.lastWheelAt = this.time.now;
       },
     );
-
-    this.editHighlight = this.add.graphics().setDepth(9500).setVisible(false);
 
     this.debug = new DebugOverlays(this, this.world, {
       getShipPose: () =>
@@ -616,17 +618,9 @@ export class WorldScene extends Phaser.Scene {
     bus.onTyped("crafting:cancel", this.onCraftingCancel);
     bus.onTyped("jobs:xpGained", this.onXpGained);
     if (import.meta.env.DEV) {
-      bus.onTyped("edit:toggle", this.onEditToggle);
-      bus.onTyped("edit:requestSnapshot", this.onEditRequestSnapshot);
-      bus.onTyped("edit:move", this.onEditMove);
-      bus.onTyped("edit:place", this.onEditPlace);
-      bus.onTyped("edit:delete", this.onEditDelete);
-      bus.onTyped("edit:shopUpdate", this.onEditShopUpdate);
-      bus.onTyped("edit:requestExport", this.onEditRequestExport);
       bus.onTyped("player:resetSpawn", this.onResetSpawn);
       bus.onTyped("ships:resetAll", this.onResetAllShips);
-      const editKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.F7);
-      editKey.on("down", () => bus.emitTyped("edit:toggle"));
+      this.editSystem = new EditSystem(this);
     }
     activeWorldScene = this;
 
@@ -671,13 +665,6 @@ export class WorldScene extends Phaser.Scene {
       bus.offTyped("crafting:cancel", this.onCraftingCancel);
       bus.offTyped("jobs:xpGained", this.onXpGained);
       if (import.meta.env.DEV) {
-        bus.offTyped("edit:toggle", this.onEditToggle);
-        bus.offTyped("edit:requestSnapshot", this.onEditRequestSnapshot);
-        bus.offTyped("edit:move", this.onEditMove);
-        bus.offTyped("edit:place", this.onEditPlace);
-        bus.offTyped("edit:delete", this.onEditDelete);
-        bus.offTyped("edit:shopUpdate", this.onEditShopUpdate);
-        bus.offTyped("edit:requestExport", this.onEditRequestExport);
         bus.offTyped("player:resetSpawn", this.onResetSpawn);
         bus.offTyped("ships:resetAll", this.onResetAllShips);
       }
@@ -768,10 +755,7 @@ export class WorldScene extends Phaser.Scene {
 
   private tickExterior(dt: number, dtMs: number) {
     this.world.manager.tick(dtMs);
-    if (this.editMode) {
-      this.redrawEditHighlights();
-      return;
-    }
+    if (this.editSystem?.isActive()) return;
     if (this.sceneState.mode === "OnFoot" && !this.activeDialogue) this.updateOnFoot(dt);
     else if (this.sceneState.mode === "AtHelm") this.updateAtHelm(dt);
     else if (this.sceneState.mode === "Anchoring") {
@@ -1058,6 +1042,19 @@ export class WorldScene extends Phaser.Scene {
     if (this.sceneState.mode !== "OnFoot") return;
     const mainHand = useGameStore.getState().equipment.equipped.mainHand;
 
+    // Active fishing session: Q presses drive bite-window reel / cancel.
+    if (this.fishingSession && this.fishingSession.isActive()) {
+      this.fishingSession.pressReel();
+      return;
+    }
+
+    // Fishing rod: skip node scan and try the new water-tile flow.
+    if (mainHand === "fishing_rod") {
+      if (this.tryStartFishing()) return;
+      showToast("Face water to cast your line.", 1500);
+      return;
+    }
+
     // If a matching gathering node is in reach, harvest it.
     const node = this.nearestNodeForTool(mainHand);
     if (node) {
@@ -1075,10 +1072,6 @@ export class WorldScene extends Phaser.Scene {
       const ok = this.player.playAction("chop", () => {});
       if (!ok) return;
       showToast("No tree in reach.", 1200);
-    } else if (mainHand === "fishing_rod") {
-      const ok = this.player.playAction("fish", () => {});
-      if (!ok) return;
-      showToast("No fishing spot in reach.", 1200);
     } else if (mainHand === "sword" || mainHand === "cutlass") {
       const reach = TILE_SIZE * 1.4;
       const target = this.nearestEnemyInReach(reach);
@@ -1248,6 +1241,37 @@ export class WorldScene extends Phaser.Scene {
     g.strokePath();
   }
 
+  /**
+   * Try to start a fishing cast on the water tile directly ahead of the
+   * player. Returns true if a session started; false if the facing tile
+   * isn't a fishable surface.
+   */
+  private tryStartFishing(): boolean {
+    const off = bobberOffsetPx(this.player.facing);
+    const bobberX = this.player.x + off.dx;
+    const bobberY = this.player.y + off.dy;
+    const targetTx = Math.floor(bobberX / TILE_SIZE);
+    const targetTy = Math.floor(bobberY / TILE_SIZE);
+    const surface = this.world.manager.fishingSurface(targetTx, targetTy) as FishingSurface | null;
+    if (!surface) return false;
+    if (!this.player.enterFishingPose()) return false;
+    const session = new FishingSession({
+      scene: this,
+      player: this.player,
+      bobberX,
+      bobberY,
+      surface,
+      contextKey: null,
+      onCatch: (itemId, quantity) => {
+        const leftover = useGameStore.getState().inventoryAdd(itemId as ItemId, quantity);
+        if (leftover > 0) showToast("Inventory full — some fish got away.", 1500);
+      },
+    });
+    this.fishingSession = session;
+    session.start();
+    return true;
+  }
+
   private nearestNodeForTool(toolId: string | undefined): GatheringNode | null {
     if (!toolId) return null;
     let best: GatheringNode | null = null;
@@ -1281,8 +1305,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private gatherFrom(node: GatheringNode) {
-    const animState =
-      node.def.kind === "fish" ? "fish" : node.def.kind === "tree" ? "chop" : "mine";
+    const animState = node.def.kind === "tree" ? "chop" : "mine";
     const ok = this.player.playAction(animState, () => {
       const nodeDmg = 1;
       const broken = node.hit(this);
@@ -1383,7 +1406,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private spawnCraftingStations() {
-    for (const inst of craftingStationInstances) {
+    this.stationInstanceData = craftingStationInstances.map((i) => ({ ...i }));
+    for (const inst of this.stationInstanceData) {
       const def = craftingStations.tryGet(inst.defId);
       if (!def) {
         console.warn(`Unknown crafting station defId: ${inst.defId}`);
@@ -2334,63 +2358,65 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  private onEditToggle = () => {
-    this.editMode = !this.editMode;
-    if (this.editMode) showToast("Edit mode ON — left-click to select/place. F7 to exit.", 2500);
-    else showToast("Edit mode OFF.", 1500);
-    if (!this.editMode) {
-      this.editHighlight?.clear();
-      this.editHighlight?.setVisible(false);
-    }
-    this.emitEditState();
-  };
+  // ── EditHost impl ─────────────────────────────────────────────────
+  // EditSystem delegates place/move/delete/export to this scene. Kinds
+  // supported here include ships and crafting stations; interiors drop ships.
 
-  private redrawEditHighlights() {
-    const g = this.editHighlight;
-    if (!g) return;
-    g.clear();
-    g.setVisible(true);
-    const r = this.EDIT_PICK_RADIUS;
-    const colors: Record<EditEntityKind, number> = {
-      npc: 0x5fd7ff,
-      enemy: 0xff6b6b,
-      node: 0xffd65f,
-      item: 0xb57bff,
-      ship: 0x7bffc7,
-    };
-    const circle = (kind: EditEntityKind, x: number, y: number) => {
-      g.lineStyle(2, colors[kind], 0.9);
-      g.strokeCircle(x, y, r);
-    };
-    for (const npc of npcModelsIn({ kind: "world" })) circle("npc", npc.x, npc.y);
-    for (const e of this.enemies) circle("enemy", e.x, e.y);
-    for (const n of this.nodes) circle("node", n.x, n.y);
+  readonly supportedKinds: readonly EditEntityKind[] = [
+    "npc",
+    "enemy",
+    "node",
+    "station",
+    "item",
+    "ship",
+  ];
+
+  get mapId(): EditMapId {
+    return "world";
+  }
+
+  get editScene(): Phaser.Scene {
+    return this;
+  }
+
+  *entities(): Iterable<EditEntityRef> {
+    for (const npc of npcModelsIn({ kind: "world" })) {
+      yield { kind: "npc", id: npc.def.id, x: npc.x, y: npc.y };
+    }
+    for (const e of this.enemies) yield { kind: "enemy", id: e.id, x: e.x, y: e.y };
+    for (const n of this.nodes) yield { kind: "node", id: n.id, x: n.x, y: n.y };
+    for (const s of this.craftingStations) {
+      yield { kind: "station", id: s.id, x: s.x, y: s.y };
+    }
     for (const gi of this.groundItems.values()) {
       if (gi.source === "dropped") continue;
-      circle("item", gi.x, gi.y);
+      yield { kind: "item", id: gi.uid, x: gi.x, y: gi.y };
     }
-    for (const ship of this.ships.values()) circle("ship", ship.x, ship.y);
+    for (const ship of this.ships.values()) {
+      yield { kind: "ship", id: ship.id, x: ship.x, y: ship.y };
+    }
   }
 
-  private onEditRequestSnapshot = () => {
-    this.emitEditState();
-  };
-
-  private emitEditState() {
-    bus.emitTyped("edit:state", {
-      active: this.editMode,
-      snapshot: this.editMode ? this.buildEditSnapshot() : null,
-    });
+  getDefs(): EditSnapshot["defs"] {
+    return {
+      npcs: this.npcData.npcs.map((n) => ({ id: n.id, name: n.name })),
+      enemies: Array.from(this.enemyDefs.values()).map((d) => ({ id: d.id, name: d.name })),
+      nodes: Array.from(this.nodeDefs.values()).map((d) => ({ id: d.id, name: d.name })),
+      stations: craftingStations.all().map((d) => ({ id: d.id, name: d.name })),
+      items: ALL_ITEM_IDS.map((id) => ({ id, name: ITEMS[id]?.name ?? id })),
+      ships: Array.from(this.shipDefs.values()).map((d) => ({ id: d.id, name: d.id })),
+    };
   }
 
-  private buildEditSnapshot(): EditSnapshot {
+  buildSnapshot(): Omit<EditSnapshot, "defs" | "supportedKinds"> {
+    const map = this.mapId;
     const npcs = Array.from(npcModelsIn({ kind: "world" })).map((n) => ({
       id: n.def.id,
       name: n.def.name,
       tileX: Math.floor(n.x / TILE_SIZE),
       tileY: Math.floor(n.y / TILE_SIZE),
       shopId: n.def.shopId,
-      map: "world",
+      map,
     }));
     const enemies = this.enemies.map((e) => ({
       id: e.id,
@@ -2398,6 +2424,7 @@ export class WorldScene extends Phaser.Scene {
       defName: e.def.name,
       tileX: Math.floor(e.x / TILE_SIZE),
       tileY: Math.floor(e.y / TILE_SIZE),
+      map,
     }));
     const nodes = this.nodes.map((n) => ({
       id: n.id,
@@ -2405,6 +2432,15 @@ export class WorldScene extends Phaser.Scene {
       defName: n.def.name,
       tileX: Math.floor(n.x / TILE_SIZE),
       tileY: Math.floor(n.y / TILE_SIZE),
+      map,
+    }));
+    const stations = this.craftingStations.map((s) => ({
+      id: s.id,
+      defId: s.def.id,
+      defName: s.def.name,
+      tileX: Math.floor(s.x / TILE_SIZE),
+      tileY: Math.floor(s.y / TILE_SIZE),
+      map,
     }));
     const items = Array.from(this.groundItems.values())
       .filter((gi) => gi.source !== "dropped")
@@ -2416,6 +2452,7 @@ export class WorldScene extends Phaser.Scene {
         tileX: Math.floor(gi.x / TILE_SIZE),
         tileY: Math.floor(gi.y / TILE_SIZE),
         source: gi.source as "authored" | "editor",
+        map,
       }));
     const headingStr: Record<number, "N" | "E" | "S" | "W"> = { 0: "N", 1: "E", 2: "S", 3: "W" };
     const ships = Array.from(this.ships.values()).map((s) => ({
@@ -2425,20 +2462,16 @@ export class WorldScene extends Phaser.Scene {
       tileX: s.docked.tx,
       tileY: s.docked.ty,
       heading: headingStr[s.docked.heading],
+      map,
     }));
     return {
+      map,
       npcs,
       enemies,
       nodes,
+      stations,
       items,
       ships,
-      defs: {
-        npcs: this.npcData.npcs.map((n) => ({ id: n.id, name: n.name })),
-        enemies: Array.from(this.enemyDefs.values()).map((d) => ({ id: d.id, name: d.name })),
-        nodes: Array.from(this.nodeDefs.values()).map((d) => ({ id: d.id, name: d.name })),
-        items: ALL_ITEM_IDS.map((id) => ({ id, name: ITEMS[id]?.name ?? id })),
-        ships: Array.from(this.shipDefs.values()).map((d) => ({ id: d.id, name: d.id })),
-      },
       shops: this.shopsForEdit.map((s) => ({
         id: s.id,
         name: s.name,
@@ -2448,70 +2481,11 @@ export class WorldScene extends Phaser.Scene {
     };
   }
 
-  private onEditLeftClick(worldX: number, worldY: number) {
-    const tileX = Math.floor(worldX / TILE_SIZE);
-    const tileY = Math.floor(worldY / TILE_SIZE);
-    const hit = this.findEditableAt(worldX, worldY);
-    bus.emitTyped("edit:click", { worldX, worldY, tileX, tileY, hit });
-  }
-
-  private onEditPointerDown(worldX: number, worldY: number) {
-    const hit = this.findEditableAt(worldX, worldY);
-    if (hit) {
-      this.editDrag = {
-        kind: hit.kind,
-        id: hit.id,
-        startWorldX: worldX,
-        startWorldY: worldY,
-        moved: false,
-      };
-    } else {
-      this.editDrag = null;
-    }
-  }
-
-  private onEditPointerMove(worldX: number, worldY: number) {
-    const drag = this.editDrag;
-    if (!drag) return;
-    const dx = worldX - drag.startWorldX;
-    const dy = worldY - drag.startWorldY;
-    if (!drag.moved && Math.hypot(dx, dy) < 4) return;
-    drag.moved = true;
-    this.dragEntityTo(drag.kind, drag.id, worldX, worldY);
-  }
-
-  private onEditPointerUp(worldX: number, worldY: number) {
-    const drag = this.editDrag;
-    this.editDrag = null;
-    if (drag && drag.moved) {
-      const tileX = Math.floor(worldX / TILE_SIZE);
-      const tileY = Math.floor(worldY / TILE_SIZE);
-      this.onEditMove({ kind: drag.kind, id: drag.id, tileX, tileY });
-      return;
-    }
-    // No-drag click on a ship cycles its heading; other kinds fall through.
-    if (drag && !drag.moved && drag.kind === "ship") {
-      const ship = this.ships.get(drag.id);
-      if (ship) {
-        const nextH = ((ship.docked.heading + 1) % 4) as 0 | 1 | 2 | 3;
-        ship.finalizeDock({ tx: ship.docked.tx, ty: ship.docked.ty, heading: nextH });
-        const stored = this.shipInstanceData.find((s) => s.id === drag.id);
-        if (stored) stored.heading = nextH;
-        this.emitEditState();
-        return;
-      }
-    }
-    // Treat a no-drag click as select/place: existing behavior.
-    this.onEditLeftClick(worldX, worldY);
-  }
-
-  private dragEntityTo(kind: EditEntityKind, id: string, px: number, py: number) {
+  dragTo(kind: EditEntityKind, id: string, px: number, py: number): void {
     if (kind === "npc") {
       const model = entityRegistry.get(`npc:${id}`) as NpcModel | undefined;
       if (!model) return;
       model.setPositionPx(px, py);
-      // Reconciler's next syncAll picks up new position; force an immediate
-      // sync here so the drag feels responsive in the same frame.
       this.npcReconciler.spriteFor(model.id)?.syncFromModel();
     } else if (kind === "enemy") {
       const e = this.enemies.find((x) => x.id === id);
@@ -2536,57 +2510,43 @@ export class WorldScene extends Phaser.Scene {
       const ty = Math.floor(py / TILE_SIZE);
       ship.finalizeDock({ tx, ty, heading: ship.docked.heading });
     }
+    // Stations don't track live drag position — they rebuild on move.
   }
 
-  private readonly EDIT_PICK_RADIUS = TILE_SIZE * 0.9;
-
-  private findEditableAt(
-    worldX: number,
-    worldY: number,
-  ): { kind: EditEntityKind; id: string } | null {
-    const radius = this.EDIT_PICK_RADIUS;
-    interface Hit { kind: EditEntityKind; id: string; dist: number }
-    const hits: Hit[] = [];
-    const consider = (kind: EditEntityKind, id: string, x: number, y: number) => {
-      const d = Phaser.Math.Distance.Between(worldX, worldY, x, y);
-      if (d > radius) return;
-      hits.push({ kind, id, dist: d });
-    };
-    for (const npc of npcModelsIn({ kind: "world" })) consider("npc", npc.def.id, npc.x, npc.y);
-    for (const e of this.enemies) consider("enemy", e.id, e.x, e.y);
-    for (const n of this.nodes) consider("node", n.id, n.x, n.y);
-    for (const gi of this.groundItems.values()) {
-      if (gi.source === "dropped") continue;
-      consider("item", gi.uid, gi.x, gi.y);
+  onEntityTap(kind: EditEntityKind, id: string): boolean {
+    if (kind === "ship") {
+      const ship = this.ships.get(id);
+      if (!ship) return false;
+      const nextH = ((ship.docked.heading + 1) % 4) as 0 | 1 | 2 | 3;
+      ship.finalizeDock({ tx: ship.docked.tx, ty: ship.docked.ty, heading: nextH });
+      const stored = this.shipInstanceData.find((s) => s.id === id);
+      if (stored) stored.heading = nextH;
+      return true;
     }
-    for (const ship of this.ships.values()) {
-      consider("ship", ship.id, ship.x, ship.y);
-    }
-    if (hits.length === 0) return null;
-    hits.sort((a, b) => a.dist - b.dist);
-    return { kind: hits[0].kind, id: hits[0].id };
+    return false;
   }
 
-  private onEditMove = (req: EditMoveRequest) => {
+  move(req: EditMoveRequest): boolean {
     const px = (req.tileX + 0.5) * TILE_SIZE;
     const py = (req.tileY + 0.5) * TILE_SIZE;
     if (req.kind === "npc") {
       const model = entityRegistry.get(`npc:${req.id}`) as NpcModel | undefined;
-      if (!model) return;
-      // Mutate the def so a subsequent restart spawns at the same tile and
-      // the next snapshot reads the right home position.
+      if (!model) return false;
       model.def.spawn = { tileX: req.tileX, tileY: req.tileY };
       model.setPositionPx(px, py);
       this.npcReconciler.spriteFor(model.id)?.syncFromModel();
-    } else if (req.kind === "enemy") {
+      return true;
+    }
+    if (req.kind === "enemy") {
       const e = this.enemies.find((x) => x.id === req.id);
-      if (!e) return;
+      if (!e) return false;
       e.sprite.setPosition(px, py);
       e.sprite.setDepth(e.sortY());
-    } else if (req.kind === "node") {
-      // Nodes use their constructor pos as `x/y` and a container — recreate.
+      return true;
+    }
+    if (req.kind === "node") {
       const idx = this.nodes.findIndex((n) => n.id === req.id);
-      if (idx === -1) return;
+      if (idx === -1) return false;
       const old = this.nodes[idx];
       old.destroy();
       this.nodes[idx] = new GatheringNode(this, old.def, {
@@ -2595,9 +2555,30 @@ export class WorldScene extends Phaser.Scene {
         tileX: req.tileX,
         tileY: req.tileY,
       });
-    } else if (req.kind === "item") {
+      return true;
+    }
+    if (req.kind === "station") {
+      const idx = this.craftingStations.findIndex((s) => s.id === req.id);
+      if (idx === -1) return false;
+      const old = this.craftingStations[idx];
+      old.destroy();
+      const inst: CraftingStationInstanceData = {
+        id: old.id,
+        defId: old.def.id,
+        tileX: req.tileX,
+        tileY: req.tileY,
+      };
+      this.craftingStations[idx] = new CraftingStation(this, old.def, inst);
+      const stored = this.stationInstanceData.find((s) => s.id === req.id);
+      if (stored) {
+        stored.tileX = req.tileX;
+        stored.tileY = req.tileY;
+      }
+      return true;
+    }
+    if (req.kind === "item") {
       const gi = this.groundItems.get(req.id);
-      if (!gi || gi.source !== "editor") return;
+      if (!gi || gi.source !== "editor") return false;
       gi.x = px;
       gi.y = py;
       gi.sprite.setPosition(px, py);
@@ -2607,38 +2588,39 @@ export class WorldScene extends Phaser.Scene {
         stored.tileX = req.tileX;
         stored.tileY = req.tileY;
       }
-    } else if (req.kind === "ship") {
+      return true;
+    }
+    if (req.kind === "ship") {
       const ship = this.ships.get(req.id);
-      if (!ship) return;
+      if (!ship) return false;
       ship.finalizeDock({ tx: req.tileX, ty: req.tileY, heading: ship.docked.heading });
       const stored = this.shipInstanceData.find((s) => s.id === req.id);
       if (stored) {
         stored.tileX = req.tileX;
         stored.tileY = req.tileY;
       }
+      return true;
     }
-    this.emitEditState();
-  };
+    return false;
+  }
 
-  private onEditPlace = (req: EditPlaceRequest) => {
+  place(req: EditPlaceRequest): boolean {
     if (req.kind === "npc") {
       const template = this.npcData.npcs.find((n) => n.id === req.defId);
-      if (!template) return;
+      if (!template) return false;
       const newId = this.nextEditId(`${template.id}-copy`);
       const clone = JSON.parse(JSON.stringify(template));
       clone.id = newId;
       clone.spawn = { tileX: req.tileX, tileY: req.tileY };
       clone.map = "world";
       this.npcData.npcs.push(clone);
-      // Newly-authored NPC: animations aren't registered yet because it's a
-      // runtime clone. The clone reuses the template's sprite sheets, so the
-      // existing anim keys already match (keyed by id). Since the clone gets
-      // a fresh id, register fresh anim keys for it.
       registerNpcAnimations(this, clone);
       addNpc(clone, { kind: "world" });
-    } else if (req.kind === "enemy") {
+      return true;
+    }
+    if (req.kind === "enemy") {
       const def = this.enemyDefs.get(req.defId);
-      if (!def) return;
+      if (!def) return false;
       const inst: EnemyInstanceData = {
         id: this.nextEditId(`${def.id}`),
         defId: def.id,
@@ -2646,9 +2628,11 @@ export class WorldScene extends Phaser.Scene {
         tileY: req.tileY,
       };
       this.addEnemy(new Enemy(this, def, inst));
-    } else if (req.kind === "node") {
+      return true;
+    }
+    if (req.kind === "node") {
       const def = this.nodeDefs.get(req.defId);
-      if (!def) return;
+      if (!def) return false;
       const inst: NodeInstanceData = {
         id: this.nextEditId(`${def.id}`),
         defId: def.id,
@@ -2656,7 +2640,22 @@ export class WorldScene extends Phaser.Scene {
         tileY: req.tileY,
       };
       this.nodes.push(new GatheringNode(this, def, inst));
-    } else if (req.kind === "item") {
+      return true;
+    }
+    if (req.kind === "station") {
+      const def = craftingStations.tryGet(req.defId);
+      if (!def) return false;
+      const inst: CraftingStationInstanceData = {
+        id: this.nextEditId(`${def.id}`),
+        defId: def.id,
+        tileX: req.tileX,
+        tileY: req.tileY,
+      };
+      this.stationInstanceData.push(inst);
+      this.craftingStations.push(new CraftingStation(this, def, inst));
+      return true;
+    }
+    if (req.kind === "item") {
       const id = this.nextEditId("ed");
       this.editorItems.set(id, {
         id,
@@ -2665,11 +2664,12 @@ export class WorldScene extends Phaser.Scene {
         tileX: req.tileX,
         tileY: req.tileY,
       });
-      // Re-render via respawn for sprite consistency.
       this.respawnGroundItems();
-    } else if (req.kind === "ship") {
+      return true;
+    }
+    if (req.kind === "ship") {
       const def = this.shipDefs.get(req.defId);
-      if (!def) return;
+      if (!def) return false;
       const id = this.nextEditId(`${def.id}`);
       const inst: ShipInstanceData = {
         id,
@@ -2680,42 +2680,71 @@ export class WorldScene extends Phaser.Scene {
       };
       this.shipInstanceData.push(inst);
       this.spawnShip(inst);
+      return true;
     }
-    this.emitEditState();
-  };
+    return false;
+  }
 
-  private onEditDelete = (req: EditDeleteRequest) => {
+  delete(req: EditDeleteRequest): boolean {
     if (req.kind === "npc") {
-      if (!entityRegistry.get(`npc:${req.id}`)) return;
+      if (!entityRegistry.get(`npc:${req.id}`)) return false;
       removeNpcById(req.id);
       this.npcData.npcs = this.npcData.npcs.filter((n) => n.id !== req.id);
-    } else if (req.kind === "enemy") {
+      return true;
+    }
+    if (req.kind === "enemy") {
       const idx = this.enemies.findIndex((e) => e.id === req.id);
-      if (idx === -1) return;
+      if (idx === -1) return false;
       this.removeEnemyAt(idx);
-    } else if (req.kind === "node") {
+      return true;
+    }
+    if (req.kind === "node") {
       const idx = this.nodes.findIndex((n) => n.id === req.id);
-      if (idx === -1) return;
+      if (idx === -1) return false;
       this.nodes[idx].destroy();
       this.nodes.splice(idx, 1);
-    } else if (req.kind === "item") {
+      return true;
+    }
+    if (req.kind === "station") {
+      const idx = this.craftingStations.findIndex((s) => s.id === req.id);
+      if (idx === -1) return false;
+      this.craftingStations[idx].destroy();
+      this.craftingStations.splice(idx, 1);
+      this.stationInstanceData = this.stationInstanceData.filter((s) => s.id !== req.id);
+      return true;
+    }
+    if (req.kind === "item") {
       const gi = this.groundItems.get(req.id);
-      if (!gi || gi.source !== "editor") return;
+      if (!gi || gi.source !== "editor") return false;
       gi.sprite.destroy();
       this.groundItems.delete(req.id);
       this.editorItems.delete(req.id);
-    } else if (req.kind === "ship") {
+      return true;
+    }
+    if (req.kind === "ship") {
       const ship = this.ships.get(req.id);
-      if (!ship) return;
+      if (!ship) return false;
       ship.destroy();
       this.ships.delete(req.id);
       this.shipInstanceData = this.shipInstanceData.filter((s) => s.id !== req.id);
       if (this.activeShip === ship) this.activeShip = null;
+      return true;
     }
-    this.emitEditState();
-  };
+    return false;
+  }
 
-  private onEditRequestExport = () => {
+  updateShop(req: EditShopUpdate): boolean {
+    const shop = this.shopsForEdit.find((s) => s.id === req.shopId);
+    if (!shop) return false;
+    shop.stock = req.stock.map((row) => ({
+      itemId: row.itemId as ItemId,
+      restockQuantity: row.restockQuantity,
+    }));
+    useShopStore.getState().reset();
+    return true;
+  }
+
+  exportFiles(): Array<{ name: string; content: string }> {
     // Apply moved positions back into the def list before serializing.
     for (const model of entityRegistry.all()) {
       if (model.kind !== "npc") continue;
@@ -2739,6 +2768,15 @@ export class WorldScene extends Phaser.Scene {
         defId: n.def.id,
         tileX: Math.floor(n.x / TILE_SIZE),
         tileY: Math.floor(n.y / TILE_SIZE),
+      })),
+    };
+    const stationsFile = {
+      defs: craftingStations.all(),
+      instances: this.craftingStations.map((s) => ({
+        id: s.id,
+        defId: s.def.id,
+        tileX: Math.floor(s.x / TILE_SIZE),
+        tileY: Math.floor(s.y / TILE_SIZE),
       })),
     };
     const itemInstancesFile: ItemInstancesFile = {
@@ -2765,30 +2803,16 @@ export class WorldScene extends Phaser.Scene {
     };
 
     const stringify = (obj: unknown) => JSON.stringify(obj, null, 2) + "\n";
-    bus.emitTyped("edit:export", {
-      files: [
-        { name: "npcs.json", content: stringify(this.npcData) },
-        { name: "enemies.json", content: stringify(enemiesFile) },
-        { name: "nodes.json", content: stringify(nodesFile) },
-        { name: "itemInstances.json", content: stringify(itemInstancesFile) },
-        { name: "shops.json", content: stringify(shopsFile) },
-        { name: "ships.json", content: stringify(shipsFile) },
-      ],
-    });
-  };
-
-  private onEditShopUpdate = (req: EditShopUpdate) => {
-    const shop = this.shopsForEdit.find((s) => s.id === req.shopId);
-    if (!shop) return;
-    shop.stock = req.stock.map((row) => ({
-      itemId: row.itemId as ItemId,
-      restockQuantity: row.restockQuantity,
-    }));
-    // Drop any cached runtime instance for this shop so the next open reads
-    // the new stock list.
-    useShopStore.getState().reset();
-    this.emitEditState();
-  };
+    return [
+      { name: "npcs.json", content: stringify(this.npcData) },
+      { name: "enemies.json", content: stringify(enemiesFile) },
+      { name: "nodes.json", content: stringify(nodesFile) },
+      { name: "craftingStations.json", content: stringify(stationsFile) },
+      { name: "itemInstances.json", content: stringify(itemInstancesFile) },
+      { name: "shops.json", content: stringify(shopsFile) },
+      { name: "ships.json", content: stringify(shipsFile) },
+    ];
+  }
 
   private grantRandomItem() {
     const id = ALL_ITEM_IDS[Math.floor(Math.random() * ALL_ITEM_IDS.length)];

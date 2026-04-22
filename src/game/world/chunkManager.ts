@@ -473,6 +473,13 @@ export class ChunkManager {
     return !this.isWater(gtx, gty) && !this.isBlocked(gtx, gty);
   }
 
+  fishingSurface(gtx: number, gty: number): string | null {
+    const chunk = this.chunkAtGlobalTile(gtx, gty);
+    if (!chunk) return "ocean"; // unloaded area beyond authored chunks is open sea
+    const s = this.manifest.chunkSize;
+    return chunk.registry.fishingSurface(gtx - chunk.cx * s, gty - chunk.cy * s);
+  }
+
   /**
    * Pixel-precise blocking test. True if the tile at (gpx, gpy) has
    * `collides: true`, OR any per-tile / chunk-level collision shape covers

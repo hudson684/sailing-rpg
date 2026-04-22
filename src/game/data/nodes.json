@@ -60,25 +60,6 @@
         "quantityMax": 4
       },
       "blocks": true
-    },
-    {
-      "id": "fishing_spot",
-      "name": "Fishing Spot",
-      "kind": "fish",
-      "color": "#5fa8c7",
-      "outlineColor": "#1f4d78",
-      "width": 24,
-      "height": 24,
-      "hp": 3,
-      "respawnSec": 30,
-      "requiredTool": "fishing_rod",
-      "skill": "fishing",
-      "xpPerHit": 6,
-      "drop": {
-        "itemId": "fish",
-        "quantity": 1
-      },
-      "blocks": false
     }
   ],
   "instances": [
@@ -113,18 +94,6 @@
       "tileY": 26
     },
     {
-      "id": "n_fish_1",
-      "defId": "fishing_spot",
-      "tileX": 61,
-      "tileY": 16
-    },
-    {
-      "id": "n_fish_2",
-      "defId": "fishing_spot",
-      "tileX": 61,
-      "tileY": 21
-    },
-    {
       "id": "tree_palm-4",
       "defId": "tree_palm",
       "tileX": 44,
@@ -135,6 +104,42 @@
       "defId": "tree_palm",
       "tileX": 40,
       "tileY": 83
+    },
+    {
+      "id": "ore_hopeite-7",
+      "defId": "ore_hopeite",
+      "tileX": 22,
+      "tileY": 20
+    },
+    {
+      "id": "ore_hopeite-8",
+      "defId": "ore_hopeite",
+      "tileX": 18,
+      "tileY": 22
+    },
+    {
+      "id": "ore_hopeite-9",
+      "defId": "ore_hopeite",
+      "tileX": 14,
+      "tileY": 24
+    },
+    {
+      "id": "ore_hopeite-10",
+      "defId": "ore_hopeite",
+      "tileX": 24,
+      "tileY": 18
+    },
+    {
+      "id": "tree_palm-11",
+      "defId": "tree_palm",
+      "tileX": 24,
+      "tileY": 10
+    },
+    {
+      "id": "tree_palm-12",
+      "defId": "tree_palm",
+      "tileX": 25,
+      "tileY": 12
     }
   ]
 }

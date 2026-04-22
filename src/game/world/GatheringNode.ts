@@ -3,7 +3,7 @@ import { TILE_SIZE } from "../constants";
 import type { ItemId } from "../inventory/items";
 import type { JobId } from "../jobs/jobs";
 
-export type NodeKind = "tree" | "ore" | "fish";
+export type NodeKind = "tree" | "ore";
 
 export interface NodeDef {
   id: string;

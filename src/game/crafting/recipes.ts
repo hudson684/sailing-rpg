@@ -13,7 +13,8 @@ const RAW = (recipeData as unknown as RecipesFile).recipes;
 
 export const recipes = createRegistry<RecipeDef>(RAW, { label: "recipe" });
 
-/** All recipes that a given station kind can craft. Handy for the modal. */
-export function recipesForStation(kind: StationKind): RecipeDef[] {
-  return recipes.all().filter((r) => r.station === kind);
+/** All recipes any of the given station kinds can craft. Handy for the modal. */
+export function recipesForStation(kinds: StationKind | StationKind[]): RecipeDef[] {
+  const set = new Set(Array.isArray(kinds) ? kinds : [kinds]);
+  return recipes.all().filter((r) => set.has(r.station));
 }

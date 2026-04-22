@@ -83,7 +83,11 @@ export interface WardrobeApply {
 // Edit mode is a developer-only overlay that lets you visually move,
 // place, and delete world entities, then export the resulting JSON.
 
-export type EditEntityKind = "npc" | "enemy" | "node" | "item" | "ship";
+export type EditEntityKind = "npc" | "enemy" | "node" | "item" | "ship" | "station";
+
+/** Which map an edit operation / snapshot entry refers to. `"world"` is the
+ *  outer world map; any other string is an interior key. */
+export type EditMapId = string;
 
 export interface EditNpcEntry {
   id: string;
@@ -91,8 +95,8 @@ export interface EditNpcEntry {
   tileX: number;
   tileY: number;
   shopId?: string;
-  /** "world" or interior key (for display only). */
-  map: string;
+  /** "world" or interior key. */
+  map: EditMapId;
 }
 
 export interface EditEnemyEntry {
@@ -101,6 +105,7 @@ export interface EditEnemyEntry {
   defName: string;
   tileX: number;
   tileY: number;
+  map: EditMapId;
 }
 
 export interface EditNodeEntry {
@@ -109,6 +114,16 @@ export interface EditNodeEntry {
   defName: string;
   tileX: number;
   tileY: number;
+  map: EditMapId;
+}
+
+export interface EditStationEntry {
+  id: string;
+  defId: string;
+  defName: string;
+  tileX: number;
+  tileY: number;
+  map: EditMapId;
 }
 
 export interface EditItemEntry {
@@ -120,6 +135,7 @@ export interface EditItemEntry {
   tileY: number;
   /** Authored items come from .tmj files and cannot be moved/deleted in edit mode. */
   source: "authored" | "editor";
+  map: EditMapId;
 }
 
 export interface EditShipEntry {
@@ -129,6 +145,7 @@ export interface EditShipEntry {
   tileX: number;
   tileY: number;
   heading: "N" | "E" | "S" | "W";
+  map: EditMapId;
 }
 
 export interface EditDefEntry {
@@ -144,19 +161,26 @@ export interface EditShopEntry {
 }
 
 export interface EditSnapshot {
+  /** The map currently being edited (the active scene's map). */
+  map: EditMapId;
   npcs: EditNpcEntry[];
   enemies: EditEnemyEntry[];
   nodes: EditNodeEntry[];
+  stations: EditStationEntry[];
   items: EditItemEntry[];
   ships: EditShipEntry[];
   defs: {
     npcs: EditDefEntry[];
     enemies: EditDefEntry[];
     nodes: EditDefEntry[];
+    stations: EditDefEntry[];
     items: EditDefEntry[];
     ships: EditDefEntry[];
   };
   shops: EditShopEntry[];
+  /** Which entity kinds the active scene supports placing.
+   *  (e.g. interiors omit "ship".) */
+  supportedKinds: EditEntityKind[];
 }
 
 export interface EditState {

@@ -299,19 +299,25 @@ function setupCfLayerAnims(scene: Phaser.Scene): void {
  *  texture and gets one anim per direction. */
 function setupToolAnims(scene: Phaser.Scene): void {
   for (const tool of Object.values(CF_TOOLS)) {
-    for (const dir of CF_DIRS) {
-      const key = cfToolAnimKey(tool.id, dir);
-      if (scene.anims.exists(key)) continue;
-      const start = tool.rows[dir] * tool.cols;
-      scene.anims.create({
-        key,
-        frames: scene.anims.generateFrameNumbers(tool.textureKey, {
-          start,
-          end: start + tool.cols - 1,
-        }),
-        frameRate: tool.fps,
-        repeat: 0,
-      });
+    // Stride = frames per row on the sheet, which is NOT necessarily the
+    // action's `cols` (e.g. the fishing rod sheet is 9 wide but the reel
+    // animation only uses 8 of those 9 slots per row).
+    const stride = tool.sheetCols ?? tool.actions[0]?.cols ?? 1;
+    for (const action of tool.actions) {
+      for (const dir of CF_DIRS) {
+        const key = cfToolAnimKey(tool.id, action.state, dir);
+        if (scene.anims.exists(key)) continue;
+        const start = action.rows[dir] * stride;
+        scene.anims.create({
+          key,
+          frames: scene.anims.generateFrameNumbers(tool.textureKey, {
+            start,
+            end: start + action.cols - 1,
+          }),
+          frameRate: action.fps,
+          repeat: 0,
+        });
+      }
     }
   }
 }

@@ -76,6 +76,44 @@ export class TileRegistry {
   }
 
   /**
+   * Classify a tile for fishing purposes. Returns `"ocean"` for deep water,
+   * `"shallow"` for wadeable shallow water / inland pools, or `null` if the
+   * tile isn't a fishable water surface. Extensible: a tile property
+   * `fishingSurface: "river" | "void" | "lava" | ...` on the topmost layer
+   * wins over the ocean/shallow classification for special tiles.
+   */
+  fishingSurface(tileX: number, tileY: number): string | null {
+    const explicit = this.firstLayerProp(tileX, tileY, "fishingSurface");
+    if (typeof explicit === "string" && explicit.length > 0) return explicit;
+    if (this.tilemap.getTileAt(tileX, tileY, false, "ocean")) {
+      for (const layerName of this.tileLayerNames) {
+        if (layerName === "ocean" || layerName === "shallow water") continue;
+        if (this.tilemap.getTileAt(tileX, tileY, false, layerName)) return null;
+      }
+      return "ocean";
+    }
+    if (this.tilemap.getTileAt(tileX, tileY, false, "shallow water")) {
+      for (const layerName of this.tileLayerNames) {
+        if (layerName === "shallow water") continue;
+        if (this.tilemap.getTileAt(tileX, tileY, false, layerName)) return null;
+      }
+      return "shallow";
+    }
+    if (this.anyLayerHasProp(tileX, tileY, "water")) return "shallow";
+    return null;
+  }
+
+  private firstLayerProp(tileX: number, tileY: number, prop: string): unknown {
+    for (const layerName of this.tileLayerNames) {
+      const tile = this.tilemap.getTileAt(tileX, tileY, false, layerName);
+      if (!tile) continue;
+      const props = this.propsByGid.get(tile.index);
+      if (props && prop in props) return props[prop];
+    }
+    return undefined;
+  }
+
+  /**
    * Sailing collision classifier:
    * - "water"   → ocean/shallow water with nothing else painted (anchorable).
    * - "beach"   → ocean/shallow water/nothing, plus a `beach` tile, and no

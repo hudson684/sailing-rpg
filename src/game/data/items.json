@@ -289,6 +289,222 @@
       "slot": "ring",
       "stats": { "sailSpeed": 6, "maxHp": 2 },
       "value": 500
+    },
+    {
+      "id": "river_fish",
+      "name": "River Fish",
+      "color": "#6b8bd6",
+      "stackable": true, "maxStack": 99,
+      "description": "A freshwater fish, common in rivers and streams.",
+      "type": "resource",
+      "value": 4
+    },
+    {
+      "id": "frog",
+      "name": "Frog",
+      "color": "#4a7a3a",
+      "stackable": true, "maxStack": 99,
+      "description": "A plump river frog. The legs are said to be a delicacy.",
+      "type": "resource",
+      "value": 5
+    },
+    {
+      "id": "eel",
+      "name": "Eel",
+      "color": "#3a3024",
+      "stackable": true, "maxStack": 99,
+      "description": "A long, slippery eel. Lives in rivers and deeper waters.",
+      "type": "resource",
+      "value": 8
+    },
+    {
+      "id": "worm_bait",
+      "name": "Worm Bait",
+      "color": "#c94a6a",
+      "stackable": true, "maxStack": 99,
+      "description": "A wriggling worm fished up by mistake. Still good bait.",
+      "type": "resource",
+      "value": 1
+    },
+    {
+      "id": "shell",
+      "name": "Shell",
+      "color": "#e5d8a8",
+      "stackable": true, "maxStack": 99,
+      "description": "An empty shell. Some collectors pay for fine specimens.",
+      "type": "resource",
+      "value": 2
+    },
+    {
+      "id": "fishbones",
+      "name": "Fishbones",
+      "color": "#c9bfa8",
+      "stackable": true, "maxStack": 99,
+      "description": "A picked-clean skeleton. Useful in some crafts.",
+      "type": "resource",
+      "value": 1
+    },
+    {
+      "id": "message_bottle",
+      "name": "Message in a Bottle",
+      "color": "#6fb3c9",
+      "stackable": true, "maxStack": 99,
+      "description": "A sealed bottle containing... something. Better open it.",
+      "type": "resource",
+      "value": 25
+    },
+    {
+      "id": "sardine",
+      "name": "Sardine",
+      "color": "#8fbad4",
+      "stackable": true, "maxStack": 99,
+      "description": "A small, silvery schooling fish from shallow coasts.",
+      "type": "resource",
+      "value": 3
+    },
+    {
+      "id": "flatfish",
+      "name": "Flatfish",
+      "color": "#b89a6a",
+      "stackable": true, "maxStack": 99,
+      "description": "A bottom-dwelling flatfish. Camouflaged against the sand.",
+      "type": "resource",
+      "value": 5
+    },
+    {
+      "id": "beach_crab",
+      "name": "Beach Crab",
+      "color": "#c97a3a",
+      "stackable": true, "maxStack": 99,
+      "description": "A small crab scuttling along tide pools.",
+      "type": "resource",
+      "value": 4
+    },
+    {
+      "id": "prawn",
+      "name": "Prawn",
+      "color": "#e08a6a",
+      "stackable": true, "maxStack": 99,
+      "description": "A shallow-water prawn. Prized for its sweet meat.",
+      "type": "resource",
+      "value": 7
+    },
+    {
+      "id": "crab",
+      "name": "Crab",
+      "color": "#b43a2a",
+      "stackable": true, "maxStack": 99,
+      "description": "A hefty crab. Mind the claws.",
+      "type": "resource",
+      "value": 10
+    },
+    {
+      "id": "tropical_fish",
+      "name": "Tropical Fish",
+      "color": "#f0b44a",
+      "stackable": true, "maxStack": 99,
+      "description": "A bright reef fish from warm shallows.",
+      "type": "resource",
+      "value": 9
+    },
+    {
+      "id": "octopus",
+      "name": "Octopus",
+      "color": "#7a3a6a",
+      "stackable": true, "maxStack": 99,
+      "description": "An eight-armed cephalopod. Impressively clever.",
+      "type": "resource",
+      "value": 18
+    },
+    {
+      "id": "pearl_grey",
+      "name": "Grey Pearl",
+      "color": "#b4b8bf",
+      "stackable": true, "maxStack": 99,
+      "description": "A modest pearl fished from a shoreline oyster.",
+      "type": "resource",
+      "value": 30
+    },
+    {
+      "id": "starfish",
+      "name": "Starfish",
+      "color": "#d68a3a",
+      "stackable": true, "maxStack": 99,
+      "description": "A five-armed sea star. Slowly regrows lost limbs.",
+      "type": "resource",
+      "value": 6
+    },
+    {
+      "id": "ocean_fish",
+      "name": "Ocean Fish",
+      "color": "#4a7acc",
+      "stackable": true, "maxStack": 99,
+      "description": "A deep-blue fish from open ocean waters.",
+      "type": "resource",
+      "value": 6
+    },
+    {
+      "id": "tuna",
+      "name": "Tuna",
+      "color": "#3a5a8a",
+      "stackable": true, "maxStack": 99,
+      "description": "A powerful migratory fish. Worth its weight at market.",
+      "type": "resource",
+      "value": 12
+    },
+    {
+      "id": "broadfish",
+      "name": "Broadfish",
+      "color": "#d67a3a",
+      "stackable": true, "maxStack": 99,
+      "description": "A broad-bodied ocean fish. Meaty and filling.",
+      "type": "resource",
+      "value": 11
+    },
+    {
+      "id": "deep_sea_fish",
+      "name": "Deep Sea Fish",
+      "color": "#6a3a7a",
+      "stackable": true, "maxStack": 99,
+      "description": "An eerie fish from the deep. Its eyes glow faintly.",
+      "type": "resource",
+      "value": 25
+    },
+    {
+      "id": "jellyfish",
+      "name": "Jellyfish",
+      "color": "#d4a8d8",
+      "stackable": true, "maxStack": 99,
+      "description": "A translucent drifter. Don't touch it barehanded.",
+      "type": "resource",
+      "value": 4
+    },
+    {
+      "id": "shark_tooth",
+      "name": "Shark Tooth",
+      "color": "#e5e0d4",
+      "stackable": true, "maxStack": 99,
+      "description": "A razor-sharp tooth. A trophy — and a weapon component.",
+      "type": "resource",
+      "value": 40
+    },
+    {
+      "id": "pearl_black",
+      "name": "Black Pearl",
+      "color": "#2a2a3a",
+      "stackable": true, "maxStack": 99,
+      "description": "A rare black pearl. Fetches a high price.",
+      "type": "resource",
+      "value": 80
+    },
+    {
+      "id": "large_bone",
+      "name": "Large Bone",
+      "color": "#c9bfa8",
+      "stackable": true, "maxStack": 99,
+      "description": "A weathered bone dredged from the deep.",
+      "type": "resource",
+      "value": 3
     }
   ]
 }

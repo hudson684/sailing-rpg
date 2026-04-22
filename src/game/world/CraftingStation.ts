@@ -23,9 +23,6 @@ export class CraftingStation {
   x: number;
   y: number;
   private readonly container: Phaser.GameObjects.Container;
-  private readonly body: Phaser.GameObjects.Rectangle;
-  private readonly accent: Phaser.GameObjects.Rectangle;
-  private readonly label: Phaser.GameObjects.Text;
 
   constructor(
     scene: Phaser.Scene,
@@ -40,9 +37,11 @@ export class CraftingStation {
     this.container = scene.add.container(this.x, this.y);
     this.container.setDepth(this.y);
 
+    if (def.invisible) return;
+
     const bg = Phaser.Display.Color.HexStringToColor(def.bgColor).color;
     const accentCol = Phaser.Display.Color.HexStringToColor(def.accentColor).color;
-    this.body = scene.add
+    const body = scene.add
       .rectangle(
         def.collisionOffsetX ?? 0,
         def.collisionOffsetY ?? 0,
@@ -55,7 +54,7 @@ export class CraftingStation {
     // Little accent strip for a bit of visual texture — evokes a glowing coal
     // bed on the smelter / a horn on the anvil. Crude but readable.
     const accentH = Math.max(3, Math.floor(def.height * 0.18));
-    this.accent = scene.add
+    const accent = scene.add
       .rectangle(
         def.collisionOffsetX ?? 0,
         (def.collisionOffsetY ?? 0) + def.height / 2 - accentH / 2 - 1,
@@ -65,7 +64,7 @@ export class CraftingStation {
       )
       .setOrigin(0.5);
 
-    this.label = scene.add
+    const label = scene.add
       .text(
         def.collisionOffsetX ?? 0,
         (def.collisionOffsetY ?? 0) - def.height / 2 - 4,
@@ -81,7 +80,7 @@ export class CraftingStation {
       )
       .setOrigin(0.5, 1);
 
-    this.container.add([this.body, this.accent, this.label]);
+    this.container.add([body, accent, label]);
   }
 
   setVisible(visible: boolean): void {

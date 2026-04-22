@@ -43,7 +43,7 @@ export function CraftingModal() {
 
   const availableRecipes = useMemo<RecipeDef[]>(() => {
     if (!station) return [];
-    return recipesForStation(station.kind).filter((r) => r.skill === station.skill);
+    return recipesForStation(station.kinds).filter((r) => r.skill === station.skill);
   }, [station]);
 
   if (!stationDefId || !station) return null;
@@ -99,7 +99,11 @@ export function CraftingModal() {
             {skillName} · <strong>Lv {skillLevel}</strong>
           </span>
           <span className="craft-topline-hint">
-            {station.kind === "smelter" ? "Instant" : "Timing minigame"}
+            {station.kinds.length === 1
+              ? station.kinds[0] === "smelter"
+                ? "Instant"
+                : "Timing minigame"
+              : "Smelt & forge"}
           </span>
         </div>
 

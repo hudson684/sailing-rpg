@@ -162,6 +162,52 @@ export class Player {
    * animation once, then reverts to idle. No-op if another action is already
    * playing or the player is frozen.
    */
+  /**
+   * Enter the fishing cast pose. Locks the player and plays the cast
+   * animation; the one-shot lands on its final frame and stays there. The
+   * session owner is responsible for calling `exitFishingPose` when the
+   * cast resolves (catch, escape, or cancel).
+   */
+  enterFishingPose(): boolean {
+    if (this.model.actionLock || this.model.frozen) return false;
+    if (this.model.cfMountId) return false;
+    this.model.actionLock = true;
+    this.model.animState = "fish";
+    this.applyAnim();
+    return true;
+  }
+
+  /** Release the fishing lock and return to idle. No-op if not in the pose. */
+  exitFishingPose(): void {
+    if (this.model.animState !== "fish" && this.model.animState !== "fish-reel") {
+      this.model.actionLock = false;
+      return;
+    }
+    this.model.actionLock = false;
+    this.model.animState = "idle";
+    this.applyAnim();
+  }
+
+  /**
+   * Swap the held fishing pose into the reel-in animation (rows 47/48/49 on
+   * the base sheet, rows 3-5 on the tool sheet). Keeps the lock engaged and
+   * fires `onComplete` when the one-shot finishes so the session can award
+   * loot in sync with the catch frame.
+   */
+  playFishReel(onComplete?: () => void): void {
+    this.model.actionLock = true;
+    this.model.animState = "fish-reel";
+    this.applyAnim();
+    const driver = this.cfLayers.get("base");
+    if (!driver) {
+      onComplete?.();
+      return;
+    }
+    driver.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      onComplete?.();
+    });
+  }
+
   playAction(state: "attack" | "mine" | "chop" | "fish" | "shoot", onComplete?: () => void): boolean {
     if (this.model.actionLock || this.model.frozen) return false;
     // Actions (swinging a sword, drawing the bow, fishing, …) aren't supported
@@ -588,10 +634,11 @@ export class Player {
     if (!this.cfTool) return;
     const { def, sprite } = this.cfTool;
     const cfState = this.model.animState as CfState;
-    // Only show + animate the tool while its matching action plays. The base
-    // anim and the tool anim share fps / frame counts (see CF_TOOLS), so
-    // they advance in lockstep off Phaser's scene clock.
-    if (cfState !== def.actionState) {
+    // Only show + animate the tool while one of its matching actions plays.
+    // The base anim and the tool anim share fps / frame counts (see CF_TOOLS),
+    // so they advance in lockstep off Phaser's scene clock.
+    const action = def.actions.find((a) => a.state === cfState);
+    if (!action) {
       if (sprite.visible) sprite.setVisible(false);
       sprite.anims.stop();
       return;
@@ -599,7 +646,7 @@ export class Player {
     const { dir, flipX } = facingToCfDir(this.model.facing);
     sprite.setFlipX(flipX);
     sprite.setVisible(true);
-    sprite.anims.play(cfToolAnimKey(def.id, dir), true);
+    sprite.anims.play(cfToolAnimKey(def.id, action.state, dir), true);
   }
 
   private applyAnimToLayer(layer: CfLayer) {

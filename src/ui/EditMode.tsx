@@ -98,41 +98,60 @@ export function EditMode() {
         </button>
 
         <div className="edit-section-title">Place</div>
-        <PlacePicker
-          label="NPC"
-          options={snapshot.defs.npcs}
-          tool={tool}
-          entity="npc"
-          onPick={(defId) => setTool({ kind: "place", entity: "npc", defId })}
-        />
-        <PlacePicker
-          label="Enemy"
-          options={snapshot.defs.enemies}
-          tool={tool}
-          entity="enemy"
-          onPick={(defId) => setTool({ kind: "place", entity: "enemy", defId })}
-        />
-        <PlacePicker
-          label="Node"
-          options={snapshot.defs.nodes}
-          tool={tool}
-          entity="node"
-          onPick={(defId) => setTool({ kind: "place", entity: "node", defId })}
-        />
-        <PlacePicker
-          label="Item"
-          options={snapshot.defs.items}
-          tool={tool}
-          entity="item"
-          onPick={(defId) => setTool({ kind: "place", entity: "item", defId })}
-        />
-        <PlacePicker
-          label="Ship"
-          options={snapshot.defs.ships}
-          tool={tool}
-          entity="ship"
-          onPick={(defId) => setTool({ kind: "place", entity: "ship", defId })}
-        />
+        {snapshot.supportedKinds.includes("npc") && (
+          <PlacePicker
+            label="NPC"
+            options={snapshot.defs.npcs}
+            tool={tool}
+            entity="npc"
+            onPick={(defId) => setTool({ kind: "place", entity: "npc", defId })}
+          />
+        )}
+        {snapshot.supportedKinds.includes("enemy") && (
+          <PlacePicker
+            label="Enemy"
+            options={snapshot.defs.enemies}
+            tool={tool}
+            entity="enemy"
+            onPick={(defId) => setTool({ kind: "place", entity: "enemy", defId })}
+          />
+        )}
+        {snapshot.supportedKinds.includes("node") && (
+          <PlacePicker
+            label="Node"
+            options={snapshot.defs.nodes}
+            tool={tool}
+            entity="node"
+            onPick={(defId) => setTool({ kind: "place", entity: "node", defId })}
+          />
+        )}
+        {snapshot.supportedKinds.includes("station") && (
+          <PlacePicker
+            label="Station"
+            options={snapshot.defs.stations}
+            tool={tool}
+            entity="station"
+            onPick={(defId) => setTool({ kind: "place", entity: "station", defId })}
+          />
+        )}
+        {snapshot.supportedKinds.includes("item") && (
+          <PlacePicker
+            label="Item"
+            options={snapshot.defs.items}
+            tool={tool}
+            entity="item"
+            onPick={(defId) => setTool({ kind: "place", entity: "item", defId })}
+          />
+        )}
+        {snapshot.supportedKinds.includes("ship") && (
+          <PlacePicker
+            label="Ship"
+            options={snapshot.defs.ships}
+            tool={tool}
+            entity="ship"
+            onPick={(defId) => setTool({ kind: "place", entity: "ship", defId })}
+          />
+        )}
 
         <div className="edit-section-title">Save</div>
         <button
@@ -218,6 +237,7 @@ interface SelectedEntity {
   npc?: EditSnapshot["npcs"][number];
   enemy?: EditSnapshot["enemies"][number];
   node?: EditSnapshot["nodes"][number];
+  station?: EditSnapshot["stations"][number];
   item?: EditSnapshot["items"][number];
   ship?: EditSnapshot["ships"][number];
 }
@@ -238,6 +258,10 @@ function findSelected(
   if (selection.kind === "node") {
     const node = snapshot.nodes.find((n) => n.id === selection.id);
     return node ? { kind: "node", node } : null;
+  }
+  if (selection.kind === "station") {
+    const station = snapshot.stations.find((s) => s.id === selection.id);
+    return station ? { kind: "station", station } : null;
   }
   if (selection.kind === "item") {
     const item = snapshot.items.find((i) => i.id === selection.id);
@@ -311,6 +335,20 @@ function Inspector({
         <Field label="Tile" value={`${n.tileX}, ${n.tileY}`} />
         <button className="edit-btn danger" onClick={onDelete}>
           Delete Node
+        </button>
+      </div>
+    );
+  }
+  if (selected.kind === "station" && selected.station) {
+    const s = selected.station;
+    return (
+      <div>
+        <Field label="Kind" value="Station" />
+        <Field label="ID" value={s.id} />
+        <Field label="Type" value={s.defName} />
+        <Field label="Tile" value={`${s.tileX}, ${s.tileY}`} />
+        <button className="edit-btn danger" onClick={onDelete}>
+          Delete Station
         </button>
       </div>
     );

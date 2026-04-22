@@ -1,0 +1,46 @@
+{
+  "surfaces": {
+    "ocean": [
+      { "itemId": "ocean_fish",     "weight": 30, "min": 1, "max": 1 },
+      { "itemId": "tuna",           "weight": 25, "min": 1, "max": 1 },
+      { "itemId": "broadfish",      "weight": 20, "min": 1, "max": 1 },
+      { "itemId": "deep_sea_fish",  "weight": 10, "min": 1, "max": 1 },
+      { "itemId": "octopus",        "weight": 6,  "min": 1, "max": 1 },
+      { "itemId": "jellyfish",      "weight": 5,  "min": 1, "max": 1 },
+      { "itemId": "shark_tooth",    "weight": 2,  "min": 1, "max": 1 },
+      { "itemId": "pearl_black",    "weight": 1,  "min": 1, "max": 1 },
+      { "itemId": "large_bone",     "weight": 1,  "min": 1, "max": 1 }
+    ],
+    "shallow": [
+      { "itemId": "sardine",        "weight": 30, "min": 1, "max": 2 },
+      { "itemId": "flatfish",       "weight": 25, "min": 1, "max": 1 },
+      { "itemId": "beach_crab",     "weight": 20, "min": 1, "max": 1 },
+      { "itemId": "prawn",          "weight": 8,  "min": 1, "max": 2 },
+      { "itemId": "crab",           "weight": 6,  "min": 1, "max": 1 },
+      { "itemId": "tropical_fish",  "weight": 4,  "min": 1, "max": 1 },
+      { "itemId": "octopus",        "weight": 3,  "min": 1, "max": 1 },
+      { "itemId": "pearl_grey",     "weight": 2,  "min": 1, "max": 1 },
+      { "itemId": "starfish",       "weight": 1,  "min": 1, "max": 1 },
+      { "itemId": "fishbones",      "weight": 1,  "min": 1, "max": 1 }
+    ],
+    "river": [
+      { "itemId": "river_fish",     "weight": 40, "min": 1, "max": 1 },
+      { "itemId": "frog",           "weight": 25, "min": 1, "max": 1 },
+      { "itemId": "eel",            "weight": 15, "min": 1, "max": 1 },
+      { "itemId": "worm_bait",      "weight": 10, "min": 1, "max": 2 },
+      { "itemId": "shell",          "weight": 6,  "min": 1, "max": 1 },
+      { "itemId": "fishbones",      "weight": 3,  "min": 1, "max": 1 },
+      { "itemId": "message_bottle", "weight": 1,  "min": 1, "max": 1 }
+    ]
+  },
+  "interiorOverrides": {
+    "starter_dungeon": {
+      "shallow": [
+        { "itemId": "frog",           "weight": 10, "min": 1, "max": 1 },
+        { "itemId": "shell",          "weight": 5,  "min": 1, "max": 1 },
+        { "itemId": "message_bottle", "weight": 2,  "min": 1, "max": 1 },
+        { "itemId": "fishbones",      "weight": 3,  "min": 1, "max": 1 }
+      ]
+    }
+  }
+}
