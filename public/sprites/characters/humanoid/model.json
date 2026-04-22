@@ -1,0 +1,57 @@
+{
+  "model": "humanoid",
+  "frameWidth": 31,
+  "frameHeight": 19,
+  "slotOrder": [
+    "hand_back",
+    "body",
+    "head",
+    "hair",
+    "helmet",
+    "hand_front"
+  ],
+  "tags": {
+    "idle": {
+      "frames": 4,
+      "frameRate": 4
+    },
+    "walk": {
+      "frames": 8,
+      "frameRate": 8
+    },
+    "sword": {
+      "frames": 6,
+      "frameRate": 8
+    },
+    "hurt": {
+      "frames": 4,
+      "frameRate": 8
+    },
+    "death": {
+      "frames": 6,
+      "frameRate": 6
+    }
+  },
+  "slots": {
+    "hand_back": [
+      "default"
+    ],
+    "body": [
+      "default_outfit",
+      "brown_outfit",
+      "pirate_outfit"
+    ],
+    "head": [
+      "default"
+    ],
+    "hair": [
+      "short_brown"
+    ],
+    "helmet": [
+      "tricorn"
+    ],
+    "hand_front": [
+      "default"
+    ]
+  }
+}

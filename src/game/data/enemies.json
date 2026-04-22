@@ -253,11 +253,12 @@
       "id": "pirate",
       "name": "Pirate",
       "layered": {
-        "model": "pirate",
+        "model": "humanoid",
         "slots": {
           "hand_back": "default",
-          "body": "default",
+          "body": "pirate_outfit",
           "head": "default",
+          "hair": "short_brown",
           "helmet": "tricorn",
           "hand_front": "default"
         }

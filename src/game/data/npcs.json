@@ -317,7 +317,7 @@
       "id": "steve",
       "name": "Steve",
       "layered": {
-        "model": "steve",
+        "model": "humanoid",
         "slots": {
           "hand_back": "default",
           "body": "pirate_outfit",
