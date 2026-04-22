@@ -35,17 +35,29 @@ export interface PauseMenuState {
   slots: PauseMenuSlot[];
 }
 
+export interface DialogueChoiceOption {
+  label: string;
+  /** Cutscene step-group label to jump to. Opaque to the dialogue UI. */
+  goto: string;
+}
+
 export interface DialogueState {
   visible: boolean;
   speaker: string;
   pages: string[];
   page: number;
   shopId?: string;
+  /** When set, the dialogue UI renders selectable buttons instead of the
+   *  default "advance to close" footer. Emitted by the cutscene director on
+   *  the final page of a `say` step. */
+  choices?: DialogueChoiceOption[];
 }
 
 export type DialogueAction =
   | { type: "advance" }
-  | { type: "close" };
+  | { type: "close" }
+  /** Picked one of the options from `DialogueState.choices`. */
+  | { type: "select"; index: number };
 
 import type { SkinPaletteId } from "./entities/playerSkin";
 import type { CfLayer } from "./entities/playerAnims";
@@ -251,6 +263,9 @@ type Events = {
   "player:resetSpawn": () => void;
   "ships:resetAll": () => void;
   "jobs:xpGained": (payload: { jobId: JobId; amount: number }) => void;
+  /** Request the active scene play a cutscene by id. Picked up by whichever
+   *  scene currently owns the cutscene director. */
+  "cutscene:play": (payload: { id: string }) => void;
 };
 
 // Tiny hand-rolled typed event emitter. Kept Phaser-free so importing `bus`

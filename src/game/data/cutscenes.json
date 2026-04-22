@@ -1,0 +1,68 @@
+{
+  "cutscenes": [
+    {
+      "id": "demo_blacksmith_chat",
+      "name": "Demo: Brom asks a favor",
+      "entry": "start",
+      "steps": {
+        "start": [
+          { "kind": "face", "actor": "brom_blacksmith", "dir": "left" },
+          {
+            "kind": "say",
+            "speaker": "Brom the Blacksmith",
+            "pages": [
+              "Aye — got a moment, sailor?",
+              "I need someone with a steady hand to run an errand."
+            ],
+            "choices": [
+              { "label": "I'll help.", "goto": "accept" },
+              { "label": "Not today.", "goto": "decline" }
+            ]
+          }
+        ],
+        "accept": [
+          { "kind": "setFlag", "name": "agreed", "value": true },
+          { "kind": "walkTo", "actor": "brom_blacksmith", "tileX": 47, "tileY": 13 },
+          { "kind": "face", "actor": "brom_blacksmith", "dir": "left" },
+          {
+            "kind": "say",
+            "speaker": "Brom the Blacksmith",
+            "pages": [
+              "Good. Take this to Mera at the market — she's expecting it."
+            ]
+          },
+          { "kind": "goto", "label": "wrap" }
+        ],
+        "decline": [
+          {
+            "kind": "say",
+            "speaker": "Brom the Blacksmith",
+            "pages": [
+              "Suit yourself. Come back if you change your mind."
+            ]
+          },
+          { "kind": "goto", "label": "wrap" }
+        ],
+        "wrap": [
+          {
+            "kind": "if",
+            "flag": "agreed",
+            "equals": true,
+            "then": "afterAccept",
+            "else": "afterDecline"
+          }
+        ],
+        "afterAccept": [
+          { "kind": "wait", "ms": 250 },
+          { "kind": "walkTo", "actor": "brom_blacksmith", "tileX": 46, "tileY": 13 },
+          { "kind": "face", "actor": "brom_blacksmith", "dir": "right" },
+          { "kind": "end" }
+        ],
+        "afterDecline": [
+          { "kind": "face", "actor": "brom_blacksmith", "dir": "right" },
+          { "kind": "end" }
+        ]
+      }
+    }
+  ]
+}
