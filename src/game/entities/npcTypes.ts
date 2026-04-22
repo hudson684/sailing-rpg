@@ -40,10 +40,22 @@ export interface NpcDisplay {
  *  (spawn coords are local to that interior tilemap). */
 export type NpcMap = "world" | { interior: string };
 
+/** Layered sprite look for an NPC — each slot (body, head, hair, helmet, ...)
+ *  is rendered as its own sprite stacked in the model's `slotOrder`. Sheets
+ *  live under `public/sprites/characters/<model>/<slot>/<variant>/<tag>.png`
+ *  and frame dims / per-tag rates come from the model's `model.json`. */
+export interface NpcLayeredSprite {
+  model: string;
+  slots: Record<string, string>;
+}
+
 export interface NpcDef {
   id: string;
   name: string;
-  sprite: { idle: NpcAnimSheet; walk?: NpcAnimSheet };
+  /** Legacy single-sheet look. Mutually exclusive with `layered`. */
+  sprite?: { idle: NpcAnimSheet; walk?: NpcAnimSheet };
+  /** Layered slot-based look. Preferred for new NPCs. */
+  layered?: NpcLayeredSprite;
   display: NpcDisplay;
   /** Defaults to "world" when absent, for backward compat with existing data. */
   map?: NpcMap;
@@ -84,4 +96,36 @@ export function npcTextureKey(npcId: string, state: "idle" | "walk"): string {
 
 export function npcAnimKey(npcId: string, state: "idle" | "walk"): string {
   return `npc-${npcId}-${state}`;
+}
+
+export function charTextureKey(model: string, slot: string, variant: string, state: string): string {
+  return `char-${model}-${slot}-${variant}-${state}`;
+}
+
+export function charAnimKey(model: string, slot: string, variant: string, state: string): string {
+  return `char-${model}-${slot}-${variant}-${state}`;
+}
+
+export function charModelManifestUrl(model: string): string {
+  return `sprites/characters/${model}/model.json`;
+}
+
+export function charModelManifestKey(model: string): string {
+  return `char-model-${model}`;
+}
+
+export function charSlotSheetUrl(model: string, slot: string, variant: string, state: string): string {
+  return `sprites/characters/${model}/${slot}/${variant}/${state}.png`;
+}
+
+/** Shape of the `model.json` that tools/build-character-slots.mjs writes.
+ *  Every slot variant for the model shares frameWidth/frameHeight, which is
+ *  what makes runtime layering composite cleanly. */
+export interface CharacterModelManifest {
+  model: string;
+  frameWidth: number;
+  frameHeight: number;
+  slotOrder: string[];
+  tags: Record<string, { frames: number; frameRate: number }>;
+  slots: Record<string, string[]>;
 }

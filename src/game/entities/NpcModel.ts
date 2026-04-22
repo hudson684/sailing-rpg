@@ -121,7 +121,10 @@ export class NpcModel implements EntityModel {
     }
 
     if (Math.abs(dx) > 1) this.facing = dx < 0 ? "left" : "right";
-    this.animState = this.def.sprite.walk ? "walk" : "idle";
+    // Layered NPCs always have a walk animation if the model ships one;
+    // legacy NPCs only have one when their sprite.walk sheet is present.
+    const hasWalk = this.def.layered !== undefined || this.def.sprite?.walk !== undefined;
+    this.animState = hasWalk ? "walk" : "idle";
   }
 
   private enterPause(ms: number) {

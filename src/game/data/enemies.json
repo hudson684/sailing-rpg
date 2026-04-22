@@ -250,6 +250,47 @@
       }
     },
     {
+      "id": "pirate",
+      "name": "Pirate",
+      "layered": {
+        "model": "pirate",
+        "slots": {
+          "hand_back": "default",
+          "body": "default",
+          "head": "default",
+          "helmet": "tricorn",
+          "hand_front": "default"
+        }
+      },
+      "display": {
+        "scale": 2,
+        "originY": 0.95
+      },
+      "hp": 10,
+      "respawnSec": 60,
+      "hurtRadiusPx": 26,
+      "dropTable": "pirate",
+      "xpSkill": "combat",
+      "xpPerKill": 35,
+      "movement": {
+        "type": "wander",
+        "radiusTiles": 5,
+        "moveSpeed": 30,
+        "pauseMs": 1400,
+        "stepMs": 2000
+      },
+      "combat": {
+        "attackRangePx": 28,
+        "aggroRadiusPx": 120,
+        "leashRadiusPx": 220,
+        "chaseSpeedPx": 54,
+        "regenPerSec": 0.5,
+        "damageMin": 1,
+        "damageMax": 3,
+        "cooldownMs": 1500
+      }
+    },
+    {
       "id": "slime_medium_red",
       "name": "Red Slime",
       "sprite": {
@@ -322,19 +363,19 @@
       "id": "e_slime_2",
       "defId": "slime_small_green",
       "tileX": 53,
-      "tileY": 4
+      "tileY": 2
     },
     {
       "id": "e_slime_3",
       "defId": "slime_small_blue",
-      "tileX": 45,
-      "tileY": 4
+      "tileX": 46,
+      "tileY": 2
     },
     {
       "id": "e_slime_4",
       "defId": "slime_small_blue",
-      "tileX": 40,
-      "tileY": 15
+      "tileX": 42,
+      "tileY": 11
     },
     {
       "id": "e_slime_5",
@@ -363,32 +404,62 @@
     {
       "id": "skeleton-7",
       "defId": "skeleton",
-      "tileX": 70,
-      "tileY": 72
-    },
-    {
-      "id": "skeleton_swordsman-8",
-      "defId": "skeleton_swordsman",
       "tileX": 72,
       "tileY": 70
     },
     {
+      "id": "skeleton_swordsman-8",
+      "defId": "skeleton_swordsman",
+      "tileX": 73,
+      "tileY": 72
+    },
+    {
       "id": "skeleton-10",
       "defId": "skeleton",
-      "tileX": 65,
-      "tileY": 70
+      "tileX": 62,
+      "tileY": 68
     },
     {
       "id": "skeleton-8",
       "defId": "skeleton",
-      "tileX": 59,
+      "tileX": 55,
       "tileY": 68
     },
     {
       "id": "skeleton-9",
       "defId": "skeleton",
-      "tileX": 59,
-      "tileY": 72
+      "tileX": 61,
+      "tileY": 73
+    },
+    {
+      "id": "pirate-7",
+      "defId": "pirate",
+      "tileX": 13,
+      "tileY": 7
+    },
+    {
+      "id": "pirate-8",
+      "defId": "pirate",
+      "tileX": 13,
+      "tileY": 12
+    },
+    {
+      "id": "pirate-9",
+      "defId": "pirate",
+      "tileX": 17,
+      "tileY": 20
+    },
+    {
+      "id": "pirate-10",
+      "defId": "pirate",
+      "tileX": 12,
+      "tileY": 15
+    },
+    {
+      "id": "pirate-11",
+      "defId": "pirate",
+      "tileX": 18,
+      "tileY": 9
     }
   ]
 }

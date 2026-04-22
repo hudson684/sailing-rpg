@@ -1,11 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="1">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="1">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
  <tileset firstgid="226" source="../themes/The Village/TiledMap Editor/tilesets/Free_Premade_houses.tsx"/>
  <tileset firstgid="3298" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses.tsx"/>
  <tileset firstgid="7394" source="../themes/The Village/TiledMap Editor/tilesets/roofs2.tsx"/>
  <tileset firstgid="11490" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx"/>
  <tileset firstgid="15450" source="../tilesets/blacksmith-building.tsx"/>
+ <tileset firstgid="16234" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains2-8 frames.tsx"/>
+ <tileset firstgid="17191" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains2-8 frames-with transparency.tsx"/>
+ <tileset firstgid="18148" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains2-16 frames.tsx"/>
+ <tileset firstgid="20488" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains2-16 frames-with transparency.tsx"/>
+ <tileset firstgid="22828" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains-8 frames.tsx"/>
+ <tileset firstgid="23785" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains-8 frames-with transparency.tsx"/>
+ <tileset firstgid="24742" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains-16 frames.tsx"/>
+ <tileset firstgid="27082" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains-16 frames-with transparency.tsx"/>
+ <tileset firstgid="29422" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 1.tsx"/>
+ <tileset firstgid="29662" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 1-transp.tsx"/>
+ <tileset firstgid="29902" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 2.tsx"/>
+ <tileset firstgid="30222" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 2-transp.tsx"/>
+ <tileset firstgid="30542" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 3.tsx"/>
+ <tileset firstgid="30782" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 3-transp.tsx"/>
+ <tileset firstgid="31022" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 4.tsx"/>
+ <tileset firstgid="31262" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 5.tsx"/>
+ <tileset firstgid="31502" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 5-transp.tsx"/>
+ <tileset firstgid="31742" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 6.tsx"/>
+ <tileset firstgid="31982" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 6-transp.tsx"/>
+ <tileset firstgid="32222" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 7.tsx"/>
+ <tileset firstgid="32462" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 7-transp.tsx"/>
+ <tileset firstgid="32702" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 8.tsx"/>
+ <tileset firstgid="32942" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 8-transp.tsx"/>
+ <tileset firstgid="33182" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset-Terrain2.tsx"/>
+ <tileset firstgid="37212" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Atlas-Props.tsx"/>
+ <tileset firstgid="39762" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Atlas-Props2.tsx"/>
+ <tileset firstgid="44621" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/garden border.tsx"/>
+ <tileset firstgid="44657" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Terrain - Ancient Ruins.tsx"/>
+ <tileset firstgid="46866" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/waterfall - blood.tsx"/>
+ <tileset firstgid="47075" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/waterfall - blood-transp.tsx"/>
+ <tileset firstgid="47284" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/waterfall.tsx"/>
+ <tileset firstgid="47493" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/waterfall-transp.tsx"/>
  <layer id="1" name="ground" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJx91muOwzAIBOBeKLeyfSk7d91WCtK3U3Z/WE0THmaAgft6vfb7zPdZz/Pn3JzBu8/vCZnSLf3R6E/0Zuiv51vZL1ulM59z8670xnPKt/ILvYPcjDPwbUwDe/v6fYcRfhbPN77EpeQLB3E5PGtD3NWt72VjcErmXL/v2tnxTuWvcDWHiaP3NB6/pX99Zd0M7Il3+TW/fqv31lrZEwNlTsiLpzlc6Iqv7zf/R9i0Tq0PMRCHvLt5ybo3tvTZydrbxmnefV+YmMu7kTe+w6n/1lPZz/o94Uv5qln9iYlxWC95R3Gu9+VL+a5Gd8juf2TP9R2bdxGbzLn+vHvpHeyZZ/uly6O9al3X/43dFXr++izPdHyYPaMt8yXHWCv2VObK+1h72cu70bdPxtVjLY8Yt7Urp5tna8GakAvtm+TY5A1jzd63X2b4XfHd/phh07jP9Z1/+9HvOV9zN+j4ZjS+ciaaP/Ppr3GsRs581JH/s6+Te3bYyDljPHJQ9qNzzZzbMyf0xdfZLXadra72cifqZrE9Ys6t/9wJ3ZfERm5IPLr47vBl3ztTkzfz7vZX5jznc/K1M8AdKedCh7ezy/isr5yR+nYWJe/knBDvxNHZJC97P+eDvNZxs/1gDHJzclcn383m9GmuzetCz9h9l3zRzcbcy5OzxTrrLOvN+d7tv/amduV8eSXn9gi/4ukuoC9znVzTzU/5M/teXuj4OfdzcU2eyZ0zd8Tc87udw5isOf39td8lD2rD/cF9LvdPe8TZ2u342avWcZev3EO92wh/OS/FIHk4Z3Xu98b0A6Untqc=
@@ -34,6 +66,11 @@
  <layer id="5" name="roof" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztzUk31mEAxuH3sxgihYb1q0mEyt5UNKjsKWXIkL0yT9E+Q7OmfUmRBrWnQqRi2/UZ/E/nWDy/c67lfe5YbHuVEI/FEkkimR2kkMpO0tjFbtLJIJM97GUf++Nb/8+yPcBBDnGYI2RzlBxyOUYe+RRwnBOcpDDCf5FtMSWUUsYpTlNOBWc4yznOU8kFLnKJqgj/1bY1XOYKtVzlGnXU00Aj12mimRZauUFbhP9225vcooNOuuimh1766GeAQYa4zTAj3Inwf9d2lDHGmeAe93nAQx7xmCdM8pRnPOcFLyP8v7J9zRRvmOYt75hhlvfM8YGPfOIz83zha4T/BdtFvvGdHyyxzAo/WWWNX6zzmz/8ZYPNCP+hUCgUCoVCoVDo//UPB4lxWQ==
+  </data>
+ </layer>
+ <layer id="9" name="Tile Layer 7" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
   </data>
  </layer>
 </map>

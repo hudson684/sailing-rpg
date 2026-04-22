@@ -1,11 +1,19 @@
 import type { ItemId } from "../inventory/items";
+import type { NpcLayeredSprite } from "./npcTypes";
 
-export type EnemyAnimState = "idle" | "move" | "attack" | "death";
+export type EnemyAnimState = "idle" | "move" | "attack" | "death" | "hurt";
 
 export interface EnemyAnimSheet {
-  /** 0-based row index in the spritesheet for this animation. */
+  /** 0-based row index in the spritesheet. When `col` is omitted, the anim
+   *  runs across this row from column 0. When `col` is set, this is the
+   *  starting row and the anim runs DOWN that column. */
   row: number;
-  /** Number of frames in the row. */
+  /** Optional: 0-based column index. When set, the animation runs vertically
+   *  down this column instead of horizontally across `row`. Use for
+   *  column-major sheets where columns represent facings (e.g. Hana Caraka
+   *  pirate: col 0 = sideways, col 1 = front, col 2 = back). */
+  col?: number;
+  /** Number of frames. */
   frames: number;
   frameRate: number;
   /** Repeat: -1 = loop, 0 = play once. Defaults loop for idle/move, once otherwise. */
@@ -31,7 +39,11 @@ export interface EnemySprite {
   frameHeight: number;
   /** Number of columns in the spritesheet (used to map row→flat frame index). */
   sheetCols: number;
-  anims: Record<EnemyAnimState, EnemyAnimSheet>;
+  /** `idle`, `move`, `attack`, `death` are required. `hurt` is optional —
+   *  defs without it fall back to the idle anim + red tint when struck. */
+  anims: Record<Exclude<EnemyAnimState, "hurt">, EnemyAnimSheet> & {
+    hurt?: EnemyAnimSheet;
+  };
 }
 
 export interface EnemyDisplay {
@@ -57,7 +69,14 @@ export type EnemyMovement =
 export interface EnemyDef {
   id: string;
   name: string;
-  sprite: EnemySprite;
+  /** Legacy single-sheet sprite. Mutually exclusive with `layered`. Required
+   *  unless `layered` is set. */
+  sprite?: EnemySprite;
+  /** Layered slot-based look (stacked per-slot sheets from a character model,
+   *  same format as NPC layered characters). Preferred for humanoid enemies
+   *  (pirates, bandits, etc.) so helmets / outfits / weapons can be mixed in
+   *  without re-baking full character sheets. */
+  layered?: NpcLayeredSprite;
   display: EnemyDisplay;
   /** Max HP. Each player hit deals 1. */
   hp: number;

@@ -9,6 +9,15 @@ import {
   type EnemyDef,
   type EnemyInstanceData,
 } from "./enemyTypes";
+import {
+  LayeredEnemyView,
+  SingleSpriteEnemyView,
+  type EnemyView,
+} from "./enemyView";
+import {
+  charModelManifestKey,
+  type CharacterModelManifest,
+} from "./npcTypes";
 import type { MapId } from "./mapId";
 import type { EntityModel } from "./registry";
 
@@ -34,7 +43,19 @@ export class Enemy implements EntityModel {
   readonly kind = "enemy" as const;
   mapId: MapId = { kind: "world" };
   readonly def: EnemyDef;
-  readonly sprite: Phaser.GameObjects.Sprite;
+  /** Rendering handle — single sprite for legacy enemies, layered container
+   *  for humanoid character-model enemies. Enemy logic reads position and
+   *  issues paint ops via this interface rather than touching a specific
+   *  Phaser object type. */
+  readonly view: EnemyView;
+  /** Reference frame dimensions for hit-rect math. Legacy enemies pull from
+   *  `def.sprite`; layered enemies pull from their model manifest. Cached at
+   *  construction so every hit test doesn't redo the lookup. */
+  /** Reference frame dimensions — kept public so the map editor and
+   *  on-hit floating-number spawners can position UI above the character
+   *  without caring whether it's a single sprite or a layered model. */
+  readonly frameWidth: number;
+  readonly frameHeight: number;
 
   private hpFloat: number;
   private state: EnemyState = "idle";
@@ -69,13 +90,37 @@ export class Enemy implements EntityModel {
     const y = (instance.tileY + 0.5) * TILE_SIZE;
     this.homePx = { x, y };
 
-    this.sprite = scene.add.sprite(x, y, enemyTextureKey(def.id), 0);
-    this.sprite.setScale(def.display.scale);
-    this.sprite.setOrigin(0.5, def.display.originY);
-    this.sprite.setDepth(this.sortY());
+    // Pick the rendering backend: layered for character-model enemies, legacy
+    // single-sprite otherwise. Layered falls back to single-sprite if the
+    // model manifest didn't load (bad data) and the def still has a `sprite`
+    // block — keeps a partially-broken enemy visible rather than invisible.
+    if (def.layered) {
+      const manifest = scene.cache.json.get(charModelManifestKey(def.layered.model)) as
+        | CharacterModelManifest
+        | undefined;
+      if (manifest) {
+        this.view = new LayeredEnemyView(scene, def, def.layered, manifest, x, y);
+        this.frameWidth = manifest.frameWidth;
+        this.frameHeight = manifest.frameHeight;
+      } else if (def.sprite) {
+        this.view = new SingleSpriteEnemyView(scene, def, x, y);
+        this.frameWidth = def.sprite.frameWidth;
+        this.frameHeight = def.sprite.frameHeight;
+      } else {
+        throw new Error(
+          `Enemy "${def.id}" is layered but model "${def.layered.model}" didn't load and no fallback sprite is defined.`,
+        );
+      }
+    } else {
+      if (!def.sprite) throw new Error(`Enemy "${def.id}" has neither "sprite" nor "layered".`);
+      this.view = new SingleSpriteEnemyView(scene, def, x, y);
+      this.frameWidth = def.sprite.frameWidth;
+      this.frameHeight = def.sprite.frameHeight;
+    }
+    this.view.setDepth(this.sortY());
 
-    const barW = Math.max(18, def.sprite.frameWidth * def.display.scale * 0.9);
-    const barY = -def.sprite.frameHeight * def.display.scale * def.display.originY - 4;
+    const barW = Math.max(18, this.frameWidth * def.display.scale * 0.9);
+    const barY = -this.frameHeight * def.display.scale * def.display.originY - 4;
     this.hpBarBg = scene.add.rectangle(x, y + barY, barW, 3, 0x000000, 0.6).setOrigin(0.5, 1);
     this.hpBar = scene.add.rectangle(x - barW / 2, y + barY, barW, 3, 0xcc4444).setOrigin(0, 1);
     this.hpBarBg.setVisible(false);
@@ -87,25 +132,33 @@ export class Enemy implements EntityModel {
     this.applyAnim();
   }
 
-  get x(): number { return this.sprite.x; }
-  get y(): number { return this.sprite.y; }
+  get x(): number { return this.view.x; }
+  get y(): number { return this.view.y; }
+
+  /** External movers (map editor, cutscenes) use this to re-home an enemy
+   *  without touching the view directly. Also fixes up y-sort depth so the
+   *  sprite renders above/below props correctly at the new location. */
+  setPositionPx(x: number, y: number): void {
+    this.view.setPosition(x, y);
+    this.view.setDepth(this.sortY());
+  }
 
   isAlive(): boolean { return this.state !== "dying" && this.state !== "dead"; }
 
   sortY(): number {
-    const { display, sprite } = this.def;
-    return this.sprite.y + (1 - display.originY) * sprite.frameHeight * display.scale;
+    const { display } = this.def;
+    return this.view.y + (1 - display.originY) * this.frameHeight * display.scale;
   }
 
   /** Pixel-rect blocking footprint for living enemies. */
   blocksPx(px: number, py: number): boolean {
     if (!this.isAlive()) return false;
-    const w = this.def.sprite.frameWidth * this.def.display.scale * 0.45;
-    const h = this.def.sprite.frameHeight * this.def.display.scale * 0.35;
-    const cy = this.sprite.y - 2;
+    const w = this.frameWidth * this.def.display.scale * 0.45;
+    const h = this.frameHeight * this.def.display.scale * 0.35;
+    const cy = this.view.y - 2;
     return (
-      px >= this.sprite.x - w / 2 &&
-      px <= this.sprite.x + w / 2 &&
+      px >= this.view.x - w / 2 &&
+      px <= this.view.x + w / 2 &&
       py >= cy - h / 2 &&
       py <= cy + h / 2
     );
@@ -118,12 +171,12 @@ export class Enemy implements EntityModel {
    */
   arrowHitPx(px: number, py: number): boolean {
     if (!this.isAlive()) return false;
-    const w = this.def.sprite.frameWidth * this.def.display.scale * 0.75;
-    const h = this.def.sprite.frameHeight * this.def.display.scale * 0.7;
-    const cy = this.sprite.y - this.def.sprite.frameHeight * this.def.display.scale * 0.25;
+    const w = this.frameWidth * this.def.display.scale * 0.75;
+    const h = this.frameHeight * this.def.display.scale * 0.7;
+    const cy = this.view.y - this.frameHeight * this.def.display.scale * 0.25;
     return (
-      px >= this.sprite.x - w / 2 &&
-      px <= this.sprite.x + w / 2 &&
+      px >= this.view.x - w / 2 &&
+      px <= this.view.x + w / 2 &&
       py >= cy - h / 2 &&
       py <= cy + h / 2
     );
@@ -159,13 +212,13 @@ export class Enemy implements EntityModel {
     this.forceAggro = false;
     this.hurtTimer = 0;
     this.kbTimer = 0;
-    this.sprite.clearTint();
+    this.view.clearTint();
     this.hpBar.setVisible(false);
     this.hpBarBg.setVisible(false);
     this.setAnimState("death");
-    this.sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+    this.view.onceAnimComplete(() => {
       this.state = "dead";
-      this.sprite.setVisible(false);
+      this.view.setVisible(false);
     });
   }
 
@@ -241,7 +294,7 @@ export class Enemy implements EntityModel {
       return;
     }
 
-    const distToPlayer = Math.hypot(player.x - this.sprite.x, player.y - this.sprite.y);
+    const distToPlayer = Math.hypot(player.x - this.view.x, player.y - this.view.y);
     if (distToPlayer <= combat.attackRangePx && this.attackCooldownMs <= 0) {
       this.beginAttack(player, combat);
       return;
@@ -256,11 +309,11 @@ export class Enemy implements EntityModel {
   ) {
     const combat = this.def.combat;
     const speed = combat?.chaseSpeedPx ?? 40;
-    const dx = this.homePx.x - this.sprite.x;
-    const dy = this.homePx.y - this.sprite.y;
+    const dx = this.homePx.x - this.view.x;
+    const dy = this.homePx.y - this.view.y;
     if (Math.hypot(dx, dy) < 2) {
       // Snap home, reset to idle.
-      this.sprite.setPosition(this.homePx.x, this.homePx.y);
+      this.view.setPosition(this.homePx.x, this.homePx.y);
       this.enterIdle(400 + Math.random() * 600);
       return;
     }
@@ -297,8 +350,8 @@ export class Enemy implements EntityModel {
     this.kbTimer = HURT_KNOCKBACK_MS;
     this.targetPx = null;
     if (attackerX != null && attackerY != null) {
-      const dx = this.sprite.x - attackerX;
-      const dy = this.sprite.y - attackerY;
+      const dx = this.view.x - attackerX;
+      const dy = this.view.y - attackerY;
       const len = Math.hypot(dx, dy) || 1;
       this.kbVx = (dx / len) * HURT_KNOCKBACK_SPEED;
       this.kbVy = (dy / len) * HURT_KNOCKBACK_SPEED;
@@ -307,9 +360,14 @@ export class Enemy implements EntityModel {
       this.kbVx = 0;
       this.kbVy = 0;
     }
-    this.sprite.setTint(HURT_TINT);
-    // No dedicated hurt frame in the sheets; freeze on idle + tint communicates the state.
-    this.setAnimState("idle");
+    this.view.setTint(HURT_TINT);
+    // Play the dedicated hurt anim if one exists for this enemy (the
+    // layered model always has one — it ships every tag; legacy defs flag
+    // via `def.sprite.anims.hurt`). Fall back to idle + red tint otherwise.
+    const hasHurt = this.def.layered !== undefined
+      ? true
+      : this.def.sprite?.anims.hurt !== undefined;
+    this.setAnimState(hasHurt ? "hurt" : "idle");
   }
 
   private updateHurt(
@@ -325,16 +383,16 @@ export class Enemy implements EntityModel {
       const nextFrac = Math.max(0, this.kbTimer) / HURT_KNOCKBACK_MS;
       const avgFrac = (prevFrac + nextFrac) / 2;
       const dt = dtMs / 1000;
-      const nx = this.sprite.x + this.kbVx * avgFrac * dt;
-      const ny = this.sprite.y + this.kbVy * avgFrac * dt;
-      if (isWalkablePx(nx, this.sprite.y)) this.sprite.x = nx;
-      if (isWalkablePx(this.sprite.x, ny)) this.sprite.y = ny;
+      const nx = this.view.x + this.kbVx * avgFrac * dt;
+      const ny = this.view.y + this.kbVy * avgFrac * dt;
+      if (isWalkablePx(nx, this.view.y)) this.view.x = nx;
+      if (isWalkablePx(this.view.x, ny)) this.view.y = ny;
       this.syncOverlayPositions();
-      this.sprite.setDepth(this.sortY());
+      this.view.setDepth(this.sortY());
     }
 
     if (this.hurtTimer <= 0) {
-      this.sprite.clearTint();
+      this.view.clearTint();
       if (this.def.combat) this.enterChase();
       else this.enterIdle(400);
     }
@@ -344,7 +402,7 @@ export class Enemy implements EntityModel {
     const combat = this.def.combat;
     if (!combat || !player) return false;
     if (this.forceAggro) return true;
-    const d = Math.hypot(player.x - this.sprite.x, player.y - this.sprite.y);
+    const d = Math.hypot(player.x - this.view.x, player.y - this.view.y);
     return d <= combat.aggroRadiusPx;
   }
 
@@ -385,8 +443,8 @@ export class Enemy implements EntityModel {
       return;
     }
 
-    const dx = this.targetPx.x - this.sprite.x;
-    const dy = this.targetPx.y - this.sprite.y;
+    const dx = this.targetPx.x - this.view.x;
+    const dy = this.targetPx.y - this.view.y;
     if (Math.hypot(dx, dy) < 2 || this.stateTimer <= 0) {
       this.enterWanderPause(move.pauseMs);
       return;
@@ -410,21 +468,21 @@ export class Enemy implements EntityModel {
     dtMs: number,
     isWalkablePx: (x: number, y: number) => boolean,
   ): boolean {
-    const dx = tx - this.sprite.x;
-    const dy = ty - this.sprite.y;
+    const dx = tx - this.view.x;
+    const dy = ty - this.view.y;
     const dist = Math.hypot(dx, dy);
     if (dist < 0.001) return false;
     const step = Math.min(dist, speedPx * (dtMs / 1000));
-    const nx = this.sprite.x + (dx / dist) * step;
-    const ny = this.sprite.y + (dy / dist) * step;
+    const nx = this.view.x + (dx / dist) * step;
+    const ny = this.view.y + (dy / dist) * step;
 
     let moved = false;
-    if (isWalkablePx(nx, this.sprite.y)) {
-      this.sprite.x = nx;
+    if (isWalkablePx(nx, this.view.y)) {
+      this.view.x = nx;
       moved = true;
     }
-    if (isWalkablePx(this.sprite.x, ny)) {
-      this.sprite.y = ny;
+    if (isWalkablePx(this.view.x, ny)) {
+      this.view.y = ny;
       moved = true;
     }
     if (!moved) return false;
@@ -432,7 +490,7 @@ export class Enemy implements EntityModel {
     if (Math.abs(dx) > 1) this.setFacing(dx < 0 ? "left" : "right");
     this.setAnimState("move");
     this.syncOverlayPositions();
-    this.sprite.setDepth(this.sortY());
+    this.view.setDepth(this.sortY());
     return true;
   }
 
@@ -449,14 +507,14 @@ export class Enemy implements EntityModel {
     this.state = "attack";
     this.attackCooldownMs = combat.cooldownMs;
     this.targetPx = null;
-    this.setFacing(player.x < this.sprite.x ? "left" : "right");
+    this.setFacing(player.x < this.view.x ? "left" : "right");
     this.setAnimState("attack");
-    this.sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+    this.view.onceAnimComplete(() => {
       if (!this.isAlive()) return;
       // The attack was interrupted (e.g. we took a hit) — don't land damage or override the new state.
       if (this.state !== "attack") return;
       // Recheck range on landing — a dodging player avoids damage.
-      const d = Math.hypot(player.x - this.sprite.x, player.y - this.sprite.y);
+      const d = Math.hypot(player.x - this.view.x, player.y - this.view.y);
       if (d <= combat.attackRangePx * 1.1) {
         const span = combat.damageMax - combat.damageMin + 1;
         const dmg = combat.damageMin + Math.floor(Math.random() * span);
@@ -475,11 +533,11 @@ export class Enemy implements EntityModel {
     this.forceAggro = false;
     this.hurtTimer = 0;
     this.kbTimer = 0;
-    this.sprite.clearTint();
-    this.sprite.setPosition(this.homePx.x, this.homePx.y);
-    this.sprite.setAlpha(1);
-    this.sprite.setVisible(true);
-    this.sprite.setDepth(this.sortY());
+    this.view.clearTint();
+    this.view.setPosition(this.homePx.x, this.homePx.y);
+    this.view.setAlpha(1);
+    this.view.setVisible(true);
+    this.view.setDepth(this.sortY());
     this.stateTimer = 500 + Math.random() * 1000;
     this.wanderMoving = false;
     this.updateHpBar();
@@ -488,11 +546,11 @@ export class Enemy implements EntityModel {
 
   private syncOverlayPositions() {
     const barY =
-      this.sprite.y -
-      this.def.sprite.frameHeight * this.def.display.scale * this.def.display.originY -
+      this.view.y -
+      this.frameHeight * this.def.display.scale * this.def.display.originY -
       4;
-    this.hpBarBg.setPosition(this.sprite.x, barY);
-    this.hpBar.setPosition(this.sprite.x - this.hpBarBg.width / 2, barY);
+    this.hpBarBg.setPosition(this.view.x, barY);
+    this.hpBar.setPosition(this.view.x - this.hpBarBg.width / 2, barY);
     this.hpBarBg.setDepth(this.sortY());
     this.hpBar.setDepth(this.sortY());
   }
@@ -500,51 +558,63 @@ export class Enemy implements EntityModel {
   private setFacing(f: Facing) {
     if (f === this.facing) return;
     this.facing = f;
-    this.sprite.setFlipX(f === "left");
+    this.view.setFlipX(f === "left");
   }
 
   private setAnimState(state: EnemyAnimState) {
-    if (this.animState === state && this.sprite.anims.isPlaying) return;
+    if (this.animState === state && this.view.isAnimPlaying()) return;
     this.animState = state;
     this.applyAnim();
   }
 
   private applyAnim() {
-    this.sprite.setFlipX(this.facing === "left");
-    // Per-anim origin override: oversized anim sheets (e.g. the swordsman's
-    // 64×64 attack arc) have different padding than the base 32×32 grid, so
-    // the default feet-anchor originY would shift the sprite mid-animation.
-    const cfg = this.def.sprite.anims[this.animState];
-    const originY = cfg.originY ?? this.def.display.originY;
-    this.sprite.setOrigin(0.5, originY);
-    this.sprite.anims.play(enemyAnimKey(this.def.id, this.animState), true);
+    this.view.setFlipX(this.facing === "left");
+    // Per-anim origin override (single-sprite enemies) and the actual anim
+    // play both happen inside the view. Layered enemies don't have per-anim
+    // origin overrides — the model's shared bbox already aligns every slot.
+    this.view.playState(this.animState);
   }
 
   destroy() {
-    this.sprite.destroy();
+    this.view.destroy();
     this.hpBar.destroy();
     this.hpBarBg.destroy();
   }
 }
 
 export function registerEnemyAnimations(scene: Phaser.Scene, def: EnemyDef) {
-  const states: EnemyAnimState[] = ["idle", "move", "attack", "death"];
+  // Layered enemies register their anims via setupCharacterAnims() in
+  // manifest.ts — bail early so we don't touch `def.sprite` when absent.
+  if (!def.sprite) return;
+  const sheet = def.sprite;
+  const states: EnemyAnimState[] = ["idle", "move", "attack", "death", "hurt"];
   for (const state of states) {
+    const cfg = sheet.anims[state];
+    if (!cfg) continue;
     const key = enemyAnimKey(def.id, state);
     if (scene.anims.exists(key)) scene.anims.remove(key);
-    const cfg = def.sprite.anims[state];
     // Anims with a `sheet` override live on their own texture, with their
     // own grid dimensions. Everything else uses the base sheet.
     const textureKey = cfg.sheet
       ? enemyAnimTextureKey(def.id, state)
       : enemyTextureKey(def.id);
-    const cols = cfg.sheet ? (cfg.sheetCols ?? def.sprite.sheetCols) : def.sprite.sheetCols;
-    const start = cfg.row * cols;
-    const end = start + cfg.frames - 1;
+    const cols = cfg.sheet ? (cfg.sheetCols ?? sheet.sheetCols) : sheet.sheetCols;
+    // Column-major sheets (e.g. Hana Caraka pirate: cols are facings,
+    // rows are anim frames) pick frames by stepping down a single column.
+    // Otherwise the anim is a contiguous run across `row`.
+    const frameNumbers: Phaser.Types.Animations.GenerateFrameNumbers =
+      cfg.col !== undefined
+        ? {
+            frames: Array.from(
+              { length: cfg.frames },
+              (_, i) => (cfg.row + i) * cols + cfg.col!,
+            ),
+          }
+        : { start: cfg.row * cols, end: cfg.row * cols + cfg.frames - 1 };
     const repeat = cfg.repeat ?? (state === "idle" || state === "move" ? -1 : 0);
     scene.anims.create({
       key,
-      frames: scene.anims.generateFrameNumbers(textureKey, { start, end }),
+      frames: scene.anims.generateFrameNumbers(textureKey, frameNumbers),
       frameRate: cfg.frameRate,
       repeat,
     });

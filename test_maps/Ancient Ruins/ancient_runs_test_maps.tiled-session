@@ -1,0 +1,43 @@
+{
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        ":/automap-tiles.tsx": {
+            "dynamicWrapping": false
+        },
+        "Ancient Ruins/TiledMap Editor/Ancient Ruins example map.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 9,
+            "viewCenter": {
+                "x": 908,
+                "y": 612
+            }
+        },
+        "Ancient Ruins/TiledMap Editor/Tilesets/Atlas-Props-Sprites.tsx": {
+            "dynamicWrapping": true
+        },
+        "Ancient Ruins/TiledMap Editor/Tilesets/Atlas-Props2.tsx": {
+            "dynamicWrapping": false
+        },
+        "Ancient_runs_test.tmx": {
+            "scale": 2,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 769,
+                "y": 1851
+            }
+        }
+    },
+    "last.externalTilesetPath": "C:/dev/sailing-rpg/test_maps/Ancient Ruins/Ancient Ruins/TiledMap Editor/Tilesets",
+    "map.height": 64,
+    "map.lastUsedFormat": "tmx",
+    "map.width": 64,
+    "openFiles": [
+    ],
+    "project": "ancient_runs_test_maps.tiled-project",
+    "recentFiles": [
+        "Ancient Ruins/TiledMap Editor/Ancient Ruins example map.tmx"
+    ],
+    "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)"
+}

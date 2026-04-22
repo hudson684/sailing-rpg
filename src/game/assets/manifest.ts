@@ -19,7 +19,17 @@ import {
   createCfAnimsForTexture,
   type CfLayer,
 } from "../entities/playerAnims";
-import { npcTextureKey, type NpcData } from "../entities/npcTypes";
+import {
+  charAnimKey,
+  charModelManifestKey,
+  charModelManifestUrl,
+  charSlotSheetUrl,
+  charTextureKey,
+  npcTextureKey,
+  type CharacterModelManifest,
+  type NpcData,
+  type NpcDef,
+} from "../entities/npcTypes";
 import { registerNpcAnimations } from "../entities/NpcSprite";
 import npcDataRaw from "../data/npcs.json";
 import {
@@ -84,6 +94,7 @@ export function queueAllAssets(scene: Phaser.Scene): void {
   queueEnemySheets(scene);
   queueNodeSheets(scene);
   queueNpcSheets(scene);
+  queueCharacterModels(scene);
 }
 
 /** Loads world.json, then chains: starting-chunk tilesets, all chunk TMJs,
@@ -216,13 +227,15 @@ function queueItemIcons(scene: Phaser.Scene): void {
 
 function queueEnemySheets(scene: Phaser.Scene): void {
   for (const def of enemiesData.defs) {
+    // Layered enemies load via queueCharacterModels — skip the legacy path.
+    if (!def.sprite) continue;
     scene.load.spritesheet(enemyTextureKey(def.id), def.sprite.sheet, {
       frameWidth: def.sprite.frameWidth,
       frameHeight: def.sprite.frameHeight,
     });
     for (const state of Object.keys(def.sprite.anims) as EnemyAnimState[]) {
       const anim = def.sprite.anims[state];
-      if (!anim.sheet) continue;
+      if (!anim?.sheet) continue;
       scene.load.spritesheet(enemyAnimTextureKey(def.id, state), anim.sheet, {
         frameWidth: anim.frameWidth ?? def.sprite.frameWidth,
         frameHeight: anim.frameHeight ?? def.sprite.frameHeight,
@@ -243,6 +256,9 @@ function queueNodeSheets(scene: Phaser.Scene): void {
 
 function queueNpcSheets(scene: Phaser.Scene): void {
   for (const npc of npcData.npcs) {
+    // Layered NPCs load via queueCharacterModels below — skip the legacy
+    // single-sheet path for them.
+    if (!npc.sprite) continue;
     const idle = npc.sprite.idle;
     scene.load.spritesheet(npcTextureKey(npc.id, "idle"), idle.sheet, {
       frameWidth: idle.frameWidth,
@@ -258,6 +274,54 @@ function queueNpcSheets(scene: Phaser.Scene): void {
   }
 }
 
+/** For every unique character-model referenced by a layered NPC, load the
+ *  model.json (which carries frameWidth/frameHeight + per-tag frame counts),
+ *  then chain a secondary load that queues every slot-variant spritesheet
+ *  the NPCs actually use. The follow-up anim registration runs from
+ *  `setupCharacterAnims()` at post-load. */
+function queueCharacterModels(scene: Phaser.Scene): void {
+  // Both layered NPCs and layered humanoid enemies pull from the same
+  // `public/sprites/characters/<model>/` tree — collect every (slot, variant)
+  // pair across both sources, load each referenced model.json once, then
+  // chain the slot-sheet queue off the manifest completion event.
+  const modelUsage = new Map<string, Array<{ slot: string; variant: string }>>();
+  const accumulate = (
+    layered: { model: string; slots: Record<string, string> } | undefined,
+  ) => {
+    if (!layered) return;
+    const list = modelUsage.get(layered.model) ?? [];
+    for (const [slot, variant] of Object.entries(layered.slots)) {
+      if (!list.some((e) => e.slot === slot && e.variant === variant)) {
+        list.push({ slot, variant });
+      }
+    }
+    modelUsage.set(layered.model, list);
+  };
+  for (const npc of npcData.npcs) accumulate(npc.layered);
+  for (const def of enemiesData.defs) accumulate(def.layered);
+
+  for (const [model, usage] of modelUsage) {
+    const manifestKey = charModelManifestKey(model);
+    scene.load.json(manifestKey, charModelManifestUrl(model));
+    scene.load.once(
+      `filecomplete-json-${manifestKey}`,
+      (_k: string, _t: string, data: CharacterModelManifest) => {
+        for (const { slot, variant } of usage) {
+          for (const tag of Object.keys(data.tags)) {
+            const textureKey = charTextureKey(model, slot, variant, tag);
+            if (scene.sys.textures.exists(textureKey)) continue;
+            scene.load.spritesheet(
+              textureKey,
+              charSlotSheetUrl(model, slot, variant, tag),
+              { frameWidth: data.frameWidth, frameHeight: data.frameHeight },
+            );
+          }
+        }
+      },
+    );
+  }
+}
+
 // ─── Post-load setup (texture baking + anim registration) ────────────────
 
 export function runPostLoadSetup(scene: Phaser.Scene): void {
@@ -267,6 +331,7 @@ export function runPostLoadSetup(scene: Phaser.Scene): void {
   setupMountAnims(scene);
   setupNodeAnims(scene);
   setupNpcAnims(scene);
+  setupCharacterAnims(scene);
 }
 
 function bakePlayerSkinSafely(scene: Phaser.Scene): void {
@@ -364,7 +429,56 @@ function setupNodeAnims(scene: Phaser.Scene): void {
 }
 
 /** Register NPC animations globally so every scene's reconciler can spawn
- *  sprites without re-registering per-scene. */
+ *  sprites without re-registering per-scene. Legacy single-sheet NPCs only —
+ *  layered NPCs register via setupCharacterAnims(). */
 function setupNpcAnims(scene: Phaser.Scene): void {
-  for (const npc of npcData.npcs) registerNpcAnimations(scene, npc);
+  for (const npc of npcData.npcs) {
+    if (!npc.sprite) continue;
+    registerNpcAnimations(scene, npc);
+  }
 }
+
+/** Register one animation per (model, slot, variant, state) for every
+ *  layered NPC referenced in npcs.json. Each slot-variant's sheet has N
+ *  frames per tag (per the model.json), so the anim runs 0..N-1 at the
+ *  per-tag frameRate. CharacterSprite plays each child with its own key;
+ *  because every slot-variant for a model has the same frame count and
+ *  frameRate, the slots stay frame-aligned in practice. */
+function setupCharacterAnims(scene: Phaser.Scene): void {
+  const seen = new Set<string>();
+  // Combat tags play once (attack swings, hurt flashes, death animations);
+  // idle/walk loop forever. Anything else defaults to loop so idle fallbacks
+  // don't freeze on their last frame.
+  const oneShotTags = new Set(["sword", "attack", "hurt", "death"]);
+  const registerFor = (layered: { model: string; slots: Record<string, string> }) => {
+    const manifest = scene.cache.json.get(charModelManifestKey(layered.model)) as
+      | CharacterModelManifest
+      | undefined;
+    if (!manifest) return;
+    for (const [slot, variant] of Object.entries(layered.slots)) {
+      for (const [tag, cfg] of Object.entries(manifest.tags)) {
+        const key = charAnimKey(layered.model, slot, variant, tag);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        if (scene.anims.exists(key)) scene.anims.remove(key);
+        const textureKey = charTextureKey(layered.model, slot, variant, tag);
+        if (!scene.textures.exists(textureKey)) continue;
+        scene.anims.create({
+          key,
+          frames: scene.anims.generateFrameNumbers(textureKey, {
+            start: 0,
+            end: Math.max(0, cfg.frames - 1),
+          }),
+          frameRate: cfg.frameRate,
+          repeat: oneShotTags.has(tag) ? 0 : -1,
+        });
+      }
+    }
+  };
+  for (const npc of npcData.npcs) if (npc.layered) registerFor(npc.layered);
+  for (const def of enemiesData.defs) if (def.layered) registerFor(def.layered);
+}
+
+// Unused imports surface as TS errors; keep NpcDef reachable even though
+// we only reference it transiently above for the typed manifest payload.
+export type { NpcDef };

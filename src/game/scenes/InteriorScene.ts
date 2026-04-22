@@ -20,6 +20,8 @@ import { useGameStore } from "../store/gameStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { stamina, STAMINA_MAX } from "../player/stamina";
 import { NpcSprite, NPC_INTERACT_RADIUS, registerNpcAnimations } from "../entities/NpcSprite";
+import { CharacterSprite } from "../entities/CharacterSprite";
+import { charModelManifestKey, type CharacterModelManifest } from "../entities/npcTypes";
 import { NpcModel } from "../entities/NpcModel";
 import { SpriteReconciler } from "../entities/SpriteReconciler";
 import { entityRegistry } from "../entities/registry";
@@ -102,7 +104,7 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
   private launchData!: InteriorLaunchData;
   private interior!: InteriorTilemap;
   private player!: Player;
-  private npcReconciler!: SpriteReconciler<NpcSprite>;
+  private npcReconciler!: SpriteReconciler<NpcSprite | CharacterSprite>;
   private lastExitTile: { x: number; y: number } | null = null;
   private dialogues: Record<string, DialogueDef> = {};
   private activeDialogue: { speaker: string; pages: string[]; page: number; shopId?: string } | null = null;
@@ -196,10 +198,21 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     });
 
     // Interior NPC reconciler + walkability provider.
-    this.npcReconciler = new SpriteReconciler<NpcSprite>(
+    this.npcReconciler = new SpriteReconciler<NpcSprite | CharacterSprite>(
       this,
       mapId,
-      (scene, m) => (m.kind === "npc" ? new NpcSprite(scene, m as NpcModel) : null),
+      (scene, m) => {
+        if (m.kind !== "npc") return null;
+        const npc = m as NpcModel;
+        if (npc.def.layered) {
+          const manifest = scene.cache.json.get(charModelManifestKey(npc.def.layered.model)) as
+            | CharacterModelManifest
+            | undefined;
+          if (manifest) return new CharacterSprite(scene, npc, manifest);
+          if (!npc.def.sprite) return null;
+        }
+        return new NpcSprite(scene, npc);
+      },
     );
     worldTicker.registerWalkable(mapId, (x, y) => this.isWalkablePx(x, y));
 
@@ -814,8 +827,7 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     } else if (kind === "enemy") {
       const e = this.enemies.find((x) => x.id === id);
       if (!e) return;
-      e.sprite.setPosition(px, py);
-      e.sprite.setDepth(e.sortY());
+      e.setPositionPx(px, py);
     } else if (kind === "node") {
       const n = this.nodes.find((x) => x.id === id);
       if (!n) return;
@@ -848,8 +860,7 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     if (req.kind === "enemy") {
       const e = this.enemies.find((x) => x.id === req.id);
       if (!e) return false;
-      e.sprite.setPosition(px, py);
-      e.sprite.setDepth(e.sortY());
+      e.setPositionPx(px, py);
       return true;
     }
     if (req.kind === "node") {

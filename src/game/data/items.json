@@ -120,6 +120,7 @@
       "type": "weapon",
       "slot": "mainHand",
       "stats": { "attack": 5 },
+      "melee": { "damageMin": 2, "damageMax": 5 },
       "visualLayer": { "layer": "tool", "variant": "iron-sword" },
       "value": 200
     },
@@ -133,6 +134,7 @@
       "type": "weapon",
       "slot": "mainHand",
       "stats": { "attack": 3 },
+      "melee": { "damageMin": 2, "damageMax": 5 },
       "visualLayer": { "layer": "tool", "variant": "iron-sword" },
       "value": 3
     },
@@ -162,7 +164,7 @@
       "name": "Arrow",
       "color": "#a88050",
       "stackable": true,
-      "maxStack": 99,
+      "maxStack": 999,
       "description": "Ammunition for a bow.",
       "type": "ammo",
       "value": 1,
@@ -236,6 +238,7 @@
       "type": "weapon",
       "slot": "mainHand",
       "stats": { "attack": 6 },
+      "melee": { "damageMin": 3, "damageMax": 7 },
       "visualLayer": { "layer": "tool", "variant": "iron-sword" },
       "value": 180
     },

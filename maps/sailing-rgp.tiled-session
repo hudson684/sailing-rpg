@@ -1,22 +1,38 @@
 {
-    "activeFile": "interiors/starter_dungeon.tmx",
+    "activeFile": "C:/dev/sailing-rpg/test_maps/untitled.tmx",
     "expandedProjectPaths": [
-        "themes/The Village/TiledMap Editor",
+        "themes/Grass Land/TiledMap Editor/Tilesets",
+        "ships",
         "themes/grassland/TiledMap Editor/Tilesets",
         "chunks",
-        "themes/grassland/TiledMap Editor",
         "themes/The Village/TiledMap Editor/tilesets",
-        "themes/Grass Land/TiledMap Editor/Tilesets",
         "themes/Grass Land/TiledMap Editor",
-        "themes/Grass Land",
-        "themes/The Village",
+        "themes/The Village/TiledMap Editor",
+        "themes/grassland/TiledMap Editor",
         "themes/grassland",
-        "interiors",
+        "themes/The Village",
         ".",
-        "ships"
+        "themes/Grass Land",
+        "interiors"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
+        "C:/dev/sailing-rpg/test_maps/untitled.tmx": {
+            "scale": 0.13173828125,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1020.9636767976278,
+                "y": 1020.9636767976281
+            }
+        },
+        "C:/dev/test_maps/untitled.tmx": {
+            "scale": 0.41376953125,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 154.6754779324994,
+                "y": 651.3287703563842
+            }
+        },
         "chunks/0_0.tmx": {
             "expandedObjectLayers": [
                 6
@@ -24,23 +40,23 @@
             "scale": 0.33,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 5751.515151515152,
-                "y": 5727.272727272727
+                "x": 510.60606060606057,
+                "y": 510.6060606060606
             }
         },
         "chunks/0_1.tmx": {
             "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 347.5,
-                "y": 48.5
+                "x": 511.75,
+                "y": 512.25
             }
         },
         "chunks/0_2.tmx": {
             "scale": 0.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 512,
+                "x": 511,
                 "y": 511
             }
         },
@@ -54,22 +70,22 @@
         },
         "chunks/1_0.tmx": {
             "expandedObjectLayers": [
-                15,
-                6
+                6,
+                15
             ],
             "scale": 0.25,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 2152,
-                "y": 3932
+                "x": 510,
+                "y": 510
             }
         },
         "chunks/1_1.tmx": {
             "scale": 0.75,
             "selectedLayer": 5,
             "viewCenter": {
-                "x": 286.6666666666667,
-                "y": -145.33333333333326
+                "x": 511.33333333333326,
+                "y": 512.6666666666666
             }
         },
         "chunks/1_2.tmx": {
@@ -79,7 +95,7 @@
             "scale": 0.75,
             "selectedLayer": 10,
             "viewCenter": {
-                "x": 512,
+                "x": 511.33333333333326,
                 "y": 512.6666666666666
             }
         },
@@ -87,7 +103,7 @@
             "scale": 1.5,
             "selectedLayer": 11,
             "viewCenter": {
-                "x": 512,
+                "x": 511.66666666666663,
                 "y": 512.3333333333333
             }
         },
@@ -95,7 +111,7 @@
             "scale": 3,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 512,
+                "x": 511.83333333333326,
                 "y": 512.1666666666666
             }
         },
@@ -119,7 +135,7 @@
             "scale": 0.33,
             "selectedLayer": 5,
             "viewCenter": {
-                "x": 512.1212121212121,
+                "x": 510.60606060606057,
                 "y": 510.6060606060606
             }
         },
@@ -127,8 +143,8 @@
             "scale": 0.33,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": -1196.9696969696968,
-                "y": -2327.272727272727
+                "x": 510.60606060606057,
+                "y": 510.6060606060606
             }
         },
         "chunks/3_0.tmx": {
@@ -159,8 +175,8 @@
             "scale": 1.5,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": -221.33333333333331,
-                "y": 253.3333333333333
+                "x": 511.66666666666663,
+                "y": 512.3333333333333
             }
         },
         "chunks/4_0.tmx": {
@@ -183,7 +199,7 @@
             "scale": 1,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 512,
+                "x": 511.5,
                 "y": 512.5
             }
         },
@@ -227,15 +243,23 @@
                 "y": -18.181818181818244
             }
         },
+        "chunks/5_5.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 10,
+            "viewCenter": {
+                "x": 511,
+                "y": 511
+            }
+        },
         "interiors/cabin.tmx": {
             "expandedObjectLayers": [
-                14,
-                6
+                6,
+                14
             ],
             "scale": 1.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 304,
+                "x": 303.66666666666663,
                 "y": 224.33333333333331
             }
         },
@@ -246,8 +270,8 @@
             "scale": 1,
             "selectedLayer": 5,
             "viewCenter": {
-                "x": 219,
-                "y": 171
+                "x": 511.5,
+                "y": 512.5
             }
         },
         "ships/galleon-e.tmx": {
@@ -298,31 +322,128 @@
                 "y": 32.375
             }
         },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains-16 frames-with transparency.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains-16 frames.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains-8 frames-with transparency.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains-8 frames.tsx": {
+            "scaleInDock": 0.75
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains2-16 frames-with transparency.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains2-16 frames.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains2-8 frames-with transparency.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains2-8 frames.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 1-transp.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 1.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 2-transp.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 2.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 3-transp.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 3.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 4.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 5-transp.tsx": {
+            "scaleInDock": 3
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 5.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 6-transp.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 6.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 7-transp.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 7.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 8-transp.tsx": {
+            "scaleInDock": 0.5
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 8.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset-Terrain2.tsx": {
+            "scaleInDock": 1
+        },
         "themes/Ancient Ruins/TiledMap Editor/Tilesets/Atlas-Props-Sprites.tsx": {
-            "dynamicWrapping": true
+            "dynamicWrapping": true,
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Atlas-Props.tsx": {
+            "scaleInDock": 0.5
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Atlas-Props2.tsx": {
+            "scaleInDock": 0.33
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/Terrain - Ancient Ruins.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/garden border.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/waterfall - blood-transp.tsx": {
+            "scaleInDock": 0.75
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/waterfall - blood.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/waterfall-transp.tsx": {
+            "scaleInDock": 1
+        },
+        "themes/Ancient Ruins/TiledMap Editor/Tilesets/waterfall.tsx": {
+            "scaleInDock": 1
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet1-sprites.tsx": {
             "scaleInDock": 1
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet1.tsx": {
-            "scaleInDock": 0.75
+            "scaleInDock": 0.5
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2-sprites.tsx": {
             "scaleInDock": 1
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet2.tsx": {
-            "scaleInDock": 0.125,
+            "scaleInDock": 0.75,
             "scaleInEditor": 0.33
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet3.tsx": {
-            "scaleInDock": 0.33
+            "scaleInDock": 0.5
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet4-sprites.tsx": {
             "scaleInDock": 1
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet4.tsx": {
             "dynamicWrapping": false,
-            "scaleInDock": 0.33
+            "scaleInDock": 1.5
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Atlas-props-sheet3-sprites.tsx": {
             "scaleInDock": 1
@@ -343,11 +464,11 @@
             "scaleInDock": 0.5
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx": {
-            "scaleInDock": 1.5,
+            "scaleInDock": 0.33,
             "scaleInEditor": 1
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/beach - no thick foam - Godot.tsx": {
-            "scaleInDock": 0.25
+            "scaleInDock": 0.75
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/beach - no thick foam.tsx": {
             "dynamicWrapping": false,
@@ -436,7 +557,7 @@
             "scaleInDock": 0.75
         },
         "themes/Old Prison/TiledMap Editor New/Tilesets/Tileset - wall 2.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 0.33
         },
         "themes/Old Prison/TiledMap Editor New/Tilesets/Tileset-Terrain-old prison.tsx": {
             "scaleInDock": 1.5
@@ -454,14 +575,14 @@
         },
         "themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx": {
             "dynamicWrapping": false,
-            "scaleInDock": 0.5,
+            "scaleInDock": 0.33,
             "scaleInEditor": 1
         },
         "themes/Sea Adventures/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx": {
             "scaleInDock": 1
         },
         "themes/Sea Adventures/TiledMap Editor/Tilesets/Tilesets-GL2SA.tsx": {
-            "scaleInDock": 0.5,
+            "scaleInDock": 0.75,
             "scaleInEditor": 0.75
         },
         "themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx": {
@@ -644,16 +765,16 @@
             "scaleInDock": 1
         },
         "themes/The Village/TiledMap Editor/tilesets/side_roofs_details_extrusion.tsx": {
-            "scaleInDock": 0.5
+            "scaleInDock": 0.25
         },
         "themes/The Village/TiledMap Editor/tilesets/side_roofs_details_extrusion2.tsx": {
-            "scaleInDock": 1.5
+            "scaleInDock": 1
         },
         "themes/The Village/TiledMap Editor/tilesets/tilesets-village.tsx": {
-            "scaleInDock": 0.75
+            "scaleInDock": 1
         },
         "themes/The Village/TiledMap Editor/tilesets/walls-floor1.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 0.5
         },
         "themes/The Village/TiledMap Editor/tilesets/walls1.tsx": {
             "scaleInDock": 0.33
@@ -722,8 +843,11 @@
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
+        "tilesets/blacksmith-building.tsx": {
+            "scaleInDock": 0.33
+        },
         "tilesets/furniture_and_props.tsx": {
-            "scaleInDock": 0.5,
+            "scaleInDock": 1.5,
             "scaleInEditor": 1
         },
         "tilesets/roguelike.tsx": {
@@ -739,9 +863,9 @@
         "C:/dev/sailing-rpg/maps/ships/galleon.world",
         "C:/dev/sailing-rpg/maps/ships/rowboat.world"
     ],
-    "map.height": 32,
+    "map.height": 64,
     "map.lastUsedFormat": "tmx",
-    "map.width": 32,
+    "map.width": 64,
     "openFiles": [
         "chunks/0_0.tmx",
         "chunks/1_0.tmx",
@@ -758,7 +882,9 @@
         "chunks/0_1.tmx",
         "chunks/4_2.tmx",
         "chunks/1_4.tmx",
-        "interiors/starter_dungeon.tmx"
+        "interiors/starter_dungeon.tmx",
+        "chunks/5_5.tmx",
+        "C:/dev/sailing-rpg/test_maps/untitled.tmx"
     ],
     "project": "sailing-rgp.tiled-project",
     "property.type": "bool",

@@ -111,6 +111,12 @@ export interface RangedWeapon {
   cooldownMs: number;
 }
 
+/** Melee-weapon stats. Present on weapons swung with Q. */
+export interface MeleeWeapon {
+  damageMin: number;
+  damageMax: number;
+}
+
 /**
  * Shop pricing sold in fixed lots (e.g. "15 arrows for 5g"). When present,
  * the shop buys and sells this item only in multiples of `quantity`, at
@@ -141,6 +147,8 @@ export interface ItemDef {
   consumable?: ConsumableEffect;
   /** Ranged-weapon metadata. Present iff this item fires a projectile. */
   ranged?: RangedWeapon;
+  /** Melee-weapon metadata. Present iff this item is swung with Q. */
+  melee?: MeleeWeapon;
   /** Buy price at a shop. Sell price is floor(value / 2). Overridden by `bundle` when present. */
   value: number;
   /** Optional lot pricing — used instead of `value` when set. */
@@ -161,6 +169,7 @@ interface RawItem {
   visualLayer?: VisualLayer;
   consumable?: ConsumableEffect;
   ranged?: RangedWeapon;
+  melee?: MeleeWeapon;
   value: number;
   bundle?: ItemBundle;
 }

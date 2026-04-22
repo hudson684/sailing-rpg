@@ -175,7 +175,7 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 54,
+        "tileX": 52,
         "tileY": 20
       },
       "facing": "right",
@@ -230,7 +230,7 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 45,
+        "tileX": 44,
         "tileY": 18
       },
       "facing": "left",
@@ -312,6 +312,34 @@
         "type": "static"
       },
       "dialogue": "lilan_florist"
+    },
+    {
+      "id": "steve",
+      "name": "Steve",
+      "layered": {
+        "model": "steve",
+        "slots": {
+          "hand_back": "default",
+          "body": "pirate_outfit",
+          "head": "default",
+          "hair": "short_brown",
+          "helmet": "tricorn",
+          "hand_front": "default"
+        }
+      },
+      "display": {
+        "scale": 2,
+        "originY": 0.506
+      },
+      "spawn": {
+        "tileX": 50,
+        "tileY": 21
+      },
+      "facing": "right",
+      "movement": {
+        "type": "static"
+      },
+      "dialogue": "steve"
     }
   ],
   "dialogues": {
@@ -375,6 +403,13 @@
         "Careful where you step — the seedlings are braver than they look.",
         "Salt air makes for stubborn blooms. These ones had to earn their petals.",
         "Bring someone flowers. It works more often than it has any right to."
+      ]
+    },
+    "steve": {
+      "speaker": "Steve",
+      "pages": [
+        "Hey there. Name's Steve.",
+        "Just testing out a new look — fresh off the template, as it were."
       ]
     }
   }

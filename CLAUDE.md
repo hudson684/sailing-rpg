@@ -41,3 +41,46 @@ something the framework already provides, or relying on Phaser 3
 behavior that changed in 4), raise it with the user before
 implementing. Explain the clash and suggest the Phaser 4 alternative,
 then let the user decide.
+
+## Exporting .aseprite sprites
+
+Use `tools/export-aseprite.mjs` to turn `.aseprite` files into per-tag
+PNG spritesheets with transparent backgrounds. It shells out to the
+Aseprite CLI (auto-discovered, or override via `ASEPRITE_EXE` /
+`--aseprite`). Don't hand-export from the Aseprite GUI and don't try
+to parse `.aseprite` binary directly.
+
+Typical usage (Hana Caraka pirate, for example):
+
+```
+node tools/export-aseprite.mjs \
+  "assets-source/character/16x16/Hana Caraka - Base Character/Premade Character/pirate/pirate.aseprite" \
+  public/sprites/enemies \
+  --prefix pirate \
+  --tags idle,walk,sword,hurt,death \
+  --layer side
+```
+
+Notes:
+
+- `--layer side` isolates the sideways facing. Hana Caraka files group
+  facings as `up` / `down` / `side` layer groups; the enemy and NPC
+  systems only use the side view (and mirror it via `setFlipX` for
+  left/right), so exporting just that group keeps sheets tight.
+- The default post-process computes one bounding box across every
+  frame of every exported tag and crops all sheets to match. That
+  drops editor whitespace (so `display.scale` doesn't have to
+  compensate) while keeping the character's feet pinned to the same
+  relative position in every animation. Pass `--no-trim` to skip.
+- Default `--columns 1` matches Hana Caraka files, where each aseprite
+  frame is a single composite. Bump `--columns` for files where each
+  facing or variant is a separate aseprite frame.
+- The script passes `--ignore-layer "bg helper"` so the editor-only
+  checkerboard layer doesn't get baked into the output. If a new
+  character kit uses a different helper layer name, extend the script.
+- Use `--list` to print tags in a file before exporting.
+
+After export, set `frameWidth` / `frameHeight` / `sheetCols` in the
+matching def (e.g. `src/game/data/enemies.json`) to match the new
+trimmed dimensions the script prints at the end. `display.scale` then
+tunes the in-world size.

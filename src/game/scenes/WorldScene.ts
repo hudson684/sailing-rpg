@@ -65,6 +65,8 @@ import {
   itemIconTextureKey,
 } from "../assets/keys";
 import { NpcSprite, NPC_INTERACT_RADIUS, registerNpcAnimations } from "../entities/NpcSprite";
+import { CharacterSprite } from "../entities/CharacterSprite";
+import { charModelManifestKey, type CharacterModelManifest } from "../entities/npcTypes";
 import { NpcModel } from "../entities/NpcModel";
 import { SpriteReconciler } from "../entities/SpriteReconciler";
 import { entityRegistry } from "../entities/registry";
@@ -259,7 +261,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
   private dropTables = new Map<string, DropTable>();
   /** Owns scene-local sprites for world-mapped NPC models. Interior NPC
    *  sprites are owned by InteriorScene's own reconciler. */
-  private npcReconciler!: SpriteReconciler<NpcSprite>;
+  private npcReconciler!: SpriteReconciler<NpcSprite | CharacterSprite>;
   /** Cached NPC data used for edit-mode templates and export. The registry
    *  is source-of-truth for runtime state; this stays for authoring flows. */
   private npcData: NpcData = npcDataRaw as NpcData;
@@ -1072,17 +1074,18 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       const ok = this.player.playAction("chop", () => {});
       if (!ok) return;
       showToast("No tree in reach.", 1200);
-    } else if (mainHand === "sword" || mainHand === "cutlass") {
+    } else if (mainHand && ITEMS[mainHand]?.melee) {
+      const melee = ITEMS[mainHand].melee!;
       const reach = TILE_SIZE * 1.4;
       const target = this.nearestEnemyInReach(reach);
       this.player.playAction("attack", () => {
         useGameStore.getState().jobsAddXp("combat", 5);
         if (!target || !target.isAlive()) return;
-        const swordDmg = 1;
+        const swordDmg = Phaser.Math.Between(melee.damageMin, melee.damageMax);
         const killed = target.hit(this, swordDmg, this.player.x, this.player.y);
         const enemyHeadY =
-          target.sprite.y - (target.def.sprite.frameHeight * target.def.display.scale) / 2 - 4;
-        spawnFloatingNumber(this, target.sprite.x, enemyHeadY, swordDmg, {
+          target.y - (target.frameHeight * target.def.display.scale) / 2 - 4;
+        spawnFloatingNumber(this, target.x, enemyHeadY, swordDmg, {
           kind: "damage-enemy",
         });
         if (killed) {
@@ -1176,8 +1179,8 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     const dmg = projectile.damage;
     const killed = target.hit(this, dmg, projectile.x, projectile.y);
     const enemyHeadY =
-      target.sprite.y - (target.def.sprite.frameHeight * target.def.display.scale) / 2 - 4;
-    spawnFloatingNumber(this, target.sprite.x, enemyHeadY, dmg, {
+      target.y - (target.frameHeight * target.def.display.scale) / 2 - 4;
+    spawnFloatingNumber(this, target.x, enemyHeadY, dmg, {
       kind: "damage-enemy",
     });
     if (killed) {
@@ -1617,12 +1620,22 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     this.npcData = npcDataRaw as NpcData;
     this.dialogues = this.npcData.dialogues ?? {};
     const worldMap: MapId = { kind: "world" };
-    this.npcReconciler = new SpriteReconciler<NpcSprite>(
+    this.npcReconciler = new SpriteReconciler<NpcSprite | CharacterSprite>(
       this,
       worldMap,
       (scene, model) => {
         if (model.kind !== "npc") return null;
-        return new NpcSprite(scene, model as NpcModel);
+        const npc = model as NpcModel;
+        if (npc.def.layered) {
+          const manifest = scene.cache.json.get(charModelManifestKey(npc.def.layered.model)) as
+            | CharacterModelManifest
+            | undefined;
+          if (manifest) return new CharacterSprite(scene, npc, manifest);
+          // Model manifest missing (bad data) — fall through to legacy path
+          // only if the NPC also declared a legacy sprite, else bail.
+          if (!npc.def.sprite) return null;
+        }
+        return new NpcSprite(scene, npc);
       },
     );
     worldTicker.registerWalkable(worldMap, (x, y) => this.isWalkablePx(x, y));
@@ -2490,8 +2503,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     } else if (kind === "enemy") {
       const e = this.enemies.find((x) => x.id === id);
       if (!e) return;
-      e.sprite.setPosition(px, py);
-      e.sprite.setDepth(e.sortY());
+      e.setPositionPx(px, py);
     } else if (kind === "node") {
       const n = this.nodes.find((x) => x.id === id);
       if (!n) return;
@@ -2540,8 +2552,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     if (req.kind === "enemy") {
       const e = this.enemies.find((x) => x.id === req.id);
       if (!e) return false;
-      e.sprite.setPosition(px, py);
-      e.sprite.setDepth(e.sortY());
+      e.setPositionPx(px, py);
       return true;
     }
     if (req.kind === "node") {

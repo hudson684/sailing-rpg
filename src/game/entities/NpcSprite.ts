@@ -15,7 +15,12 @@ export class NpcSprite {
   constructor(scene: Phaser.Scene, model: NpcModel) {
     this.model = model;
     const def = model.def;
-    this.sprite = scene.add.sprite(model.x, model.y, npcTextureKey(def.id, "idle"), def.sprite.idle.start);
+    // NpcSprite is only spawned for legacy NPCs (the factory routes layered
+    // NPCs to CharacterSprite). `def.sprite` is therefore defined here; the
+    // `!` is safe and keeps the type-narrowing cleaner than threading an
+    // additional constructor param.
+    const sheet = def.sprite!;
+    this.sprite = scene.add.sprite(model.x, model.y, npcTextureKey(def.id, "idle"), sheet.idle.start);
     this.sprite.setScale(def.display.scale);
     this.sprite.setOrigin(0.5, def.display.originY);
     this.applyAnim();
@@ -26,7 +31,7 @@ export class NpcSprite {
     const m = this.model;
     this.sprite.setPosition(m.x, m.y);
     this.sprite.setFlipX(m.facing === "left");
-    const hasWalk = !!m.def.sprite.walk;
+    const hasWalk = !!m.def.sprite?.walk;
     const resolved = m.animState === "walk" && !hasWalk ? "idle" : m.animState;
     const key = npcAnimKey(m.def.id, resolved);
     if (this.currentAnim !== key) {
@@ -54,11 +59,15 @@ export class NpcSprite {
 }
 
 export function registerNpcAnimations(scene: Phaser.Scene, def: NpcDef) {
-  const states: Array<"idle" | "walk"> = def.sprite.walk ? ["idle", "walk"] : ["idle"];
+  // Layered NPCs register anims via setupCharacterAnims(); bail if called
+  // on one of those so we don't touch `def.sprite` when it's absent.
+  if (!def.sprite) return;
+  const sheet = def.sprite;
+  const states: Array<"idle" | "walk"> = sheet.walk ? ["idle", "walk"] : ["idle"];
   for (const state of states) {
     const key = npcAnimKey(def.id, state);
     if (scene.anims.exists(key)) scene.anims.remove(key);
-    const cfg = state === "walk" ? def.sprite.walk! : def.sprite.idle;
+    const cfg = state === "walk" ? sheet.walk! : sheet.idle;
     scene.anims.create({
       key,
       frames: scene.anims.generateFrameNumbers(npcTextureKey(def.id, state), {

@@ -13,6 +13,7 @@
  <tileset firstgid="17897" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Atlas-Props.tsx"/>
  <tileset firstgid="20447" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 4.tsx"/>
  <tileset firstgid="20687" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Atlas-Props2.tsx"/>
+ <tileset firstgid="23287" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/waterfall.tsx"/>
  <layer id="7" name="Ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMA6B1eP9SS7QeR8FeUlVVVfX1AZnYlC4=
@@ -65,7 +66,7 @@
  </layer>
  <layer id="4" name="props_high" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzdcJwgAYReFfzUS2SZINbNjGMSqWjGPDknGMimeKi8g98D2fCOec+6/GacQEU8wwT7X/Db8tdtijEP+v/G6444FS/I8sooY6Gkgy7b7Jr4U2OuiK/z1+fQwwxEj8X/DLscQKa/H/wO+IE864iP9PfhVeeOMj/jvnnHO/3BdIaScH
+   eJztzbcNAkEURdGPyUiJSYmxAXXsJpDihCuHBYQrByfYpRqEE1digmlgJoD/pJO+K6LT6XS/tUEgMsQIY0wCv/0lvRXW2GBr9W9NkVTry9XO9C6IkeDquS8h/0gjg2zot1+mV0EVNdQ999v0Ouiih77n/pRehBnmWFj9HN284Wo7ensccMTJ6hfoFg1Xu9N74IkX3la/RLdh6HQ6nU73j/sA7hg1sA==
   </data>
  </layer>
  <layer id="5" name="roof" width="32" height="32">

@@ -1,0 +1,14 @@
+{
+    "automappingRulesFile": "Ancient Ruins/TiledMap Editor/rules.txt",
+    "commands": [
+    ],
+    "compatibilityVersion": 1100,
+    "extensionsPath": "extensions",
+    "folders": [
+        "."
+    ],
+    "properties": [
+    ],
+    "propertyTypes": [
+    ]
+}
