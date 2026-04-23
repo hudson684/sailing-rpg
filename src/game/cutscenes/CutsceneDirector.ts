@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
 import { bus, type DialogueAction } from "../bus";
+import type { DialogueDirector } from "../dialogue/DialogueDirector";
 import type {
   ActorRef,
   CutsceneDef,
@@ -43,6 +44,11 @@ export class CutsceneDirector {
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly host: CutsceneHost,
+    /** Optional — when provided, `say` steps with a `dialogueId` route
+     *  to the shared DialogueDirector instead of the legacy inline
+     *  dialogue loop. Absent during unit tests that only exercise
+     *  movement/flag steps. */
+    private readonly dialogues?: DialogueDirector,
   ) {}
 
   isPlaying(): boolean {
@@ -167,8 +173,34 @@ export class CutsceneDirector {
       }
 
       case "say": {
-        const choice = await this.showDialogue(step.speaker, step.pages, step.choices);
+        if (step.dialogueId) {
+          if (step.pages || step.choices) {
+            console.warn(
+              `[cutscene] say step has both dialogueId='${step.dialogueId}' and inline pages — dialogueId wins`,
+            );
+          }
+          if (!this.dialogues) {
+            console.warn(
+              `[cutscene] say step references dialogueId='${step.dialogueId}' but no DialogueDirector was provided`,
+            );
+            return { kind: "next" };
+          }
+          await this.dialogues.play(step.dialogueId, step.nodeId);
+          // Branching by dialogue end-node is expressed through quest
+          // predicates, not cutscene gotos — the say step just returns.
+          return { kind: "next" };
+        }
+        const choice = await this.showDialogue(
+          step.speaker ?? "",
+          step.pages ?? [],
+          step.choices,
+        );
         if (choice) return { kind: "goto", label: choice };
+        return { kind: "next" };
+      }
+
+      case "changeMap": {
+        await this.awaitChangeMap(step);
         return { kind: "next" };
       }
 
@@ -189,6 +221,43 @@ export class CutsceneDirector {
       case "end":
         return { kind: "end" };
     }
+  }
+
+  /** Fires the change-map request and awaits `world:mapEntered` with a
+   *  matching mapId. Falls back after 3s if the scene never reports
+   *  arrival — a warning is logged and the cutscene continues rather
+   *  than wedging mid-script. */
+  private awaitChangeMap(step: {
+    mapId: string;
+    tileX: number;
+    tileY: number;
+    facing?: CutsceneFacing;
+  }): Promise<void> {
+    return new Promise((resolve) => {
+      let done = false;
+      const handler = (p: { mapId: string }) => {
+        if (p.mapId !== step.mapId || done) return;
+        done = true;
+        bus.offTyped("world:mapEntered", handler);
+        resolve();
+      };
+      bus.onTyped("world:mapEntered", handler);
+      bus.emitTyped("cutscene:changeMapRequest", {
+        mapId: step.mapId,
+        tileX: step.tileX,
+        tileY: step.tileY,
+        facing: step.facing,
+      });
+      this.scene.time.delayedCall(3000, () => {
+        if (done) return;
+        done = true;
+        bus.offTyped("world:mapEntered", handler);
+        console.warn(
+          `[cutscene] changeMap to '${step.mapId}' timed out after 3s`,
+        );
+        resolve();
+      });
+    });
   }
 
   private resolve(ref: ActorRef): CutsceneActor | undefined {

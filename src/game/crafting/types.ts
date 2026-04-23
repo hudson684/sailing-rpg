@@ -88,6 +88,8 @@ export interface CraftingStationInstanceData {
   defId: string;
   tileX: number;
   tileY: number;
+  /** Phase 7: optional spawn gate. */
+  when?: import("../quests/types").Predicate;
 }
 
 export interface CraftingStationsFile {

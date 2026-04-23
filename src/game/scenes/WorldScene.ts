@@ -87,6 +87,9 @@ import {
 } from "../cutscenes/CutsceneDirector";
 import type { CutsceneData, CutsceneFacing } from "../cutscenes/types";
 import { DebugOverlays, type OverlayName } from "../debug/DebugOverlays";
+import { ensureQuestSubsystem, getPredicateContext } from "../quests/activeQuestManager";
+import { SpawnGateRegistry } from "../world/spawnGating";
+import type { PredicateContext } from "../quests/predicates";
 import { GroundItemsState } from "../world/groundItemsState";
 import { DroppedItemsState, type DroppedItem } from "../world/droppedItemsState";
 import {
@@ -416,15 +419,22 @@ export class WorldScene extends Phaser.Scene implements EditHost {
 
     this.loadEditorItems();
     this.respawnGroundItems();
+    // Initialize the quest subsystem eagerly so that spawn gating
+    // (Phase 7) sees the PredicateContext. `ensureQuestSubsystem` is
+    // idempotent; `initSave` calls it again later and reuses the
+    // same singletons.
+    const { flags: _flags } = ensureQuestSubsystem();
+    void _flags;
+    const questCtx = getPredicateContext();
     // Populate the registry before subscribing the reconciler so it picks up
     // existing models via getByMap with this live scene, instead of being
     // triggered by registry mutations from outside the scene lifecycle.
-    bootstrapNpcs(this.npcData);
+    bootstrapNpcs(this.npcData, questCtx);
     this.setupNpcReconciler();
-    this.spawnGatheringNodes();
-    this.spawnCraftingStations();
+    this.spawnGatheringNodes(questCtx);
+    this.spawnCraftingStations(questCtx);
     this.loadDropTables();
-    this.spawnEnemies();
+    this.spawnEnemies(questCtx);
     this.shopsForEdit = (shopsDataRaw as ShopsFile).shops.map((s) => ({
       ...s,
       stock: s.stock.map((row) => ({ ...row })),
@@ -631,7 +641,11 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       });
     }
 
-    this.cutsceneDirector = new CutsceneDirector(this, this.cutsceneHost);
+    this.cutsceneDirector = new CutsceneDirector(
+      this,
+      this.cutsceneHost,
+      ensureQuestSubsystem().dialogues,
+    );
 
     bus.onTyped("inventory:action", this.onInventoryAction);
     bus.onTyped("dialogue:action", this.onDialogueAction);
@@ -722,12 +736,19 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     });
     showToast("WASD/Arrows to move. E interact. ESC menu.", 4000);
 
+    bus.emitTyped("world:mapEntered", {
+      mapId: "world",
+      fromMapId: null,
+      reason: "load",
+    });
+
     void this.initSave();
   }
 
   private async initSave(): Promise<void> {
     await this.saveController.init();
     setActiveSaveController(this.saveController);
+    const questSubsystem = ensureQuestSubsystem();
     this.saveController.registerSystems([
       saveSystems.inventorySaveable(),
       saveSystems.equipmentSaveable(),
@@ -740,6 +761,11 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       saveSystems.sceneSaveable(this.sceneState),
       saveSystems.appearanceSaveable(),
       saveSystems.shopsSaveable(),
+      // Flags MUST register before quests: hydrate order follows
+      // registration order, and QuestManager.hydrate reads flags to
+      // reconcile cursors.
+      questSubsystem.flags,
+      questSubsystem.quests,
     ]);
     await this.saveController.refreshMenu();
     // If PreloadScene prefetched the latest envelope while the title was up,
@@ -1043,9 +1069,17 @@ export class WorldScene extends Phaser.Scene implements EditHost {
 
   /** Called when InteriorScene hands control back via `scene.wake`. */
   private onInteriorWake(ret: InteriorReturnData | undefined) {
+    const fromMap = this.sceneState.interior
+      ? `interior:${this.sceneState.interior.interiorKey}`
+      : null;
     this.sceneState.mode = "OnFoot";
     this.sceneState.activeScene = "World";
     this.sceneState.interior = null;
+    bus.emitTyped("world:mapEntered", {
+      mapId: "world",
+      fromMapId: fromMap,
+      reason: "transition",
+    });
     if (ret) {
       this.player.setPosition(
         (ret.returnWorldTx + 0.5) * TILE_SIZE,
@@ -1340,6 +1374,10 @@ export class WorldScene extends Phaser.Scene implements EditHost {
         kind: "damage-node",
       });
       useGameStore.getState().jobsAddXp(node.def.skill, node.def.xpPerHit);
+      bus.emitTyped("gathering:nodeHit", {
+        defId: node.def.id,
+        mapId: "world",
+      });
       if (broken) this.dropFromNode(node);
     });
     if (!ok) return;
@@ -1356,6 +1394,12 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     const entry = this.droppedItemsState.add(itemId, quantity, x, y);
     this.spawnDroppedSprite(entry);
     showToast(`+${quantity} ${ITEMS[itemId].name}`, 1500);
+    bus.emitTyped("gathering:nodeHarvested", {
+      defId: node.def.id,
+      mapId: "world",
+      yieldedItemId: itemId,
+      yieldedQuantity: quantity,
+    });
   }
 
   private loadDropTables() {
@@ -1363,18 +1407,33 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     for (const t of file.tables) this.dropTables.set(t.id, t);
   }
 
-  private spawnEnemies() {
+  private enemyGate: SpawnGateRegistry<EnemyInstanceData, Enemy> | null = null;
+  private nodeGate: SpawnGateRegistry<NodeInstanceData, GatheringNode> | null = null;
+  private stationGate: SpawnGateRegistry<CraftingStationInstanceData, CraftingStation> | null = null;
+
+  private spawnEnemies(ctx: PredicateContext) {
     const file = enemiesDataRaw as EnemiesFile;
     this.enemyDefs = new Map(file.defs.map((d) => [d.id, d]));
     for (const def of file.defs) registerEnemyAnimations(this, def);
-    for (const inst of file.instances) {
-      const def = this.enemyDefs.get(inst.defId);
-      if (!def) {
-        console.warn(`Unknown enemy defId: ${inst.defId}`);
-        continue;
-      }
-      this.addEnemy(new Enemy(this, def, inst));
-    }
+    this.enemyGate?.destroy();
+    this.enemyGate = new SpawnGateRegistry({
+      ctx,
+      factory: (inst) => {
+        const def = this.enemyDefs.get(inst.defId);
+        if (!def) {
+          console.warn(`Unknown enemy defId: ${inst.defId}`);
+          return null;
+        }
+        const e = new Enemy(this, def, inst);
+        this.addEnemy(e);
+        return e;
+      },
+      teardown: (e) => {
+        const idx = this.enemies.indexOf(e);
+        if (idx >= 0) this.removeEnemyAt(idx);
+      },
+    });
+    this.enemyGate.register(file.instances);
   }
 
   private addEnemy(enemy: Enemy) {
@@ -1419,29 +1478,53 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     return best;
   }
 
-  private spawnGatheringNodes() {
+  private spawnGatheringNodes(ctx: PredicateContext) {
     const file = loadNodesFile(nodesDataRaw);
     this.nodeDefs = indexDefs(file.defs);
-    for (const inst of file.instances) {
-      const def = this.nodeDefs.get(inst.defId);
-      if (!def) {
-        console.warn(`Unknown node defId: ${inst.defId}`);
-        continue;
-      }
-      this.nodes.push(new GatheringNode(this, def, inst));
-    }
+    this.nodeGate?.destroy();
+    this.nodeGate = new SpawnGateRegistry({
+      ctx,
+      factory: (inst) => {
+        const def = this.nodeDefs.get(inst.defId);
+        if (!def) {
+          console.warn(`Unknown node defId: ${inst.defId}`);
+          return null;
+        }
+        const n = new GatheringNode(this, def, inst);
+        this.nodes.push(n);
+        return n;
+      },
+      teardown: (n) => {
+        const i = this.nodes.indexOf(n);
+        if (i >= 0) this.nodes.splice(i, 1);
+        n.destroy();
+      },
+    });
+    this.nodeGate.register(file.instances);
   }
 
-  private spawnCraftingStations() {
+  private spawnCraftingStations(ctx: PredicateContext) {
     this.stationInstanceData = craftingStationInstances.map((i) => ({ ...i }));
-    for (const inst of this.stationInstanceData) {
-      const def = craftingStations.tryGet(inst.defId);
-      if (!def) {
-        console.warn(`Unknown crafting station defId: ${inst.defId}`);
-        continue;
-      }
-      this.craftingStations.push(new CraftingStation(this, def, inst));
-    }
+    this.stationGate?.destroy();
+    this.stationGate = new SpawnGateRegistry({
+      ctx,
+      factory: (inst) => {
+        const def = craftingStations.tryGet(inst.defId);
+        if (!def) {
+          console.warn(`Unknown crafting station defId: ${inst.defId}`);
+          return null;
+        }
+        const s = new CraftingStation(this, def, inst);
+        this.craftingStations.push(s);
+        return s;
+      },
+      teardown: (s) => {
+        const i = this.craftingStations.indexOf(s);
+        if (i >= 0) this.craftingStations.splice(i, 1);
+        s.destroy();
+      },
+    });
+    this.stationGate.register(this.stationInstanceData);
   }
 
   private nearestCraftingStation(): CraftingStation | null {
@@ -1670,7 +1753,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     this.dialogues = data.dialogues ?? {};
     if (this.activeDialogue) this.closeDialogue();
     clearNpcs();
-    bootstrapNpcs(data);
+    bootstrapNpcs(data, getPredicateContext());
     // Sprites are re-created automatically by the reconciler via `added` events.
   }
 
@@ -1705,6 +1788,10 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       showToast(`${npc.def.name} has nothing to say.`, 1500);
       return;
     }
+    bus.emitTyped("npc:interacted", {
+      npcId: npc.def.id,
+      mapId: "world",
+    });
     npc.faceToward(this.player.x, this.player.y);
     this.activeDialogue = {
       speaker: dialogue.speaker || npc.def.name,

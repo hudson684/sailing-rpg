@@ -6,6 +6,8 @@ import react from "@vitejs/plugin-react";
 import sailingMaps from "./tools/vite-plugin-sailing-maps/index.mjs";
 // @ts-expect-error — local plugin, no types
 import editSave from "./tools/vite-plugin-edit-save/index.mjs";
+// @ts-expect-error — local plugin, no types
+import editorWrite from "./tools/editor-write-plugin.mjs";
 
 function versionServiceWorker(): Plugin {
   return {
@@ -20,9 +22,15 @@ function versionServiceWorker(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   base: "./",
-  plugins: [react(), sailingMaps(), editSave(), versionServiceWorker()],
+  plugins: [
+    react(),
+    sailingMaps(),
+    editSave(),
+    ...(mode === "development" ? [editorWrite()] : []),
+    versionServiceWorker(),
+  ],
   server: {
     host: true,
     port: 5173,
@@ -38,4 +46,4 @@ export default defineConfig({
   build: {
     target: "es2022",
   },
-});
+}));

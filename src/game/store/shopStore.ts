@@ -20,6 +20,7 @@ import { shops } from "../shops/shops";
 import type { ShopInstance } from "../shops/types";
 import { useGameStore } from "./gameStore";
 import { addToSlots, removeFromSlot } from "../inventory/operations";
+import { bus } from "../bus";
 
 export type ShopOutcome =
   | { ok: true }
@@ -139,6 +140,7 @@ export const useShopStore = create<ShopsState>()((set, get) => ({
       },
     };
     set({ instances: nextInstances });
+    bus.emitTyped("shop:purchased", { shopId, itemId, quantity: qty });
     return { ok: true };
   },
 

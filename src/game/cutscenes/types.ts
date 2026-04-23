@@ -34,12 +34,31 @@ export type CutsceneStep =
   | { kind: "anim"; actor: ActorRef; state: "idle" | "walk" }
   /** Show a dialogue page (or pages) attributed to `speaker`. If `choices`
    *  are present, the cutscene blocks until the player picks one and then
-   *  jumps to the chosen `goto` label. */
+   *  jumps to the chosen `goto` label.
+   *
+   *  Dual shape for the Phase 1 migration: if `dialogueId` is set, the
+   *  cutscene delegates to DialogueDirector and the inline fields are
+   *  ignored. At least one of `{ pages }` or `{ dialogueId }` must be
+   *  provided. The inline path is deprecated and will be removed after
+   *  the dialogue editor lands. */
   | {
       kind: "say";
-      speaker: string;
-      pages: string[];
+      speaker?: string;
+      pages?: string[];
       choices?: DialogueChoice[];
+      dialogueId?: string;
+      nodeId?: string;
+    }
+  /** Force a scene transition. Emits `cutscene:changeMapRequest`; the
+   *  active scene performs the swap and emits `world:mapEntered` on
+   *  the target side. The director awaits that event (with a 3s
+   *  fallback) before continuing. */
+  | {
+      kind: "changeMap";
+      mapId: string;
+      tileX: number;
+      tileY: number;
+      facing?: CutsceneFacing;
     }
   /** Unconditional jump to a labeled step group. */
   | { kind: "goto"; label: string }

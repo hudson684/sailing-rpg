@@ -2,6 +2,10 @@
 <map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="1">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
  <tileset firstgid="226" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
+ <tileset firstgid="736" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx"/>
+ <tileset firstgid="4696" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
+ <tileset firstgid="8792" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses3.tsx"/>
+ <tileset firstgid="10904" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses.tsx"/>
  <layer id="7" name="ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
    eJztwwEJAAAMBKHrn+4jrcdQcNVUVVXV1w8WeEAu
@@ -9,12 +13,12 @@
  </layer>
  <layer id="8" name="beach" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztVG1uwjAMbX5020kY3UlKykmg203YDkm/oO0d5qc9KyFqJIrEfsWSlRTsvGc/J1n2f7YxWfYi/mruz8mZszZvyUrJ72UtvPPy4FwfD/4uPsjvo5cH/3iAC/BnWc/ijfhevg/ibwHe1vzFYAUu8Fvxq5dbrOhLHtTSiX/K/ss4XooJnEr2F+JjXxv3W01OvedF0JOlHraMBe63h634E3s8kQPWmfFHYl75X8s+XLgfuRbsRUm8Hfs9kDfO+lnoVcn6ep61Nbc8T9wf2T+tuyZvy95cyAH1NowZWAdi9hGdSuZ35AwOS7EHcujIsyMH5FhPozFzczNTzzZypuJb6mzN7WyEdiIH1New5jN5T9xbcrTG6RirSfFVr5hGS32oqS+wemKr3j3PU259BH9DvSxjYxxjHCreHfQB81l73wN7oPO5dLZqPzH+XnyYaoG8inOgbwTwtvwP58c01dlWj+keM727OuPY63uhd+AeTR81xT9nbn5R7864t2FNTx/B9++u3sHKuHf2WbUrvr5B/r1X3Z9ZO+wQzE/oa+cpWbJkyZIlS/Z8+wW8MKGC
+   eJy9l2+Sk0AQxXs+qDdR9CaBPYmiR9FDAoEAuYNM7ftVv1C75X5xUzVFMkz/f/16EvF+n88l4uOxPpW3nXtt/Uv+NV1fjjUfe19Nz4cX9Ndz9+Ncfzxvx7M7npfy/FxN/i2r6poOmf1YV+kcjud4rCe9b6W/1bvtWE15Xqvs1+9X6ag+1f1We43kevm96FyV26Sv/q7vqp167uexfpWU7fRsJDNJf1PSzlW6q/1ZutC7av8muU3vJ/nVyW49h+2QTuzOkecn5ajVPjHwrLoX+THL7mTne+WUfAx6V/dr/b6Zffy7yyY172TjIl2D4lzkb2+1WyRzs1rPsns328g8yX6VxWb97rLkotEZ94EYF/0mN43FDH7Y60vmC/trJOaIAxzuOus52SJjpW74tEfirbOcYHeM9A374HnXc1DcxIjf5IleQg8xj5ZrcAF+rpJDtuLvj+zT24vsbPHYS03JuGfDC+/HSJldtsEMvUMfUQ9iD+naDU+X8liLRX7Tz/zuDCs3ndv1jlyxqA96z/aRbUvW9aZ3o+mGayaT22RjjcwHfTdH8gn9De/xwd4sHdSMfsbucMoxtaL/mvKYA3DsOaQG5/j7knmkr6bI+sP9cN4gn1rL1VX+w1v4DgfwPOd/s1yDa3qZXoCzweEeyVdzZB3WSH7qSnLhPZLjvffJP/mCn8dIjr1H2tnsCQ8QL30ABpzvtsi559yPffqKWdKUzCn59zzdzCZ9Q73hnj0eOZ+YPPaI7C1swsHwhcfEnvO08xb4Yr5fSs4mevxsH36hPtR5tXogu9iTfgEr1Gm0ms6WC/Bwtg/PrJHzmvj3yPsHOAefzHtmVVtyj1oxd8iL8z4f7hqN5Qq8D6abPfgHfHp/tIbXKutcST/77I94vHO1wslscovkuA9QI/KLLLPN+cO5i1lw5j9iop6XU+3ZQ+dme/ArZ8EFd0Vw5DU+9z+4A4fkA06hPvDNbv7gJ1zlsx/MwxnM8elkH4wO5gs86rwKJuFdYoIPPeceA1jgvnyOnxw7b/idi3mDD9wFmXfcfbkjXU0fPIyf5KxikP8wzsvUEryARe+z2XTSm9jjfwG87Xdq8nvGIJyKbZ9z9BO9Dca5p3AHcpz4fR2bzGV4viuP99/O9DHL6W+ww/8Kv6sRN7ODuQwmudtyP4GTPP7f5X3WD4vlJR7+35/vJ3+YwX8B35pPlw==
   </data>
  </layer>
  <layer id="1" name="ground" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJztl81NxDAQhbcBvAWwWWqgFRJTAqKWDXQALKWwiFaAEpDggq31Ex8vE8QBThBpZMeZmTeePzuLxf/z28/jwWJxs9zTbaGjNOU5TJ/X63vlfyqy2yYbyX3nOSlyfaG3QldFz6XpqVirQuu0t69i3ZV51yi3Ud+3bR+cy07J673Sqsk/FHo+iO0bmo2VxvYuyrCD86HNxTe29RE6nP/U9l5jI/s6s6GD3hHfHXPAt4y1EdjS4fgr0y1s6aJd1JfNBvHRJtozt3+XpY8H6KEPaVsfYOldexZPnR8vp/jZeHpgyT6tE0/rtFl2c2SuOD7zhvqpj3EX35jiHIx8xxx6TTE+/eb6fR8ec193Wc0vCp0F+4/qbrSRfDnFuch4e17kYO+MP/OJeUWfE99zsDdcj0cfxF74spl17j3EY8t4eZ1QF/3otUf8wfDoY+ZQBg5tY9y7NLWtm8Hv0jTGkWw20rrkGSfWJce5/XcBFnPcc9Jz1WMnPI/NeRD/uT5LX3p9+Jw6BpOlrgjf/cY+47XM/suYcN9e87Inqn3t333m/ZdnEs86j433I/JFexe+n3uug76lL2iz5yZrqq5FtS//CzPqJX2a7sfzNNs6cb/qfcw/nu+s+6gfRfUVnXXkncP3uwRjGJ21vOf0JkM7Sf0X+H5/ivYY3Wnc97wjsG/ofe7u6fXkvcV947H1+8KQpnETX+SDTZqeq97H5nKKfhOv7vgvaVoz68AHJ9BdZe8LXS/3433TpfF6hsirf4td+lgX36bZwP+YHb77f8lPP8KK+uBffd4BHGAyjA==
   </data>
  </layer>
  <layer id="2" name="overlay" width="32" height="32">
@@ -24,7 +28,7 @@
  </layer>
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJzt0TkSgkAQRuGJNPEOErogzHAq9+VWiihwCRM9iCig3MCXa2hXWVa/qi/pYP5gjNE0TfvdTt3325nb5cNdopZnTNt7v3c+3L7d1hqzQ4w9EhxwRIoMuZXbv/J2gRvuKFGhxgNPNIL7PWdMHwMM4WOEACEsnJPbH/P2BFPMMMcCS6ywxkZwf8vbO8TYI8EBR6TIkAvuX3m7wA13lKhQ44EnGsH9XsT/Y4AhfIwQIISFi+T2NU3TNO0fewHAADg7
   </data>
  </layer>
  <layer id="4" name="props_high" width="32" height="32">
@@ -34,7 +38,7 @@
  </layer>
  <layer id="5" name="roof" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJzt0cdxAkEURdGJBuHGQFAg4SEovAwEhfcR6ATRqtKib9XZ/rf4SRKL/b92aZLsOXDkxJkLV27cefDklYbdL2VJ8kaZClVq1EnJyClo0MzC7rfca/POBx269OgzYMiIMZPA+1P3ZsxZsGTFmk+++OaHDdvA+zv39hw4cuLMhSs37jx48gq8X8r9nzIVqtSok5KRU9CgmYfdb7nX5p0POnTp0WfAkBFjJoH3p+7NmLNgyYo1n3zxzQ8btoH3d+7tOXDkxJkLV27cefDkFXi/VPg/ZSpUqVEnJSOnoEGzCLsfi8VisVgs9lf9AvAnXrY=
   </data>
  </layer>
 </map>

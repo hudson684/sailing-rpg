@@ -266,6 +266,78 @@ type Events = {
   /** Request the active scene play a cutscene by id. Picked up by whichever
    *  scene currently owns the cutscene director. */
   "cutscene:play": (payload: { id: string }) => void;
+
+  // ── Quest / dialogue / world-state events ────────────────────────
+  //
+  // These are gameplay observations — emitted by the systems that
+  // already own the data, consumed by QuestManager. Nothing in
+  // src/game/quests imports from these systems directly; coupling
+  // goes through this bus.
+  "combat:enemyKilled": (payload: {
+    defId: string;
+    instanceId: string;
+    mapId: string;
+    x: number;
+    y: number;
+  }) => void;
+  "gathering:nodeHit": (payload: {
+    defId: string;
+    mapId: string;
+  }) => void;
+  "gathering:nodeHarvested": (payload: {
+    defId: string;
+    mapId: string;
+    yieldedItemId: string;
+    yieldedQuantity: number;
+  }) => void;
+  "fishing:caught": (payload: {
+    itemId: string;
+    mapId: string;
+    quantity: number;
+  }) => void;
+  "shop:purchased": (payload: {
+    shopId: string;
+    itemId: string;
+    quantity: number;
+  }) => void;
+  "world:mapEntered": (payload: {
+    mapId: string;
+    fromMapId: string | null;
+    reason: "load" | "transition" | "cutscene";
+  }) => void;
+  "player:tileEntered": (payload: {
+    mapId: string;
+    tileX: number;
+    tileY: number;
+  }) => void;
+  "npc:interacted": (payload: {
+    npcId: string;
+    mapId: string;
+  }) => void;
+  "dialogue:ended": (payload: {
+    treeId: string;
+    endNodeId: string | null;
+  }) => void;
+  "flags:changed": (payload: {
+    key: string;
+    value: boolean | number | string | undefined;
+    prev: boolean | number | string | undefined;
+  }) => void;
+
+  // ── Quest lifecycle ──────────────────────────────────────────────
+  "quest:started": (payload: { questId: string }) => void;
+  "quest:stepEntered": (payload: { questId: string; stepId: string }) => void;
+  "quest:stepCompleted": (payload: { questId: string; stepId: string }) => void;
+  "quest:completed": (payload: { questId: string }) => void;
+  "quest:unlocked": (payload: { questId: string }) => void;
+
+  // ── Cutscene → scene: forced map change ──────────────────────────
+  "cutscene:changeMapRequest": (payload: {
+    mapId: string;
+    tileX: number;
+    tileY: number;
+    facing?: "left" | "right" | "up" | "down";
+  }) => void;
 };
 
 // Tiny hand-rolled typed event emitter. Kept Phaser-free so importing `bus`

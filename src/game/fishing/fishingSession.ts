@@ -6,6 +6,7 @@ import { ITEMS } from "../inventory/items";
 import { showToast } from "../../ui/store/ui";
 import { spawnFloatingNumber } from "../fx/floatingText";
 import { rollCatch } from "./catchTables";
+import { bus } from "../bus";
 import type { FishingSurface } from "./fishingSurface";
 
 type Phase = "waiting" | "biting" | "resolved";
@@ -113,6 +114,11 @@ export class FishingSession {
         return;
       }
       onCatch(catchResult.itemId, catchResult.quantity);
+      bus.emitTyped("fishing:caught", {
+        itemId: catchResult.itemId,
+        mapId: contextKey ? `interior:${contextKey}` : "world",
+        quantity: catchResult.quantity,
+      });
       useGameStore.getState().jobsAddXp("fishing", CATCH_XP);
       const itemName = ITEMS[catchResult.itemId]?.name ?? catchResult.itemId;
       showToast(`+${catchResult.quantity} ${itemName}`, 1500);

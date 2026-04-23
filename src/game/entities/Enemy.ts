@@ -19,6 +19,8 @@ import {
   type CharacterModelManifest,
 } from "./npcTypes";
 import type { MapId } from "./mapId";
+import { mapIdKey } from "./mapId";
+import { bus } from "../bus";
 import type { EntityModel } from "./registry";
 
 type EnemyState = "idle" | "chase" | "attack" | "hurt" | "returning" | "dying" | "dead";
@@ -216,6 +218,13 @@ export class Enemy implements EntityModel {
     this.hpBar.setVisible(false);
     this.hpBarBg.setVisible(false);
     this.setAnimState("death");
+    bus.emitTyped("combat:enemyKilled", {
+      defId: this.def.id,
+      instanceId: this.id,
+      mapId: mapIdKey(this.mapId),
+      x: this.x,
+      y: this.y,
+    });
     this.view.onceAnimComplete(() => {
       this.state = "dead";
       this.view.setVisible(false);

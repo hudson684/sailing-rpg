@@ -309,6 +309,11 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     }
 
     showToast("Inside. Walk back through the door to leave.", 2500);
+    bus.emitTyped("world:mapEntered", {
+      mapId: `interior:${this.launchData.interiorKey}`,
+      fromMapId: "world",
+      reason: "transition",
+    });
     void getActiveSaveController()?.autosave();
   }
 
@@ -497,6 +502,10 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
       showToast(`${npc.def.name} has nothing to say.`, 1500);
       return;
     }
+    bus.emitTyped("npc:interacted", {
+      npcId: npc.def.id,
+      mapId: `interior:${this.launchData.interiorKey}`,
+    });
     npc.faceToward(this.player.x, this.player.y);
     this.activeDialogue = {
       speaker: dialogue.speaker || npc.def.name,

@@ -1,3 +1,5 @@
+import type { Predicate } from "../quests/types";
+
 export interface NpcAnimSheet {
   sheet: string;
   frameWidth: number;
@@ -52,6 +54,10 @@ export interface NpcLayeredSprite {
 export interface NpcDef {
   id: string;
   name: string;
+  /** Phase 7: optional spawn gate. If present and evaluates false, the
+   *  NPC is not added to the entity registry on boot and is despawned
+   *  if a later flag change flips it false. */
+  when?: Predicate;
   /** Legacy single-sheet look. Mutually exclusive with `layered`. */
   sprite?: { idle: NpcAnimSheet; walk?: NpcAnimSheet };
   /** Layered slot-based look. Preferred for new NPCs. */
