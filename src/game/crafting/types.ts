@@ -13,6 +13,8 @@ export type StationKind =
   | "smelter"
   /** Instant-craft station that saws logs into planks. */
   | "sawmill"
+  /** Instant-craft station that cooks raw food into meals. */
+  | "cooking_fire"
   /** Minigame-driven station (e.g. anvil, oven, loom, workbench). */
   | "anvil";
 
