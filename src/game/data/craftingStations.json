@@ -29,6 +29,20 @@
       "width": 26,
       "height": 22,
       "blocks": false
+    },
+    {
+      "id": "cooking_fire",
+      "name": "Cooking Fire",
+      "kinds": [
+        "cooking_fire"
+      ],
+      "skill": "cook",
+      "bgColor": "#2e1a12",
+      "accentColor": "#e0632a",
+      "labelColor": "#f6b85a",
+      "width": 26,
+      "height": 22,
+      "blocks": false
     }
   ],
   "instances": [
@@ -43,6 +57,12 @@
       "defId": "sawmill",
       "tileX": 52,
       "tileY": 18
+    },
+    {
+      "id": "station_cooking_fire_1",
+      "defId": "cooking_fire",
+      "tileX": 50,
+      "tileY": 23
     }
   ]
 }

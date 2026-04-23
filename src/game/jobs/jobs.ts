@@ -18,7 +18,8 @@ export type JobId =
   | "ranger"
   | "orecheologist"
   | "lumberjack"
-  | "blacksmith";
+  | "blacksmith"
+  | "cook";
 
 export type JobCategory = "seafaring" | "gathering" | "combat" | "crafting";
 
@@ -99,6 +100,14 @@ const DEFS: ReadonlyArray<JobDef> = [
     color: "#a05a2a",
     category: "crafting",
     description: "Smelting ore and shaping steel at the forge.",
+  },
+  {
+    id: "cook",
+    name: "Cook",
+    icon: emojiJobIcon("🍳"),
+    color: "#d88a3a",
+    category: "crafting",
+    description: "Turning fresh catch and foraged goods into hearty meals.",
   },
 ];
 

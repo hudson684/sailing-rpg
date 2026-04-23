@@ -72,6 +72,26 @@
       "value": 4
     },
     {
+      "id": "cooked_fish",
+      "name": "Cooked Fish",
+      "color": "#d89868",
+      "stackable": true,
+      "maxStack": 20,
+      "description": "Flaky and salt-crusted, straight from the coals.",
+      "type": "consumable",
+      "value": 9
+    },
+    {
+      "id": "crab_cake",
+      "name": "Crab Cake",
+      "color": "#e6a25a",
+      "stackable": true,
+      "maxStack": 20,
+      "description": "Sweet crab bound with toasted coconut — a castaway's feast.",
+      "type": "consumable",
+      "value": 22
+    },
+    {
       "id": "coin",
       "name": "Gold Coin",
       "color": "#e5c14a",

@@ -11,6 +11,29 @@
       "xpReward": 3
     },
     {
+      "id": "cook_fish",
+      "name": "Cooked Fish",
+      "skill": "cook",
+      "station": "cooking_fire",
+      "inputs": [{ "itemId": "fish", "qty": 1 }],
+      "output": { "itemId": "cooked_fish", "qty": 1 },
+      "levelReq": 1,
+      "xpReward": 4
+    },
+    {
+      "id": "cook_crab_cake",
+      "name": "Crab Cake",
+      "skill": "cook",
+      "station": "cooking_fire",
+      "inputs": [
+        { "itemId": "crab", "qty": 1 },
+        { "itemId": "coconut", "qty": 1 }
+      ],
+      "output": { "itemId": "crab_cake", "qty": 1 },
+      "levelReq": 1,
+      "xpReward": 12
+    },
+    {
       "id": "smelt_hopeite_ingot",
       "name": "Hopeite Ingot",
       "skill": "blacksmith",
