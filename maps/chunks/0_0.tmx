@@ -7,71 +7,73 @@
  <tileset firstgid="5092" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass - coast.tsx"/>
  <tileset firstgid="6078" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx"/>
  <tileset firstgid="7064" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Tilesets-GL2SA.tsx"/>
- <tileset firstgid="7768" source="../themes/Sea Adventures/props/animated/ship/ship-animations - down-idle-baked.tsx"/>
- <tileset firstgid="13468" source="../themes/Sea Adventures/props/animated/ship/ship-animations - down-sailing-baked.tsx"/>
- <tileset firstgid="19928" source="../themes/Sea Adventures/props/animated/ship/ship-animations - down-sailing-windFX.tsx"/>
- <tileset firstgid="26388" source="../themes/Sea Adventures/props/animated/ship/ship-animations - up-idle-baked.tsx"/>
- <tileset firstgid="32088" source="../themes/Sea Adventures/props/animated/ship/ship-animations - up-sailing-baked.tsx"/>
- <tileset firstgid="38548" source="../themes/Sea Adventures/props/animated/ship/ship-animations - up-sailing-windFX.tsx"/>
- <tileset firstgid="45008" source="../themes/Sea Adventures/props/animated/ship/ship-animations-sideways-idle-baked.tsx"/>
- <tileset firstgid="50708" source="../themes/Sea Adventures/props/animated/ship/ship-animations-sideways-sailing-baked.tsx"/>
- <tileset firstgid="57168" source="../themes/Sea Adventures/props/animated/ship/ship-animations-sideways-sailing-windFX-baked.tsx"/>
- <tileset firstgid="63628" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx"/>
- <tileset firstgid="67588" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx"/>
- <tileset firstgid="68574" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet3.tsx"/>
+ <tileset firstgid="7768" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx"/>
+ <tileset firstgid="11728" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx"/>
+ <tileset firstgid="12714" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet3.tsx"/>
  <layer id="10" name="shallow water" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztw7EJAAAIAzAdCv3/Yv+QBJLuRFVVVX39AHJAOAE=
+      eJztwwEJAAAMA6AVev8ca7QeR8FeUlVVVfX1ASjH+C4=
+  
   </data>
  </layer>
  <layer id="7" name="ocean" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJy9l6GSAkEMRPmH/REs9iwWe/YsFovFrsVi157lG/gidqouVamu7p7sApeqCIphXpJJeobHsNk8hO9m/33Rb2b/Hu9r9myn+fMx+Q98z2wqxtHYW7FfcM/wm32Bn+NQMewgV8wTueHfsA4d63MlMTC24i11Vp/RrHknW/GxBrHm8sfGHlzSv+x8WI+OhD8OPOZrIQ42pzexH/Yi8lvMB1E3Nd/unNV+mC+rScVaXGxue/ut4bceidliOWXLNWY1WMNn5+bM7en46sxiXdaMqEm1zyv8Xg2CnfUCdQR1cynf1cDlpzSsx2faHPruzgLXursi78P0BmvQOwu1XmnU1vCd9ld0dOld0Dv/Sgzv5Fd0HvvBvSmw9viWUvdNzLeLpdIzju34eb7V2y33suJHDupNp/jM2GyqvulxkV/RmYiB3bnT4N/MPX61BtmmQn6f5L9qqDX/ze/ddadiT6wxprPYg63X7sUY4q6t/BdzGs/evayXkRdzcS/E4LRK3TFowcP+V/FWckd9/4Qr9hMM/bgL
+      eJy9lyGSwzAMRX2HXKS0dOnSpaWlpaFLQ01DS0NLe4aeqJOZ9Yz2z/+SnKbVjFFcP0mWvtzHUMpDrONQyu3FdXXOj3hfQ/ln41DKxawzfGe2JP1Y2QdxXuP+wm++E3zrh/LhCLFinMht6wT7cGF+ZuIDYyte72L5qc6ePdmKjzloe6Y/NtZgT/2y+2E1Wgm/Cp/nhB+sT69ODhbyvRqff0TeVH9796zOw3hZTjI2i76NztvCn0xvsZis2RyzHGzhs3vzzDvT46s7a/usZkyOFm/lRzlobKsXqCOom718LwdefErDIj7T5lNQa3hn0ayw5zC9wRxEd6H2K406OHxP+zM62jsLovvP+LAnP6PzWA/emwJzj28pNW+qmSfq7EzNeGyPb/tbvd1sLSt+i0G96RSfGetNVTcRF/kZnSkwf+3MXYI3c8TP5sDakojvnfxXDbXm0/xo1o3JmthiTGexBtdauyd9GDv+i3kaz969rJaR1/rinvDB0yo1Y9Bm0d/K30zsqO/vWIr9BAz9uAs=
+  
   </data>
  </layer>
  <layer id="1" name="beach" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJzNl2GOmzAQhSMTCBB++BBtb9JlexLAPUmW9ia7PWOJ9D55lmAg2a1US6MgPMx7fp4ZO4fD/zm++MPh6wfsh/8Y9tNkw2TnycrJ+snqyUa9O+ldIQuTZZrLJ3t+kAPYrTCcMIOeC+H2hh/YV35HzQVx+HYHh+/CrhS7FTbxzno+ytACrmdxyOTfTPZzJz7rRuNG8fgNRgM4WV5o0Gi/gub3aMC6B4OH1oXWWmuNzOd6V5l9D/LNNF9qfkuDzuQZvH9N9iZ7MXELccvEpxSWM5xqxSvkt6VBZ9bWL+zbxfAotd9Hg5HP+OKbGc5rGoA/KO6Q8O+MPrXJgSWNO60jW4lnfdGKfUzhk5+5rEnE73ysg1Q860vu1Xpe2jPyJNN+O8XOE/hOseqNHOiM7pWs0Te2pz75WPfEtTlGv6Oe2HtipjR4NTleKW7wsX7YF+qb+qT3tEYzeLpZnCWNGPCt5ctejGatmXDO4klvoB8yBy6/9Ip2Bb9TnFK4V84nYY56X+rdvC8MZo3wtRx6H8+qNXxyj95vex61Ps5iUA/kjlMc8oczAW221j9I08bkAtrXCfyTjzkIb2c0K/XuqtufjfVbf/pp62Pejf59nnfGPxiOTrwqcTutrP06Lj72S/D4rvexv897KXXrzHfUBRoUC7qlNAg+1hu5Q68jH/IZPr5H/75/kTettP+9gU8PyMWBdfQGHxxb5/hzLqI/+bQH23J487fnGPlNDVidRoM7+NuzcC/2Xk4v/vZu6D4Zc4sPHILBTdXWPYM7/9Z9jfN6raYfGfQz8it1f7+s6Lz0v2Xv/wD6Gfn1vDOGxeS/A31zre/PB3tLDy58vJfO7wLze8FJuUjPH8Vj7dxd45Cb+ucs5GymD3IPzaQXvtzLuEffmyNLfeBR+8z8/BfjL9ITvnw=
+      eJzNV1tu2zAQXJCi3h86RNqbOEpPQok9ieP2Jk3P2BqYAQYE9YiTAiVAQBbpndnZBymz/3M8TWZfPjC/TR/Dfp7M1slsmMzayWyZzPq/v2941+BdjZkmM4+1MJm9PMiB2DMwHDATnmvgLsKP2Hd+FdYSOHx9B4cLsDvYnoFNewOeK0xqQa4DOHjsHyez7yfx6Tc1HmFvFB+T6LFkvKjBiHglrJ/R4CLxJp6T2Fbg1ch6wLtO4p6w12O9xfqRBlHyjLx/TGZvmK9itwY3Dz4tsJxw6mGvxr4jDaL4thTidhUeLeJdCUbI+HKvF857GhB/hd11Y38UfXrJgZLGEX74HXu6t87iuIXP/AyY44b9KHWwZU/3Mvd6PJdixjzxiLeD7bCB72CrP8iBKLp3mCP+oz31WeqedjXH2O9YT4x9d1AHvyTHO9hNUj9e/Nb6ZO+ZRTPydJmdkkYcF+k9rcTiJr564AzgWUsvrmSNuE7qMGB9Cz/CTgvchHrwwG8xm0JfWMVH8lUOi5xVe/ij9LM163ms9VtmI8qZswJvlPxpJEbDCf9XaDpKLqxytpXwG8lB8naiWYt3d91+H/iv+53EzUs+aJ5H2Z+EowOvDtyag/q/Sr+cpW4YtyA9X3tpFK6z9IVBNKgLum1pkKTemDvsdcyHkOFzb5X1r0bq4q79zwN89oAADvRjEXziaJ0H0dmJ/synM9jK4a1wjlVy17plOt0Edy2chWexz3J6LdwN3SdjHvEhhyS4W7X1nsE7/9F9jef1Xk0/MqKclXvfENcdnUvfLWe/A9jPmF8vJ208ZWf0LH1zr+/ng7FlD67lXprfBfJ7QYNcbKRO5oNzd49DkPrnWdiKX7XcQz304t4gd9lHcqTUBx6dn5mf/2L8AdITvnw=
+  
   </data>
  </layer>
  <layer id="8" name="grass" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztVgFuwjAMbJWE/aBsX4FuPxiDp2wdT6HADxDbU2DlBx17yXyqLaKotCkgFUQtWVCI4/Od4zQIOrtmG5swmKuwbRheBqxtWqzDQOvb4OoabUN9NiENdy31myLtDPlXSxquKe+Pqs+fMk/jC3P1aIr6nyrOETTakn/TuoR8Sd8XF8KA+ns1/AMjOBKM0OzvyHrw9Gb88a1Z/6ykJuwFvmf0+UqffXLhooyvlP8D1gfPflI8PxAz1QcMNud9K9eAnkem0AAzeuesxz66Rk+3/pg56DEPE645cXK7uI21/p2fkf+5Is61D+4p+JD30B7nca+LPNBlyDEx//bZ4CzLuQLvOcWteK86/fYWRsXc+Zzjsn1QM7SHltIPmYXrWFymDjHGE7dr0v+CAT0ktcQVOkjfIAa9gp6E/zbMH1n6yXxJWAdTUU/O2su5PMekB+2+ibiel+5u7+wOLD3zTt/wvTs/cZ+I77RT323wjiAzpMn8tw13a9P5JZbrbl742j9Sa1NF
+      eJztVm1Og0AQfb8segO1PcAOZ9DqUaR6g6btUdrSG6BeRcAbULyHTJgNGwJ0aRu3JryEPy07896bjwUYcMkY+8BMuWZhB+bqEh4B8T/x6hKxVsDEB3aOPPxSQKKAJbnJvyBga5E/EJ/GZ/Yqp1L/T0d+rtFGASsCpgS8KeD1TBxYf3pAfy4eaY5cs8+W99mne9+e30L0hw2aOBb7/VLovy124p4qL5r8CuQ/5vptmZ+1xHLmmSoOpud7I9dV4cWdX9aAd/Su9v5W4nXVs67fEw9S8WEimqe13HXeifH+g8Tg/Ncd5+p4lJ7iZyQxYot5+KAyD9dlJDvYk9+eesyyniv2PSJgLrEO1Y/zL41+TJXdHDfFSaT2XEvdD6HBq+1cqKoz2jfbvtPQ/a85bAwtHrXr0X3DZ7hXuCf5ee+pP6OqfiujF+bCq01PJLXXc3kKdA+afZPJnN04uhcGDPhLBCfe6Wu5d2dHxsnku+LYb5vc2CF99r8Jvlv77i+NaNgX1vgFxa18DQ==
+  
   </data>
  </layer>
  <layer id="9" name="Dock" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+      eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+  
   </data>
  </layer>
  <layer id="3" name="props_low" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJzt1slOwlAUgOHLiqYtOFFYQOK8Qd9ElxQQFjgwaOKLODyAaHTNq7BAGWSlsG/xIfhdmJiaGG2LIeb8yZd00XPPXV6l5q8XXalXjDDWfz7n8K+LCd5+MectbSiVMfzNZpnbwa7P+ffKAWY/Og9wxt2n2Qe+O3jEE7rooY8BnjFEK4Q7ezNMpUzEEMcCFrGEZawgAQtJONzBDekeGc7bwz5WsYZ1bGATW9hGDjbyKKCIA5RM/7svmL3EFa5RwSGOcIwTVFFDHQ2c4gw3aOI2wH5JksLv3ox88Ze12eclSZIkSX6zNN7fSGmzOT/Km1775l1vszePwoz2/+emcI0tNg==
+      eJzt1rlOVWEUBtDVeXL25yxYQKKiNmrFa0gpg1g4gUriizi0Jg6JtS+jKGKF2gM+hFiYGEiM3nshxvwr2eW3h27z79no+dzzpedr/+e5zZ6tnu2eb3+R222imKzBspeKy8WVAfM/3Bgi+9PDIXq8+iX7unhbvCtWi/fFh2Kt+FisF5+KNyPYebcKCYfDkXA0HAvHw4lwMpwKY2E8bBZbI9pjMlwNM+FMOBvOhalwPlwIF8O1MBvmwnxYCNfDYgaf/Sg8Dk927n8aboZb4Xa4E+6GpbAc7oX74cHO/SvheXgRXg4xv2ma0VuZ3lsH6dn03mqapmmaQY11jHec7van/6Gi+81fP9sx1zG/T/P/Z98BklIsoA==
+  
   </data>
  </layer>
  <layer id="11" name="bridge_fixed" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztzbsNwCAQBNEjpyIqAtrh0w7YlbHhVUBgz5NG2mzNAAD4rhSDZVVUdfuWpq+uhppu37L0tdWjXrcBAMD/HJeGCy8=
+      eJztxjEVgDAUBMGtEHQPsEOInQCaab+CFLBTDUiS9F1LYA1sgb18liPQAmegl88yAlfgDjzlkiTpf16Oswoh
+  
   </data>
  </layer>
  <layer id="12" name="bridge_fixed_front" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztw8ERgCAQBLDjT/9FIigluHVAMpMqAOBEo7d6cubKN7/cCQDc5wcvxwbX
+      eJztzgkNADAMxLBgOvD7OnCDUWmKERgkSdKPRmAGVmAHTqACN90zSZLU4QHf/wZu
+  
   </data>
  </layer>
  <layer id="2" name="overlay" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+      eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+  
   </data>
  </layer>
  <layer id="4" name="props_high" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJzt1ldSFFEYBtAmzwzuABBQwQAsggxrQAkqQYFFTJ5Zg6HK8GBcBBnWgAkVA2EPHt+mxnkYuqqf7K/qVN2+3ff/7mMHQf15lgqC57zgZeoCBy+YQ7M/8JFPfOYLR3zlG9855gc/+cVvTjjljPOQd+xoD4JOurhMNz30coWrXKOPfq5zg5vcYoBBhtrD9c84d5s7zDLHPAvc5R73WWSJZVZ4wENWWWM9ZP8j5x7zhKd1znjlu9e84S3veB+y/9C51KV/94+q5h3XmH9i75QzzkP2d+jurOjvtu6ht+pOfZ77a9xzwN4gQzXe1ZOZinOz1nPMs1A1b9HzEsusVLxbtV5jPWR/nDj/e9KJIMiQJUeeAkVKlBPR9m+Yv8kW2+ywyx77HETc35AMgkaaaKaFVtpIkExG2z9s/gijjDHOBJNMMR1xf9r8DFly5ClQpEQ54v4N8zfZYpsddtljn4OI+xv8OzXSRDMttNJGgmSE/39/M2z+CKOMMc4Ek0wxHXF/2vwMWXLkKVCkRDni/jhx4sSJOn8AAqdYxA==
+      eJzt1keSVlUYx+GHfM773h2AAioYgEWQYQ0oQSUosIjO3WswVBkGxkWQYQ2YUDEQ9uDrrKvtQfNV3ZHff3hv3fM7z+yy8X0WfB58EXwZL/DhC+5h8EPwY/BT8HPwS/Ao+DX4Lfg9eBz8EfwZ/BX8HTwJngbPgucT3nFnsit5KXk52Z3sSfYmrySvJq8l+5L9yevJG8mbyVvJgeRgcign659J3k7eSc4m55LzyYXk3eS95P3kYnIpuZxcST5IPkyuJteS6xP2Pyr/x+X/pPyfbvCMr8r/dfm/Kf+35f+u/N9P2H+YxPDf54/WnPd4nfOflP9p+Z+V//mE/Z0Du1b1dw/sGdi75k77Bvavc88DAwcHDq3zbiM7s+q7swPnBs4PXFhz3sWBSwOXB66send14NrA9Qn70033f99MY7Yx15hvLDQWG0uN5cZKG7d/o3Gzcatxu3Gncbdxr3G/8WDk/qbO5s6WztbOts72zo5O6/Q+bv9w50jnaOdY53jnROdk51Tn9Mj9mfLPln+u/PPlXyj/YvmXyr9c/pWR+zfKf7P8t8p/u/x3yn+3/PfKf7/8D0bubwo2B1uCrcG2YHuwI2hBH/H/798dDo4ER4NjwfHgRHAyOBWcHrk/U/7Z8s+Vf778C+VfLP9S+ZfLvzJyf7rppptu7P0DAqdYxA==
+  
   </data>
  </layer>
  <layer id="5" name="roof" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+      eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+  
   </data>
  </layer>
  <objectgroup id="6" name="objects">
