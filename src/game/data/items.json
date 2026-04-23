@@ -52,6 +52,16 @@
       "value": 3
     },
     {
+      "id": "coconut",
+      "name": "Coconut",
+      "color": "#8a5a2a",
+      "stackable": true,
+      "maxStack": 50,
+      "description": "A hairy husk sloshing with sweet water.",
+      "type": "consumable",
+      "value": 2
+    },
+    {
       "id": "fish",
       "name": "Fish",
       "color": "#6bb7d6",

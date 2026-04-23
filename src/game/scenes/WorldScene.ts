@@ -1378,9 +1378,28 @@ export class WorldScene extends Phaser.Scene implements EditHost {
         defId: node.def.id,
         mapId: "world",
       });
+      if (node.def.perHitDrop) this.dropPerHitFromNode(node);
       if (broken) this.dropFromNode(node);
     });
     if (!ok) return;
+  }
+
+  private dropPerHitFromNode(node: GatheringNode) {
+    const drop = node.def.perHitDrop;
+    if (!drop) return;
+    const offsetX = (Math.random() - 0.5) * TILE_SIZE * 0.5;
+    const offsetY = TILE_SIZE * 0.4 + Math.random() * 6;
+    const qMax = drop.quantityMax ?? drop.quantity;
+    const quantity =
+      drop.quantity + Math.floor(Math.random() * (qMax - drop.quantity + 1));
+    if (quantity <= 0) return;
+    const entry = this.droppedItemsState.add(
+      drop.itemId,
+      quantity,
+      node.x + offsetX,
+      node.y + offsetY,
+    );
+    this.spawnDroppedSprite(entry);
   }
 
   private dropFromNode(node: GatheringNode) {
