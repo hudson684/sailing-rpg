@@ -26,7 +26,7 @@
       "skill": "cook",
       "station": "cooking_fire",
       "inputs": [
-        { "itemId": "crab", "qty": 1 },
+        { "itemId": "beach_crab", "qty": 1 },
         { "itemId": "coconut", "qty": 1 }
       ],
       "output": { "itemId": "crab_cake", "qty": 1 },
