@@ -2164,7 +2164,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
   private beginAnchoring() {
     const ship = this.activeShip;
     if (!ship) return;
-    const target = findAnchorPose(
+    const clearTarget = findAnchorPose(
       (tx, ty) => this.world.manager.isAnchorable(tx, ty),
       ship.x,
       ship.y,
@@ -2172,10 +2172,11 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       ship.dims,
       TILE_SIZE,
     );
-    if (!target) {
-      showToast("No clear water to anchor. Steer away from land.", 2500);
-      return;
-    }
+    // Fallback: if no clear water is reachable (e.g. ship is stuck on land),
+    // anchor in place at the ship's current pose so the player can always
+    // step off. Rounded from the continuous sailing position.
+    const target: DockedPose = clearTarget ?? this.currentShipPose(ship);
+    const stuck = clearTarget === null;
 
     this.sceneState.mode = "Anchoring";
     ship.mode = "anchoring";
@@ -2201,7 +2202,20 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       onComplete: () => this.finishAnchoring(target),
     });
 
-    showToast("Dropping anchor…", 1200);
+    showToast(stuck ? "Anchoring in place…" : "Dropping anchor…", 1200);
+  }
+
+  private currentShipPose(ship: Ship): DockedPose {
+    const cx = ship.x / TILE_SIZE;
+    const cy = ship.y / TILE_SIZE;
+    const eastWest = ship.heading === 1 || ship.heading === 3;
+    const bboxW = eastWest ? ship.dims.tilesLong : ship.dims.tilesWide;
+    const bboxH = eastWest ? ship.dims.tilesWide : ship.dims.tilesLong;
+    return {
+      tx: Math.round(cx - bboxW / 2),
+      ty: Math.round(cy - bboxH / 2),
+      heading: ship.heading,
+    };
   }
 
   private finishAnchoring(pose: DockedPose) {
