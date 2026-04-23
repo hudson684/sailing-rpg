@@ -97,6 +97,9 @@ export interface VisualLayer {
 export interface ConsumableEffect {
   /** HP restored when the player uses this item. */
   healHp?: number;
+  /** Total HP added to the food-regen pool; ticks into health over time at
+   *  FOOD_REGEN_PER_SEC. Stacks with other regen food already in the pool. */
+  regenHp?: number;
 }
 
 /**

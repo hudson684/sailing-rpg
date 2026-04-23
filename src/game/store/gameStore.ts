@@ -26,6 +26,7 @@ import {
 } from "../jobs/operations";
 import { showToast } from "../../ui/store/ui";
 import { bus } from "../bus";
+import { foodRegen } from "../player/foodRegen";
 
 /**
  * Global game store. This owns discrete game state (inventory, and later
@@ -192,10 +193,16 @@ export const useGameStore = create<GameState>()((set, get) => ({
     const def = ITEMS[slot.itemId];
     if (!def?.consumable) return { ok: false, reason: "not_consumable" };
     const heal = def.consumable.healHp ?? 0;
-    if (heal > 0) {
+    const regen = def.consumable.regenHp ?? 0;
+    if (heal > 0 || regen > 0) {
       const max = computeMaxHp(get().equipment.equipped);
-      if (get().health.current >= max) return { ok: false, reason: "no_effect" };
-      get().healthHeal(heal);
+      // Block at full HP unless a regen buff is already ticking — topping up
+      // the pool is still a legitimate reason to eat more.
+      if (get().health.current >= max && foodRegen.isIdle()) {
+        return { ok: false, reason: "no_effect" };
+      }
+      if (heal > 0) get().healthHeal(heal);
+      if (regen > 0) foodRegen.add(regen);
     }
     const removed = removeFromSlot(get().inventory.slots, index, 1);
     if (removed.removed > 0) set({ inventory: { slots: removed.slots } });
