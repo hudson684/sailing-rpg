@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="17" height="13" tilewidth="32" tileheight="32" infinite="0" nextlayerid="5" nextobjectid="3">
  <tileset firstgid="1" source="../maps/themes/Sea Adventures/props/animated/ship/ship-animations-sideways-sailing-baked.tsx"/>
- <tileset firstgid="6461" source="../maps/themes/Sea Adventures/props/animated/ship/ship-animations-sideways-idle-baked.tsx"/>
+ <tileset firstgid="7601" source="../maps/themes/Sea Adventures/props/animated/ship/ship-animations-sideways-idle-baked.tsx"/>
  <layer id="1" name="moving" width="17" height="13">
   <data encoding="csv">
 2147484311,2147484310,2147484309,2147484308,2147484307,2147484306,2147484305,2147484304,2147484303,2147484302,2147484301,2147484300,2147484299,2147484298,2147484297,2147484296,2147484295,
