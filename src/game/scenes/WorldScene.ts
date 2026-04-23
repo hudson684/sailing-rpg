@@ -134,6 +134,7 @@ import type { NodeDef, NodeInstanceData } from "../world/GatheringNode";
 import type { ShopDef } from "../shops/types";
 import type { ItemId } from "../inventory/items";
 import { spawnFloatingNumber } from "../fx/floatingText";
+import { showSpeechBubble } from "../fx/speechBubble";
 import { FishingSession } from "../fishing/fishingSession";
 import { bobberOffsetPx, type FishingSurface } from "../fishing/fishingSurface";
 import {
@@ -961,10 +962,14 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     if (!slot) return;
     const def = ITEMS[slot.itemId];
     if (def?.consumable) {
+      const itemId = slot.itemId;
       const res = store.useConsumable(index);
       if (!res.ok && res.reason === "no_effect") showToast("Already at full health.", 1200);
       else if (res.ok && def.consumable.healHp) showToast(`+${def.consumable.healHp} HP`, 1200, "success");
       else if (res.ok && def.consumable.regenHp) showToast(`+${def.consumable.regenHp} HP regen`, 1200, "success");
+      if (res.ok && itemId === "crab_cake") {
+        showSpeechBubble(this, this.player, "Just like Mum used to make!");
+      }
       return;
     }
     if (!def?.slot) return;
