@@ -23,8 +23,12 @@
       "skill": "lumberjack",
       "xpPerHit": 4,
       "drop": {
-        "itemId": "plank",
+        "itemId": "coconut_wood",
         "quantity": 4
+      },
+      "perHitDrop": {
+        "itemId": "coconut",
+        "quantity": 1
       },
       "blocks": true,
       "ySortOffset": -57.71429443359375,

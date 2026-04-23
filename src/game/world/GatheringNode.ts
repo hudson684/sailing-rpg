@@ -20,6 +20,9 @@ export interface NodeDef {
   skill: JobId;
   xpPerHit: number;
   drop: { itemId: ItemId; quantity: number; quantityMax?: number };
+  /** Optional item dropped on every hit, not just on depletion. Useful for
+   *  coconuts shaken loose while chopping a palm, etc. */
+  perHitDrop?: { itemId: ItemId; quantity: number; quantityMax?: number };
   /** If true, the node's footprint blocks player movement while alive. */
   blocks: boolean;
   /** Pixel offset of the collision box center from the node anchor. */

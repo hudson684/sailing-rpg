@@ -11,6 +11,8 @@ import type { JobId } from "../jobs/jobs";
 export type StationKind =
   /** Instant-craft station, no minigame (e.g. smelter, cooking pot, spinning wheel). */
   | "smelter"
+  /** Instant-craft station that saws logs into planks. */
+  | "sawmill"
   /** Minigame-driven station (e.g. anvil, oven, loom, workbench). */
   | "anvil";
 
