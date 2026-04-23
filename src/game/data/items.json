@@ -77,8 +77,9 @@
       "color": "#d89868",
       "stackable": true,
       "maxStack": 20,
-      "description": "Flaky and salt-crusted, straight from the coals.",
+      "description": "Flaky and salt-crusted, straight from the coals. Regenerates HP over time.",
       "type": "consumable",
+      "consumable": { "regenHp": 8 },
       "value": 9
     },
     {
@@ -87,8 +88,9 @@
       "color": "#e6a25a",
       "stackable": true,
       "maxStack": 20,
-      "description": "Sweet crab bound with toasted coconut — a castaway's feast.",
+      "description": "Sweet crab bound with toasted coconut — a castaway's feast. Regenerates HP over time.",
       "type": "consumable",
+      "consumable": { "regenHp": 20 },
       "value": 22
     },
     {

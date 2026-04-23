@@ -32,6 +32,7 @@ import {
 import { syncPlayerVisualsFromEquipment } from "../entities/playerEquipmentVisuals";
 import { stamina, STAMINA_MAX } from "../player/stamina";
 import { healthRegen } from "../player/regen";
+import { foodRegen } from "../player/foodRegen";
 import { CF_WARDROBE_LAYERS } from "../entities/playerWardrobe";
 import {
   Ship,
@@ -963,6 +964,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       const res = store.useConsumable(index);
       if (!res.ok && res.reason === "no_effect") showToast("Already at full health.", 1200);
       else if (res.ok && def.consumable.healHp) showToast(`+${def.consumable.healHp} HP`, 1200, "success");
+      else if (res.ok && def.consumable.regenHp) showToast(`+${def.consumable.regenHp} HP regen`, 1200, "success");
       return;
     }
     if (!def?.slot) return;
@@ -1036,6 +1038,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       (DEFAULT_PLAYER_SPAWN_TILE.y + 0.5) * TILE_SIZE,
     );
     useGameStore.getState().healthReset();
+    foodRegen.reset();
   }
 
   // ─── Building interiors ───────────────────────────────────────────
@@ -2224,6 +2227,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
    * camera follow, player-frozen — so they agree with the restored state.
    */
   private applyAfterLoad(env: SaveEnvelope | null) {
+    foodRegen.reset();
     if (!env) {
       useGameStore.getState().healthReset();
       useGameStore.getState().inventoryReset();
