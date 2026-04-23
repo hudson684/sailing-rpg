@@ -100,9 +100,9 @@ export function CraftingModal() {
           </span>
           <span className="craft-topline-hint">
             {station.kinds.length === 1
-              ? station.kinds[0] === "smelter"
-                ? "Instant"
-                : "Timing minigame"
+              ? station.kinds[0] === "anvil"
+                ? "Timing minigame"
+                : "Instant"
               : "Smelt & forge"}
           </span>
         </div>

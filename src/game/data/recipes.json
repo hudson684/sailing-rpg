@@ -1,6 +1,16 @@
 {
   "recipes": [
     {
+      "id": "saw_plank",
+      "name": "Plank",
+      "skill": "lumberjack",
+      "station": "sawmill",
+      "inputs": [{ "itemId": "coconut_wood", "qty": 1 }],
+      "output": { "itemId": "plank", "qty": 1 },
+      "levelReq": 1,
+      "xpReward": 3
+    },
+    {
       "id": "smelt_hopeite_ingot",
       "name": "Hopeite Ingot",
       "skill": "blacksmith",
