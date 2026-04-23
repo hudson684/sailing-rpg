@@ -78,6 +78,7 @@ export const ITEM_ICONS: Record<string, string> = {
   bow: iconBow,
   arrow: iconArrow,
   hopeite_ingot: emojiIcon("🧈"),
+  coconut_wood: emojiIcon("🥥"),
   hopeite_sword: iconSword,
   hopeite_pickaxe: iconPickaxe,
   hopeite_axe: iconAxe,

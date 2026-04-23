@@ -42,6 +42,16 @@
       "value": 3
     },
     {
+      "id": "coconut_wood",
+      "name": "Coconut Wood",
+      "color": "#7a4a1f",
+      "stackable": true,
+      "maxStack": 50,
+      "description": "Fibrous wood hewn from a palm trunk.",
+      "type": "resource",
+      "value": 3
+    },
+    {
       "id": "fish",
       "name": "Fish",
       "color": "#6bb7d6",
