@@ -17,22 +17,22 @@
     {
       "id": "rowboat-1",
       "defId": "rowboat",
-      "tileX": 60,
-      "tileY": 13,
+      "tileX": 20,
+      "tileY": 31,
       "heading": "E"
     },
     {
       "id": "galleon-1",
       "defId": "galleon",
-      "tileX": 73,
-      "tileY": 20,
+      "tileX": 24,
+      "tileY": 58,
       "heading": "E"
     },
     {
       "id": "galleon-7",
       "defId": "galleon",
-      "tileX": 54,
-      "tileY": 55,
+      "tileX": 120,
+      "tileY": 59,
       "heading": "E"
     },
     {
@@ -45,8 +45,8 @@
     {
       "id": "rowboat-7",
       "defId": "rowboat",
-      "tileX": 61,
-      "tileY": 18,
+      "tileX": 43,
+      "tileY": 31,
       "heading": "E"
     }
   ]

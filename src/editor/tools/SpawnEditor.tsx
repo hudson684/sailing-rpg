@@ -44,6 +44,19 @@ const DEFAULT_SCALE: Record<"world" | "interior" | "ship", number> = {
   ship: 1,
 };
 
+const ZOOM_STEPS = [0.25, 0.5, 0.75, 1, 1.5, 2];
+
+function stepZoom(current: number, direction: 1 | -1): number {
+  if (direction > 0) {
+    for (const s of ZOOM_STEPS) if (s > current + 1e-6) return s;
+    return ZOOM_STEPS[ZOOM_STEPS.length - 1];
+  }
+  for (let i = ZOOM_STEPS.length - 1; i >= 0; i--) {
+    if (ZOOM_STEPS[i] < current - 1e-6) return ZOOM_STEPS[i];
+  }
+  return ZOOM_STEPS[0];
+}
+
 // --- Component ----------------------------------------------------
 
 export function SpawnEditor() {
@@ -55,6 +68,59 @@ export function SpawnEditor() {
   const [mapError, setMapError] = useState<string | null>(null);
   const [mapLoading, setMapLoading] = useState(false);
   const [scale, setScale] = useState(1);
+  const mapScrollRef = useRef<HTMLDivElement | null>(null);
+  // Pending scroll adjustment to apply after scale change re-renders the map.
+  const pendingAnchor = useRef<{
+    prevScale: number;
+    contentX: number; // point in content coords (pre-scale-change) under cursor
+    contentY: number;
+    viewX: number; // cursor offset within the viewport
+    viewY: number;
+  } | null>(null);
+  const lastWheelAt = useRef(0);
+
+  useEffect(() => {
+    const el = mapScrollRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      if (e.deltaY === 0) return;
+      e.preventDefault();
+      // Throttle: one zoom step per 90ms to tame fast wheels / trackpads.
+      const now = performance.now();
+      if (now - lastWheelAt.current < 90) return;
+      lastWheelAt.current = now;
+      const direction: 1 | -1 = e.deltaY < 0 ? 1 : -1;
+      const rect = el.getBoundingClientRect();
+      const viewX = e.clientX - rect.left;
+      const viewY = e.clientY - rect.top;
+      setScale((prev) => {
+        const next = stepZoom(prev, direction);
+        if (next === prev) return prev;
+        pendingAnchor.current = {
+          prevScale: prev,
+          contentX: (viewX + el.scrollLeft) / prev,
+          contentY: (viewY + el.scrollTop) / prev,
+          viewX,
+          viewY,
+        };
+        return next;
+      });
+    };
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, []);
+
+  // After the map re-renders at the new scale, adjust scroll so the point
+  // under the cursor stays put. useLayoutEffect runs after the DOM has the
+  // new content size, so scrollLeft/Top won't be clamped to stale bounds.
+  useLayoutEffect(() => {
+    const el = mapScrollRef.current;
+    const anchor = pendingAnchor.current;
+    if (!el || !anchor) return;
+    pendingAnchor.current = null;
+    el.scrollLeft = anchor.contentX * scale - anchor.viewX;
+    el.scrollTop = anchor.contentY * scale - anchor.viewY;
+  }, [scale]);
 
   useEffect(() => {
     fetchManifest()
@@ -309,7 +375,10 @@ export function SpawnEditor() {
           parsed={parsed}
         />
 
-        <div style={{ flex: 1, overflow: "auto", background: "#08080c", border: "1px solid #222", position: "relative" }}>
+        <div
+          ref={mapScrollRef}
+          style={{ flex: 1, overflow: "auto", background: "#08080c", border: "1px solid #222", position: "relative" }}
+        >
           {mapError && <div style={{ color: "#ff6666", padding: 12 }}>{mapError}</div>}
           {anyLoading && !mapError && (
             <div style={{ color: "#888", padding: 12 }}>Loading…</div>
@@ -393,7 +462,7 @@ function Toolbar(props: {
         onChange={(e) => onScaleChange(Number(e.target.value))}
         style={selectStyle}
       >
-        {[0.25, 0.5, 0.75, 1, 1.5, 2].map((s) => (
+        {ZOOM_STEPS.map((s) => (
           <option key={s} value={s}>{(s * 100).toFixed(0)}%</option>
         ))}
       </select>
@@ -681,6 +750,15 @@ function MapCanvas(props: MapCanvasProps) {
       const cx = (e.tileX + 0.5) * tile;
       const cy = (e.tileY + 0.5) * tile;
       const selected = e.id === selectionId;
+      // Selectable-area ring — same radius hitTest uses.
+      const hitR = Math.max(10, tile * 0.45);
+      ctx.beginPath();
+      ctx.arc(cx, cy, hitR, 0, Math.PI * 2);
+      ctx.fillStyle = selected ? "rgba(255, 221, 68, 0.18)" : "rgba(255, 255, 255, 0.06)";
+      ctx.fill();
+      ctx.strokeStyle = selected ? "rgba(255, 221, 68, 0.9)" : "rgba(255, 255, 255, 0.35)";
+      ctx.lineWidth = selected ? 1.5 : 1;
+      ctx.stroke();
       if (frame) {
         // Draw sprite centered with its bottom anchored to the tile bottom.
         const dw = frame.sw * scale;

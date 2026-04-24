@@ -88,8 +88,8 @@
     {
       "id": "n_ore_1",
       "defId": "ore_hopeite",
-      "tileX": 47,
-      "tileY": 25
+      "tileX": 49,
+      "tileY": 26
     },
     {
       "id": "n_ore_2",
@@ -142,8 +142,44 @@
     {
       "id": "tree_palm-12",
       "defId": "tree_palm",
-      "tileX": 25,
+      "tileX": 3,
       "tileY": 12
+    },
+    {
+      "id": "n_tree_palm_1",
+      "defId": "tree_palm",
+      "tileX": 3,
+      "tileY": 17
+    },
+    {
+      "id": "n_tree_palm_2",
+      "defId": "tree_palm",
+      "tileX": 25,
+      "tileY": 14
+    },
+    {
+      "id": "n_tree_palm_3",
+      "defId": "tree_palm",
+      "tileX": 20,
+      "tileY": 18
+    },
+    {
+      "id": "n_tree_palm_4",
+      "defId": "tree_palm",
+      "tileX": 4,
+      "tileY": 21
+    },
+    {
+      "id": "n_tree_palm_5",
+      "defId": "tree_palm",
+      "tileX": 7,
+      "tileY": 14
+    },
+    {
+      "id": "n_tree_palm_6",
+      "defId": "tree_palm",
+      "tileX": 16,
+      "tileY": 10
     }
   ]
 }

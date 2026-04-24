@@ -230,8 +230,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 44,
-        "tileY": 18
+        "tileX": 39,
+        "tileY": 19
       },
       "facing": "left",
       "movement": {
@@ -341,76 +341,5 @@
       },
       "dialogue": "steve"
     }
-  ],
-  "dialogues": {
-    "brom_blacksmith": {
-      "speaker": "Brom",
-      "pages": [
-        "Well met, sailor. The forge burns hot today.",
-        "Bring me iron and coal, and I'll see your blade keeps its edge at sea.",
-        "A good hammer beats a bad storm — every time."
-      ]
-    },
-    "mera_vendor": {
-      "speaker": "Mera",
-      "pages": [
-        "Welcome to my stall! Rope, hardtack, lantern oil — I've got what a traveller needs.",
-        "Coin talks louder than weather, friend. What'll it be?"
-      ]
-    },
-    "garra_chef": {
-      "speaker": "Garra",
-      "pages": [
-        "Smell that? Butter, salt, and fish fresh off the dock — that's the taste of the coast.",
-        "Bring me a good catch and I'll turn it into a meal worth remembering.",
-        "A full belly makes the sea a kinder place, friend."
-      ]
-    },
-    "old_salt_fisherman": {
-      "speaker": "Old Salt",
-      "pages": [
-        "Ahoy. Weather's holding, but I don't trust that sky northward.",
-        "I once hooked a creature bigger than my boat. Tell you the tale another time."
-      ]
-    },
-    "jory_miner": {
-      "speaker": "Jory",
-      "pages": [
-        "Mornin'. Just back from the tunnels — dust in my lungs, coin in my pocket.",
-        "The deep veins run rich past the old shaft, if you've the nerve for the dark.",
-        "If you see my pickaxe, tell her I'm not angry. Just disappointed."
-      ]
-    },
-    "elin_innkeeper": {
-      "speaker": "Elin",
-      "pages": [
-        "Oh — hello! Room for the night, or just passing through?",
-        "The stew's on, the beds are dry, and the roof only leaks when it's honest about it.",
-        "My father says strangers bring either news or trouble. Which are you?"
-      ]
-    },
-    "tomas_farmer": {
-      "speaker": "Tomas",
-      "pages": [
-        "Soil's good this year — rains came when they were meant to, for once.",
-        "If you're headed inland, mind the fences. The goats are clever and the gates are not.",
-        "A field tended is a field that feeds you. That's all the wisdom I've got."
-      ]
-    },
-    "lilan_florist": {
-      "speaker": "Lilan",
-      "pages": [
-        "Careful where you step — the seedlings are braver than they look.",
-        "Salt air makes for stubborn blooms. These ones had to earn their petals.",
-        "Bring someone flowers. It works more often than it has any right to."
-      ]
-    },
-    "steve": {
-      "speaker": "Steve",
-      "pages": [
-        "Hey there. Name's Steve.",
-        "Just testing out a new look — fresh off the template, as it were."
-      ]
-    }
-  }
+  ]
 }
