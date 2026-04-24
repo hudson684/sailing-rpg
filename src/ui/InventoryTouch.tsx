@@ -153,6 +153,24 @@ export function InventoryTouch() {
     setSelected(null);
   };
 
+  const addSelectedToHotbar = () => {
+    if (selected?.kind !== "inv") return;
+    if (selected.index < HOTBAR_SIZE) return;
+    let target = -1;
+    for (let i = 0; i < HOTBAR_SIZE; i++) {
+      if (!slots[i]) {
+        target = i;
+        break;
+      }
+    }
+    if (target < 0) {
+      showToast("Hotbar full", 1500, "warn");
+      return;
+    }
+    moveSlot(selected.index, target);
+    setSelected(null);
+  };
+
   const unequipSelected = () => {
     if (selected?.kind !== "equip") return;
     const res = useGameStore.getState().unequip(selected.slot);
@@ -279,6 +297,7 @@ export function InventoryTouch() {
         selectedQuantity={selectedInvSlot?.quantity ?? 0}
         onEquip={equipSelectedInv}
         onConsume={consumeSelectedInv}
+        onAddToHotbar={addSelectedToHotbar}
         onDrop={dropSelectedInv}
         onUnequip={unequipSelected}
         onCancel={() => setSelected(null)}
@@ -472,6 +491,7 @@ interface TouchActionBarProps {
   selectedQuantity: number;
   onEquip: () => void;
   onConsume: () => void;
+  onAddToHotbar: () => void;
   onDrop: () => void;
   onUnequip: () => void;
   onCancel: () => void;
@@ -504,6 +524,14 @@ function TouchActionBar(props: TouchActionBarProps) {
             onClick={props.onConsume}
           >
             Eat
+          </button>
+        )}
+        {selected.kind === "inv" && selected.index >= HOTBAR_SIZE && (
+          <button
+            className="px-btn px-btn-blue"
+            onClick={props.onAddToHotbar}
+          >
+            Add to Hotbar
           </button>
         )}
         {selected.kind === "inv" && (
