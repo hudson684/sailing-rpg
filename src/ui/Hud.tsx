@@ -75,6 +75,8 @@ export function Hud() {
 
       <XpRing />
 
+      <SailingIndicator />
+
       {state.prompt && <div className="px-panel hud-prompt">{state.prompt}</div>}
 
       {toasts.length > 0 && (
@@ -86,6 +88,70 @@ export function Hud() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Compass-rose wind indicator + speed bar. Renders only while the HUD is
+ *  in a sailing mode (WorldScene emits `wind` and `shipMaxSpeed` as non-null
+ *  exactly when the player is AtHelm or Anchoring). The arrow points in the
+ *  wind's travel direction — i.e. where the wind is *pushing* the ship —
+ *  which is how a telltale or flag reads, not the aviation "from" convention.
+ */
+function SailingIndicator() {
+  const state = useUIStore(selectHud);
+  const wind = state.wind;
+  const maxSpeed = state.shipMaxSpeed;
+  if (!wind || !maxSpeed) return null;
+
+  const speedPct = Math.max(0, Math.min(1, state.speed / maxSpeed));
+  // Convert wind angle (radians, 0 = east, screen-space +y = south) to CSS
+  // degrees. The SVG arrow is drawn pointing east at 0°, so a raw rad→deg
+  // conversion lines up — no offset needed.
+  const arrowDeg = (wind.angle * 180) / Math.PI;
+  // Strength drives arrow opacity/length so a weak wind reads differently
+  // from a strong one at a glance.
+  const strength = Math.max(0, Math.min(1, wind.strength));
+  // Visual length scales within a reasonable band so a near-calm wind is
+  // still legible instead of invisible.
+  const arrowLen = 10 + strength * 14;
+
+  return (
+    <div className="hud-sailing" role="status" aria-label="Sailing">
+      <div
+        className="hud-sailing-compass"
+        aria-label={`Wind strength ${Math.round(strength * 100)}%`}
+      >
+        <svg viewBox="-24 -24 48 48" aria-hidden="true">
+          <circle className="hud-sailing-compass-ring" cx="0" cy="0" r="20" />
+          <line className="hud-sailing-compass-axis" x1="-16" y1="0" x2="16" y2="0" />
+          <line className="hud-sailing-compass-axis" x1="0" y1="-16" x2="0" y2="16" />
+          <g transform={`rotate(${arrowDeg})`}>
+            <line
+              className="hud-sailing-compass-arrow"
+              x1={-arrowLen * 0.4}
+              y1="0"
+              x2={arrowLen}
+              y2="0"
+              style={{ opacity: 0.4 + strength * 0.6 }}
+            />
+            <polygon
+              className="hud-sailing-compass-head"
+              points={`${arrowLen},0 ${arrowLen - 6},-4 ${arrowLen - 6},4`}
+              style={{ opacity: 0.4 + strength * 0.6 }}
+            />
+          </g>
+        </svg>
+      </div>
+      <div className="hud-sailing-speed" aria-label={`Speed ${state.speed}`}>
+        <div className="hud-sailing-speed-bar">
+          <div
+            className="hud-sailing-speed-fill"
+            style={{ width: `${speedPct * 100}%` }}
+          />
+        </div>
+        <div className="hud-sailing-speed-text">{state.speed} kt</div>
+      </div>
     </div>
   );
 }
