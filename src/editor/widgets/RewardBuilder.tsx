@@ -136,15 +136,21 @@ function FlagValueInput({ value, onChange }: { value: boolean | number | string;
 
 function changeKind(current: Reward, k: Reward["kind"]): Reward {
   if (current.kind === k) return current;
+  const c = current as unknown as Record<string, unknown>;
+  const str = (key: string) => (typeof c[key] === "string" ? (c[key] as string) : "");
+  const num = (key: string, d: number) => (typeof c[key] === "number" ? (c[key] as number) : d);
+  const questId = str("questId");
+  const flagKey = str("key");
+  const value = (c.value as boolean | number | string | undefined) ?? true;
   switch (k) {
-    case "grantItem": return { kind: "grantItem", itemId: "", quantity: 1 };
-    case "grantXp": return { kind: "grantXp", jobId: "", amount: 10 };
-    case "setFlag": return { kind: "setFlag", key: "", value: true };
-    case "clearFlag": return { kind: "clearFlag", key: "" };
-    case "playCutscene": return { kind: "playCutscene", id: "" };
-    case "unlockQuest": return { kind: "unlockQuest", questId: "" };
-    case "startQuest": return { kind: "startQuest", questId: "" };
-    case "completeQuest": return { kind: "completeQuest", questId: "" };
+    case "grantItem": return { kind: "grantItem", itemId: str("itemId"), quantity: num("quantity", 1) };
+    case "grantXp": return { kind: "grantXp", jobId: str("jobId"), amount: num("amount", 10) };
+    case "setFlag": return { kind: "setFlag", key: flagKey, value };
+    case "clearFlag": return { kind: "clearFlag", key: flagKey };
+    case "playCutscene": return { kind: "playCutscene", id: str("id") };
+    case "unlockQuest": return { kind: "unlockQuest", questId };
+    case "startQuest": return { kind: "startQuest", questId };
+    case "completeQuest": return { kind: "completeQuest", questId };
   }
 }
 

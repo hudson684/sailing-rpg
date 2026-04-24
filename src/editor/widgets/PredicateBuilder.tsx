@@ -1,5 +1,6 @@
 import React from "react";
 import type { Predicate, QuestEvent, EventMatch, FlagValue } from "../../game/quests/types";
+import { predicateSummary } from "./predicateUtils";
 
 /**
  * Predicate builder widget. Shared by the dialogue, quest, and
@@ -120,6 +121,10 @@ export function PredicateBuilder({ value, onChange, suggestions, depth = 0, requ
       {value.kind === "not" && (
         <NotFields value={value} onChange={onChange} suggestions={suggestions} depth={depth + 1} />
       )}
+
+      <span style={chip} title="Human-readable summary of this predicate">
+        {predicateSummary(value)}
+      </span>
 
       {!required && (
         <button onClick={() => onChange(undefined)} style={delBtn} title="Remove predicate">
@@ -297,6 +302,11 @@ function GroupFields({ value, onChange, suggestions, depth }: { value: Extract<P
     onChange(value.kind === "and" ? { kind: "and", all: next } : { kind: "or", any: next });
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingLeft: 12, borderLeft: "2px solid #333", marginTop: 4 }}>
+      {list.length === 0 && (
+        <div style={{ fontSize: 10, color: "#888", fontStyle: "italic" }}>
+          empty — {value.kind === "and" ? "always true" : "always false"}
+        </div>
+      )}
       {list.map((p, i) => (
         <PredicateBuilder
           key={i}
@@ -338,17 +348,43 @@ function NotFields({ value, onChange, suggestions, depth }: { value: Extract<Pre
 
 function changeKind(current: Predicate, newKind: Predicate["kind"]): Predicate {
   if (current.kind === newKind) return current;
+  // Carry over fields that make sense in the new kind so a misclick on
+  // the kind dropdown doesn't wipe what the user typed.
+  const c = current as unknown as Record<string, unknown>;
+  const str = (k: string): string => (typeof c[k] === "string" ? (c[k] as string) : "");
+  const num = (k: string, d: number): number => (typeof c[k] === "number" ? (c[k] as number) : d);
+  const matchField = (k: string): string => {
+    const m = c.match as Record<string, unknown> | undefined;
+    const v = m?.[k];
+    return typeof v === "string" ? v : "";
+  };
+  const questId: string = str("questId");
+  const itemId: string = str("itemId") || matchField("itemId");
+  const jobId: string = str("jobId") || matchField("jobId");
+  const mapId: string = str("mapId") || matchField("mapId");
+  const flagKey: string = str("key") || matchField("flagKey");
+
   switch (newKind) {
-    case "event": return { kind: "event", event: "world:mapEntered" };
-    case "flag": return { kind: "flag", key: "" };
-    case "quest": return { kind: "quest", questId: "", status: "completed" };
-    case "step": return { kind: "step", questId: "", stepId: "", status: "completed" };
-    case "hasItem": return { kind: "hasItem", itemId: "", min: 1 };
-    case "jobLevel": return { kind: "jobLevel", jobId: "", min: 1 };
-    case "sceneMap": return { kind: "sceneMap", mapId: "" };
-    case "and": return { kind: "and", all: [] };
-    case "or": return { kind: "or", any: [] };
-    case "not": return { kind: "not", predicate: { kind: "flag", key: "" } };
+    case "event":
+      return { kind: "event", event: "world:mapEntered" };
+    case "flag":
+      return { kind: "flag", key: flagKey };
+    case "quest":
+      return { kind: "quest", questId, status: "completed" };
+    case "step":
+      return { kind: "step", questId, stepId: str("stepId"), status: "completed" };
+    case "hasItem":
+      return { kind: "hasItem", itemId, min: num("min", 1) };
+    case "jobLevel":
+      return { kind: "jobLevel", jobId, min: num("min", 1) };
+    case "sceneMap":
+      return { kind: "sceneMap", mapId };
+    case "and":
+      return { kind: "and", all: current.kind === "or" ? current.any : [] };
+    case "or":
+      return { kind: "or", any: current.kind === "and" ? current.all : [] };
+    case "not":
+      return { kind: "not", predicate: current.kind === "not" ? current.predicate : { kind: "flag", key: "" } };
   }
 }
 
@@ -432,4 +468,17 @@ const delBtn: React.CSSProperties = {
   border: "none",
   cursor: "pointer",
   fontSize: 14,
+};
+
+const chip: React.CSSProperties = {
+  padding: "1px 6px",
+  background: "#0c0c14",
+  color: "#8af",
+  border: "1px solid #333",
+  borderRadius: 10,
+  fontSize: 10,
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  maxWidth: 200,
 };
