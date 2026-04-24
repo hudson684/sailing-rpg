@@ -46,6 +46,8 @@ const INITIAL_HUD: HudState = {
   staminaMax: 100,
   wind: null,
   shipMaxSpeed: null,
+  shipVel: null,
+  sail: null,
 };
 
 let nextToastId = 1;

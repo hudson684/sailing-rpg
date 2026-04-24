@@ -330,6 +330,8 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     sprint: Phaser.Input.Keyboard.Key;
     reverse: Phaser.Input.Keyboard.Key;
     mount: Phaser.Input.Keyboard.Key;
+    reefSail: Phaser.Input.Keyboard.Key;
+    easeSail: Phaser.Input.Keyboard.Key;
   };
 
   private unsubVirtualInput: (() => void) | null = null;
@@ -499,10 +501,17 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       sprint: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT),
       reverse: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.R),
       mount: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.M),
+      // Sail trim: Shift eases out (more canvas = faster), Ctrl reefs in
+      // (less canvas = slower). Shift also drives on-foot sprint; having
+      // two named Keys bound to the same physical key is fine — they're
+      // used in different modes.
+      reefSail: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL),
+      easeSail: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT),
     };
 
     this.input.keyboard!.addCapture([
       Phaser.Input.Keyboard.KeyCodes.SHIFT,
+      Phaser.Input.Keyboard.KeyCodes.CTRL,
       Phaser.Input.Keyboard.KeyCodes.UP,
       Phaser.Input.Keyboard.KeyCodes.DOWN,
       Phaser.Input.Keyboard.KeyCodes.LEFT,
@@ -524,8 +533,11 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       helmE: this.keys.d,
       helmS: this.keys.s,
       helmW: this.keys.a,
-      helmThrottleUp: this.keys.sprint,
-      helmThrottleDown: this.keys.reverse,
+      // ThrottleUp = ease out sail (more canvas); ThrottleDown = reef in
+      // (less canvas). Dedicated bracket keys keep WASD/R free for
+      // steering and the mobile touch buttons route through the same pair.
+      helmThrottleUp: this.keys.easeSail,
+      helmThrottleDown: this.keys.reefSail,
       helmAnchor: this.keys.interact,
     };
     this.unsubVirtualInput = bindSceneToVirtualInput(this, virtualKeyMap);
@@ -2111,7 +2123,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     ship.startSailing();
     this.sceneState.mode = "AtHelm";
     this.cameras.main.startFollow(ship.container, true, 0.1, 0.1);
-    showToast("WASD to steer, R to reverse, E to anchor. Watch the wind!", 4500);
+    showToast("WASD steer, Shift/Ctrl trim sails, R reverse, E anchor. Watch the wind!", 5000);
     void this.saveController.autosave();
   }
 
@@ -2133,25 +2145,47 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     if (this.keys.a.isDown || this.keys.left.isDown) dx -= 1;
     if (this.keys.d.isDown || this.keys.right.isDown) dx += 1;
 
-    let thrust: { x: number; y: number } | null = null;
+    // Input sets a *target* bearing; the ship rotates toward it over
+    // several frames rather than snapping. Thrust is always applied along
+    // the current bow (not the input vector) — reverse is a separate key
+    // that pushes backward without changing the target.
+    let thrust = 0;
     if (dx !== 0 || dy !== 0) {
-      ship.setHeadingFromInput(dx, dy);
-      const len = Math.hypot(dx, dy);
-      thrust = { x: dx / len, y: dy / len };
-    } else if (this.keys.reverse.isDown) {
-      const h = ship.heading;
-      thrust = {
-        x: h === 1 ? -1 : h === 3 ? 1 : 0,
-        y: h === 2 ? -1 : h === 0 ? 1 : 0,
-      };
+      thrust = 1;
+      ship.setTargetHeading(Math.atan2(dy, dx));
+    } else {
+      ship.setTargetHeading(null);
+      if (this.keys.reverse.isDown) thrust = -1;
+    }
+
+    // Sail trim: Shift eases out (more canvas), Ctrl reefs in. Edge-
+    // triggered so a held key doesn't spam through all four states in a
+    // single frame.
+    if (Phaser.Input.Keyboard.JustDown(this.keys.reefSail)) {
+      const before = ship.sail;
+      const after = ship.adjustSail(-1);
+      if (after !== before) showToast(`Sails: ${after}`, 1200);
+    }
+    if (Phaser.Input.Keyboard.JustDown(this.keys.easeSail)) {
+      const before = ship.sail;
+      const after = ship.adjustSail(1);
+      if (after !== before) showToast(`Sails: ${after}`, 1200);
     }
 
     this.wind.update(dt);
+    // Other hulls the player's ship can collide with: every other known
+    // ship (docked or sailing). Built each frame from current poses so
+    // anchoring / moving ships stay accurate without an event plumbing.
+    const otherHulls: Array<{ x: number; y: number; w: number; h: number }> = [];
+    for (const s of this.ships.values()) {
+      if (s !== ship) otherHulls.push(s.hitboxAABB());
+    }
     const step = ship.updateSailing(
       dt,
       thrust,
       (tx, ty) => this.world.manager.shipTileState(tx, ty),
       this.wind.vector(),
+      otherHulls,
     );
     if (step.blocked) {
       if (!this.wasBlocked) showToast("Ran aground! Turn to clear water.", 2500);
@@ -2549,13 +2583,24 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       mode: hudMode,
       prompt,
       speed: this.activeShip ? Math.round(this.activeShip.speed) : 0,
-      heading: this.activeShip ? normalizeAngle(this.activeShip.rotation) : 0,
+      heading: this.activeShip ? normalizeAngle(this.activeShip.headingRad) : 0,
       stamina: Math.round(stamina.current),
       staminaMax: STAMINA_MAX,
       wind: showSailingHud
         ? { angle: this.wind.angle, strength: this.wind.strength }
         : null,
       shipMaxSpeed: showSailingHud ? SHIP_MAX_SPEED : null,
+      shipVel:
+        showSailingHud && this.activeShip
+          ? { vx: this.activeShip.vx, vy: this.activeShip.vy }
+          : null,
+      sail:
+        showSailingHud && this.activeShip
+          ? {
+              state: this.activeShip.sail,
+              overCanvas: this.activeShip.isOverCanvassed(this.wind.strength),
+            }
+          : null,
     });
   }
 

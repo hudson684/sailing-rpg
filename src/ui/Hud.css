@@ -272,12 +272,13 @@
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
 }
 
-/* Sailing HUD: compass + speed bar. Anchored top-right so it doesn't crowd
-   the hotbar/health cluster on the left. Only rendered while AtHelm or
-   Anchoring (Hud.tsx bails when wind/shipMaxSpeed are null). */
+/* Sailing HUD: compass + speed bar. Anchored top-right but offset down so
+   it clears the browser / Claude Code overlay chrome that sits in the top
+   corner. Only rendered while AtHelm or Anchoring (Hud.tsx bails when
+   wind/shipMaxSpeed are null). */
 .hud-sailing {
   position: absolute;
-  top: 16px;
+  top: 80px;
   right: 16px;
   display: flex;
   flex-direction: column;
@@ -323,6 +324,17 @@
   fill: #e8d08c;
   transition: opacity 160ms linear;
 }
+.hud-sailing-compass-bow {
+  fill: rgba(243, 227, 194, 0.55);
+}
+.hud-sailing-compass-vel {
+  stroke: #6fd3e8;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.hud-sailing-compass-vel-head {
+  fill: #6fd3e8;
+}
 .hud-sailing-speed {
   display: flex;
   align-items: center;
@@ -345,6 +357,41 @@
   height: 100%;
   background: linear-gradient(180deg, #6fc3ff 0%, #3985c9 60%, #1f4a7a 100%);
   transition: width 160ms ease-out;
+}
+.hud-sailing-sail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.hud-sailing-sail-segments {
+  display: flex;
+  gap: 2px;
+}
+.hud-sailing-sail-seg {
+  width: 10px;
+  height: 8px;
+  background: rgba(20, 30, 50, 0.55);
+  border: 1.5px solid var(--pixel-ink, #2b1d12);
+}
+.hud-sailing-sail-seg.is-on {
+  background: #e8d08c;
+}
+.hud-sailing-sail.is-overcanvas .hud-sailing-sail-seg.is-on {
+  background: #d85050;
+  animation: hud-sailing-over 700ms ease-in-out infinite;
+}
+.hud-sailing-sail.is-overcanvas .hud-sailing-sail-text {
+  color: #ff8888;
+}
+@keyframes hud-sailing-over {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.6); }
+}
+.hud-sailing-sail-text {
+  min-width: 44px;
 }
 .hud-sailing-speed-text {
   min-width: 40px;

@@ -102,19 +102,34 @@ function SailingIndicator() {
   const state = useUIStore(selectHud);
   const wind = state.wind;
   const maxSpeed = state.shipMaxSpeed;
+  const vel = state.shipVel;
   if (!wind || !maxSpeed) return null;
 
   const speedPct = Math.max(0, Math.min(1, state.speed / maxSpeed));
   // Convert wind angle (radians, 0 = east, screen-space +y = south) to CSS
   // degrees. The SVG arrow is drawn pointing east at 0°, so a raw rad→deg
   // conversion lines up — no offset needed.
-  const arrowDeg = (wind.angle * 180) / Math.PI;
+  const windDeg = (wind.angle * 180) / Math.PI;
   // Strength drives arrow opacity/length so a weak wind reads differently
   // from a strong one at a glance.
   const strength = Math.max(0, Math.min(1, wind.strength));
   // Visual length scales within a reasonable band so a near-calm wind is
   // still legible instead of invisible.
-  const arrowLen = 10 + strength * 14;
+  const windLen = 10 + strength * 14;
+
+  // Ship heading tick: small triangle on the rim pointing where the bow
+  // faces. state.heading is in radians, 0 = east (matches wind's convention).
+  const bowDeg = (state.heading * 180) / Math.PI;
+
+  // Velocity arrow: direction the ship is actually moving (bow + leeway).
+  // Length scales with |v| / maxSpeed so a drifting ship shows a short
+  // arrow and a running ship shows a long one. Hidden when basically
+  // stationary to avoid jitter from floating-point noise.
+  const velMag = vel ? Math.hypot(vel.vx, vel.vy) : 0;
+  const showVel = velMag > 3;
+  const velDeg = vel ? (Math.atan2(vel.vy, vel.vx) * 180) / Math.PI : 0;
+  const velNorm = Math.min(1, velMag / maxSpeed);
+  const velLen = 8 + velNorm * 14;
 
   return (
     <div className="hud-sailing" role="status" aria-label="Sailing">
@@ -126,21 +141,45 @@ function SailingIndicator() {
           <circle className="hud-sailing-compass-ring" cx="0" cy="0" r="20" />
           <line className="hud-sailing-compass-axis" x1="-16" y1="0" x2="16" y2="0" />
           <line className="hud-sailing-compass-axis" x1="0" y1="-16" x2="0" y2="16" />
-          <g transform={`rotate(${arrowDeg})`}>
+          {/* Bow tick — which way the ship is pointed. */}
+          <g transform={`rotate(${bowDeg})`}>
+            <polygon
+              className="hud-sailing-compass-bow"
+              points="20,0 16,-2.5 16,2.5"
+            />
+          </g>
+          {/* Wind arrow — direction the wind is blowing the ship. */}
+          <g transform={`rotate(${windDeg})`}>
             <line
               className="hud-sailing-compass-arrow"
-              x1={-arrowLen * 0.4}
+              x1={-windLen * 0.4}
               y1="0"
-              x2={arrowLen}
+              x2={windLen}
               y2="0"
               style={{ opacity: 0.4 + strength * 0.6 }}
             />
             <polygon
               className="hud-sailing-compass-head"
-              points={`${arrowLen},0 ${arrowLen - 6},-4 ${arrowLen - 6},4`}
+              points={`${windLen},0 ${windLen - 6},-4 ${windLen - 6},4`}
               style={{ opacity: 0.4 + strength * 0.6 }}
             />
           </g>
+          {/* Velocity arrow — actual direction of travel (bow + leeway). */}
+          {showVel && (
+            <g transform={`rotate(${velDeg})`}>
+              <line
+                className="hud-sailing-compass-vel"
+                x1="0"
+                y1="0"
+                x2={velLen}
+                y2="0"
+              />
+              <polygon
+                className="hud-sailing-compass-vel-head"
+                points={`${velLen},0 ${velLen - 5},-3 ${velLen - 5},3`}
+              />
+            </g>
+          )}
         </svg>
       </div>
       <div className="hud-sailing-speed" aria-label={`Speed ${state.speed}`}>
@@ -152,6 +191,33 @@ function SailingIndicator() {
         </div>
         <div className="hud-sailing-speed-text">{state.speed} kt</div>
       </div>
+      <SailGauge />
+    </div>
+  );
+}
+
+/** Four-segment sail gauge: furled → reefed → trim → full, filled up to
+ *  the current state. Flashes red (via CSS class) when the ship is
+ *  over-canvassed — too much sail for the current wind. */
+const SAIL_LABELS = ["furled", "reefed", "trim", "full"] as const;
+function SailGauge() {
+  const sail = useUIStore((s) => s.hud.sail);
+  if (!sail) return null;
+  const filledTo = SAIL_LABELS.indexOf(sail.state);
+  return (
+    <div
+      className={`hud-sailing-sail${sail.overCanvas ? " is-overcanvas" : ""}`}
+      aria-label={`Sails ${sail.state}${sail.overCanvas ? " (over-canvassed)" : ""}`}
+    >
+      <div className="hud-sailing-sail-segments">
+        {SAIL_LABELS.map((label, i) => (
+          <div
+            key={label}
+            className={`hud-sailing-sail-seg${i <= filledTo ? " is-on" : ""}`}
+          />
+        ))}
+      </div>
+      <div className="hud-sailing-sail-text">{sail.state}</div>
     </div>
   );
 }
