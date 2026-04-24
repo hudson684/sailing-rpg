@@ -11,14 +11,17 @@ export function EditorShell({ inspector }: EditorShellProps) {
   const [activeId, setActiveId] = useState<string | null>(tools[0]?.id ?? null);
   const active = tools.find((t) => t.id === activeId) ?? null;
   const ActiveComponent = active?.component;
+  const showInspector = inspector !== undefined;
 
   return (
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "200px 1fr 320px",
+        gridTemplateColumns: showInspector ? "200px 1fr 320px" : "200px 1fr",
         gridTemplateRows: "40px 1fr",
-        gridTemplateAreas: `"header header header" "sidebar main inspector"`,
+        gridTemplateAreas: showInspector
+          ? `"header header header" "sidebar main inspector"`
+          : `"header header" "sidebar main"`,
         height: "100vh",
         width: "100vw",
         fontFamily: "system-ui, sans-serif",
@@ -93,17 +96,19 @@ export function EditorShell({ inspector }: EditorShellProps) {
         )}
       </main>
 
-      <aside
-        style={{
-          gridArea: "inspector",
-          background: "#1a1a1f",
-          borderLeft: "1px solid #2a2a32",
-          padding: 12,
-          overflow: "auto",
-        }}
-      >
-        {inspector ?? <div style={{ color: "#666" }}>Inspector</div>}
-      </aside>
+      {showInspector && (
+        <aside
+          style={{
+            gridArea: "inspector",
+            background: "#1a1a1f",
+            borderLeft: "1px solid #2a2a32",
+            padding: 12,
+            overflow: "auto",
+          }}
+        >
+          {inspector}
+        </aside>
+      )}
     </div>
   );
 }
