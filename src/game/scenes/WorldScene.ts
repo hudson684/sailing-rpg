@@ -31,7 +31,6 @@ import {
 } from "../entities/Player";
 import { syncPlayerVisualsFromEquipment } from "../entities/playerEquipmentVisuals";
 import { stamina, STAMINA_MAX } from "../player/stamina";
-import { healthRegen } from "../player/regen";
 import { foodRegen } from "../player/foodRegen";
 import { CF_WARDROBE_LAYERS } from "../entities/playerWardrobe";
 import {
@@ -984,7 +983,6 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     if (damage <= 0) return;
     const taken = useGameStore.getState().healthDamage(damage);
     if (taken <= 0) return;
-    healthRegen.noteDamage();
     this.flashPlayer();
     spawnFloatingNumber(this, this.player.x, this.player.y - 22, taken, {
       kind: "damage-player",
