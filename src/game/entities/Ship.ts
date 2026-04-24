@@ -19,8 +19,24 @@ export interface VesselDims {
   tilesWide: number;
 }
 
-const SHIP_MAX_SPEED = 120; // px/s cap on velocity magnitude
-const SHIP_ACCEL = 60; // px/s^2 — thrust and drag rate
+/** Max velocity magnitude before the cap kicks in. Tailwind can lift a ship
+ *  toward this faster than dead calm, but it's always the ceiling. */
+export const SHIP_MAX_SPEED = 140;
+/** Thrust acceleration (px/s^2) applied in the heading's direction while a
+ *  movement key is held. Tuned higher than drag so held keys feel responsive. */
+const SHIP_ACCEL = 110;
+/** Exponential drag coefficient (1/s). Velocity decays each frame as
+ *  v *= exp(-DRAG * dt). Lower = more glide. Chosen so that releasing the
+ *  keys at full speed takes a few seconds to coast down — unlike the old
+ *  symmetric linear decel which braked in lockstep with acceleration. */
+const SHIP_DRAG_COEF = 0.55;
+/** Speeds below this (px/s) snap to zero once the ship is idle (no thrust,
+ *  no wind). Prevents asymptotic crawling that never quite stops. */
+const SHIP_IDLE_SNAP = 2;
+/** Duration of a heading-change crossfade + thrust ramp (ms). During a turn
+ *  the new heading's thrust scales from 0 → full, giving a "weight" feel
+ *  without requiring rotational physics. */
+const SHIP_TURN_MS = 260;
 
 export type ShipTileState = "water" | "beach" | "blocked";
 
@@ -46,6 +62,14 @@ export class Ship {
   public heading: Heading;
   public vx = 0;
   public vy = 0;
+
+  /** The heading the ship is rotating *away from* during a turn-crossfade,
+   *  or null if not turning. Set by `setHeadingFromInput` / `turn`; cleared
+   *  when `turnElapsedMs` reaches `SHIP_TURN_MS`. Driving this from state
+   *  (rather than a Phaser Tween) keeps it trivially save/load-safe and
+   *  avoids running tweens while sailing physics tick. */
+  public turnFromHeading: Heading | null = null;
+  public turnElapsedMs = 0;
 
   /** Lightweight anchor for camera follow and global visibility. Tilemap layers
    *  cannot be Container children, so they live at scene level and are
@@ -103,11 +127,25 @@ export class Ship {
 
   private updateVisual() {
     const sailing = this.mode === "sailing";
+    // Crossfade progress for heading transitions: 0 = just started, 1 = done.
+    // When not turning the new heading renders at full alpha.
+    const turning = this.turnFromHeading !== null;
+    const p = turning ? Math.min(1, this.turnElapsedMs / SHIP_TURN_MS) : 1;
     for (let h = 0; h < 4; h++) {
-      const active = h === this.heading;
       const v = this.visuals[h];
-      v.moving.setVisible(active && sailing);
-      v.idle.setVisible(active && !sailing);
+      let alpha = 0;
+      let visible = false;
+      if (h === this.heading) {
+        alpha = p;
+        visible = true;
+      } else if (turning && h === this.turnFromHeading) {
+        alpha = 1 - p;
+        visible = true;
+      }
+      v.moving.setVisible(visible && sailing);
+      v.idle.setVisible(visible && !sailing);
+      v.moving.setAlpha(alpha);
+      v.idle.setAlpha(alpha);
     }
     this.applyLayerTransforms();
   }
@@ -128,7 +166,19 @@ export class Ship {
   /** Rotate heading by +1 (starboard / right) or -1 (port / left). */
   turn(dir: -1 | 1): void {
     if (this.mode !== "sailing") return;
-    this.heading = ((((this.heading + dir) % 4) + 4) % 4) as Heading;
+    const next = ((((this.heading + dir) % 4) + 4) % 4) as Heading;
+    this.beginTurn(next);
+  }
+
+  /** Begin a heading transition. Idempotent if the target heading matches
+   *  what we're already turning to (keeps the crossfade smooth when input
+   *  is held). Chained turns (A→B while B→C) reset the crossfade from the
+   *  current mid-tween heading — acceptable for 90° cardinal swaps. */
+  private beginTurn(next: Heading): void {
+    if (next === this.heading) return;
+    this.turnFromHeading = this.heading;
+    this.turnElapsedMs = 0;
+    this.heading = next;
     this.updateVisual();
   }
 
@@ -150,9 +200,16 @@ export class Ship {
       else next = dx > 0 ? 1 : 3;
     }
     if (next !== this.heading) {
-      this.heading = next;
-      this.updateVisual();
+      this.beginTurn(next);
     }
+  }
+
+  /** Scalar 0..1 thrust scaler during a heading change. 0 at the start of a
+   *  turn, 1 when it completes. Scene applies this to player thrust so the
+   *  ship briefly loses steering power while reorienting. */
+  turnThrustScale(): number {
+    if (this.turnFromHeading === null) return 1;
+    return Math.min(1, this.turnElapsedMs / SHIP_TURN_MS);
   }
 
   /** Current velocity magnitude (px/s). */
@@ -216,6 +273,8 @@ export class Ship {
     this.mode = "sailing";
     this.vx = 0;
     this.vy = 0;
+    this.turnFromHeading = null;
+    this.turnElapsedMs = 0;
     this.updateVisual();
   }
 
@@ -243,35 +302,61 @@ export class Ship {
   }
 
   /** Advance physics while sailing. `thrust` is a (possibly non-unit) vector;
-   *  null means no input (the ship drifts and drag slows it). Collision is
-   *  axis-separated so that grazing a beach on one axis doesn't kill motion on
-   *  the other — you can slide along a shore. A beach tile only blocks the
-   *  axis if traversing it would raise the ship's beach-tile count (i.e. you
-   *  are being pushed *further* into the beach); parallel or outward motion
-   *  along the same beach is allowed. */
+   *  null means no input (the ship drifts — drag and wind still act).
+   *  `wind` is an acceleration vector in px/s² applied every frame; pass
+   *  null (or {x:0,y:0}) for dead calm. During a heading crossfade, player
+   *  thrust is scaled by `turnThrustScale()` so steering momentarily
+   *  weakens — an arcade stand-in for turning inertia.
+   *
+   *  Collision is axis-separated so that grazing a beach on one axis
+   *  doesn't kill motion on the other — you can slide along a shore. A
+   *  beach tile only blocks the axis if traversing it would raise the
+   *  ship's beach-tile count (i.e. you are being pushed *further* into
+   *  the beach); parallel or outward motion along the same beach is
+   *  allowed. */
   updateSailing(
     dtSec: number,
     thrust: { x: number; y: number } | null,
     classify: (tx: number, ty: number) => ShipTileState,
+    wind: { x: number; y: number } | null = null,
   ): SailingStepResult {
-    const dv = SHIP_ACCEL * dtSec;
-    if (thrust) {
-      this.vx += thrust.x * dv;
-      this.vy += thrust.y * dv;
-    } else {
-      const sp = Math.hypot(this.vx, this.vy);
-      if (sp > 0) {
-        const decel = Math.min(sp, dv);
-        const k = (sp - decel) / sp;
-        this.vx *= k;
-        this.vy *= k;
+    // Advance the heading-crossfade timer first so visuals and the thrust
+    // scaler share the same phase within this frame.
+    if (this.turnFromHeading !== null) {
+      this.turnElapsedMs += dtSec * 1000;
+      if (this.turnElapsedMs >= SHIP_TURN_MS) {
+        this.turnFromHeading = null;
+        this.turnElapsedMs = 0;
       }
+      this.updateVisual();
     }
+
+    // Exponential drag: v *= exp(-k*dt). Preserves momentum far better than
+    // the old symmetric linear brake — a released helm now coasts instead
+    // of halting. Applied before thrust/wind so new forces aren't
+    // immediately sapped by the same frame's drag.
+    const dragFactor = Math.exp(-SHIP_DRAG_COEF * dtSec);
+    this.vx *= dragFactor;
+    this.vy *= dragFactor;
+
+    if (thrust) {
+      const scale = this.turnThrustScale();
+      this.vx += thrust.x * SHIP_ACCEL * scale * dtSec;
+      this.vy += thrust.y * SHIP_ACCEL * scale * dtSec;
+    }
+    if (wind) {
+      this.vx += wind.x * dtSec;
+      this.vy += wind.y * dtSec;
+    }
+
     const sp = Math.hypot(this.vx, this.vy);
     if (sp > SHIP_MAX_SPEED) {
       const k = SHIP_MAX_SPEED / sp;
       this.vx *= k;
       this.vy *= k;
+    } else if (sp < SHIP_IDLE_SNAP && !thrust && !wind) {
+      this.vx = 0;
+      this.vy = 0;
     }
 
     const hb = this.hitbox();
@@ -358,6 +443,8 @@ export class Ship {
     this.mode = "docked";
     this.vx = 0;
     this.vy = 0;
+    this.turnFromHeading = null;
+    this.turnElapsedMs = 0;
     this.setPose(c.x, c.y, pose.heading);
     // setPose only updateVisuals if heading changed; force in case it didn't.
     this.updateVisual();
@@ -385,6 +472,8 @@ export class Ship {
     this.heading = data.heading;
     this.x = data.x;
     this.y = data.y;
+    this.turnFromHeading = null;
+    this.turnElapsedMs = 0;
     this.updateVisual();
     this.container.setPosition(this.x, this.y);
     this.container.setDepth(this.sortY());

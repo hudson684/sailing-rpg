@@ -12,6 +12,12 @@ export interface HudState {
   message: string | null;
   stamina: number;
   staminaMax: number;
+  /** Current wind, or null when nothing should render a wind indicator
+   *  (e.g. on foot). Angle is radians (0 = east); strength is 0..1. */
+  wind: { angle: number; strength: number } | null;
+  /** Ship top speed (px/s) used as the denominator for the speed HUD. Set
+   *  while AtHelm; null otherwise so the HUD can decide when to render. */
+  shipMaxSpeed: number | null;
 }
 
 export type InventoryAction =

@@ -272,6 +272,86 @@
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
 }
 
+/* Sailing HUD: compass + speed bar. Anchored top-right so it doesn't crowd
+   the hotbar/health cluster on the left. Only rendered while AtHelm or
+   Anchoring (Hud.tsx bails when wind/shipMaxSpeed are null). */
+.hud-sailing {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+  font-family: var(--pixel-font);
+  color: var(--pixel-parchment, #f3e3c2);
+}
+.hud-sailing-compass {
+  width: 60px;
+  height: 60px;
+  background: rgba(20, 30, 50, 0.55);
+  border: 3px solid var(--pixel-ink, #2b1d12);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.15),
+    0 3px 0 rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hud-sailing-compass svg {
+  width: 100%;
+  height: 100%;
+}
+.hud-sailing-compass-ring {
+  fill: none;
+  stroke: rgba(243, 227, 194, 0.3);
+  stroke-width: 1.5;
+}
+.hud-sailing-compass-axis {
+  stroke: rgba(243, 227, 194, 0.2);
+  stroke-width: 1;
+}
+.hud-sailing-compass-arrow {
+  stroke: #e8d08c;
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: opacity 160ms linear;
+}
+.hud-sailing-compass-head {
+  fill: #e8d08c;
+  transition: opacity 160ms linear;
+}
+.hud-sailing-speed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+.hud-sailing-speed-bar {
+  position: relative;
+  width: 52px;
+  height: 8px;
+  background: var(--pixel-tan, #d9b382);
+  border: 3px solid var(--pixel-ink, #2b1d12);
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 2px 0 var(--pixel-parchment, #f3e3c2),
+    0 2px 0 rgba(0, 0, 0, 0.4);
+}
+.hud-sailing-speed-fill {
+  height: 100%;
+  background: linear-gradient(180deg, #6fc3ff 0%, #3985c9 60%, #1f4a7a 100%);
+  transition: width 160ms ease-out;
+}
+.hud-sailing-speed-text {
+  min-width: 40px;
+  text-align: right;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;

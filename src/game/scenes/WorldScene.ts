@@ -35,11 +35,13 @@ import { foodRegen } from "../player/foodRegen";
 import { CF_WARDROBE_LAYERS } from "../entities/playerWardrobe";
 import {
   Ship,
+  SHIP_MAX_SPEED,
   normalizeAngle,
   type DockedPose,
   type Heading,
 } from "../entities/Ship";
 import { loadShipsFile, type ShipInstanceData, type VesselTemplate } from "../entities/vessels";
+import { Wind } from "../entities/wind";
 import type { VirtualKey } from "../input/virtualInput";
 import { bindSceneToVirtualInput } from "../input/virtualInputBridge";
 
@@ -239,6 +241,9 @@ export class WorldScene extends Phaser.Scene implements EditHost {
   private shipInstanceData: ShipInstanceData[] = [];
   /** Ship the player is currently piloting / anchoring aboard. */
   private activeShip: Ship | null = null;
+  /** Global wind. Fresh each session (not persisted) — a random starting
+   *  direction on load is part of the charm and avoids a "stuck" wind. */
+  private readonly wind = new Wind();
   private readonly groundItemsState = new GroundItemsState();
   private readonly droppedItemsState = new DroppedItemsState();
   private droppedExpiryAccum = 0;
@@ -2106,7 +2111,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     ship.startSailing();
     this.sceneState.mode = "AtHelm";
     this.cameras.main.startFollow(ship.container, true, 0.1, 0.1);
-    showToast("WASD to steer, R to reverse, E to anchor.", 4500);
+    showToast("WASD to steer, R to reverse, E to anchor. Watch the wind!", 4500);
     void this.saveController.autosave();
   }
 
@@ -2141,7 +2146,13 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       };
     }
 
-    const step = ship.updateSailing(dt, thrust, (tx, ty) => this.world.manager.shipTileState(tx, ty));
+    this.wind.update(dt);
+    const step = ship.updateSailing(
+      dt,
+      thrust,
+      (tx, ty) => this.world.manager.shipTileState(tx, ty),
+      this.wind.vector(),
+    );
     if (step.blocked) {
       if (!this.wasBlocked) showToast("Ran aground! Turn to clear water.", 2500);
       this.wasBlocked = true;
@@ -2532,6 +2543,8 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       }
     }
 
+    const showSailingHud =
+      this.sceneState.mode === "AtHelm" || this.sceneState.mode === "Anchoring";
     setHud({
       mode: hudMode,
       prompt,
@@ -2539,6 +2552,10 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       heading: this.activeShip ? normalizeAngle(this.activeShip.rotation) : 0,
       stamina: Math.round(stamina.current),
       staminaMax: STAMINA_MAX,
+      wind: showSailingHud
+        ? { angle: this.wind.angle, strength: this.wind.strength }
+        : null,
+      shipMaxSpeed: showSailingHud ? SHIP_MAX_SPEED : null,
     });
   }
 
