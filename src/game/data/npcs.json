@@ -26,8 +26,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 46,
-        "tileY": 13
+        "tileX": 110,
+        "tileY": 77
       },
       "facing": "right",
       "movement": {
@@ -37,7 +37,7 @@
     },
     {
       "id": "mera_vendor",
-      "name": "Mera, General Vendor",
+      "name": "Josie, General Vendor",
       "sprite": {
         "idle": {
           "sheet": "sprites/npcs/merchant-idle.png",
@@ -101,8 +101,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 55,
-        "tileY": 20
+        "tileX": 119,
+        "tileY": 84
       },
       "facing": "right",
       "movement": {
@@ -136,8 +136,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 44,
-        "tileY": 14
+        "tileX": 108,
+        "tileY": 78
       },
       "facing": "right",
       "movement": {
@@ -175,28 +175,28 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 52,
-        "tileY": 20
+        "tileX": 116,
+        "tileY": 84
       },
       "facing": "right",
       "movement": {
         "type": "patrol",
         "waypoints": [
           {
-            "tileX": 46,
-            "tileY": 24
+            "tileX": 110,
+            "tileY": 88
           },
           {
-            "tileX": 54,
-            "tileY": 24
+            "tileX": 118,
+            "tileY": 88
           },
           {
-            "tileX": 54,
-            "tileY": 20
+            "tileX": 118,
+            "tileY": 84
           },
           {
-            "tileX": 46,
-            "tileY": 20
+            "tileX": 110,
+            "tileY": 84
           }
         ],
         "moveSpeed": 50,
@@ -230,8 +230,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 39,
-        "tileY": 19
+        "tileX": 103,
+        "tileY": 83
       },
       "facing": "left",
       "movement": {
@@ -269,8 +269,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 46,
-        "tileY": 22
+        "tileX": 110,
+        "tileY": 86
       },
       "facing": "right",
       "movement": {
@@ -304,8 +304,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 52,
-        "tileY": 25
+        "tileX": 116,
+        "tileY": 89
       },
       "facing": "left",
       "movement": {
@@ -332,8 +332,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 50,
-        "tileY": 21
+        "tileX": 114,
+        "tileY": 85
       },
       "facing": "right",
       "movement": {
@@ -341,5 +341,14 @@
       },
       "dialogue": "steve"
     }
-  ]
+  ],
+  "dialogues": {
+    "mera_vendor": {
+      "speaker": "Josie",
+      "pages": [
+        "Welcome to my shop! I've got a bit of everything — rope, rations, tools, the usual sundries.",
+        "Have a look around. If you see something you like, just say the word."
+      ]
+    }
+  }
 }

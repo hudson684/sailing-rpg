@@ -70,116 +70,116 @@
     {
       "id": "n_tree_1",
       "defId": "tree_palm",
-      "tileX": 41,
-      "tileY": 26
+      "tileX": 105,
+      "tileY": 90
     },
     {
       "id": "n_tree_2",
       "defId": "tree_palm",
-      "tileX": 38,
-      "tileY": 23
+      "tileX": 102,
+      "tileY": 87
     },
     {
       "id": "n_tree_3",
       "defId": "tree_palm",
-      "tileX": 37,
-      "tileY": 15
+      "tileX": 101,
+      "tileY": 79
     },
     {
       "id": "n_ore_1",
       "defId": "ore_hopeite",
-      "tileX": 49,
-      "tileY": 26
+      "tileX": 113,
+      "tileY": 90
     },
     {
       "id": "n_ore_2",
       "defId": "ore_hopeite",
-      "tileX": 44,
-      "tileY": 26
+      "tileX": 108,
+      "tileY": 90
     },
     {
       "id": "tree_palm-4",
       "defId": "tree_palm",
-      "tileX": 44,
-      "tileY": 85
+      "tileX": 108,
+      "tileY": 149
     },
     {
       "id": "tree_palm-5",
       "defId": "tree_palm",
-      "tileX": 40,
-      "tileY": 83
+      "tileX": 104,
+      "tileY": 147
     },
     {
       "id": "ore_hopeite-7",
       "defId": "ore_hopeite",
-      "tileX": 22,
-      "tileY": 20
+      "tileX": 86,
+      "tileY": 84
     },
     {
       "id": "ore_hopeite-8",
       "defId": "ore_hopeite",
-      "tileX": 18,
-      "tileY": 22
+      "tileX": 82,
+      "tileY": 86
     },
     {
       "id": "ore_hopeite-9",
       "defId": "ore_hopeite",
-      "tileX": 14,
-      "tileY": 24
+      "tileX": 78,
+      "tileY": 88
     },
     {
       "id": "ore_hopeite-10",
       "defId": "ore_hopeite",
-      "tileX": 24,
-      "tileY": 18
+      "tileX": 88,
+      "tileY": 82
     },
     {
       "id": "tree_palm-11",
       "defId": "tree_palm",
-      "tileX": 24,
-      "tileY": 10
+      "tileX": 88,
+      "tileY": 74
     },
     {
       "id": "tree_palm-12",
       "defId": "tree_palm",
-      "tileX": 3,
-      "tileY": 12
+      "tileX": 67,
+      "tileY": 76
     },
     {
       "id": "n_tree_palm_1",
       "defId": "tree_palm",
-      "tileX": 3,
-      "tileY": 17
+      "tileX": 67,
+      "tileY": 81
     },
     {
       "id": "n_tree_palm_2",
       "defId": "tree_palm",
-      "tileX": 25,
-      "tileY": 14
+      "tileX": 89,
+      "tileY": 78
     },
     {
       "id": "n_tree_palm_3",
       "defId": "tree_palm",
-      "tileX": 20,
-      "tileY": 18
+      "tileX": 84,
+      "tileY": 82
     },
     {
       "id": "n_tree_palm_4",
       "defId": "tree_palm",
-      "tileX": 4,
-      "tileY": 21
+      "tileX": 68,
+      "tileY": 85
     },
     {
       "id": "n_tree_palm_5",
       "defId": "tree_palm",
-      "tileX": 7,
-      "tileY": 14
+      "tileX": 71,
+      "tileY": 78
     },
     {
       "id": "n_tree_palm_6",
       "defId": "tree_palm",
-      "tileX": 16,
-      "tileY": 10
+      "tileX": 80,
+      "tileY": 74
     }
   ]
 }

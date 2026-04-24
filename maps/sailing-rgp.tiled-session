@@ -5,8 +5,6 @@
         "themes/Grass Land/TiledMap Editor",
         ".",
         "chunks",
-        "themes/Grass Land",
-        "themes",
         "themes/Grass Land/TiledMap Editor/Tilesets",
         "themes/The Village/TiledMap Editor/tilesets",
         "themes/grassland/TiledMap Editor/Tilesets",
@@ -37,10 +35,10 @@
         },
         "chunks/0_0.tmx": {
             "scale": 0.125,
-            "selectedLayer": 1,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": 1936,
-                "y": 2456
+                "x": 3352,
+                "y": 3152
             }
         },
         "chunks/0_1.tmx": {
@@ -882,11 +880,13 @@
         "chunks/0_1.tmx",
         "interiors/starter_dungeon.tmx",
         "interiors/tutorial_island/Players_Basement.tmx",
-        "chunks/2_0.tmx"
+        "chunks/2_0.tmx",
+        "chunks/2_1.tmx"
     ],
     "project": "sailing-rgp.tiled-project",
     "property.type": "bool",
     "recentFiles": [
+        "chunks/2_1.tmx",
         "chunks/2_0.tmx",
         "interiors/tutorial_island/Players_Basement.tmx",
         "interiors/starter_dungeon.tmx",
@@ -897,8 +897,7 @@
         "chunks/2_2.tmx",
         "chunks/0_2.tmx",
         "chunks/1_2.tmx",
-        "chunks/1_1.tmx",
-        "chunks/1_0.tmx"
+        "chunks/1_1.tmx"
     ],
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx"
