@@ -131,6 +131,22 @@ export function InventoryTouch() {
     setSelected(null);
   };
 
+  const consumeSelectedInv = () => {
+    if (selected?.kind !== "inv") return;
+    const slot = slots[selected.index];
+    const def = slot ? ITEMS[slot.itemId] : null;
+    const effect = def?.consumable;
+    const res = useGameStore.getState().useConsumable(selected.index);
+    if (!res.ok && res.reason === "no_effect") {
+      showToast("Already at full health.", 1200);
+    } else if (res.ok && effect?.healHp) {
+      showToast(`+${effect.healHp} HP`, 1200, "success");
+    } else if (res.ok && effect?.regenHp) {
+      showToast(`+${effect.regenHp} HP regen`, 1200, "success");
+    }
+    setSelected(null);
+  };
+
   const dropSelectedInv = () => {
     if (selected?.kind !== "inv") return;
     bus.emitTyped("inventory:action", { type: "drop", slot: selected.index });
@@ -262,6 +278,7 @@ export function InventoryTouch() {
         selectedDef={selectedInvDef}
         selectedQuantity={selectedInvSlot?.quantity ?? 0}
         onEquip={equipSelectedInv}
+        onConsume={consumeSelectedInv}
         onDrop={dropSelectedInv}
         onUnequip={unequipSelected}
         onCancel={() => setSelected(null)}
@@ -454,6 +471,7 @@ interface TouchActionBarProps {
   selectedDef: (typeof ITEMS)[string] | null;
   selectedQuantity: number;
   onEquip: () => void;
+  onConsume: () => void;
   onDrop: () => void;
   onUnequip: () => void;
   onCancel: () => void;
@@ -478,6 +496,14 @@ function TouchActionBar(props: TouchActionBarProps) {
             onClick={props.onEquip}
           >
             Equip
+          </button>
+        )}
+        {selected.kind === "inv" && selectedDef?.consumable && (
+          <button
+            className="px-btn px-btn-green"
+            onClick={props.onConsume}
+          >
+            Eat
           </button>
         )}
         {selected.kind === "inv" && (
