@@ -35,26 +35,26 @@
         },
         "chunks/0_0.tmx": {
             "scale": 0.125,
-            "selectedLayer": 5,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 3352,
-                "y": 3152
+                "x": 4920,
+                "y": 3552
             }
         },
         "chunks/0_1.tmx": {
             "scale": 0.125,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 1936,
-                "y": 1432
+                "x": 1024,
+                "y": 1020
             }
         },
         "chunks/0_2.tmx": {
             "scale": 0.125,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 1936,
-                "y": 408
+                "x": 1024,
+                "y": 1020
             }
         },
         "chunks/0_3.tmx": {
@@ -67,18 +67,18 @@
         },
         "chunks/1_0.tmx": {
             "scale": 0.125,
-            "selectedLayer": 5,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 944,
-                "y": 2848
+                "x": 1020,
+                "y": 1020
             }
         },
         "chunks/1_1.tmx": {
-            "scale": 0.75,
-            "selectedLayer": 5,
+            "scale": 0.125,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 1023.9999999999999,
-                "y": 1024
+                "x": 2760,
+                "y": 3720
             }
         },
         "chunks/1_2.tmx": {
@@ -88,16 +88,16 @@
             "scale": 0.125,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 912,
-                "y": 408
+                "x": 2760,
+                "y": 1672
             }
         },
         "chunks/1_3.tmx": {
-            "scale": 1.5,
-            "selectedLayer": 11,
+            "scale": 0.125,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 511.99999999999994,
-                "y": 512
+                "x": 2760,
+                "y": -376
             }
         },
         "chunks/1_4.tmx": {
@@ -112,32 +112,32 @@
             "scale": 0.125,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": -112,
-                "y": 2456
+                "x": 1024,
+                "y": 1020
             }
         },
         "chunks/2_1.tmx": {
             "scale": 0.125,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": -112,
-                "y": 1432
+                "x": 1024,
+                "y": 1020
             }
         },
         "chunks/2_2.tmx": {
             "scale": 0.125,
-            "selectedLayer": 5,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": -1104,
-                "y": -1248
+                "x": 712,
+                "y": 1672
             }
         },
         "chunks/2_3.tmx": {
-            "scale": 0.33,
+            "scale": 0.125,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 512.1212121212122,
-                "y": 509.0909090909091
+                "x": 712,
+                "y": -376
             }
         },
         "chunks/3_0.tmx": {
@@ -252,8 +252,8 @@
             "scale": 1.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 303.99999999999994,
-                "y": 224
+                "x": 304,
+                "y": 224.33333333333331
             }
         },
         "interiors/starter_dungeon.tmx": {
@@ -264,15 +264,15 @@
             "selectedLayer": 5,
             "viewCenter": {
                 "x": 512,
-                "y": 512
+                "y": 512.5
             }
         },
         "interiors/tutorial_island/Players_Basement.tmx": {
             "scale": 1.5,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 319.99999999999994,
-                "y": 240
+                "x": 320,
+                "y": 240.33333333333331
             }
         },
         "ships/galleon-e.tmx": {

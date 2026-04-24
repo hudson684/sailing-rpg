@@ -388,49 +388,49 @@
       "id": "slime_small_green-1",
       "defId": "slime_small_green",
       "tileX": 109,
-      "tileY": 143
+      "tileY": 207
     },
     {
       "id": "slime_small_green-2",
       "defId": "slime_small_green",
       "tileX": 109,
-      "tileY": 143
+      "tileY": 207
     },
     {
       "id": "slime_small_green-3",
       "defId": "slime_small_green",
       "tileX": 104,
-      "tileY": 138
+      "tileY": 202
     },
     {
       "id": "skeleton-7",
       "defId": "skeleton",
       "tileX": 136,
-      "tileY": 134
+      "tileY": 198
     },
     {
       "id": "skeleton_swordsman-8",
       "defId": "skeleton_swordsman",
       "tileX": 137,
-      "tileY": 136
+      "tileY": 200
     },
     {
       "id": "skeleton-10",
       "defId": "skeleton",
       "tileX": 126,
-      "tileY": 132
+      "tileY": 196
     },
     {
       "id": "skeleton-8",
       "defId": "skeleton",
       "tileX": 119,
-      "tileY": 132
+      "tileY": 196
     },
     {
       "id": "skeleton-9",
       "defId": "skeleton",
       "tileX": 125,
-      "tileY": 137
+      "tileY": 201
     },
     {
       "id": "pirate-7",

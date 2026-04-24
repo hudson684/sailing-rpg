@@ -1,141 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="64" height="64" tilewidth="32" tileheight="32" infinite="0" nextlayerid="20" nextobjectid="1">
- <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
- <tileset firstgid="226" source="../themes/Grass Land/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
- <tileset firstgid="736" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet1.tsx"/>
- <tileset firstgid="4256" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses3.tsx"/>
- <tileset firstgid="6368" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass - transparency.tsx"/>
- <tileset firstgid="10328" source="../themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass(transparency) - river orientation.tsx"/>
- <tileset firstgid="11198" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses2.tsx"/>
- <tileset firstgid="15294" source="../themes/Grass Land/TiledMap Editor/Tilesets/Atlas-Props-sheet3.tsx"/>
- <tileset firstgid="16438" source="../themes/Grass Land/TiledMap Editor/Tilesets/fence-straight.tsx"/>
- <tileset firstgid="16486" source="../themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx"/>
- <tileset firstgid="20446" source="../themes/Grass Land/TiledMap Editor/Tilesets/fertilized soil.tsx"/>
- <tileset firstgid="20586" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
- <tileset firstgid="21096" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Tilesets-GL2SA.tsx"/>
- <tileset firstgid="21800" source="../themes/The Village/TiledMap Editor/tilesets/Free_Premade_houses.tsx"/>
- <tileset firstgid="24872" source="../themes/The Village/TiledMap Editor/tilesets/Premade_houses.tsx"/>
- <tileset firstgid="28968" source="../themes/The Village/TiledMap Editor/tilesets/roofs2.tsx"/>
- <tileset firstgid="33064" source="../themes/The Village/TiledMap Editor/tilesets/side_roofs_details_extrusion2.tsx"/>
- <tileset firstgid="37160" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/waterfall.tsx"/>
- <tileset firstgid="37369" source="../tilesets/blacksmith-building.tsx"/>
- <tileset firstgid="38153" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains2-8 frames.tsx"/>
- <tileset firstgid="39110" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains2-8 frames-with transparency.tsx"/>
- <tileset firstgid="40067" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains2-16 frames.tsx"/>
- <tileset firstgid="42407" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains2-16 frames-with transparency.tsx"/>
- <tileset firstgid="44747" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains-8 frames.tsx"/>
- <tileset firstgid="45704" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains-8 frames-with transparency.tsx"/>
- <tileset firstgid="46661" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains-16 frames.tsx"/>
- <tileset firstgid="49001" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Animated Terrains-16 frames-with transparency.tsx"/>
- <tileset firstgid="51341" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 1.tsx"/>
- <tileset firstgid="51581" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 1-transp.tsx"/>
- <tileset firstgid="51821" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 2.tsx"/>
- <tileset firstgid="52141" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 2-transp.tsx"/>
- <tileset firstgid="52461" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 3.tsx"/>
- <tileset firstgid="52701" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 3-transp.tsx"/>
- <tileset firstgid="52941" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 4.tsx"/>
- <tileset firstgid="53181" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 5.tsx"/>
- <tileset firstgid="53421" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 5-transp.tsx"/>
- <tileset firstgid="53661" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 6.tsx"/>
- <tileset firstgid="53901" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 6-transp.tsx"/>
- <tileset firstgid="54141" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 7.tsx"/>
- <tileset firstgid="54381" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 7-transp.tsx"/>
- <tileset firstgid="54621" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 8.tsx"/>
- <tileset firstgid="54861" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset - wall 8-transp.tsx"/>
- <tileset firstgid="55101" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Ancient Ruins-Tileset-Terrain2.tsx"/>
- <tileset firstgid="59131" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Atlas-Props.tsx"/>
- <tileset firstgid="61681" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Atlas-Props2.tsx"/>
- <tileset firstgid="64281" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/garden border.tsx"/>
- <tileset firstgid="64317" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/Terrain - Ancient Ruins.tsx"/>
- <tileset firstgid="66526" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/waterfall - blood.tsx"/>
- <tileset firstgid="66735" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/waterfall - blood-transp.tsx"/>
- <tileset firstgid="66944" source="../themes/Ancient Ruins/TiledMap Editor/Tilesets/waterfall-transp.tsx"/>
- <layer id="1" name="ocean" width="64" height="64">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="64" height="64" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="1">
+ <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
+ <tileset firstgid="4097" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
+ <tileset firstgid="4607" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx"/>
+ <tileset firstgid="4867" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
+ <tileset firstgid="5092" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass - coast.tsx"/>
+ <tileset firstgid="6078" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx"/>
+ <tileset firstgid="7064" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Tilesets-GL2SA.tsx"/>
+ <layer id="1" name="Ocean" width="64" height="64">
   <data encoding="base64" compression="zlib">
-   eJztwwEJAAAAAqD+r2tSOwIFm6Sqqqqqqqqq6nUAAAAAAAAA4N8AidGAWw==
+   eJztwzENAAAMA6B6mH9TVVQZeyChl1RVVVVVVVVVVVVVVVVVVVV9PYkqUNM=
   </data>
  </layer>
  <layer id="2" name="beach" width="64" height="64">
   <data encoding="base64" compression="zlib">
-   eJztWFty20YQHHwkOYGTG8RQbkIiH/A5tFZESjqGnZvEdk4iWbkBHovnj2znO4Wwu9BawXIqD0pUtqu2SMPcFWamZ6ZnzSL+z/g6ubt+SB76rfaHzsxGM2vMrDWzLDE7WvDJN0/UJ5WZDVjrxMwlu++rxKy23Vov+OSp+KNH7BvwYOKDh/0ezyb7p880mX/7VDhCOycbW8S7CewvbMeL6VklnCjhK/7+6ADtn/I9gy20Z8DzXvxBm5kXHtwZUDc67CmEM4eAErymfbS5gN29xL9HnFfgSgE/dPj/Cmd0OOMQMMJGBw4wpg42sic0qJUZamSa3I03fTTCL4eAFPEcYTdzIEP+k+uj1IJKbKavPPZW4qcWZ/74iHOhl7x1yWw3+2GF57XY19ocZ/qnhS9T8GiUM44esaZirDvYsAbXS8l51kZy3IMHNfyRYn8nudLbHP/OlnvD94nZ63y3fs0fwvq5z7X4Ptmyxie1QSm8J/erwP40mXnPmuAkt1LhwVfQC88Ts6vcbJObvcvNfn4AH1DPUOMwxtR+K3nOXphKrVtL7WBvYM9gL2HfGMCD5/DV5PePudl78cG+eZBKL3OS7+S7l1xnnpDTpeiAGhzykgOqKxrhDPvMn77OzY7zHQ/O/wMe/JLPObaUZ6PN9rPetaJrBvnukjn+HfasYGOWzPlTY08Pm0vpB+RDCt6c5Lv1E9YpfPBv1ITJ9jc4czr7U272e3Am+1cnGm+QWkCto/2N2iATf1ArNGIb+yk5Q83gkrnXnCDuG7zjRW72Nje7/odceAXbJ25tcf5vC2fx3TgDFFITqI170UUN4j5IHWTPIB8Y81bs51xZyrPpb35AfI5h+5QHZ/DJ9m/WBMb9JWrLFWL/3Yu7v12JdiFfG+lvmt+lzDqsjczxQbSvl3xqhC+clbzUmGcvdj44Q8y38MU53v1Y8uGvcIG2X+CMM/hhKfYGewuJXS05yjhS53A5yeVWeLEWDZ0hf7QOdDJrtDIj3ORm38IPW9i9xXtfSf6+kzoW+uIVnr/Bnmvh0sk99vcy96heYR0Y5L07mYfGYHYK9YKXsxuZpzq5cyqCd7lEnm5g/wlqARdjehz4Qu3ewF9TX3XYd3pPLRmCuy+NG+vYKpgF9N8F9lYS51rOZD+spD4O8ncV5AEXa8MWcTyTmNJPDn45lc8r7DmX2vq5esrY+uAuiPchnPmdzP6FaAHqnzroA4PY60U/ZKIx+/sSecEf9Mlb1LMPsPlaNAR76CfJKfbXjwu1hHbw3SrRPd5uzwKZ9Hb2Ri/aIJV9g/TWLLldCzlvj1+w/z6fTLV8yT9crPU38NNGaqz6wUlPJgfKgL+93JMWwhm9O3LJrJ/Y+yu7rZEr2c8aug/QBw4cuYAPJk4UYlctOZBK7x9F5zUy7xRB/nD2Xcm8PIhe8KKJ6dN9gX2WeUDd6YLc1thxlqtFtxSBFlS/se+t5Z6UfmTMqRs4I+8Tl+DAe+TB5Asvfcwv5DpjuArylzNgI7MTtZGTeyHtkYNobPp3nyAHXkrf6EX7jqL7aVMns7zebejdzyA9nTOw9nnuY11diRbeNy7RG9lTee/TBnqPdSuTmtZJz+d9BzVNIzpSZ59K9H4nOnBc6P/7wE3QF1OZ4XSGX8tdXiv33F64PkovLGV+8kGdHIP7I/cI7sifoU9GREREREREREREREREREREREREREREREREREREREREHD7+AFWsEG4=
+   eJztwTEBAAAAwqD1T20MH6AAAAAAAAAAAAAAAAAAAACAtwFAAAAB
   </data>
  </layer>
  <layer id="3" name="grass" width="64" height="64">
   <data encoding="base64" compression="zlib">
-   eJztWMFNxDAQNC3A8Y2viROiFiiBB61g6ACJWmy3QDHA6rwwN6yQEA/nuBkpSi6Josx4dnZzKQmCIJwmLrYpPS2z32Ie+pLS45LS7YlqYPzr0OAUvdCMb97rYHvTYbM9IT/k/frbvsDedLgZWlxu98c3cO6/+MS5276DF+x3GVtbDu+zc9f5f2jg/m+Df1m++LM26JMGHjnmWumDWxubc8NzmBGFtHAdjtYLwdo7V9bFr7kHCmhj9XCMPijAD9e+0pqjJ1wzzAa79pJns/k9CnDHuq/Ar9G1Dl7AbDQPHFvvLORxrgHniOuNWqF+Xhemw+Xom2vXosN6VjrG7MPe13/IC/YOarHGjKzU6wpxb8FcgD2wBv2yUEZ00mIz5imbt2eDs78shzMh54F7oZM2fK//bpQjlfJ0NnpQ18iJM66BPyplQIf15x5SyVefek5GDWqZ1xe9gTyi7KvkIZ6rC3lgNqJ3LsSb50KuEb6fs4D1Qw/MBq5FlIFcB/wtxDNRBZ6sHc/Qa1h/zqhO9R3NBJgT3CdawJ37SUP/TEYL/MxcMct5/kOvY/3gPM0b1thsYE1jjmEO8vVGHsd7GjyD+aK+fSX8C/nY+aEf7nNKVzmlN+px6JUS9MNonsTcWAN/nn1tb3zPt3u+PrfZvLbL3z3P8yFmCPcDv2bPv8vr4M/fs2cfXF/Hd+zzeE+ec3vg8U7HkTauif1f8rCS9W9Uk/4/uM/nuxznF85/PNNG/aJSjtSV8ed5Dr95cQbgvMOZkbOddWlRVgqCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIPwR78lyxIE=
+   eJztwTEBAAAAwqD1T20MH6AAAAAAAAAAAAAAAAAAAACAtwFAAAAB
   </data>
  </layer>
- <layer id="4" name="shade grass" width="64" height="64">
-  <data encoding="base64" compression="zlib">
-   eJztmMFNxDAQRefC0gELHOzUgYBWgB6gFAiUgKglDjVsJewoHjFaRYJbpJn3JEtZ7yUvf8a2LAIAkJOrQeSpbP0W2zEXkfeS9xuov47nuvWbbIO6n1WR76T5q7uOrPmr+5i4/qeyjK+k/q37H5z/63FPuEyyL1r9m/9DEbmpy7p4X0Ueg++Ntv6rq2b+1vdD6wv97xC4N9S1dU/ztWed31WRu8D+Vv8+b5tT9/PA7op6jj1rXwe+/6+HZXwEXAfG7tzK77P5N1cXLege2Vz25m81Mbva0PmI/uNK1tPJ75cqcht0HfRr3+jqwL6Bun8G9DYm1//NZb0/ngUuhpiZe3yP74JnvYb19z5B1mu0Evt8+xda+1nvfqTnn9l/Tl7/p3cf2ZiDnuv/S+a7XwAAAAAAAAAAAAAAAAAAAIjBDyTAZSs=
-  </data>
- </layer>
- <layer id="5" name="river" width="64" height="64">
-  <data encoding="base64" compression="zlib">
-   eJztWttNxDAQ3HLWtVwlV8GVkAZykSiABuw1DdAAClAAHYBoAEXsKhOLP6Q7yeOR8p/xzr5XZGBgYGBgYOC/yCpiKrKqSNF7/83tkZ37Qsr/RUW+0y/3xd+CDdm5V+fP9AYXFbm69k13HRjBG2zc3137wd8gHvSOKe0+vzT8X1XkrfM3CP6lyQHb99Q599C+gd0Xt/tn57bHmBc2rySaF9e96dH3H5LIFwF3gZon8j0T98AZ+D+ne//NbRGxr7rtGXwekSHeP5LZfvbYb6R+n6HH6b3GaTG730evx6Z9zPuFMO5Hzos6l9X3N/4fZLbfcEq82he3f/WP1f6FWP+Txz+G+cZfyMrb84jrP2o/ttpHmnkfo/+foP5j5D+lvf5h9P+I/6z5f4L8z2r/mPWz8W93fWz6x9qnEto/A/dCVv/Mza6PLf6F9k33+Q+T/TNwZ5x7T9D3MPa+53S88WDSfux7Fph7M/GPmbfBnp9p35n1eNvIlPcusO8qZHPvGXb8eNvIEvux1zeyGx+0PSP3K/j7ShTzL5DrDXo9ll4/wy1ncGe5aWzrvHgDhnjf3rVUoloX77lWsP9KUu9lPdY4wT800Lv+Y6dZYL5XQQsM/Etzw1/BB3rz/x9/YRSq
-  </data>
- </layer>
- <layer id="6" name="ground" width="64" height="64">
-  <data encoding="base64" compression="zlib">
-   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
-  </data>
- </layer>
- <layer id="7" name="overlay" width="64" height="64">
-  <data encoding="base64" compression="zlib">
-   eJzt1jFOQkEQh/HvArx9HcYEuImZCtFAaEgMEjpPoGcUDqONegGapYMEkjWPzft+3U6mmP82MyBJkqS+2ga8BSwClgHPAbOAp/xeBcwDXqLrSf/H64W5Lu2rjfnL9tXG/GX7amP+sn212eT9f9z1DznnNN8Ai1xfX5H/vjld/xrA96DM3DUaNnB35m+kW/WZYJdgn7qepBs/CX4T/PU0/6iFcQuTtutJJNVq2sBjj++f9wY+epxfkiRJkiRJkiRJkiRJZRwA3Kcebg==
-  </data>
- </layer>
- <layer id="8" name="props_low" width="64" height="64">
-  <data encoding="base64" compression="zlib">
-   eJztz8ENQVEARNGpRRBNTAuCqEb4UY2VIlm8pTWSd04y+7kJAAAAAAAAMLtVk3WTzdi2ya6/fvU9+yaHJsexU5PzRP2XJtcmt7Hl3X6fqP/xofU5UT8AAAAAAAAA8D9e+DULyQ==
-  </data>
- </layer>
- <layer id="9" name="buildings low" width="64" height="64">
-  <data encoding="base64" compression="zlib">
-   eJzt0ddtYwEQQ9FbgHPsZGaKkKxghaaUY1POsR2zhP0QVsADTwUkLpiZmZmZmZmZmZnZv2gFtAMeAjoB3YBeQD/gMWAQMAwYBYzj2GsPbxIwDZgFzAMWAcuAVcA6YBOwDdgF7Bv4/0n9n9X/Rf1f1f9N/d/V/0P9P9X/S/2/1f9H/X8b+P8k4TThLOE84SLhMuEq4TrhJuE24S7hPo+99vBaCe2Eh4ROQjehl9BPeEwYJAwTRgnjBv6fqP9U/WfqP1f/hfov1X+l/mv136j/Vv136r9v4P8n9X9W/xf1f1X/N/V/V/8P9f9U/y/1/1b/H/X/beD/k4LTgrOC84KLgsuCq4LrgpuC24K7gvs69trDaxW0Cx4KOgXdgl5Bv+CxYFAwLBgVjBv4f6L+U/Wfqf9c/Rfqv1T/lfqv1X+j/lv136n/voH/zczMzMzMzMzMzMzMzMzMzP63P7IDTv0=
-  </data>
- </layer>
- <layer id="10" name="buildings_high" width="64" height="64">
-  <data encoding="base64" compression="zlib">
-   eJzt0dVxJUcYhuG3aknSIWlEKZh9Md2TwJIYlmZOAN1ldhBLYlxIYc1BLEk6JFYKZqfg79J3VpVXPtpRvwF0/V8/EAqFQqFQKBQKhUKhUCgUCv331mJYj9t9xclWi6EeQyOGZgytGLZj2IlhN4a9GPZjOIjhMIajnP1HwUDRQMlA2UDFQLeBHgORgV4DfQb6DQwYGDTtvvjNNmpgzMC4gQkDkwamDEwbuGHgpoFbBm4buGMgzdn+efkvyH9R/kvyX5b/ivxX5b8m/3X5P5L/Y/k/kf/TnO2vyb8u/4b8m/JvyX9b/jvy35X/nvz35X8g/0P5H+Vsf8FC0ULJQtlCxUK3hR4LkYVeC30W+i0MWBi07b74zTZqYczCuIUJC5MWpixMW7hh4aaFWxZuW7hjIc3Z/nn5L8h/Uf5L8l+W/4r8V+W/Jv91+T+S/2P5P5H/05ztr8m/Lv+G/Jvyb8l/W/478t+V/5789+V/IP9D+R/lbH8hgWICpQTKCVQS6E6gJ4Eogd4E+hLoT2AggcGk3ReHQqF/9k4E70bwXgTvR/BBBB9G8FEEH0ftvu7k+ySCTyP4LILPI/gigi8j+CqCr8/A/mfy/0b+38r/O/l/L/8f5P+j/H86A/t/lv8v8v9V/r/J/3f5/yH/P+X/1xnYHwqFQqFQKBQK5bmNFDZT2EqhlkI9hUYKzRRaKWynsJO2+8qTqyODzgy6MihkUMyglEE5g0oG3Rn0ZMd765yD8w4uOLjo4JKDDgedDrocFBwUHZQclB1U3Emv+/eGMhjOYCSD0QzGMhjPYCKDyQymMpg+5v7LDq44uOrgmoPrDoYcDDsYcTDqYMzBuIMJB5OnYP+M/GflPyf/efkvyH9R/kvyX5b/ivxXj7n/rvzvyf++/B/I/6H8Z+Q/K/85+c/Lf0H+i/Jfkv/yKdi/If9N+W/Jvyb/uvwb8m/KvyX/bfnvHHP/c/m/kP9L+b+S/2v5b8h/U/5b8q/Jvy7/hvyb8m+dgv0dVeisQlcVClUoVqFUhXIVKlXorkJP9XhvnfNw3sMFDxc9XPLQ4aHTQ5eHgoeih5KHsoeKP+l1/2+XPVzxcNXDNQ/XPQx5GPYw4mHUw5iHcQ8THiZztv+u/O/J/778H8j/ofxn5D8r/zn5z8t/Qf6L8l+S/3LO9j+X/wv5v5T/K/m/lv+G/DflvyX/mvzr8m/Ivyn/Vs72h0KhUCgUejv6Gzdj6zk=
-  </data>
- </layer>
- <layer id="11" name="props_high" width="64" height="64">
+ <layer id="4" name="Dock" width="64" height="64">
   <data encoding="base64" compression="zlib">
    eJztwTEBAAAAwqD1T20MH6AAAAAAAAAAAAAAAAAAAACAtwFAAAAB
   </data>
  </layer>
- <layer id="12" name="roof" width="64" height="64">
+ <layer id="5" name="overlay" width="64" height="64">
   <data encoding="base64" compression="zlib">
-   eJzt1MWvnFUcx+EHl0DyvgvcNbTFChXc9rgUX3NvnXnbAluC+/kBf0PvrUGCrHHXPW535krbpBK0HJa9yWyaNsNMz7M5ObvzzSc5FEVRFEVRFEVRFEVRFEVRFEVRFINkx2E731dXjFSMVqypWFuxrmJ9xYaqV6/cc2YdvvN9rKJd0akYr5iomKyYqtg4gPsXTNt/Vs2Mmpk1s2rOrjmn5tya8+pevXLPeXja/vtqhmqGaxbWLKpZXLOkZukA7p9ude4/kvuP5v5rcv+1uf+63H997r9hL9g/lvu3c/9O7j+e+0/k/pO5/1Tuv3Ev2F/01luJtxPvJN5NvJd4P/FB4sPER4mPE58kPk18lvg88UXiy8RXia9Tr1fsum8S3ya+S3yf+CHxY+KnxM+JXxK/Jn5LjCXaiU5iPDGRmExM9fH+3xN/JP5M/JX4O/FPYsd/m4J9gn2D/YL9gwOCA4ODgoODQ4JDo9crdt0RwZHBUcHRwTHBscFxwfHBCcGJwUnBycEpwanBacHpwRnBmX28f3ZwQXBhMCeYG8wL5gcXBRcHlwSXBpcFlwdXBFcGVwVXB9f08f5rg+uC64MbghuDm4Kbg1uCW4PbggXB7cEdwZ3BXcHdwT3BvX28fygYDhYGi4LFwZJgabAsWB7cH7SCJlgRrAxWBQ8EDwYP9fH+R/J/9mj+zx7L/9nj+T97Iv9nTwZPBU8HzwTPBs8FzwcvBCmI4MXgpfx/vNzH+4uiKIqi37RbdFpsbrGpy7mlxdYW21psb/X6xbvXjIaZDbMbzu9yzmmY2zCvYX7T6xfvXkMNww3LG5Z1OZuGFQ0rG1YN2P6R3H80d341936ly/la7v967v9G7v/mgO1v5/6d3Hlz7r2py7kl99+a+2/L/bcP2P6iKIqiKIqi+L/7FyUbAKQ=
+   eJztwTEBAAAAwqD1T20MH6AAAAAAAAAAAAAAAAAAAACAtwFAAAAB
   </data>
  </layer>
- <layer id="13" name="roads" width="64" height="64">
+ <layer id="6" name="props_low" width="64" height="64">
   <data encoding="base64" compression="zlib">
-   eJzt2G1ugzAMBmDfaJt2h/QArIdqw3omCN2ZKIwfUzVbtaLwESpQCu8jRUzratXEKfaIAAAAAAAAAAAAAAAAAAAAAAAAAADgVZ0M0RevS+B6NNNjZfye0PqOiLMGyftsiBpeTv1cGSJriK4Rn7vj9zi1JF5MnKX5ebeG6McQvR8e1xvn8nkYjpWpWrnHLDlviSnrYyTOmireX9nnUI61+b8HOefXdw4KjmP5WnLuvwntt09q2/Ln7avNgl8ve+5RxnvuOFbLtZPSXodIncvq26tC5RT6m0Kd89T3fI56JKdOnfPU93wJHX8/xD4nt+Ckzr5L7Pm2Bv3d2O6w/iX/aod7T3z23Qbyz2b26G/cIw71D6m6qBnnrHrg2DMsz/+xHjk1VtVu80TvIvNOnuB8N6TiurUDve0U+hkQmhMyVWdz5umlNKpnfaZfL9QMJbNk7s2Dll93E+fJNdxz7uvpY8j517XUeL9zG54RajVDyUx183J26n682nNiDv+e6P+p7K1HhDT9ASEN24o=
+   eJztwTEBAAAAwqD1T20MH6AAAAAAAAAAAAAAAAAAAACAtwFAAAAB
   </data>
  </layer>
- <layer id="14" name="buildings_low" width="64" height="64">
+ <layer id="7" name="props_high" width="64" height="64">
   <data encoding="base64" compression="zlib">
-   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
+   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
   </data>
  </layer>
- <layer id="15" name="roof_mid" width="64" height="64">
-  <data encoding="base64" compression="zlib">
-   eJztzzERACEQBMHVxTsDCWf6DUAVCQl0h5NNAgAAAAAAAAAAAAAAwItaJV/t99v0Ssbkc9UBAABO+wG3iwct
-  </data>
- </layer>
- <layer id="16" name="roof_windows" width="64" height="64">
-  <data encoding="base64" compression="zlib">
-   eJztyDEBADAIA7DqR8ywiAWeXSRnEgAAAAAAAAAAAAAAALjnVdK1fwAAgN8GyVsE4w==
-  </data>
- </layer>
- <layer id="17" name="roof_high" width="64" height="64">
-  <data encoding="base64" compression="zlib">
-   eJztz7ERgCAUBcE32rlGn7KwMRrAGRIT3A0vuwQAAAAAAAAAAAAAAOCfrkruWu+76ZU8k8+3vpujJWdb7wAAAF8baEELjw==
-  </data>
- </layer>
- <layer id="18" name="Tile Layer 7" width="64" height="64">
+ <layer id="8" name="roof" width="64" height="64">
   <data encoding="base64" compression="zlib">
    eJztwTEBAAAAwqD1T20MH6AAAAAAAAAAAAAAAAAAAACAtwFAAAAB
   </data>
