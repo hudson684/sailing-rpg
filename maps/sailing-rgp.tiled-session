@@ -1,19 +1,21 @@
 {
-    "activeFile": "chunks/2_0.tmx",
+    "activeFile": "chunks/0_0.tmx",
     "expandedProjectPaths": [
-        ".",
-        "themes/The Village/TiledMap Editor",
-        "ships",
-        "themes/Grass Land/TiledMap Editor/Tilesets",
-        "themes/grassland/TiledMap Editor/Tilesets",
-        "interiors",
-        "themes/grassland/TiledMap Editor",
+        "themes/The Village/TiledMap Editor/tilesets",
         "themes/grassland",
+        "themes/Grass Land",
+        ".",
+        "themes",
+        "themes/Grass Land/TiledMap Editor/Tilesets",
+        "themes/grassland/TiledMap Editor",
+        "ships",
         "themes/The Village",
         "chunks",
-        "themes/The Village/TiledMap Editor/tilesets",
-        "themes/Grass Land",
-        "themes/Grass Land/TiledMap Editor"
+        "themes/grassland/TiledMap Editor/Tilesets",
+        "interiors",
+        "themes/Grass Land/TiledMap Editor",
+        "interiors/tutorial_island",
+        "themes/The Village/TiledMap Editor"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -40,16 +42,16 @@
             "scale": 0.33,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 512.121212121212,
-                "y": 510.6060606060606
+                "x": 551.5151515151514,
+                "y": 724.2424242424242
             }
         },
         "chunks/0_1.tmx": {
             "scale": 0.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 2276,
-                "y": -462
+                "x": 512,
+                "y": 510
             }
         },
         "chunks/0_2.tmx": {
@@ -57,7 +59,7 @@
             "selectedLayer": 1,
             "viewCenter": {
                 "x": 512,
-                "y": 511
+                "y": 510
             }
         },
         "chunks/0_3.tmx": {
@@ -76,16 +78,16 @@
             "scale": 0.75,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 858.6666666666667,
-                "y": 550.6666666666665
+                "x": 511.99999999999994,
+                "y": 512
             }
         },
         "chunks/1_1.tmx": {
             "scale": 0.75,
             "selectedLayer": 5,
             "viewCenter": {
-                "x": 512,
-                "y": 512.6666666666666
+                "x": 511.99999999999994,
+                "y": 512
             }
         },
         "chunks/1_2.tmx": {
@@ -95,8 +97,8 @@
             "scale": 0.75,
             "selectedLayer": 10,
             "viewCenter": {
-                "x": 512,
-                "y": 512.6666666666666
+                "x": 511.99999999999994,
+                "y": 512
             }
         },
         "chunks/1_3.tmx": {
@@ -104,23 +106,23 @@
             "selectedLayer": 11,
             "viewCenter": {
                 "x": 511.99999999999994,
-                "y": 512.3333333333333
+                "y": 512
             }
         },
         "chunks/1_4.tmx": {
             "scale": 3,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 512,
-                "y": 512.1666666666666
+                "x": 511.99999999999994,
+                "y": 512.3333333333333
             }
         },
         "chunks/2_0.tmx": {
-            "scale": 1,
+            "scale": 0.125,
             "selectedLayer": 7,
             "viewCenter": {
-                "x": 411,
-                "y": 541
+                "x": 1144,
+                "y": 2544
             }
         },
         "chunks/2_1.tmx": {
@@ -135,16 +137,16 @@
             "scale": 0.33,
             "selectedLayer": 5,
             "viewCenter": {
-                "x": 512.121212121212,
-                "y": 510.6060606060606
+                "x": 512.1212121212122,
+                "y": 509.0909090909091
             }
         },
         "chunks/2_3.tmx": {
             "scale": 0.33,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 512.121212121212,
-                "y": 510.6060606060606
+                "x": 512.1212121212122,
+                "y": 509.0909090909091
             }
         },
         "chunks/3_0.tmx": {
@@ -176,7 +178,7 @@
             "selectedLayer": 6,
             "viewCenter": {
                 "x": 511.99999999999994,
-                "y": 512.3333333333333
+                "y": 512
             }
         },
         "chunks/4_0.tmx": {
@@ -200,7 +202,7 @@
             "selectedLayer": 0,
             "viewCenter": {
                 "x": 512,
-                "y": 512.5
+                "y": 513
             }
         },
         "chunks/4_3.tmx": {
@@ -247,8 +249,8 @@
             "scale": 0.33,
             "selectedLayer": 10,
             "viewCenter": {
-                "x": -3933.333333333333,
-                "y": -4163.636363636364
+                "x": 512.1212121212122,
+                "y": 509.0909090909091
             }
         },
         "interiors/cabin.tmx": {
@@ -259,8 +261,8 @@
             "scale": 1.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 304,
-                "y": 224.33333333333331
+                "x": 303.99999999999994,
+                "y": 224
             }
         },
         "interiors/starter_dungeon.tmx": {
@@ -271,15 +273,15 @@
             "selectedLayer": 5,
             "viewCenter": {
                 "x": 512,
-                "y": 512.5
+                "y": 513
             }
         },
         "interiors/tutorial_island/Players_Basement.tmx": {
             "scale": 1.5,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 237.99999999999997,
-                "y": 188.66666666666669
+                "x": 319.99999999999994,
+                "y": 240
             }
         },
         "ships/galleon-e.tmx": {
@@ -898,18 +900,18 @@
     "project": "sailing-rgp.tiled-project",
     "property.type": "bool",
     "recentFiles": [
-        "chunks/0_0.tmx",
-        "chunks/1_0.tmx",
-        "chunks/1_1.tmx",
-        "chunks/1_2.tmx",
-        "chunks/0_2.tmx",
-        "chunks/2_2.tmx",
-        "chunks/2_3.tmx",
-        "chunks/1_3.tmx",
-        "chunks/3_3.tmx",
-        "themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass - river orientation.tsx",
+        "chunks/2_0.tmx",
+        "interiors/tutorial_island/Players_Basement.tmx",
+        "chunks/5_5.tmx",
+        "interiors/starter_dungeon.tmx",
+        "chunks/1_4.tmx",
+        "chunks/4_2.tmx",
+        "chunks/0_1.tmx",
+        "interiors/cabin.tmx",
         "themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx",
-        "interiors/cabin.tmx"
+        "themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass - river orientation.tsx",
+        "chunks/3_3.tmx",
+        "chunks/1_3.tmx"
     ],
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx"
