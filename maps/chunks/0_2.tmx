@@ -1,40 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="1">
- <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
- <tileset firstgid="226" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
- <layer id="7" name="ocean" width="32" height="32">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="64" height="64" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="1">
+ <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Atlas-props.tsx"/>
+ <tileset firstgid="4097" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
+ <tileset firstgid="4607" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Beach-transition tiles between coast platform and beach.tsx"/>
+ <tileset firstgid="4867" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
+ <tileset firstgid="5092" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass - coast.tsx"/>
+ <tileset firstgid="6078" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/platform - grass(transparency) - coast.tsx"/>
+ <tileset firstgid="7064" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/Tilesets-GL2SA.tsx"/>
+ <layer id="1" name="Ocean" width="64" height="64">
   <data encoding="base64" compression="zlib">
-   eJztwwEJAAAMBKHrn+4jrcdQcNVUVVXV1w8WeEAu
+   eJztwzENAAAMA6B6mH9TVVQZeyChl1RVVVVVVVVVVVVVVVVVVVV9PYkqUNM=
   </data>
  </layer>
- <layer id="8" name="beach" width="32" height="32">
+ <layer id="2" name="beach" width="64" height="64">
   <data encoding="base64" compression="zlib">
-   eJztU1sOwiAQXD7Umyh6Eos3qV6lXrIva9s7uJsOAY0/1hQSZZJJSQnM7M5ClJDwm9gqojW4UeH1j6x5YZa83vP3ENhDwXpX5pk5RvIgkD5oZqaW8bDycn7NWvZ2zBtN/MaDryPn7XzJ/QM9Z7329gyzpSmDO/MED5/OZI4s79CQuyuaelujNqmxZzbQM/DWgUa5f/sZPSjgoYdug3ulvgH1tfhanQrrDOfEYwm/c5Bjru1s19AsoSWeTvDWQ7tDPwZy/RrmyT+h8Ly849nrgfCCHozwuzRyz4NG9iO52QgB68HOilYul1DIvTy0cm8hNOz7MehHDNg8qkj6gmPE+gX23SYkJCT8Kx55oVPs
+   eJztwTEBAAAAwqD1T20MH6AAAAAAAAAAAAAAAAAAAACAtwFAAAAB
   </data>
  </layer>
- <layer id="1" name="ground" width="32" height="32">
+ <layer id="3" name="grass" width="64" height="64">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJztwTEBAAAAwqD1T20MH6AAAAAAAAAAAAAAAAAAAACAtwFAAAAB
   </data>
  </layer>
- <layer id="2" name="overlay" width="32" height="32">
+ <layer id="4" name="Dock" width="64" height="64">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJztwTEBAAAAwqD1T20MH6AAAAAAAAAAAAAAAAAAAACAtwFAAAAB
   </data>
  </layer>
- <layer id="3" name="props_low" width="32" height="32">
+ <layer id="5" name="overlay" width="64" height="64">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJztwTEBAAAAwqD1T20MH6AAAAAAAAAAAAAAAAAAAACAtwFAAAAB
   </data>
  </layer>
- <layer id="4" name="props_high" width="32" height="32">
+ <layer id="6" name="props_low" width="64" height="64">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJztwTEBAAAAwqD1T20MH6AAAAAAAAAAAAAAAAAAAACAtwFAAAAB
   </data>
  </layer>
- <layer id="5" name="roof" width="32" height="32">
+ <layer id="7" name="props_high" width="64" height="64">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20PBxQAAADwbhAAAAE=
+   eJztwTEBAAAAwqD1T20MH6AAAAAAAAAAAAAAAAAAAACAtwFAAAAB
+  </data>
+ </layer>
+ <layer id="8" name="roof" width="64" height="64">
+  <data encoding="base64" compression="zlib">
+   eJztwTEBAAAAwqD1T20MH6AAAAAAAAAAAAAAAAAAAACAtwFAAAAB
   </data>
  </layer>
 </map>

@@ -1,47 +1,17 @@
 {
     "type": "world",
     "maps": [
-        { "fileName": "chunks/0_0.tmx", "x": 0,    "y": 0,    "width": 1024, "height": 1024 },
-        { "fileName": "chunks/1_0.tmx", "x": 1024, "y": 0,    "width": 1024, "height": 1024 },
-        { "fileName": "chunks/2_0.tmx", "x": 2048, "y": 0,    "width": 1024, "height": 1024 },
-        { "fileName": "chunks/3_0.tmx", "x": 3072, "y": 0,    "width": 1024, "height": 1024 },
-        { "fileName": "chunks/4_0.tmx", "x": 4096, "y": 0,    "width": 1024, "height": 1024 },
-        { "fileName": "chunks/5_0.tmx", "x": 5120, "y": 0,    "width": 1024, "height": 1024 },
+        { "fileName": "chunks/0_0.tmx", "x": 0,    "y": 0,    "width": 2048, "height": 2048 },
+        { "fileName": "chunks/1_0.tmx", "x": 2048, "y": 0,    "width": 2048, "height": 2048 },
+        { "fileName": "chunks/2_0.tmx", "x": 4096, "y": 0,    "width": 2048, "height": 2048 },
 
-        { "fileName": "chunks/0_1.tmx", "x": 0,    "y": 1024, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/1_1.tmx", "x": 1024, "y": 1024, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/2_1.tmx", "x": 2048, "y": 1024, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/3_1.tmx", "x": 3072, "y": 1024, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/4_1.tmx", "x": 4096, "y": 1024, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/5_1.tmx", "x": 5120, "y": 1024, "width": 1024, "height": 1024 },
+        { "fileName": "chunks/0_1.tmx", "x": 0,    "y": 2048, "width": 2048, "height": 2048 },
+        { "fileName": "chunks/1_1.tmx", "x": 2048, "y": 2048, "width": 2048, "height": 2048 },
+        { "fileName": "chunks/2_1.tmx", "x": 4096, "y": 2048, "width": 2048, "height": 2048 },
 
-        { "fileName": "chunks/0_2.tmx", "x": 0,    "y": 2048, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/1_2.tmx", "x": 1024, "y": 2048, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/2_2.tmx", "x": 2048, "y": 2048, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/3_2.tmx", "x": 3072, "y": 2048, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/4_2.tmx", "x": 4096, "y": 2048, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/5_2.tmx", "x": 5120, "y": 2048, "width": 1024, "height": 1024 },
-
-        { "fileName": "chunks/0_3.tmx", "x": 0,    "y": 3072, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/1_3.tmx", "x": 1024, "y": 3072, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/2_3.tmx", "x": 2048, "y": 3072, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/3_3.tmx", "x": 3072, "y": 3072, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/4_3.tmx", "x": 4096, "y": 3072, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/5_3.tmx", "x": 5120, "y": 3072, "width": 1024, "height": 1024 },
-
-        { "fileName": "chunks/0_4.tmx", "x": 0,    "y": 4096, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/1_4.tmx", "x": 1024, "y": 4096, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/2_4.tmx", "x": 2048, "y": 4096, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/3_4.tmx", "x": 3072, "y": 4096, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/4_4.tmx", "x": 4096, "y": 4096, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/5_4.tmx", "x": 5120, "y": 4096, "width": 1024, "height": 1024 },
-
-        { "fileName": "chunks/0_5.tmx", "x": 0,    "y": 5120, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/1_5.tmx", "x": 1024, "y": 5120, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/2_5.tmx", "x": 2048, "y": 5120, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/3_5.tmx", "x": 3072, "y": 5120, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/4_5.tmx", "x": 4096, "y": 5120, "width": 1024, "height": 1024 },
-        { "fileName": "chunks/5_5.tmx", "x": 5120, "y": 5120, "width": 1024, "height": 1024 }
+        { "fileName": "chunks/0_2.tmx", "x": 0,    "y": 4096, "width": 2048, "height": 2048 },
+        { "fileName": "chunks/1_2.tmx", "x": 2048, "y": 4096, "width": 2048, "height": 2048 },
+        { "fileName": "chunks/2_2.tmx", "x": 4096, "y": 4096, "width": 2048, "height": 2048 }
     ],
     "onlyShowAdjacentMaps": false
 }

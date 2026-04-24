@@ -1,21 +1,21 @@
 {
     "activeFile": "chunks/0_0.tmx",
     "expandedProjectPaths": [
-        "themes/The Village/TiledMap Editor/tilesets",
-        "themes/grassland",
-        "themes/Grass Land",
+        "ships",
+        "themes/Grass Land/TiledMap Editor",
         ".",
+        "chunks",
+        "themes/Grass Land",
         "themes",
         "themes/Grass Land/TiledMap Editor/Tilesets",
-        "themes/grassland/TiledMap Editor",
-        "ships",
-        "themes/The Village",
-        "chunks",
+        "themes/The Village/TiledMap Editor/tilesets",
         "themes/grassland/TiledMap Editor/Tilesets",
-        "interiors",
-        "themes/Grass Land/TiledMap Editor",
+        "themes/The Village/TiledMap Editor",
+        "themes/The Village",
+        "themes/grassland/TiledMap Editor",
+        "themes/grassland",
         "interiors/tutorial_island",
-        "themes/The Village/TiledMap Editor"
+        "interiors"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -36,30 +36,27 @@
             }
         },
         "chunks/0_0.tmx": {
-            "expandedObjectLayers": [
-                6
-            ],
-            "scale": 0.33,
-            "selectedLayer": 4,
+            "scale": 0.125,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 551.5151515151514,
-                "y": 724.2424242424242
+                "x": 1936,
+                "y": 2456
             }
         },
         "chunks/0_1.tmx": {
-            "scale": 0.5,
+            "scale": 0.125,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 512,
-                "y": 510
+                "x": 1936,
+                "y": 1432
             }
         },
         "chunks/0_2.tmx": {
-            "scale": 0.5,
-            "selectedLayer": 1,
+            "scale": 0.125,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 512,
-                "y": 510
+                "x": 1936,
+                "y": 408
             }
         },
         "chunks/0_3.tmx": {
@@ -71,34 +68,30 @@
             }
         },
         "chunks/1_0.tmx": {
-            "expandedObjectLayers": [
-                6,
-                15
-            ],
-            "scale": 0.75,
-            "selectedLayer": 3,
+            "scale": 0.125,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": 511.99999999999994,
-                "y": 512
+                "x": 944,
+                "y": 2848
             }
         },
         "chunks/1_1.tmx": {
             "scale": 0.75,
             "selectedLayer": 5,
             "viewCenter": {
-                "x": 511.99999999999994,
-                "y": 512
+                "x": 1023.9999999999999,
+                "y": 1024
             }
         },
         "chunks/1_2.tmx": {
             "expandedGroupLayers": [
                 14
             ],
-            "scale": 0.75,
-            "selectedLayer": 10,
+            "scale": 0.125,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 511.99999999999994,
-                "y": 512
+                "x": 912,
+                "y": 408
             }
         },
         "chunks/1_3.tmx": {
@@ -119,26 +112,26 @@
         },
         "chunks/2_0.tmx": {
             "scale": 0.125,
-            "selectedLayer": 7,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 1144,
-                "y": 2544
+                "x": -112,
+                "y": 2456
             }
         },
         "chunks/2_1.tmx": {
-            "scale": 0.8145507812499999,
+            "scale": 0.125,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 511.32478120129485,
-                "y": 511.93861647284496
+                "x": -112,
+                "y": 1432
             }
         },
         "chunks/2_2.tmx": {
-            "scale": 0.33,
+            "scale": 0.125,
             "selectedLayer": 5,
             "viewCenter": {
-                "x": 512.1212121212122,
-                "y": 509.0909090909091
+                "x": -1104,
+                "y": -1248
             }
         },
         "chunks/2_3.tmx": {
@@ -255,8 +248,8 @@
         },
         "interiors/cabin.tmx": {
             "expandedObjectLayers": [
-                6,
-                14
+                14,
+                6
             ],
             "scale": 1.5,
             "selectedLayer": 0,
@@ -273,7 +266,7 @@
             "selectedLayer": 5,
             "viewCenter": {
                 "x": 512,
-                "y": 513
+                "y": 512
             }
         },
         "interiors/tutorial_island/Players_Basement.tmx": {
@@ -883,17 +876,11 @@
         "chunks/1_2.tmx",
         "chunks/0_2.tmx",
         "chunks/2_2.tmx",
-        "chunks/2_3.tmx",
-        "chunks/1_3.tmx",
-        "chunks/3_3.tmx",
         "themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass - river orientation.tsx",
         "themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx",
         "interiors/cabin.tmx",
         "chunks/0_1.tmx",
-        "chunks/4_2.tmx",
-        "chunks/1_4.tmx",
         "interiors/starter_dungeon.tmx",
-        "chunks/5_5.tmx",
         "interiors/tutorial_island/Players_Basement.tmx",
         "chunks/2_0.tmx"
     ],
@@ -902,16 +889,16 @@
     "recentFiles": [
         "chunks/2_0.tmx",
         "interiors/tutorial_island/Players_Basement.tmx",
-        "chunks/5_5.tmx",
         "interiors/starter_dungeon.tmx",
-        "chunks/1_4.tmx",
-        "chunks/4_2.tmx",
         "chunks/0_1.tmx",
         "interiors/cabin.tmx",
         "themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx",
         "themes/Grass Land/TiledMap Editor/Tilesets/platform - water to grass - river orientation.tsx",
-        "chunks/3_3.tmx",
-        "chunks/1_3.tmx"
+        "chunks/2_2.tmx",
+        "chunks/0_2.tmx",
+        "chunks/1_2.tmx",
+        "chunks/1_1.tmx",
+        "chunks/1_0.tmx"
     ],
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx"
