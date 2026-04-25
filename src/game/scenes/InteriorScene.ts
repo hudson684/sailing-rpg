@@ -185,11 +185,10 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     this.lastExitTile = { x: entryTx, y: entryTy };
 
     // Camera: bounds to interior, center on player, restore persisted zoom.
-    const { w: wPx, h: hPx } = interiorPixelSize(this.interior);
-    this.cameras.main.setBounds(0, 0, wPx, hPx, true);
     this.cameras.main.setZoom(this.zoomTarget);
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
     this.cameras.main.setBackgroundColor("#1a1208");
+    this.updateCenteredCameraBounds();
 
     // Track canvas resizes (window/orientation change). Otherwise the main
     // camera viewport stays at its initial size and any extra canvas area
@@ -623,6 +622,40 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
 
   private onScaleResize(gameSize: Phaser.Structs.Size) {
     this.cameras.main.setViewport(0, 0, gameSize.width, gameSize.height);
+    this.updateCenteredCameraBounds();
+  }
+
+  /** Set camera bounds so a small interior is centered in the viewport
+   *  instead of pinned to the top-left.
+   *
+   *  When `bounds.size === camera display size` on an axis, Phaser's
+   *  `clampToBounds` locks `scrollX/Y` to `bounds.x/y` (because the clamp
+   *  range collapses to a single value). We exploit this by expanding the
+   *  bounds to the viewport size on any axis where the map is smaller, and
+   *  shifting `bounds.x/y` so the clamp lands on the centered scroll. On
+   *  axes where the map is larger, normal scroll-to-follow behavior is
+   *  preserved. */
+  private updateCenteredCameraBounds() {
+    if (!this.interior) return;
+    const cam = this.cameras.main;
+    const { w: mapW, h: mapH } = interiorPixelSize(this.interior);
+    const zoom = cam.zoom > 0 ? cam.zoom : 1;
+    const viewW = cam.width / zoom;
+    const viewH = cam.height / zoom;
+
+    let bx = 0;
+    let by = 0;
+    let bw = mapW;
+    let bh = mapH;
+    if (mapW < viewW) {
+      bx = -(viewW - mapW) / 2;
+      bw = viewW;
+    }
+    if (mapH < viewH) {
+      by = -(viewH - mapH) / 2;
+      bh = viewH;
+    }
+    cam.setBounds(bx, by, bw, bh, false);
   }
 
   private stepZoomKeyboard(dir: 1 | -1) {
@@ -665,11 +698,15 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     const cam = this.cameras.main;
     const diff = this.zoomTarget - cam.zoom;
     if (Math.abs(diff) < ZOOM_SNAP_EPSILON) {
-      if (cam.zoom !== this.zoomTarget) cam.setZoom(this.zoomTarget);
+      if (cam.zoom !== this.zoomTarget) {
+        cam.setZoom(this.zoomTarget);
+        this.updateCenteredCameraBounds();
+      }
       return;
     }
     const t = 1 - Math.exp(-ZOOM_SMOOTH_RATE * (dtMs / 1000));
     cam.setZoom(cam.zoom + diff * t);
+    this.updateCenteredCameraBounds();
   }
 
   private onShutdown() {
