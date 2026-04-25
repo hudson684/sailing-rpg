@@ -24,7 +24,7 @@ import { PlayerModel, PLAYER_MODEL_ID } from "./PlayerModel";
 import { entityRegistry } from "./registry";
 import type { MapId } from "./mapId";
 
-export const PLAYER_SPEED = 199; // pixels / sec
+export const PLAYER_SPEED = 100; // pixels / sec
 // Collision footprint at the feet. Wider than tall and offset down from
 // `player.y` (the sprite origin, which sits around the waist) so the hitbox
 // hugs the shoes. Tune in this file, not in the sampler.
