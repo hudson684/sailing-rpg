@@ -61,6 +61,7 @@ export function PauseMenu() {
             ))}
           </div>
           <MobileModeRow />
+          <ZoomRow />
           <div className="pause-actions">
             <button className="px-btn px-btn-green" onClick={resume}>Resume</button>
             <button
@@ -98,6 +99,22 @@ export function PauseMenu() {
           </div>
           <div className="px-footer">ESC: toggle · F5: quicksave · F9: quickload</div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ZoomRow() {
+  const zoom = useSettingsStore((s) => s.zoom);
+  const zoomIn = useSettingsStore((s) => s.zoomIn);
+  const zoomOut = useSettingsStore((s) => s.zoomOut);
+  return (
+    <div className="pause-mobile-row">
+      <div className="pause-mobile-label">Zoom</div>
+      <div className="pause-mobile-options">
+        <button className="px-btn px-btn-grey" onClick={zoomOut} aria-label="Zoom out">−</button>
+        <span className="pause-zoom-value">{zoom.toFixed(1)}×</span>
+        <button className="px-btn px-btn-grey" onClick={zoomIn} aria-label="Zoom in">+</button>
       </div>
     </div>
   );

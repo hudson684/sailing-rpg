@@ -778,6 +778,15 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       // doesn't visually drop the equipped item.
       syncPlayerVisualsFromEquipment(this.player, useGameStore.getState().equipment.equipped);
     });
+    // Pick up zoom changes that come from outside the scene (pause-menu
+    // buttons). Wheel/keyboard handlers update the store too, but they also
+    // mutate `zoomTarget` first, so the equality check makes this a no-op.
+    const unsubZoom = useSettingsStore.subscribe((state, prev) => {
+      if (state.zoom === prev.zoom) return;
+      if (Math.abs(state.zoom - this.zoomTarget) <= ZOOM_SNAP_EPSILON) return;
+      this.zoomTarget = state.zoom;
+      this.wheelZoomDir = 0;
+    });
 
     this.events.on(Phaser.Scenes.Events.WAKE, (_sys: unknown, data: InteriorReturnData | undefined) => {
       this.onInteriorWake(data);
@@ -802,6 +811,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       }
       unsubEquipment();
       unsubWardrobe();
+      unsubZoom();
       this.unsubVirtualInput?.();
       this.unsubVirtualInput = null;
       if (activeWorldScene === this) activeWorldScene = null;

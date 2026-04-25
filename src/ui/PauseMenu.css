@@ -126,3 +126,11 @@
   font-size: 13px;
   border-width: 14px;
 }
+
+.pause-zoom-value {
+  align-self: center;
+  min-width: 44px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--pixel-ink);
+}

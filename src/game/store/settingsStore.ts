@@ -11,8 +11,24 @@ import { DEFAULT_WARDROBE, type CfWardrobe } from "../entities/playerWardrobe";
  * so copying a save between machines doesn't carry someone else's preferences.
  */
 
-const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 8;
+export const ZOOM_STEPS = [0.5, 1, 1.5, 2, 3, 4, 6, 8] as const;
+const MIN_ZOOM = ZOOM_STEPS[0];
+const MAX_ZOOM = ZOOM_STEPS[ZOOM_STEPS.length - 1];
+const ZOOM_SNAP_EPSILON = 0.001;
+
+/** Coarse-pointer devices (touch screens) get a closer default zoom because
+ *  the fixed 960×640 viewport renders very small on phone screens. */
+const DEFAULT_ZOOM_DESKTOP = 1;
+const DEFAULT_ZOOM_MOBILE = 2;
+
+function isCoarsePointer(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(pointer: coarse)").matches;
+}
+
+function defaultZoom(): number {
+  return isCoarsePointer() ? DEFAULT_ZOOM_MOBILE : DEFAULT_ZOOM_DESKTOP;
+}
 
 export type MobileMode = "auto" | "on" | "off";
 
@@ -25,6 +41,8 @@ export interface SettingsState {
   mobileMode: MobileMode;
 
   setZoom: (z: number) => void;
+  zoomIn: () => void;
+  zoomOut: () => void;
   setMasterVolume: (v: number) => void;
   setSkinTone: (id: SkinPaletteId) => void;
   setWardrobeLayer: (layer: CfLayer, variant: string | null) => void;
@@ -33,10 +51,23 @@ export interface SettingsState {
   setMobileMode: (m: MobileMode) => void;
 }
 
+function snapStep(cur: number, dir: 1 | -1): number {
+  if (dir > 0) {
+    const next = ZOOM_STEPS.find((s) => s > cur + ZOOM_SNAP_EPSILON);
+    return next ?? MAX_ZOOM;
+  }
+  let prev: number = MIN_ZOOM;
+  for (const s of ZOOM_STEPS) {
+    if (s < cur - ZOOM_SNAP_EPSILON) prev = s;
+    else break;
+  }
+  return prev;
+}
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
-    (set) => ({
-      zoom: 1,
+    (set, get) => ({
+      zoom: defaultZoom(),
       masterVolume: 1,
       skinTone: "default" as SkinPaletteId,
       wardrobe: { ...DEFAULT_WARDROBE },
@@ -45,6 +76,8 @@ export const useSettingsStore = create<SettingsState>()(
 
       setZoom: (z) =>
         set({ zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z)) }),
+      zoomIn: () => set({ zoom: snapStep(get().zoom, 1) }),
+      zoomOut: () => set({ zoom: snapStep(get().zoom, -1) }),
       setMasterVolume: (v) =>
         set({ masterVolume: Math.min(1, Math.max(0, v)) }),
       setSkinTone: (id) => set({ skinTone: id }),
@@ -56,7 +89,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: "sailing-rpg:settings",
-      version: 5,
+      version: 6,
       storage: createJSONStorage(() => localStorage),
       // Old saves without `wardrobe` get the default outfit. No data loss.
       migrate: (persisted: unknown, version: number) => {
@@ -66,6 +99,12 @@ export const useSettingsStore = create<SettingsState>()(
         }
         if (version < 5 || !state.mobileMode) {
           state.mobileMode = "auto";
+        }
+        // v6: bump existing mobile users still sitting on the legacy default
+        // zoom (1) up to the new mobile default. Anyone who picked a custom
+        // zoom keeps it.
+        if (version < 6 && state.zoom === 1 && isCoarsePointer()) {
+          state.zoom = DEFAULT_ZOOM_MOBILE;
         }
         return state as SettingsState;
       },

@@ -146,6 +146,7 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
 
   private unsubEquipment: (() => void) | null = null;
   private unsubWardrobe: (() => void) | null = null;
+  private unsubZoom: (() => void) | null = null;
 
   constructor() {
     super("Interior");
@@ -305,6 +306,12 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
         if (next !== previous) this.player.setBaselineLayer(layer, next);
       }
       syncPlayerVisualsFromEquipment(this.player, useGameStore.getState().equipment.equipped);
+    });
+    this.unsubZoom = useSettingsStore.subscribe((state, prev) => {
+      if (state.zoom === prev.zoom) return;
+      if (Math.abs(state.zoom - this.zoomTarget) <= ZOOM_SNAP_EPSILON) return;
+      this.zoomTarget = state.zoom;
+      this.wheelZoomDir = 0;
     });
 
     bus.onTyped("dialogue:action", this.onDialogueAction);
@@ -715,8 +722,10 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     bus.offTyped("dialogue:action", this.onDialogueAction);
     this.unsubEquipment?.();
     this.unsubWardrobe?.();
+    this.unsubZoom?.();
     this.unsubEquipment = null;
     this.unsubWardrobe = null;
+    this.unsubZoom = null;
     const mapId: MapId = { kind: "interior", key: this.launchData.interiorKey };
     worldTicker.unregisterWalkable(mapId);
     this.npcReconciler?.shutdown();
