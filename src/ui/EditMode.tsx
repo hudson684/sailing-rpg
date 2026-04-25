@@ -134,6 +134,15 @@ export function EditMode() {
             onPick={(defId) => setTool({ kind: "place", entity: "station", defId })}
           />
         )}
+        {snapshot.supportedKinds.includes("chest") && (
+          <PlacePicker
+            label="Chest"
+            options={snapshot.defs.chests}
+            tool={tool}
+            entity="chest"
+            onPick={(defId) => setTool({ kind: "place", entity: "chest", defId })}
+          />
+        )}
         {snapshot.supportedKinds.includes("item") && (
           <PlacePicker
             label="Item"
@@ -238,6 +247,7 @@ interface SelectedEntity {
   enemy?: EditSnapshot["enemies"][number];
   node?: EditSnapshot["nodes"][number];
   station?: EditSnapshot["stations"][number];
+  chest?: EditSnapshot["chests"][number];
   item?: EditSnapshot["items"][number];
   ship?: EditSnapshot["ships"][number];
 }
@@ -262,6 +272,10 @@ function findSelected(
   if (selection.kind === "station") {
     const station = snapshot.stations.find((s) => s.id === selection.id);
     return station ? { kind: "station", station } : null;
+  }
+  if (selection.kind === "chest") {
+    const chest = snapshot.chests.find((c) => c.id === selection.id);
+    return chest ? { kind: "chest", chest } : null;
   }
   if (selection.kind === "item") {
     const item = snapshot.items.find((i) => i.id === selection.id);
@@ -349,6 +363,20 @@ function Inspector({
         <Field label="Tile" value={`${s.tileX}, ${s.tileY}`} />
         <button className="edit-btn danger" onClick={onDelete}>
           Delete Station
+        </button>
+      </div>
+    );
+  }
+  if (selected.kind === "chest" && selected.chest) {
+    const c = selected.chest;
+    return (
+      <div>
+        <Field label="Kind" value="Chest" />
+        <Field label="ID" value={c.id} />
+        <Field label="Type" value={c.defName} />
+        <Field label="Tile" value={`${c.tileX}, ${c.tileY}`} />
+        <button className="edit-btn danger" onClick={onDelete}>
+          Delete Chest
         </button>
       </div>
     );

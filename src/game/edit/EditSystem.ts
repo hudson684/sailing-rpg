@@ -20,6 +20,7 @@ const HIGHLIGHT_COLORS: Record<EditEntityKind, number> = {
   item: 0xb57bff,
   ship: 0x7bffc7,
   station: 0xff9e42,
+  chest: 0xc78a4a,
 };
 
 /**

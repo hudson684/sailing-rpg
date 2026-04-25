@@ -52,6 +52,12 @@ import {
 } from "../world/Decoration";
 import decorationsDataRaw from "../data/decorations.json";
 import {
+  chestOpenAnimKey,
+  chestTextureKey,
+  loadChestsFile,
+} from "../world/Chest";
+import chestsDataRaw from "../data/chests.json";
+import {
   SKIN_PALETTES,
   bakePlayerSkin,
   installPlayerSkinCanvases,
@@ -100,6 +106,7 @@ export function queueAllAssets(scene: Phaser.Scene): void {
   queueEnemySheets(scene);
   queueNodeSheets(scene);
   queueDecorationSheets(scene);
+  queueChestSheets(scene);
   queueNpcSheets(scene);
   queueCharacterModels(scene);
   queueUiTextures(scene);
@@ -258,6 +265,15 @@ function queueEnemySheets(scene: Phaser.Scene): void {
   }
 }
 
+function queueChestSheets(scene: Phaser.Scene): void {
+  for (const def of loadChestsFile(chestsDataRaw).defs) {
+    scene.load.spritesheet(chestTextureKey(def.id), def.sprite.sheet, {
+      frameWidth: def.sprite.frameWidth,
+      frameHeight: def.sprite.frameHeight,
+    });
+  }
+}
+
 function queueDecorationSheets(scene: Phaser.Scene): void {
   for (const def of loadDecorationsFile(decorationsDataRaw).defs) {
     scene.load.spritesheet(decorationTextureKey(def.id), def.sprite.sheet, {
@@ -354,6 +370,7 @@ export function runPostLoadSetup(scene: Phaser.Scene): void {
   setupMountAnims(scene);
   setupNodeAnims(scene);
   setupDecorationAnims(scene);
+  setupChestAnims(scene);
   setupNpcAnims(scene);
   setupCharacterAnims(scene);
 }
@@ -447,6 +464,22 @@ function setupDecorationAnims(scene: Phaser.Scene): void {
       }),
       frameRate: def.sprite.frameRate,
       repeat: -1,
+    });
+  }
+}
+
+function setupChestAnims(scene: Phaser.Scene): void {
+  for (const def of loadChestsFile(chestsDataRaw).defs) {
+    const animKey = chestOpenAnimKey(def.id);
+    if (scene.anims.exists(animKey)) continue;
+    scene.anims.create({
+      key: animKey,
+      frames: scene.anims.generateFrameNumbers(chestTextureKey(def.id), {
+        start: 0,
+        end: def.sprite.frames - 1,
+      }),
+      frameRate: def.sprite.frameRate,
+      repeat: 0,
     });
   }
 }

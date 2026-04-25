@@ -71,6 +71,20 @@ export interface ShopOpenRequest {
   shopId: string;
 }
 
+export interface ChestOpenRequest {
+  chestId: string;
+  chestName: string;
+  loot: Array<{ itemId: string; qty: number }>;
+}
+export interface ChestTakeRequest {
+  chestId: string;
+  /** Loot list index to take. */
+  index: number;
+}
+export interface ChestTakeAllRequest {
+  chestId: string;
+}
+
 /** Generic crafting flow. Emitted by React modal → consumed by WorldScene,
  *  then WorldScene → CraftingScene (minigame) → WorldScene (apply result).
  *  Payloads are skill-agnostic so every crafting skill reuses the same path. */
@@ -100,7 +114,7 @@ export interface WardrobeApply {
 // Edit mode is a developer-only overlay that lets you visually move,
 // place, and delete world entities, then export the resulting JSON.
 
-export type EditEntityKind = "npc" | "enemy" | "node" | "item" | "ship" | "station";
+export type EditEntityKind = "npc" | "enemy" | "node" | "item" | "ship" | "station" | "chest";
 
 /** Which map an edit operation / snapshot entry refers to. `"world"` is the
  *  outer world map; any other string is an interior key. */
@@ -135,6 +149,15 @@ export interface EditNodeEntry {
 }
 
 export interface EditStationEntry {
+  id: string;
+  defId: string;
+  defName: string;
+  tileX: number;
+  tileY: number;
+  map: EditMapId;
+}
+
+export interface EditChestEntry {
   id: string;
   defId: string;
   defName: string;
@@ -184,6 +207,7 @@ export interface EditSnapshot {
   enemies: EditEnemyEntry[];
   nodes: EditNodeEntry[];
   stations: EditStationEntry[];
+  chests: EditChestEntry[];
   items: EditItemEntry[];
   ships: EditShipEntry[];
   defs: {
@@ -191,6 +215,7 @@ export interface EditSnapshot {
     enemies: EditDefEntry[];
     nodes: EditDefEntry[];
     stations: EditDefEntry[];
+    chests: EditDefEntry[];
     items: EditDefEntry[];
     ships: EditDefEntry[];
   };
@@ -250,6 +275,10 @@ type Events = {
   "wardrobe:apply": (change: WardrobeApply) => void;
   "shop:open": (request: ShopOpenRequest) => void;
   "shop:close": () => void;
+  "chest:open": (request: ChestOpenRequest) => void;
+  "chest:close": () => void;
+  "chest:take": (request: ChestTakeRequest) => void;
+  "chest:takeAll": (request: ChestTakeAllRequest) => void;
   "crafting:open": (request: CraftingOpenRequest) => void;
   "crafting:close": () => void;
   "crafting:begin": (request: CraftingBeginRequest) => void;

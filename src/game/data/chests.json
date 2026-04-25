@@ -1,0 +1,43 @@
+{
+  "defs": [
+    {
+      "id": "wood_chest",
+      "name": "Wooden Chest",
+      "sprite": {
+        "sheet": "sprites/decorations/chest-no-horns-opening.png",
+        "frameWidth": 62,
+        "frameHeight": 52,
+        "frames": 8,
+        "frameRate": 12,
+        "scale": 1,
+        "originY": 1
+      },
+      "loot": [
+        {
+          "itemId": "coin",
+          "qty": 25,
+          "chance": 1
+        },
+        {
+          "itemId": "health_potion",
+          "qty": 1,
+          "chance": 0.6
+        }
+      ]
+    }
+  ],
+  "instances": [
+    {
+      "id": "chest_test_1",
+      "defId": "wood_chest",
+      "tileX": 180,
+      "tileY": 76
+    },
+    {
+      "id": "wood_chest-7",
+      "defId": "wood_chest",
+      "tileX": 143,
+      "tileY": 100
+    }
+  ]
+}

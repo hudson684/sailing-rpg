@@ -103,6 +103,21 @@ import {
 import nodesDataRaw from "../data/nodes.json";
 import { Decoration, loadDecorationsFile } from "../world/Decoration";
 import decorationsDataRaw from "../data/decorations.json";
+import {
+  CHEST_INTERACT_RADIUS,
+  Chest,
+  chestLootedFlagKey,
+  loadChestsFile,
+  rollChestLoot,
+} from "../world/Chest";
+import chestsDataRaw from "../data/chests.json";
+import { useChestStore } from "../store/chestStore";
+import type {
+  ChestTakeAllRequest,
+  ChestTakeRequest,
+} from "../bus";
+import { getFlagStore } from "../quests/activeQuestManager";
+import { addToSlots } from "../inventory/operations";
 import playerSpawnRaw from "../data/playerSpawn.json";
 import {
   CraftingStation,
@@ -274,6 +289,11 @@ export class WorldScene extends Phaser.Scene implements EditHost {
   private decorations: Decoration[] = [];
   private fishingSession: FishingSession | null = null;
   private craftingStations: CraftingStation[] = [];
+  private chests: Chest[] = [];
+  /** Mirror of chests.json instances so editor mutations can round-trip on export. */
+  private chestInstanceData: Array<{ id: string; defId: string; tileX: number; tileY: number }> = [];
+  /** Pre-rolled loot for chests still pending interaction. Cleared on take-all. */
+  private chestPendingLoot = new Map<string, Array<{ itemId: ItemId; qty: number }>>();
   private stationInstanceData: CraftingStationInstanceData[] = [];
   private enemies: Enemy[] = [];
   private projectiles: Projectile[] = [];
@@ -488,6 +508,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     phase("spawnGatheringNodes", () => this.spawnGatheringNodes(questCtx));
     phase("spawnDecorations", () => this.spawnDecorations());
     phase("spawnCraftingStations", () => this.spawnCraftingStations(questCtx));
+    phase("spawnChests", () => this.spawnChests());
     phase("loadDropTables", () => this.loadDropTables());
     phase("spawnEnemies", () => this.spawnEnemies(questCtx));
     this.shopsForEdit = (shopsDataRaw as ShopsFile).shops.map((s) => ({
@@ -719,6 +740,9 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     bus.onTyped("crafting:begin", this.onCraftingBegin);
     bus.onTyped("crafting:complete", this.onCraftingComplete);
     bus.onTyped("crafting:cancel", this.onCraftingCancel);
+    bus.onTyped("chest:take", this.onChestTake);
+    bus.onTyped("chest:takeAll", this.onChestTakeAll);
+    bus.onTyped("chest:close", this.onChestClose);
     bus.onTyped("jobs:xpGained", this.onXpGained);
     if (import.meta.env.DEV) {
       bus.onTyped("player:resetSpawn", this.onResetSpawn);
@@ -768,6 +792,9 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       bus.offTyped("crafting:begin", this.onCraftingBegin);
       bus.offTyped("crafting:complete", this.onCraftingComplete);
       bus.offTyped("crafting:cancel", this.onCraftingCancel);
+      bus.offTyped("chest:take", this.onChestTake);
+      bus.offTyped("chest:takeAll", this.onChestTakeAll);
+      bus.offTyped("chest:close", this.onChestClose);
       bus.offTyped("jobs:xpGained", this.onXpGained);
       if (import.meta.env.DEV) {
         bus.offTyped("player:resetSpawn", this.onResetSpawn);
@@ -782,6 +809,9 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       this.enemies = [];
       for (const d of this.decorations) d.destroy();
       this.decorations = [];
+      for (const c of this.chests) c.destroy();
+      this.chests = [];
+      this.chestPendingLoot.clear();
       for (const p of this.projectiles) p.destroy();
       this.projectiles = [];
       this.bowReticle?.destroy();
@@ -1635,6 +1665,163 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     this.stationGate.register(this.stationInstanceData);
   }
 
+  private spawnChests() {
+    for (const c of this.chests) c.destroy();
+    this.chests = [];
+    this.chestPendingLoot.clear();
+    const file = loadChestsFile(chestsDataRaw);
+    this.chestInstanceData = file.instances.map((i) => ({ ...i }));
+    const flags = getFlagStore();
+    for (const inst of this.chestInstanceData) {
+      const def = this.chestDef(inst.defId);
+      if (!def) {
+        console.warn(`Unknown chest defId: ${inst.defId}`);
+        continue;
+      }
+      const looted = flags.getBool(chestLootedFlagKey(inst.id));
+      this.chests.push(new Chest(this, def, inst, looted));
+    }
+  }
+
+  private chestDef(defId: string) {
+    const file = loadChestsFile(chestsDataRaw);
+    return file.defs.find((d) => d.id === defId);
+  }
+
+  private nearestChest(): Chest | null {
+    const flags = getFlagStore();
+    let best: Chest | null = null;
+    let bestDist = CHEST_INTERACT_RADIUS;
+    for (const c of this.chests) {
+      if (flags.getBool(chestLootedFlagKey(c.id))) continue;
+      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, c.x, c.y);
+      if (d <= bestDist) {
+        best = c;
+        bestDist = d;
+      }
+    }
+    return best;
+  }
+
+  private openChest(chest: Chest) {
+    // Re-opening a chest the player closed mid-loot reuses its pending roll
+    // so they don't re-roll loot by toggling the panel.
+    let loot = this.chestPendingLoot.get(chest.id);
+    if (!loot) {
+      loot = rollChestLoot(chest.def);
+      this.chestPendingLoot.set(chest.id, loot);
+    }
+    chest.playOpen(() => {
+      // Re-check pending — the player may have moved away or another flow
+      // may have invalidated the chest by the time the anim finishes.
+      const finalLoot = this.chestPendingLoot.get(chest.id);
+      if (!finalLoot) return;
+      // Empty chests still show the panel ("Empty.") so the player can see
+      // they've found one, then close it normally.
+      useChestStore.getState().open(chest.id, chest.def.name, finalLoot);
+      bus.emitTyped("chest:open", {
+        chestId: chest.id,
+        chestName: chest.def.name,
+        loot: finalLoot,
+      });
+    });
+  }
+
+  private onChestTake = (req: ChestTakeRequest) => {
+    const pending = this.chestPendingLoot.get(req.chestId);
+    if (!pending) return;
+    const entry = pending[req.index];
+    if (!entry) return;
+    const store = useGameStore.getState();
+    const result = addToSlots(store.inventory.slots, entry.itemId, entry.qty);
+    if (result.leftover >= entry.qty) {
+      showToast("Inventory full.", 1500, "warn");
+      return;
+    }
+    store.inventoryHydrate(result.slots);
+    const taken = entry.qty - result.leftover;
+    showToast(`+${taken} ${ITEMS[entry.itemId].name}`, 1300, "success");
+    if (result.leftover > 0) {
+      // Partial take — leave the remainder in the chest.
+      pending[req.index] = { itemId: entry.itemId, qty: result.leftover };
+      useChestStore.setState((s) => {
+        const next = [...s.loot];
+        next[req.index] = { itemId: entry.itemId, qty: result.leftover };
+        return { loot: next };
+      });
+      return;
+    }
+    pending.splice(req.index, 1);
+    useChestStore.getState().removeAt(req.index);
+    if (pending.length === 0) this.finalizeChest(req.chestId);
+  };
+
+  private onChestTakeAll = (req: ChestTakeAllRequest) => {
+    const pending = this.chestPendingLoot.get(req.chestId);
+    if (!pending) return;
+    const store = useGameStore.getState();
+    let slots = store.inventory.slots;
+    const remaining: Array<{ itemId: ItemId; qty: number }> = [];
+    let anyTaken = false;
+    let anyLeftover = false;
+    for (const entry of pending) {
+      const r = addToSlots(slots, entry.itemId, entry.qty);
+      slots = r.slots;
+      const taken = entry.qty - r.leftover;
+      if (taken > 0) anyTaken = true;
+      if (r.leftover > 0) {
+        anyLeftover = true;
+        remaining.push({ itemId: entry.itemId, qty: r.leftover });
+      }
+    }
+    if (!anyTaken) {
+      showToast("Inventory full.", 1500, "warn");
+      return;
+    }
+    store.inventoryHydrate(slots);
+    if (remaining.length === 0) {
+      pending.length = 0;
+      useChestStore.getState().clear();
+      this.finalizeChest(req.chestId);
+      showToast("Took all loot.", 1300, "success");
+    } else {
+      this.chestPendingLoot.set(req.chestId, remaining);
+      useChestStore.getState().open(
+        req.chestId,
+        useChestStore.getState().openChestName,
+        remaining,
+      );
+      if (anyLeftover) showToast("Inventory full — some items left in chest.", 1800, "warn");
+    }
+  };
+
+  private onChestClose = () => {
+    // Player closed the panel. If the chest still has loot, preserve it for
+    // a future re-interact. If it was empty (or was emptied click-by-click
+    // and then closed), finalize so it can't be re-opened forever.
+    const chestId = useChestStore.getState().openChestId;
+    if (!chestId) {
+      useChestStore.getState().close();
+      return;
+    }
+    const pending = this.chestPendingLoot.get(chestId);
+    if (pending && pending.length === 0) {
+      this.finalizeChest(chestId);
+      return;
+    }
+    useChestStore.getState().close();
+    const chest = this.chests.find((c) => c.id === chestId);
+    chest?.playClose();
+  };
+
+  private finalizeChest(chestId: string) {
+    this.chestPendingLoot.delete(chestId);
+    getFlagStore().set(chestLootedFlagKey(chestId), true);
+    useChestStore.getState().close();
+    const chest = this.chests.find((c) => c.id === chestId);
+    chest?.playClose();
+  }
+
   private nearestCraftingStation(): CraftingStation | null {
     let best: CraftingStation | null = null;
     let bestDist = STATION_INTERACT_RADIUS;
@@ -1792,6 +1979,11 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       const station = this.nearestCraftingStation();
       if (station) {
         this.openCraftingStation(station);
+        return;
+      }
+      const chest = this.nearestChest();
+      if (chest) {
+        this.openChest(chest);
         return;
       }
       const door = this.nearestDoor();
@@ -2526,6 +2718,9 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     for (const st of this.craftingStations) {
       if (st.blocksPx(px, py)) return false;
     }
+    for (const c of this.chests) {
+      if (c.blocksPx(px, py)) return false;
+    }
     // Enemies only collide with each other — players and enemies pass through freely.
     if (ignoreEnemy) {
       for (const enemy of this.enemies) {
@@ -2608,6 +2803,8 @@ export class WorldScene extends Phaser.Scene implements EditHost {
         prompt = `Press E to talk to ${npc.def.name}`;
       } else if (station) {
         prompt = `Press E to use ${station.def.name}`;
+      } else if (this.nearestChest()) {
+        prompt = `Press E to open ${this.nearestChest()!.def.name}`;
       } else if (this.nearestDoor()) {
         prompt = "Press E to go inside";
       } else {
@@ -2724,6 +2921,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     "enemy",
     "node",
     "station",
+    "chest",
     "item",
     "ship",
   ];
@@ -2745,6 +2943,9 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     for (const s of this.craftingStations) {
       yield { kind: "station", id: s.id, x: s.x, y: s.y };
     }
+    for (const c of this.chests) {
+      yield { kind: "chest", id: c.id, x: c.x, y: c.y };
+    }
     for (const gi of this.groundItems.values()) {
       if (gi.source === "dropped") continue;
       yield { kind: "item", id: gi.uid, x: gi.x, y: gi.y };
@@ -2760,6 +2961,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       enemies: Array.from(this.enemyDefs.values()).map((d) => ({ id: d.id, name: d.name })),
       nodes: Array.from(this.nodeDefs.values()).map((d) => ({ id: d.id, name: d.name })),
       stations: craftingStations.all().map((d) => ({ id: d.id, name: d.name })),
+      chests: loadChestsFile(chestsDataRaw).defs.map((d) => ({ id: d.id, name: d.name })),
       items: ALL_ITEM_IDS.map((id) => ({ id, name: ITEMS[id]?.name ?? id })),
       ships: Array.from(this.shipDefs.values()).map((d) => ({ id: d.id, name: d.id })),
     };
@@ -2799,6 +3001,14 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       tileY: Math.floor(s.y / TILE_SIZE),
       map,
     }));
+    const chests = this.chests.map((c) => ({
+      id: c.id,
+      defId: c.def.id,
+      defName: c.def.name,
+      tileX: Math.floor(c.x / TILE_SIZE),
+      tileY: Math.floor(c.y / TILE_SIZE),
+      map,
+    }));
     const items = Array.from(this.groundItems.values())
       .filter((gi) => gi.source !== "dropped")
       .map((gi) => ({
@@ -2827,6 +3037,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       enemies,
       nodes,
       stations,
+      chests,
       items,
       ships,
       shops: this.shopsForEdit.map((s) => ({
@@ -2866,7 +3077,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       const ty = Math.floor(py / TILE_SIZE);
       ship.finalizeDock({ tx, ty, heading: ship.docked.heading });
     }
-    // Stations don't track live drag position — they rebuild on move.
+    // Stations and chests don't track live drag position — they rebuild on move.
   }
 
   onEntityTap(kind: EditEntityKind, id: string): boolean {
@@ -2925,6 +3136,25 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       };
       this.craftingStations[idx] = new CraftingStation(this, old.def, inst);
       const stored = this.stationInstanceData.find((s) => s.id === req.id);
+      if (stored) {
+        stored.tileX = req.tileX;
+        stored.tileY = req.tileY;
+      }
+      return true;
+    }
+    if (req.kind === "chest") {
+      const idx = this.chests.findIndex((c) => c.id === req.id);
+      if (idx === -1) return false;
+      const old = this.chests[idx];
+      const wasOpen = old.isOpen();
+      old.destroy();
+      this.chests[idx] = new Chest(
+        this,
+        old.def,
+        { id: old.id, defId: old.def.id, tileX: req.tileX, tileY: req.tileY },
+        wasOpen,
+      );
+      const stored = this.chestInstanceData.find((c) => c.id === req.id);
       if (stored) {
         stored.tileX = req.tileX;
         stored.tileY = req.tileY;
@@ -3010,6 +3240,19 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       this.craftingStations.push(new CraftingStation(this, def, inst));
       return true;
     }
+    if (req.kind === "chest") {
+      const def = this.chestDef(req.defId);
+      if (!def) return false;
+      const inst = {
+        id: this.nextEditId(`${def.id}`),
+        defId: def.id,
+        tileX: req.tileX,
+        tileY: req.tileY,
+      };
+      this.chestInstanceData.push(inst);
+      this.chests.push(new Chest(this, def, inst, false));
+      return true;
+    }
     if (req.kind === "item") {
       const id = this.nextEditId("ed");
       this.editorItems.set(id, {
@@ -3066,6 +3309,15 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       this.craftingStations[idx].destroy();
       this.craftingStations.splice(idx, 1);
       this.stationInstanceData = this.stationInstanceData.filter((s) => s.id !== req.id);
+      return true;
+    }
+    if (req.kind === "chest") {
+      const idx = this.chests.findIndex((c) => c.id === req.id);
+      if (idx === -1) return false;
+      this.chests[idx].destroy();
+      this.chests.splice(idx, 1);
+      this.chestInstanceData = this.chestInstanceData.filter((c) => c.id !== req.id);
+      this.chestPendingLoot.delete(req.id);
       return true;
     }
     if (req.kind === "item") {
@@ -3134,6 +3386,15 @@ export class WorldScene extends Phaser.Scene implements EditHost {
         tileY: Math.floor(s.y / TILE_SIZE),
       })),
     };
+    const chestsFile = {
+      defs: loadChestsFile(chestsDataRaw).defs,
+      instances: this.chests.map((c) => ({
+        id: c.id,
+        defId: c.def.id,
+        tileX: Math.floor(c.x / TILE_SIZE),
+        tileY: Math.floor(c.y / TILE_SIZE),
+      })),
+    };
     const itemInstancesFile: ItemInstancesFile = {
       instances: Array.from(this.editorItems.values()).map((e) => ({
         id: e.id,
@@ -3163,6 +3424,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       { name: "enemies.json", content: stringify(enemiesFile) },
       { name: "nodes.json", content: stringify(nodesFile) },
       { name: "craftingStations.json", content: stringify(stationsFile) },
+      { name: "chests.json", content: stringify(chestsFile) },
       { name: "itemInstances.json", content: stringify(itemInstancesFile) },
       { name: "shops.json", content: stringify(shopsFile) },
       { name: "ships.json", content: stringify(shipsFile) },

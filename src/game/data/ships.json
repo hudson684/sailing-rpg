@@ -31,8 +31,8 @@
     {
       "id": "galleon-7",
       "defId": "galleon",
-      "tileX": 112,
-      "tileY": 56,
+      "tileX": 140,
+      "tileY": 121,
       "heading": "E"
     },
     {
@@ -47,6 +47,13 @@
       "defId": "rowboat",
       "tileX": 107,
       "tileY": 97,
+      "heading": "E"
+    },
+    {
+      "id": "galleon-7",
+      "defId": "galleon",
+      "tileX": 150,
+      "tileY": 128,
       "heading": "E"
     }
   ]

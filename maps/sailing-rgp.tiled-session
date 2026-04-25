@@ -1,22 +1,22 @@
 {
-    "activeFile": "chunks/3_1.tmx",
+    "activeFile": "chunks/2_1.tmx",
     "expandedProjectPaths": [
-        "themes/Grass Land/TiledMap Editor/Rules",
-        "interiors",
-        "themes/grassland",
-        ".",
+        "themes",
+        "themes/grassland/TiledMap Editor/Tilesets",
         "themes/Grass Land",
+        "themes/grassland/TiledMap Editor",
+        "themes/Grass Land/TiledMap Editor",
+        ".",
+        "interiors/tutorial_island",
+        "chunks",
+        "themes/The Village/TiledMap Editor",
         "themes/Grass Land/TiledMap Editor/Tilesets",
         "ships",
-        "themes/Grass Land/TiledMap Editor",
-        "themes/The Village/TiledMap Editor/tilesets",
-        "themes/grassland/TiledMap Editor/Tilesets",
-        "themes/grassland/TiledMap Editor",
+        "interiors",
+        "themes/grassland",
         "themes/The Village",
-        "chunks",
-        "themes",
-        "interiors/tutorial_island",
-        "themes/The Village/TiledMap Editor"
+        "themes/Grass Land/TiledMap Editor/Rules",
+        "themes/The Village/TiledMap Editor/tilesets"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -123,11 +123,11 @@
             }
         },
         "chunks/2_1.tmx": {
-            "scale": 2,
-            "selectedLayer": 15,
+            "scale": 0.33,
+            "selectedLayer": 18,
             "viewCenter": {
-                "x": 1594.5,
-                "y": 310.5
+                "x": 1121.2121212121212,
+                "y": 942.4242424242424
             }
         },
         "chunks/2_1.tmx#walls-floor1": {
@@ -158,6 +158,9 @@
             }
         },
         "chunks/3_1.tmx": {
+            "expandedObjectLayers": [
+                12
+            ],
             "scale": 0.5,
             "selectedLayer": 8,
             "viewCenter": {
@@ -482,7 +485,7 @@
             "scaleInDock": 0.33
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx": {
-            "scaleInDock": 2,
+            "scaleInDock": 1,
             "scaleInEditor": 2
         },
         "themes/Grass Land/TiledMap Editor/Tilesets/beach - no thick foam - Godot.tsx": {
@@ -905,7 +908,6 @@
     "project": "sailing-rgp.tiled-project",
     "property.type": "string",
     "recentFiles": [
-        "themes/Grass Land/TiledMap Editor/Tilesets/Tileset-Terrain-new grass.tsx",
         "chunks/0_0.tmx",
         "chunks/1_0.tmx",
         "chunks/1_1.tmx",
@@ -916,7 +918,8 @@
         "interiors/cabin.tmx",
         "chunks/0_1.tmx",
         "interiors/starter_dungeon.tmx",
-        "interiors/tutorial_island/Players_Basement.tmx"
+        "interiors/tutorial_island/Players_Basement.tmx",
+        "chunks/2_0.tmx"
     ],
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx"

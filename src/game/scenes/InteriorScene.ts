@@ -822,6 +822,7 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
       enemies: Array.from(this.enemyDefs.values()).map((d) => ({ id: d.id, name: d.name })),
       nodes: Array.from(this.nodeDefs.values()).map((d) => ({ id: d.id, name: d.name })),
       stations: craftingStations.all().map((d) => ({ id: d.id, name: d.name })),
+      chests: [],
       items: ALL_ITEM_IDS.map((id) => ({ id, name: ITEMS[id]?.name ?? id })),
       ships: [],
     };
@@ -877,7 +878,7 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
       source: "editor" as const,
       map,
     }));
-    return { map, npcs, enemies, nodes, stations, items, ships: [], shops: [] };
+    return { map, npcs, enemies, nodes, stations, chests: [], items, ships: [], shops: [] };
   }
 
   dragTo(kind: EditEntityKind, id: string, px: number, py: number): void {

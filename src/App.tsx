@@ -27,6 +27,9 @@ const ShopTouch = lazy(() =>
 const CraftingModal = lazy(() =>
   import("./ui/CraftingModal").then((m) => ({ default: m.CraftingModal })),
 );
+const LootPanel = lazy(() =>
+  import("./ui/LootPanel").then((m) => ({ default: m.LootPanel })),
+);
 const CharacterCustomizer = lazy(() =>
   import("./ui/CharacterCustomizer").then((m) => ({ default: m.CharacterCustomizer })),
 );
@@ -108,6 +111,7 @@ export default function App() {
             <Dialogue />
             {isMobile ? <ShopTouch /> : <Shop />}
             <CraftingModal />
+            <LootPanel />
             <CharacterCustomizer
               mode="edit"
               open={customizerOpen}

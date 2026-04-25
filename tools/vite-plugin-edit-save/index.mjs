@@ -21,6 +21,7 @@ const ALLOWED = new Set([
   "itemInstances.json",
   "ships.json",
   "craftingStations.json",
+  "chests.json",
   "interiorInstances.json",
 ]);
 

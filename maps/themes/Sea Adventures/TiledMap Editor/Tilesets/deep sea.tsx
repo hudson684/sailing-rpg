@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tileset version="1.9" tiledversion="1.9.2" name="deep sea" tilewidth="32" tileheight="32" tilecount="225" columns="9">
- <image source="../../Tilesets/sea-color variation-spritesheet.png" width="288" height="826"/>
+ <image source="../../Tilesets/sea-color variation-spritesheet.png" width="288" height="832"/>
  <tile id="45">
   <animation>
    <frame tileid="45" duration="100"/>
