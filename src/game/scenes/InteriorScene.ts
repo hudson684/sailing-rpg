@@ -167,13 +167,13 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     const npcData = npcDataRaw as NpcData;
     this.dialogues = npcData.dialogues ?? {};
 
-    // Player: bind to the shared model, position one tile north of the
-    // interior_exit if present — the exit object is the authoritative door
-    // location inside the interior. Fall back to the door's entryTx/entryTy
-    // only when the interior has no exit object.
+    // Player: bind to the shared model, position at the authored
+    // `interior_entry` object if present, else one tile north of the
+    // `interior_exit`, else the door's entryTx/entryTy launch fallback.
+    const entry = this.interior.entries[0];
     const exit = this.interior.exits[0];
-    const entryTx = exit ? exit.tileX : this.launchData.entryTx;
-    const entryTy = exit ? exit.tileY - 1 : this.launchData.entryTy;
+    const entryTx = entry ? entry.tileX : exit ? exit.tileX : this.launchData.entryTx;
+    const entryTy = entry ? entry.tileY : exit ? exit.tileY - 1 : this.launchData.entryTy;
     const model = getOrCreatePlayerModel();
     const mapId: MapId = { kind: "interior", key: this.launchData.interiorKey };
     entityRegistry.setMap(model.id, mapId);
@@ -762,7 +762,7 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
       .image(x, y, itemIconTextureKey(it.itemId))
       .setOrigin(0.5)
       .setDepth(y);
-    sprite.setDisplaySize(20, 20);
+    sprite.setDisplaySize(10, 10);
     this.tweens.add({
       targets: sprite,
       y: y - 3,

@@ -9,7 +9,7 @@
         "frameHeight": 52,
         "frames": 8,
         "frameRate": 12,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 1
       },
       "loot": [

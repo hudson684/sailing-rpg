@@ -38,7 +38,7 @@ export const PLAYER_FEET_OFFSET_Y = -PLAYER_FEET_HEIGHT / 2;
 // near y=40, expressed as a normalized origin so the sprite anchors at the
 // feet for depth sorting.
 const CF_ORIGIN_Y = 40 / CF_FRAME_SIZE;
-const CF_SPRITE_SCALE = 2;
+const CF_SPRITE_SCALE = 1;
 
 export { type Facing, FACING_VALUES } from "./playerAnims";
 

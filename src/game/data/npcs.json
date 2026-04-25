@@ -22,7 +22,7 @@
         }
       },
       "display": {
-        "scale": 2,
+        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
@@ -57,11 +57,11 @@
         }
       },
       "display": {
-        "scale": 2,
+        "scale": 1.0,
         "originY": 0.506
       },
       "map": {
-        "interior": "cabin"
+        "interior": "general_store"
       },
       "spawn": {
         "tileX": 7,
@@ -97,7 +97,7 @@
         }
       },
       "display": {
-        "scale": 2,
+        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
@@ -132,7 +132,7 @@
         }
       },
       "display": {
-        "scale": 2,
+        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
@@ -171,7 +171,7 @@
         }
       },
       "display": {
-        "scale": 2,
+        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
@@ -226,7 +226,7 @@
         }
       },
       "display": {
-        "scale": 2,
+        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
@@ -265,7 +265,7 @@
         }
       },
       "display": {
-        "scale": 2,
+        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
@@ -300,7 +300,7 @@
         }
       },
       "display": {
-        "scale": 2,
+        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
@@ -328,7 +328,7 @@
         }
       },
       "display": {
-        "scale": 2,
+        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
@@ -356,7 +356,7 @@
         }
       },
       "display": {
-        "scale": 2,
+        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
@@ -384,7 +384,7 @@
         }
       },
       "display": {
-        "scale": 2,
+        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
@@ -412,7 +412,7 @@
         }
       },
       "display": {
-        "scale": 2,
+        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
@@ -440,7 +440,7 @@
         }
       },
       "display": {
-        "scale": 2,
+        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {

@@ -14,7 +14,7 @@
         "frameHeight": 215,
         "frames": 10,
         "frameRate": 8,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 0.92
       },
       "hp": 4,
@@ -50,7 +50,7 @@
         "frameHeight": 64,
         "frames": 1,
         "frameRate": 1,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 0.85
       },
       "hp": 4,

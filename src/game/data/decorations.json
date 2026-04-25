@@ -9,7 +9,7 @@
         "frameHeight": 64,
         "frames": 48,
         "frameRate": 24,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 0.5
       }
     },
@@ -22,7 +22,7 @@
         "frameHeight": 160,
         "frames": 8,
         "frameRate": 12,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 1
       }
     },
@@ -35,7 +35,7 @@
         "frameHeight": 160,
         "frames": 8,
         "frameRate": 12,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 1
       }
     },
@@ -48,7 +48,7 @@
         "frameHeight": 64,
         "frames": 16,
         "frameRate": 12,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 1
       }
     },
@@ -61,7 +61,7 @@
         "frameHeight": 64,
         "frames": 24,
         "frameRate": 12,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 1
       }
     },
@@ -74,7 +74,7 @@
         "frameHeight": 64,
         "frames": 24,
         "frameRate": 12,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 1
       }
     },
@@ -87,7 +87,7 @@
         "frameHeight": 64,
         "frames": 24,
         "frameRate": 12,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 1
       }
     },
@@ -100,7 +100,7 @@
         "frameHeight": 64,
         "frames": 24,
         "frameRate": 12,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 1
       }
     },
@@ -113,7 +113,7 @@
         "frameHeight": 96,
         "frames": 16,
         "frameRate": 16,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 0.5
       }
     },
@@ -126,7 +126,7 @@
         "frameHeight": 106,
         "frames": 24,
         "frameRate": 16,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 0.5
       }
     },
@@ -139,7 +139,7 @@
         "frameHeight": 106,
         "frames": 24,
         "frameRate": 16,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 0.5
       }
     },
@@ -152,7 +152,7 @@
         "frameHeight": 106,
         "frames": 24,
         "frameRate": 16,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 0.5
       }
     },
@@ -165,7 +165,7 @@
         "frameHeight": 128,
         "frames": 15,
         "frameRate": 12,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 1
       }
     },
@@ -178,7 +178,7 @@
         "frameHeight": 128,
         "frames": 8,
         "frameRate": 12,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 1
       }
     },
@@ -191,7 +191,7 @@
         "frameHeight": 96,
         "frames": 16,
         "frameRate": 8,
-        "scale": 1,
+        "scale": 0.5,
         "originY": 1
       }
     }

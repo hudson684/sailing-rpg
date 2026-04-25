@@ -1,12 +1,10 @@
 {
   "chunkSize": 64,
-  "tileWidth": 32,
-  "tileHeight": 32,
-  "oceanGid": 61,
-  "tilesetSource": "tilesets/roguelike.tsx",
+  "tileWidth": 16,
+  "tileHeight": 16,
   "startChunk": {
-    "cx": 1,
-    "cy": 1
+    "cx": 2,
+    "cy": 2
   },
   "authoredChunks": [
     "0_0",
@@ -34,5 +32,11 @@
     "2_4",
     "3_4",
     "4_4"
-  ]
+  ],
+  "interiors": {
+    "general_store": {
+      "path": "interiors/general_store.tmj"
+    }
+  },
+  "ships": {}
 }

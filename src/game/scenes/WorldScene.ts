@@ -2237,7 +2237,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       .image(x, y, itemIconTextureKey(s.itemId))
       .setOrigin(0.5)
       .setDepth(y);
-    sprite.setDisplaySize(20, 20);
+    sprite.setDisplaySize(10, 10);
     this.tweens.add({
       targets: sprite,
       y: y - 3,
@@ -2262,7 +2262,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       .image(d.x, d.y, itemIconTextureKey(d.itemId))
       .setOrigin(0.5)
       .setDepth(d.y);
-    sprite.setDisplaySize(20, 20);
+    sprite.setDisplaySize(10, 10);
     this.tweens.add({
       targets: sprite,
       y: d.y - 3,

@@ -16,7 +16,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { XMLParser } from "fast-xml-parser";
 
-export const SPAWN_LAYER_TYPES = ["item_spawn", "door", "interior_exit"];
+export const SPAWN_LAYER_TYPES = ["item_spawn", "door", "interior_exit", "interior_entry"];
 
 const parser = new XMLParser({
   ignoreAttributes: false,

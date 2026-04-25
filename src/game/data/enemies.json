@@ -34,7 +34,7 @@
         }
       },
       "display": {
-        "scale": 1.6,
+        "scale": 0.8,
         "originY": 0.95
       },
       "hp": 3,
@@ -95,7 +95,7 @@
         }
       },
       "display": {
-        "scale": 1.6,
+        "scale": 0.8,
         "originY": 0.95
       },
       "hp": 4,
@@ -156,7 +156,7 @@
         }
       },
       "display": {
-        "scale": 1.4,
+        "scale": 0.7,
         "originY": 0.95
       },
       "hp": 6,
@@ -222,7 +222,7 @@
         }
       },
       "display": {
-        "scale": 1.5,
+        "scale": 0.75,
         "originY": 0.95
       },
       "hp": 12,
@@ -264,7 +264,7 @@
         }
       },
       "display": {
-        "scale": 2,
+        "scale": 1.0,
         "originY": 0.95
       },
       "hp": 10,
@@ -325,7 +325,7 @@
         }
       },
       "display": {
-        "scale": 1.4,
+        "scale": 0.7,
         "originY": 0.9
       },
       "hp": 8,

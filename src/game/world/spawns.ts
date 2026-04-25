@@ -37,7 +37,17 @@ export interface InteriorExitSpawn {
   promptOnly: boolean;
 }
 
-export type Spawn = ItemSpawn | DoorSpawn | InteriorExitSpawn;
+/** A tile in an interior map where the player is placed when entering through
+ *  any door that links to this interior. Authored in the interior's `objects`
+ *  layer as a Tiled object of type `interior_entry`. */
+export interface InteriorEntrySpawn {
+  kind: "interior_entry";
+  uid: string;
+  tileX: number;
+  tileY: number;
+}
+
+export type Spawn = ItemSpawn | DoorSpawn | InteriorExitSpawn | InteriorEntrySpawn;
 
 export interface ParsedSpawns {
   items: ItemSpawn[];
@@ -47,6 +57,7 @@ export interface ParsedSpawns {
 /** Spawns parsed from a standalone interior map. */
 export interface InteriorParsedSpawns {
   exits: InteriorExitSpawn[];
+  entries: InteriorEntrySpawn[];
   items: ItemSpawn[];
 }
 
@@ -149,8 +160,9 @@ export function parseInteriorSpawns(
   const tw = tilemap.tileWidth;
   const th = tilemap.tileHeight;
   const exits: InteriorExitSpawn[] = [];
+  const entries: InteriorEntrySpawn[] = [];
   const items: ItemSpawn[] = [];
-  if (!layer) return { exits, items };
+  if (!layer) return { exits, entries, items };
 
   for (const raw of layer.objects) {
     const props = propMap(raw.properties as TiledProperty[] | undefined);
@@ -170,6 +182,19 @@ export function parseInteriorSpawns(
         tileY,
         promptOnly: Boolean(props.promptOnly ?? false),
       });
+    } else if (raw.type === "interior_entry") {
+      const uid = String(props.uid ?? "");
+      if (!uid) {
+        throw new Error(
+          `interior_entry at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+        );
+      }
+      entries.push({
+        kind: "interior_entry",
+        uid,
+        tileX,
+        tileY,
+      });
     } else if (raw.type === "item_spawn") {
       const itemId = String(props.itemId ?? "") as ItemId;
       const quantity = Number(props.quantity ?? 1);
@@ -184,7 +209,7 @@ export function parseInteriorSpawns(
     }
   }
 
-  return { exits, items };
+  return { exits, entries, items };
 }
 
 interface TiledProperty {

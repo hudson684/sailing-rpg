@@ -3,7 +3,7 @@ import { TILE_SIZE } from "../constants";
 import { interiorTilemapKey } from "../assets/keys";
 import { tilesetImageKeyFor } from "./chunkManager";
 import { ShapeCollider } from "./shapeCollision";
-import { parseInteriorSpawns, type InteriorExitSpawn } from "./spawns";
+import { parseInteriorSpawns, type InteriorEntrySpawn, type InteriorExitSpawn } from "./spawns";
 import { TileRegistry } from "./tileRegistry";
 
 const INTERIOR_OVERHEAD_LAYERS = new Set(["props_high", "roof"]);
@@ -16,6 +16,7 @@ export interface InteriorTilemap {
   registry: TileRegistry;
   shapes: ShapeCollider;
   exits: InteriorExitSpawn[];
+  entries: InteriorEntrySpawn[];
   /** Per-tile images extracted from layers flagged with the `y-sort` custom
    *  property — each one gets its own depth so it sorts against the player
    *  (and other entities) by world y. */
@@ -136,9 +137,9 @@ export function buildInteriorTilemap(
     rawTmj: cached?.data,
     renderScale,
   });
-  const { exits } = parseInteriorSpawns(tilemap);
+  const { exits, entries } = parseInteriorSpawns(tilemap);
 
-  return { key, tilemap, layers, registry, shapes, exits, ySortImages };
+  return { key, tilemap, layers, registry, shapes, exits, entries, ySortImages };
 }
 
 export function destroyInteriorTilemap(t: InteriorTilemap): void {
