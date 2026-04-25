@@ -1,12 +1,21 @@
 import type { MapKind } from "./mapLoader";
 import {
+  loadDecorationFrame,
   loadEnemyFrame,
   loadNodeFrame,
   loadNpcFrame,
   type SpriteFrame,
 } from "./spriteLoader";
 
-export type EntityKind = "npc" | "enemy" | "node" | "station" | "ship" | "item";
+export type EntityKind =
+  | "npc"
+  | "enemy"
+  | "node"
+  | "decoration"
+  | "station"
+  | "ship"
+  | "item"
+  | "spawn";
 
 /** A placed entity instance in the editor's working copy. The
  *  `underlying` field holds the original JSON object unchanged so
@@ -255,6 +264,32 @@ const nodeInfo: EntityTypeInfo = {
   defaultColor: "#3a6b2a",
 };
 
+// Decorations -------------------------------------------------------
+
+const decorationInfo: EntityTypeInfo = {
+  kind: "decoration",
+  label: "Decoration",
+  jsonPath: "src/game/data/decorations.json",
+  parseFile: (raw) => parseDefsInstances(raw, "decoration", "#7ab0ff"),
+  toFile: (orig, entities) => toDefsInstancesFile(orig, entities),
+  isOnMap: (_e, _mapId, mapKind) => mapKind === "world",
+  makeNew(defId, tileX, tileY, existingIds) {
+    const id = nextId(`d_${defId}_`, existingIds);
+    return {
+      kind: "decoration",
+      id,
+      tileX,
+      tileY,
+      defId,
+      label: defId,
+      color: "#7ab0ff",
+      underlying: { id, defId, tileX, tileY },
+    };
+  },
+  loadSprite: loadDecorationFrame,
+  defaultColor: "#7ab0ff",
+};
+
 // Stations ----------------------------------------------------------
 
 const stationInfo: EntityTypeInfo = {
@@ -371,15 +406,62 @@ const itemInfo: EntityTypeInfo = {
   defaultColor: "#d0c040",
 };
 
+// Player spawn -----------------------------------------------------
+
+const SPAWN_ID = "player_spawn";
+
+const spawnInfo: EntityTypeInfo = {
+  kind: "spawn",
+  label: "Player Spawn",
+  jsonPath: "src/game/data/playerSpawn.json",
+  parseFile(raw) {
+    const file = (raw ?? {}) as { instance?: { tileX?: number; tileY?: number } };
+    const inst = file.instance ?? {};
+    const entity: EditorEntity = {
+      kind: "spawn",
+      id: SPAWN_ID,
+      tileX: num(inst.tileX),
+      tileY: num(inst.tileY),
+      defId: SPAWN_ID,
+      label: "Player Spawn",
+      color: "#ffcc00",
+      underlying: { tileX: num(inst.tileX), tileY: num(inst.tileY) },
+    };
+    return { entities: [entity], defs: [], rawDefs: {} };
+  },
+  toFile(_orig, entities) {
+    const e = entities[0];
+    return { instance: { tileX: e?.tileX ?? 0, tileY: e?.tileY ?? 0 } };
+  },
+  isOnMap: (_e, _mapId, mapKind) => mapKind === "world",
+  // Singleton — never created via "place" tool. Returns a noop entity if called.
+  makeNew(_defId, tileX, tileY) {
+    return {
+      kind: "spawn",
+      id: SPAWN_ID,
+      tileX,
+      tileY,
+      defId: SPAWN_ID,
+      label: "Player Spawn",
+      color: "#ffcc00",
+      underlying: { tileX, tileY },
+    };
+  },
+  loadSprite: async () => null,
+  defaultColor: "#ffcc00",
+};
+
 // Registry ----------------------------------------------------------
 
 export const ENTITY_TYPES: EntityTypeInfo[] = [
   npcInfo,
   enemyInfo,
   nodeInfo,
+  decorationInfo,
   stationInfo,
   shipInfo,
   itemInfo,
+  spawnInfo,
 ];
 
 export function findType(kind: EntityKind): EntityTypeInfo {

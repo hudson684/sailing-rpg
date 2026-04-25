@@ -88,7 +88,7 @@
     {
       "id": "n_ore_1",
       "defId": "ore_hopeite",
-      "tileX": 113,
+      "tileX": 112,
       "tileY": 90
     },
     {
@@ -180,6 +180,120 @@
       "defId": "tree_palm",
       "tileX": 80,
       "tileY": 74
+    },
+    {
+      "id": "n_tree_palm_7",
+      "defId": "tree_palm",
+      "tileX": 186,
+      "tileY": 92
+    },
+    {
+      "id": "n_tree_palm_8",
+      "defId": "tree_palm",
+      "tileX": 185,
+      "tileY": 96
+    },
+    {
+      "id": "n_tree_palm_9",
+      "defId": "tree_palm",
+      "tileX": 184,
+      "tileY": 100
+    },
+    {
+      "id": "n_tree_palm_10",
+      "defId": "tree_palm",
+      "tileX": 185,
+      "tileY": 104
+    },
+    {
+      "id": "n_tree_palm_11",
+      "defId": "tree_palm",
+      "tileX": 186,
+      "tileY": 110
+    },
+    {
+      "id": "n_tree_palm_12",
+      "defId": "tree_palm",
+      "tileX": 178,
+      "tileY": 105
+    },
+    {
+      "id": "n_tree_palm_13",
+      "defId": "tree_palm",
+      "tileX": 156,
+      "tileY": 109
+    },
+    {
+      "id": "n_tree_palm_14",
+      "defId": "tree_palm",
+      "tileX": 130,
+      "tileY": 110
+    },
+    {
+      "id": "n_tree_palm_15",
+      "defId": "tree_palm",
+      "tileX": 129,
+      "tileY": 99
+    },
+    {
+      "id": "n_ore_hopeite_1",
+      "defId": "ore_hopeite",
+      "tileX": 129,
+      "tileY": 107
+    },
+    {
+      "id": "n_ore_hopeite_2",
+      "defId": "ore_hopeite",
+      "tileX": 131,
+      "tileY": 102
+    },
+    {
+      "id": "n_ore_hopeite_3",
+      "defId": "ore_hopeite",
+      "tileX": 182,
+      "tileY": 104
+    },
+    {
+      "id": "n_ore_hopeite_4",
+      "defId": "ore_hopeite",
+      "tileX": 182,
+      "tileY": 98
+    },
+    {
+      "id": "n_ore_hopeite_5",
+      "defId": "ore_hopeite",
+      "tileX": 184,
+      "tileY": 93
+    },
+    {
+      "id": "n_ore_hopeite_6",
+      "defId": "ore_hopeite",
+      "tileX": 183,
+      "tileY": 107
+    },
+    {
+      "id": "tree_palm-7",
+      "defId": "tree_palm",
+      "tileX": 147,
+      "tileY": 68
+    },
+    {
+      "id": "tree_palm-8",
+      "defId": "tree_palm",
+      "tileX": 141,
+      "tileY": 67
+    },
+    {
+      "id": "tree_palm-9",
+      "defId": "tree_palm",
+      "tileX": 135,
+      "tileY": 67
+    },
+    {
+      "id": "tree_palm-10",
+      "defId": "tree_palm",
+      "tileX": 151,
+      "tileY": 68
     }
   ]
 }

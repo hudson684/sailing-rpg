@@ -18,6 +18,7 @@ import { syncPlayerVisualsFromEquipment } from "../entities/playerEquipmentVisua
 import { CF_WARDROBE_LAYERS } from "../entities/playerWardrobe";
 import { useGameStore } from "../store/gameStore";
 import { useSettingsStore } from "../store/settingsStore";
+import { useShopStore } from "../store/shopStore";
 import { stamina, STAMINA_MAX } from "../player/stamina";
 import { NpcSprite, NPC_INTERACT_RADIUS, registerNpcAnimations } from "../entities/NpcSprite";
 import { CharacterSprite } from "../entities/CharacterSprite";
@@ -63,6 +64,7 @@ import type { ItemId } from "../inventory/items";
 
 const SPRINT_SPEED_MULT = 1.35;
 const DOOR_INTERACT_RADIUS = TILE_SIZE * 0.9;
+const SHOP_CLICK_RADIUS = TILE_SIZE * 1.5;
 
 const ZOOM_STEPS = [0.5, 1, 1.5, 2, 3, 4, 6, 8] as const;
 const MIN_ZOOM = ZOOM_STEPS[0];
@@ -241,6 +243,14 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
 
     this.keys.interact.on("down", () => this.onInteract());
 
+    // Right-click an NPC with a `shopId` to open their shop directly.
+    this.input.mouse?.disableContextMenu();
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (this.editSystem?.isActive()) return;
+      if (!pointer.rightButtonDown()) return;
+      this.onRightClick(pointer.worldX, pointer.worldY);
+    });
+
     // Route mobile touch controls through the same Phaser Key objects the
     // keyboard populates, so `isDown` polling and `"down"` handlers both fire.
     bindSceneToVirtualInput(this, {
@@ -364,7 +374,16 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     const sprinting = moving && this.keys.sprint.isDown && stamina.current > 0;
     if (sprinting) stamina.drain(dt);
     const speed = PLAYER_SPEED * (sprinting ? SPRINT_SPEED_MULT : 1);
-    this.player.tryMove(dx * speed * dt, dy * speed * dt, (px, py) => this.isWalkablePx(px, py));
+    this.player.tryMove(
+      dx * speed * dt,
+      dy * speed * dt,
+      (px, py) => this.isWalkablePx(px, py),
+      (px, py) => {
+        const tx = Math.floor(px / TILE_SIZE);
+        const ty = Math.floor(py / TILE_SIZE);
+        return this.interior.registry.slopeAt(tx, ty);
+      },
+    );
   }
 
   private isWalkablePx(px: number, py: number): boolean {
@@ -432,6 +451,40 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     });
     this.fishingSession = session;
     session.start();
+  }
+
+  private onRightClick(worldX: number, worldY: number) {
+    if (this.activeDialogue) return;
+    const npc = this.npcAtWorldPoint(worldX, worldY);
+    if (!npc || !npc.def.shopId) return;
+    const dPlayer = Phaser.Math.Distance.Between(
+      this.player.x,
+      this.player.y,
+      npc.x,
+      npc.y,
+    );
+    if (dPlayer > SHOP_CLICK_RADIUS * 2) {
+      showToast(`Step closer to ${npc.def.name} to trade.`, 1500);
+      return;
+    }
+    useShopStore.getState().openShop(npc.def.shopId);
+    bus.emitTyped("shop:open", { shopId: npc.def.shopId });
+  }
+
+  private npcAtWorldPoint(x: number, y: number): NpcModel | null {
+    const mapId: MapId = { kind: "interior", key: this.launchData.interiorKey };
+    let best: NpcModel | null = null;
+    let bestDist = SHOP_CLICK_RADIUS;
+    for (const m of entityRegistry.getByMap(mapId)) {
+      if (m.kind !== "npc") continue;
+      const npc = m as NpcModel;
+      const d = Phaser.Math.Distance.Between(x, y, npc.x, npc.y);
+      if (d <= bestDist) {
+        best = npc;
+        bestDist = d;
+      }
+    }
+    return best;
   }
 
   private nearestNpc(): NpcModel | null {

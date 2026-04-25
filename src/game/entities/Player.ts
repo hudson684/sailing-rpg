@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
+import { applySlopeDeflection, type Slope } from "../world/tileRegistry";
 import {
   CF_ANIMS,
   CF_FRAME_SIZE,
@@ -358,7 +359,12 @@ export class Player {
    * Attempt to move by (dx, dy) this frame, respecting a walkability predicate.
    * Uses axis-separated tests so the player can slide along walls.
    */
-  tryMove(dx: number, dy: number, isWalkablePx: (x: number, y: number) => boolean) {
+  tryMove(
+    dx: number,
+    dy: number,
+    isWalkablePx: (x: number, y: number) => boolean,
+    slopeAtPx?: (x: number, y: number) => Slope | null,
+  ) {
     if (this.model.frozen) {
       this.setAnimState("idle");
       return;
@@ -366,6 +372,24 @@ export class Player {
     if (this.model.actionLock) {
       // Movement locked during the swing; facing/anim already set.
       return;
+    }
+    // Preserve raw input for facing — the visual facing should follow what the
+    // user pressed, not the slope-deflected motion vector (otherwise walking
+    // straight right on a `/` ramp would face up-right).
+    const inputDx = dx;
+    const inputDy = dy;
+    // Slope deflection: tiles flagged with a `slope` property project motion
+    // onto the ramp surface so walking horizontally also nudges vertically.
+    // Sampled at the foot position — stepping off the tile drops the effect.
+    // Only horizontal input triggers deflection: pure up/down should walk
+    // straight forward/backward without sliding along the ramp.
+    if (slopeAtPx && dx !== 0) {
+      const slope = slopeAtPx(this.model.x, this.model.y);
+      if (slope) {
+        const out = applySlopeDeflection(dx, dy, slope);
+        dx = out.dx;
+        dy = out.dy;
+      }
     }
     let moved = false;
     if (dx !== 0) {
@@ -384,7 +408,7 @@ export class Player {
         moved = true;
       }
     }
-    const intended = facingFromDelta(dx, dy);
+    const intended = facingFromDelta(inputDx, inputDy);
     if (intended) this.model.facing = intended;
     const mounted = this.model.cfMountId !== null;
     const next: CfState = mounted

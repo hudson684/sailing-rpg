@@ -136,8 +136,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 108,
-        "tileY": 78
+        "tileX": 104,
+        "tileY": 82
       },
       "facing": "right",
       "movement": {
@@ -175,8 +175,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 116,
-        "tileY": 84
+        "tileX": 111,
+        "tileY": 88
       },
       "facing": "right",
       "movement": {
@@ -230,7 +230,7 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 103,
+        "tileX": 102,
         "tileY": 83
       },
       "facing": "left",
@@ -304,7 +304,7 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 116,
+        "tileX": 115,
         "tileY": 89
       },
       "facing": "left",
@@ -332,8 +332,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 114,
-        "tileY": 85
+        "tileX": 115,
+        "tileY": 84
       },
       "facing": "right",
       "movement": {
@@ -341,14 +341,5 @@
       },
       "dialogue": "steve"
     }
-  ],
-  "dialogues": {
-    "mera_vendor": {
-      "speaker": "Josie",
-      "pages": [
-        "Welcome to my shop! I've got a bit of everything — rope, rations, tools, the usual sundries.",
-        "Have a look around. If you see something you like, just say the word."
-      ]
-    }
-  }
+  ]
 }

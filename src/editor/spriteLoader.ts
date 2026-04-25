@@ -82,3 +82,8 @@ export async function loadNodeFrame(def: unknown): Promise<SpriteFrame | null> {
   const image = await loadImage(`/${s.sheet.replace(/^\/+/, "")}`);
   return { image, sx: 0, sy: 0, sw: s.frameWidth, sh: s.frameHeight };
 }
+
+/** Decoration: same shape as node — first frame of a horizontal strip. */
+export async function loadDecorationFrame(def: unknown): Promise<SpriteFrame | null> {
+  return loadNodeFrame(def);
+}

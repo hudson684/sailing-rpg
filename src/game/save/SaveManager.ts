@@ -38,6 +38,10 @@ export class SaveManager {
     this.systems.set(system.id, system as Saveable);
   }
 
+  unregister(id: string): void {
+    this.systems.delete(id);
+  }
+
   listSystems(): readonly Saveable[] {
     return [...this.systems.values()];
   }

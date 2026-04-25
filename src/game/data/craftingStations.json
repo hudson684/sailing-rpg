@@ -49,20 +49,26 @@
     {
       "id": "station_forge_1",
       "defId": "blacksmith_forge",
-      "tileX": 50,
-      "tileY": 18
+      "tileX": 179,
+      "tileY": 113
     },
     {
       "id": "station_sawmill_1",
       "defId": "sawmill",
-      "tileX": 52,
-      "tileY": 18
+      "tileX": 171,
+      "tileY": 113
     },
     {
       "id": "station_cooking_fire_1",
       "defId": "cooking_fire",
-      "tileX": 50,
-      "tileY": 23
+      "tileX": 182,
+      "tileY": 101
+    },
+    {
+      "id": "cooking_fire-7",
+      "defId": "cooking_fire",
+      "tileX": 107,
+      "tileY": 86
     }
   ]
 }

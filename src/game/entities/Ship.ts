@@ -30,10 +30,10 @@ export interface VesselDims {
 
 /** Max velocity magnitude before the cap kicks in. Tailwind can lift a ship
  *  toward this faster than dead calm, but it's always the ceiling. */
-export const SHIP_MAX_SPEED = 140;
+export const SHIP_MAX_SPEED = 180;
 /** Thrust acceleration (px/s^2) applied in the heading's direction while a
  *  movement key is held. Tuned higher than drag so held keys feel responsive. */
-const SHIP_ACCEL = 110;
+const SHIP_ACCEL = 500;
 /** Exponential drag coefficients (1/s), split by axis relative to the
  *  ship's heading. Velocity is decomposed into an `along` component (down
  *  the keel) and a `lateral` component (beam-wise); each decays as
@@ -47,11 +47,11 @@ const SHIP_ACCEL = 110;
  *    2. Leeway cap. Wind pushing sideways still builds lateral velocity,
  *       but the higher lateral drag pins its steady-state well below what
  *       a tailwind could drive forward. */
-const SHIP_DRAG_ALONG_COEF = 0.55;
-const SHIP_DRAG_LATERAL_COEF = 1.5;
+const SHIP_DRAG_ALONG_COEF = 2.2;
+const SHIP_DRAG_LATERAL_COEF = 12;
 /** Speeds below this (px/s) snap to zero once the ship is idle (no thrust,
  *  no wind). Prevents asymptotic crawling that never quite stops. */
-const SHIP_IDLE_SNAP = 2;
+const SHIP_IDLE_SNAP = 10;
 /** Duration of the visual crossfade (ms) between cardinal sprites when
  *  the continuous heading rotates across a 45° boundary. Purely cosmetic
  *  now that rotation itself is a physics quantity (headingRad); the
@@ -61,7 +61,7 @@ const SHIP_SPRITE_CROSSFADE_MS = 260;
  *  takes about 1.3 s — quick enough to be responsive, slow enough to feel
  *  like a boat. Per-sail multipliers in SAIL_MULTS scale this: a rowed
  *  (furled) ship pivots fastest, full canvas fights the rudder. */
-const SHIP_TURN_RATE = 1.2;
+const SHIP_TURN_RATE = 3.5;
 /** Fraction of the wind's perpendicular-to-heading component that still
  *  reaches the ship as force. Tuned together with SHIP_DRAG_LATERAL_COEF:
  *  steady-state leeway ≈ windPerp · LEEWAY_FRAC / LATERAL_DRAG, so raising
@@ -74,10 +74,8 @@ const LEEWAY_FRAC = 0.7;
  *  the wind. A sail can't generate drive pointed straight into the wind, so
  *  close-hauled and in-irons points lose thrust sharply. Running and
  *  reaching keep full thrust — the wind is filling the sail. */
-function pointOfSailThrustMult(dot: number): number {
-  if (dot > 0) return 1;                  // running / reaching
-  if (dot > -Math.SQRT1_2) return 0.55;   // close-hauled (90°–135° off wind)
-  return 0.15;                            // in irons (nearly head-to-wind)
+function pointOfSailThrustMult(_dot: number): number {
+  return 1; // arcade: heading vs. wind no longer gates thrust
 }
 
 /** Per-sail-state multipliers. `thrust` scales player input thrust, `speed`
@@ -94,16 +92,11 @@ interface SailMultipliers {
   turn: number;
 }
 const SAIL_MULTS: Record<SailState, SailMultipliers> = {
-  furled: { thrust: 0.25, speed: 0.25, wind: 0,    turn: 1.5 },
-  reefed: { thrust: 0.5,  speed: 0.6,  wind: 0.4,  turn: 1.2 },
-  trim:   { thrust: 0.8,  speed: 0.85, wind: 0.75, turn: 1.0 },
-  full:   { thrust: 1.0,  speed: 1.0,  wind: 1.0,  turn: 0.7 },
+  furled: { thrust: 0.6, speed: 0.5,  wind: 0,    turn: 1.3 },
+  reefed: { thrust: 0.8, speed: 0.75, wind: 0.15, turn: 1.15 },
+  trim:   { thrust: 1.0, speed: 1.0,  wind: 0.25, turn: 1.0 },
+  full:   { thrust: 1.2, speed: 1.2,  wind: 0.35, turn: 0.9 },
 };
-
-/** Wind strength above which carrying full sails is "over-canvassed" —
- *  exposed on the Ship so the HUD can flash a warning. No direct hull
- *  damage for now; the thrust/wind math already makes it hard to handle. */
-export const OVER_CANVAS_WIND = 0.85;
 
 export type ShipTileState = "water" | "beach" | "blocked";
 
@@ -269,12 +262,6 @@ export class Ship {
     const next = Math.max(0, Math.min(SAIL_STATES.length - 1, idx + dir));
     this.sail = SAIL_STATES[next];
     return this.sail;
-  }
-
-  /** True when full sails are set in a wind that's really too strong for
-   *  them. HUD uses this to flash the sail gauge red. */
-  isOverCanvassed(windStrength: number): boolean {
-    return this.sail === "full" && windStrength >= OVER_CANVAS_WIND;
   }
 
   /** Set or clear the heading the ship is trying to turn toward. The

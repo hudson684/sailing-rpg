@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
 import { TILE_SIZE } from "../constants";
-import { TileRegistry } from "./tileRegistry";
+import { TileRegistry, type Slope } from "./tileRegistry";
 import {
   parseSpawns,
   type ParsedSpawns,
@@ -344,20 +344,41 @@ export class ChunkManager {
   private streamingStarted = false;
 
   initialize(): void {
+    // Only build the 3x3 island around the start chunk synchronously. That's
+    // everything the camera can see on frame one (a 64-tile chunk at 16px
+    // covers the default viewport on its own; neighbors are a safety margin
+    // for the player walking off the edge before the paced flush catches up).
+    // Everything else goes to `pending` and streams in one chunk per tick via
+    // `flushReadyPending` → `schedulePump`. Authored chunks further than one
+    // ring away used to instantiate eagerly just because they happened to
+    // share tilesets with the start chunk, which cost ~1.5s on a 5x5 world.
+    const { cx: sx, cy: sy } = this.manifest.startChunk;
+    let eagerCount = 0;
+    let pendingCount = 0;
     for (const key of this.manifest.authoredChunks) {
       const [cxStr, cyStr] = key.split("_");
       const cx = parseInt(cxStr, 10);
       const cy = parseInt(cyStr, 10);
+      const nearStart = Math.abs(cx - sx) <= 1 && Math.abs(cy - sy) <= 1;
 
-      if (this.tilesetsLoaded(cx, cy)) {
+      if (nearStart && this.tilesetsLoaded(cx, cy)) {
         // Fires `onChunkReady` with parsed spawns once layers exist.
         this.instantiateChunk(cx, cy);
+        eagerCount++;
       } else {
         // Spawns for pending chunks are parsed when the chunk streams in —
         // see `instantiateChunk`. Pending chunks read as ocean in the
         // meantime, so their items/doors aren't reachable anyway.
         this.pending.set(key, { cx, cy });
+        pendingCount++;
       }
+    }
+    if (import.meta.env.DEV) {
+      console.log(
+        `[ChunkManager] initialize: start=${sx},${sy}, ` +
+          `authored=${this.manifest.authoredChunks.length}, ` +
+          `eager=${eagerCount}, pending=${pendingCount}`,
+      );
     }
   }
 
@@ -419,12 +440,54 @@ export class ChunkManager {
     this.scene.load.start();
   }
 
+  private pumpScheduled = false;
+
+  /** Instantiate pending chunks whose tilesets are cached — but at most one
+   *  per scheduler tick so a batch of simultaneously-ready chunks can't stall
+   *  a frame. Chunks built this way still fire `onChunkReady`, so scene-level
+   *  spawn registration works exactly as before, just spread across frames. */
   private flushReadyPending(): void {
     if (this.pending.size === 0) return;
-    for (const [key, { cx, cy }] of [...this.pending]) {
-      if (!this.tilesetsLoaded(cx, cy)) continue;
-      this.instantiateChunk(cx, cy);
-      this.pending.delete(key);
+    this.schedulePump();
+  }
+
+  private schedulePump(): void {
+    if (this.pumpScheduled || this.pending.size === 0) return;
+    this.pumpScheduled = true;
+    // `delayedCall(0, ...)` fires on the next scene tick; Phaser's time plugin
+    // is tied to the scene lifecycle so the call is auto-cancelled on shutdown.
+    // ~100ms between pumps gives the renderer time to breathe between chunk
+    // instantiations (each builds a tilemap + layers + colliders + animation
+    // cells, which on a heavy chunk can blow a 16ms frame budget on its own).
+    this.scene.time.delayedCall(100, () => this.pumpOne());
+  }
+
+  private pumpOne(): void {
+    this.pumpScheduled = false;
+    // Pick the first pending chunk whose tilesets are cached. Keeps order
+    // deterministic (Map iteration is insertion order) without needing
+    // per-frame distance math — close-to-player chunks generally were added
+    // to `pending` early because they share tilesets with the start chunk.
+    let pickedKey: string | null = null;
+    for (const [key, { cx, cy }] of this.pending) {
+      if (this.tilesetsLoaded(cx, cy)) {
+        pickedKey = key;
+        break;
+      }
+    }
+    if (pickedKey !== null) {
+      const entry = this.pending.get(pickedKey)!;
+      this.instantiateChunk(entry.cx, entry.cy);
+      this.pending.delete(pickedKey);
+    }
+    // More work to do? Keep pumping one per tick until the ready set is empty.
+    if (this.pending.size > 0) {
+      for (const { cx, cy } of this.pending.values()) {
+        if (this.tilesetsLoaded(cx, cy)) {
+          this.schedulePump();
+          break;
+        }
+      }
     }
   }
 
@@ -485,6 +548,15 @@ export class ChunkManager {
    * `collides: true`, OR any per-tile / chunk-level collision shape covers
    * this pixel. Water is not considered here — walkability wraps both.
    */
+  slopeAtPx(gpx: number, gpy: number): Slope | null {
+    const gtx = Math.floor(gpx / TILE_SIZE);
+    const gty = Math.floor(gpy / TILE_SIZE);
+    const chunk = this.chunkAtGlobalTile(gtx, gty);
+    if (!chunk) return null;
+    const s = this.manifest.chunkSize;
+    return chunk.registry.slopeAt(gtx - chunk.cx * s, gty - chunk.cy * s);
+  }
+
   isBlockedPx(gpx: number, gpy: number): boolean {
     const gtx = Math.floor(gpx / TILE_SIZE);
     const gty = Math.floor(gpy / TILE_SIZE);
@@ -557,8 +629,10 @@ export class ChunkManager {
   }
 
   private instantiateChunk(cx: number, cy: number): Chunk {
+    const devStart = import.meta.env.DEV ? performance.now() : 0;
     const cacheKey = `${this.chunkKeyPrefix}${cx}_${cy}`;
     const tilemap = this.scene.make.tilemap({ key: cacheKey });
+    const tMap = import.meta.env.DEV ? performance.now() : 0;
 
     // Phaser's Tileset instances don't carry the raw `image` path string, so we
     // read image paths from the cached TMJ JSON. We pair by index (not by name)
@@ -634,7 +708,9 @@ export class ChunkManager {
       shapes,
     };
     this.chunks.set(`${cx}_${cy}`, chunk);
+    const tShapes = import.meta.env.DEV ? performance.now() : 0;
     this.collectAnimations(chunk);
+    const tAnims = import.meta.env.DEV ? performance.now() : 0;
 
     if (this.onChunkReady) {
       const spawns = parseSpawns(tilemap, {
@@ -643,17 +719,34 @@ export class ChunkManager {
       });
       this.onChunkReady(chunk, spawns);
     }
-
+    if (import.meta.env.DEV) {
+      const total = performance.now() - devStart;
+      const tLayers = tShapes - tMap;
+      const anims = tAnims - tShapes;
+      console.log(
+        `[ChunkManager] ${cx}_${cy} ${total.toFixed(1)}ms ` +
+          `(tilemap+layers+shapes=${tLayers.toFixed(1)}ms, anims=${anims.toFixed(1)}ms)`,
+      );
+    }
     return chunk;
   }
 
   /** Read per-tileset animation data and index every painted cell that uses
-   *  an animated tile's base frame, so tick() can advance them cheaply. */
+   *  an animated tile's base frame, so tick() can advance them cheaply.
+   *
+   *  Builds a single `tileIndex → animation spec` lookup across every tileset
+   *  + animated tile id in the chunk, then scans each layer exactly once.
+   *  Previously this did a full-layer `forEachTile` scan per (tileset × id ×
+   *  layer) combination; on a chunk with ~20 animated tiles and ~5 layers the
+   *  nested loops did 100+ full scans of a 64×64 map, which turned into a
+   *  ~900ms stall on the start chunk. */
   private collectAnimations(chunk: Chunk): void {
     type TileData = Record<
       number,
       { animation?: Array<{ tileid: number; duration: number }> }
     >;
+    type AnimSpec = { frames: number[]; durations: number[]; totalMs: number };
+    const byTileIndex = new Map<number, AnimSpec>();
     for (const ts of chunk.tilemap.tilesets) {
       const tileData = (ts as unknown as { tileData?: TileData }).tileData;
       if (!tileData) continue;
@@ -664,25 +757,27 @@ export class ChunkManager {
         const frames = anim.map((a) => firstgid + a.tileid);
         const durations = anim.map((a) => a.duration);
         const totalMs = durations.reduce((a, b) => a + b, 0);
-        // Find every cell across every layer whose index matches any frame in
-        // this animation (author may have painted any frame as the "base").
-        const frameSet = new Set(frames);
-        for (const layer of chunk.layers) {
-          layer.forEachTile((tile) => {
-            if (frameSet.has(tile.index)) {
-              this.animatedCells.push({
-                layer,
-                tileX: tile.x,
-                tileY: tile.y,
-                frames,
-                durations,
-                totalMs,
-                lastFrame: -1,
-              });
-            }
-          });
-        }
+        const spec: AnimSpec = { frames, durations, totalMs };
+        // Author may have painted any frame as the "base", so every frame
+        // index maps back to the same animation spec.
+        for (const f of frames) byTileIndex.set(f, spec);
       }
+    }
+    if (byTileIndex.size === 0) return;
+    for (const layer of chunk.layers) {
+      layer.forEachTile((tile) => {
+        const spec = byTileIndex.get(tile.index);
+        if (!spec) return;
+        this.animatedCells.push({
+          layer,
+          tileX: tile.x,
+          tileY: tile.y,
+          frames: spec.frames,
+          durations: spec.durations,
+          totalMs: spec.totalMs,
+          lastFrame: -1,
+        });
+      });
     }
   }
 }

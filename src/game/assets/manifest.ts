@@ -46,6 +46,12 @@ import {
 } from "../world/GatheringNode";
 import nodesDataRaw from "../data/nodes.json";
 import {
+  decorationAnimKey,
+  decorationTextureKey,
+  loadDecorationsFile,
+} from "../world/Decoration";
+import decorationsDataRaw from "../data/decorations.json";
+import {
   SKIN_PALETTES,
   bakePlayerSkin,
   installPlayerSkinCanvases,
@@ -93,8 +99,16 @@ export function queueAllAssets(scene: Phaser.Scene): void {
   queueItemIcons(scene);
   queueEnemySheets(scene);
   queueNodeSheets(scene);
+  queueDecorationSheets(scene);
   queueNpcSheets(scene);
   queueCharacterModels(scene);
+  queueUiTextures(scene);
+}
+
+/** UI textures used by in-world Phaser overlays (e.g. speech bubbles).
+ *  HTML UI loads these via CSS `border-image-source` instead. */
+function queueUiTextures(scene: Phaser.Scene): void {
+  scene.load.image("ui-panel-tan", "ui/panel-tan.png");
 }
 
 /** Loads world.json, then chains: starting-chunk tilesets, all chunk TMJs,
@@ -244,6 +258,15 @@ function queueEnemySheets(scene: Phaser.Scene): void {
   }
 }
 
+function queueDecorationSheets(scene: Phaser.Scene): void {
+  for (const def of loadDecorationsFile(decorationsDataRaw).defs) {
+    scene.load.spritesheet(decorationTextureKey(def.id), def.sprite.sheet, {
+      frameWidth: def.sprite.frameWidth,
+      frameHeight: def.sprite.frameHeight,
+    });
+  }
+}
+
 function queueNodeSheets(scene: Phaser.Scene): void {
   for (const def of loadNodesFile(nodesDataRaw).defs) {
     if (!def.sprite) continue;
@@ -330,6 +353,7 @@ export function runPostLoadSetup(scene: Phaser.Scene): void {
   setupToolAnims(scene);
   setupMountAnims(scene);
   setupNodeAnims(scene);
+  setupDecorationAnims(scene);
   setupNpcAnims(scene);
   setupCharacterAnims(scene);
 }
@@ -408,6 +432,22 @@ function setupMountAnims(scene: Phaser.Scene): void {
         });
       }
     }
+  }
+}
+
+function setupDecorationAnims(scene: Phaser.Scene): void {
+  for (const def of loadDecorationsFile(decorationsDataRaw).defs) {
+    const animKey = decorationAnimKey(def.id);
+    if (scene.anims.exists(animKey)) continue;
+    scene.anims.create({
+      key: animKey,
+      frames: scene.anims.generateFrameNumbers(decorationTextureKey(def.id), {
+        start: 0,
+        end: def.sprite.frames - 1,
+      }),
+      frameRate: def.sprite.frameRate,
+      repeat: -1,
+    });
   }
 }
 

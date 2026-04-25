@@ -53,11 +53,18 @@ export class SaveController {
   private manager: SaveManager | null = null;
   private playerId = "";
   private menuVisible = false;
-  private readonly opts: SaveControllerOptions;
+  private opts: SaveControllerOptions;
   private initialized = false;
   private autosaveHandle: number | null = null;
+  private lastLoadedEnv: SaveEnvelope | null = null;
 
   constructor(opts: SaveControllerOptions) {
+    this.opts = opts;
+  }
+
+  /** Rebind the scene-specific hooks (getSceneKey / onApplied / canAutosave)
+   *  when this controller is game-scoped but serving a freshly-created scene. */
+  setSceneHooks(opts: SaveControllerOptions): void {
     this.opts = opts;
   }
 
@@ -99,6 +106,11 @@ export class SaveController {
     for (const s of systems) this.manager.register(s);
   }
 
+  unregisterSystems(ids: readonly string[]): void {
+    if (!this.manager) return;
+    for (const id of ids) this.manager.unregister(id);
+  }
+
   async autoload(): Promise<SaveEnvelope | null> {
     if (!this.manager) return null;
     const env = await this.manager.load("autosave");
@@ -122,8 +134,23 @@ export class SaveController {
    */
   loadPrefetched(env: SaveEnvelope | null): void {
     if (!this.manager || !env) return;
+    this.lastLoadedEnv = env;
     this.manager.hydrateFrom(env);
     this.opts.onApplied(env);
+  }
+
+  /** Re-apply the most recently loaded envelope against currently-registered
+   *  systems. Used when scene-bound saveables are registered after the initial
+   *  boot-time hydration and need the envelope's scene data applied. Triggers
+   *  the current `onApplied` hook (i.e. the active scene's applyAfterLoad). */
+  rehydrate(): void {
+    if (!this.manager || !this.lastLoadedEnv) {
+      // No save existed — scene still needs its fresh-start fix-ups.
+      this.opts.onApplied(null);
+      return;
+    }
+    this.manager.hydrateFrom(this.lastLoadedEnv);
+    this.opts.onApplied(this.lastLoadedEnv);
   }
 
   async autosave(): Promise<void> {

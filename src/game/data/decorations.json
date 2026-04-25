@@ -1,0 +1,219 @@
+{
+  "defs": [
+    {
+      "id": "wind_cartoonish",
+      "name": "Wind FX (cartoonish)",
+      "sprite": {
+        "sheet": "sprites/decorations/wind-cartoonish.png",
+        "frameWidth": 288,
+        "frameHeight": 64,
+        "frames": 48,
+        "frameRate": 24,
+        "scale": 1,
+        "originY": 0.5
+      }
+    },
+    {
+      "id": "campfire_fire_1",
+      "name": "Campfire 1 (fire)",
+      "sprite": {
+        "sheet": "sprites/decorations/campfire-1-fire.png",
+        "frameWidth": 160,
+        "frameHeight": 160,
+        "frames": 8,
+        "frameRate": 12,
+        "scale": 1,
+        "originY": 1
+      }
+    },
+    {
+      "id": "campfire_fire_2",
+      "name": "Campfire 2 (fire)",
+      "sprite": {
+        "sheet": "sprites/decorations/campfire-2-fire.png",
+        "frameWidth": 160,
+        "frameHeight": 160,
+        "frames": 8,
+        "frameRate": 12,
+        "scale": 1,
+        "originY": 1
+      }
+    },
+    {
+      "id": "campfire_smoke",
+      "name": "Campfire smoke",
+      "sprite": {
+        "sheet": "sprites/decorations/campfire-smoke.png",
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "frames": 16,
+        "frameRate": 12,
+        "scale": 1,
+        "originY": 1
+      }
+    },
+    {
+      "id": "chimney_smoke_1_dark",
+      "name": "Chimney smoke 1 (dark)",
+      "sprite": {
+        "sheet": "sprites/decorations/chimney-1-smoke-dark.png",
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "frames": 24,
+        "frameRate": 12,
+        "scale": 1,
+        "originY": 1
+      }
+    },
+    {
+      "id": "chimney_smoke_1_white",
+      "name": "Chimney smoke 1 (white)",
+      "sprite": {
+        "sheet": "sprites/decorations/chimney-1-smoke-white.png",
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "frames": 24,
+        "frameRate": 12,
+        "scale": 1,
+        "originY": 1
+      }
+    },
+    {
+      "id": "chimney_smoke_2_dark",
+      "name": "Chimney smoke 2 (dark)",
+      "sprite": {
+        "sheet": "sprites/decorations/chimney-2-smoke-dark.png",
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "frames": 24,
+        "frameRate": 12,
+        "scale": 1,
+        "originY": 1
+      }
+    },
+    {
+      "id": "chimney_smoke_2_white",
+      "name": "Chimney smoke 2 (white)",
+      "sprite": {
+        "sheet": "sprites/decorations/chimney-2-smoke-white.png",
+        "frameWidth": 64,
+        "frameHeight": 64,
+        "frames": 24,
+        "frameRate": 12,
+        "scale": 1,
+        "originY": 1
+      }
+    },
+    {
+      "id": "flies",
+      "name": "Flies swarm",
+      "sprite": {
+        "sheet": "sprites/decorations/flies.png",
+        "frameWidth": 96,
+        "frameHeight": 96,
+        "frames": 16,
+        "frameRate": 16,
+        "scale": 1,
+        "originY": 0.5
+      }
+    },
+    {
+      "id": "butterfly_1",
+      "name": "Butterfly 1",
+      "sprite": {
+        "sheet": "sprites/decorations/butterfly-1.png",
+        "frameWidth": 150,
+        "frameHeight": 106,
+        "frames": 24,
+        "frameRate": 16,
+        "scale": 1,
+        "originY": 0.5
+      }
+    },
+    {
+      "id": "butterfly_2",
+      "name": "Butterfly 2",
+      "sprite": {
+        "sheet": "sprites/decorations/butterfly-2.png",
+        "frameWidth": 150,
+        "frameHeight": 106,
+        "frames": 24,
+        "frameRate": 16,
+        "scale": 1,
+        "originY": 0.5
+      }
+    },
+    {
+      "id": "butterfly_3",
+      "name": "Butterfly 3",
+      "sprite": {
+        "sheet": "sprites/decorations/butterfly-3.png",
+        "frameWidth": 150,
+        "frameHeight": 106,
+        "frames": 24,
+        "frameRate": 16,
+        "scale": 1,
+        "originY": 0.5
+      }
+    },
+    {
+      "id": "enemy_flag_1",
+      "name": "Enemy flag (banner)",
+      "sprite": {
+        "sheet": "sprites/decorations/enemy-flag-1.png",
+        "frameWidth": 96,
+        "frameHeight": 128,
+        "frames": 15,
+        "frameRate": 12,
+        "scale": 1,
+        "originY": 1
+      }
+    },
+    {
+      "id": "enemy_flag_2",
+      "name": "Enemy flag (pennant)",
+      "sprite": {
+        "sheet": "sprites/decorations/enemy-flag-2.png",
+        "frameWidth": 96,
+        "frameHeight": 128,
+        "frames": 8,
+        "frameRate": 12,
+        "scale": 1,
+        "originY": 1
+      }
+    },
+    {
+      "id": "lamp_post_1",
+      "name": "Lamp post 1",
+      "sprite": {
+        "sheet": "sprites/decorations/lamp-post-1.png",
+        "frameWidth": 76,
+        "frameHeight": 96,
+        "frames": 16,
+        "frameRate": 8,
+        "scale": 1,
+        "originY": 1
+      }
+    }
+  ],
+  "instances": [
+    {
+      "id": "d_wind_cartoonish_1",
+      "defId": "wind_cartoonish",
+      "tileX": 179,
+      "tileY": 74
+    },
+    {
+      "id": "d_butterfly_1_1",
+      "defId": "butterfly_1",
+      "tileX": 185,
+      "tileY": 73
+    },
+    {
+      "id": "d_wind_cartoonish_2",
+      "defId": "wind_cartoonish",
+      "tileX": 182,
+      "tileY": 83
+    }
+  ]
+}

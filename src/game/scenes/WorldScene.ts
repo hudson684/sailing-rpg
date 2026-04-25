@@ -101,6 +101,9 @@ import {
   loadNodesFile,
 } from "../world/GatheringNode";
 import nodesDataRaw from "../data/nodes.json";
+import { Decoration, loadDecorationsFile } from "../world/Decoration";
+import decorationsDataRaw from "../data/decorations.json";
+import playerSpawnRaw from "../data/playerSpawn.json";
 import {
   CraftingStation,
   STATION_INTERACT_RADIUS,
@@ -146,16 +149,21 @@ import {
 } from "../save";
 import { setActiveSaveController } from "../save/activeController";
 import { PREFETCHED_SAVE_REGISTRY_KEY } from "./PreloadScene";
+import { getBootedSaveController } from "../save/bootSave";
+import { getPrefetchedEnvelope, getSavedPlayerSpawn } from "../save/storeHydrate";
 
 const HELM_INTERACT_RADIUS = TILE_SIZE * 0.7;
 const DOOR_INTERACT_RADIUS = TILE_SIZE * 0.9;
 const PICKUP_RADIUS = TILE_SIZE * 0.8;
 const SHOP_CLICK_RADIUS = TILE_SIZE * 1.5;
 /** Time after last damage before player HP regen kicks in. */
-/** Tile where a new game drops the player — center of the starter village
- *  on the chunk (1,0) island, not at the dock. Loaded saves override this
- *  via the hydrated player position. */
-const DEFAULT_PLAYER_SPAWN_TILE = { x: 48, y: 17 } as const;
+/** Tile where a new game drops the player. Authored in
+ *  `src/game/data/playerSpawn.json` and movable via the spawn editor.
+ *  Loaded saves override this via the hydrated player position. */
+const DEFAULT_PLAYER_SPAWN_TILE = {
+  x: (playerSpawnRaw as { instance: { tileX: number; tileY: number } }).instance.tileX,
+  y: (playerSpawnRaw as { instance: { tileX: number; tileY: number } }).instance.tileY,
+} as const;
 
 const ZOOM_STEPS = [0.5, 1, 1.5, 2, 3, 4, 6, 8] as const;
 const MIN_ZOOM = ZOOM_STEPS[0];
@@ -248,11 +256,9 @@ export class WorldScene extends Phaser.Scene implements EditHost {
   private readonly droppedItemsState = new DroppedItemsState();
   private droppedExpiryAccum = 0;
   private readonly sceneState = new SceneState();
-  private readonly saveController = new SaveController({
-    getSceneKey: () => "World",
-    onApplied: (env) => this.applyAfterLoad(env),
-    canAutosave: () => this.sceneState.mode !== "Anchoring",
-  });
+  // Assigned in create() from the game-scoped controller booted behind the
+  // title. Marked `!` because TS can't see create() as a constructor.
+  private saveController!: SaveController;
   private groundItems = new Map<string, GroundItem>();
   private doors: DoorSpawn[] = [];
   /** Accumulated authored item spawns from every chunk that has been
@@ -265,6 +271,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
    *  creation because the initial tear-down-and-rebuild will do it in bulk. */
   private initialGroundItemsBuilt = false;
   private nodes: GatheringNode[] = [];
+  private decorations: Decoration[] = [];
   private fishingSession: FishingSession | null = null;
   private craftingStations: CraftingStation[] = [];
   private stationInstanceData: CraftingStationInstanceData[] = [];
@@ -387,6 +394,30 @@ export class WorldScene extends Phaser.Scene implements EditHost {
   }
 
   create() {
+    const phase = import.meta.env.DEV
+      ? (label: string, fn: () => void) => {
+          const key = `[WorldScene.create] ${label}`;
+          console.time(key);
+          fn();
+          console.timeEnd(key);
+        }
+      : (_label: string, fn: () => void) => fn();
+    const createStart = import.meta.env.DEV ? performance.now() : 0;
+
+    // The SaveController was booted + store-only systems were hydrated behind
+    // the title, so inventory/equipment/wardrobe/etc. stores are already
+    // populated. Rebind the scene-specific hooks before anything that could
+    // trigger an autosave or onApplied callback.
+    const booted = getBootedSaveController(this.game);
+    if (!booted) throw new Error("SaveController was not booted before World");
+    this.saveController = booted;
+    this.saveController.setSceneHooks({
+      getSceneKey: () => "World",
+      onApplied: (env) => this.applyAfterLoad(env),
+      canAutosave: () => this.sceneState.mode !== "Anchoring",
+    });
+    setActiveSaveController(this.saveController);
+
     const manifest = this.cache.json.get(WORLD_MANIFEST_KEY) as WorldManifest;
     // Spawns arrive as chunks instantiate — once synchronously here for every
     // chunk whose tilesets were in the eager preload batch, and again later
@@ -395,54 +426,70 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     // new authored item into the world as its own sprite.
     this.doors = [];
     this.authoredItems = [];
-    this.world = loadWorld({
-      scene: this,
-      manifest,
-      chunkKeyPrefix: CHUNK_KEY_PREFIX,
-      onChunkReady: (_chunk, spawns) => {
-        this.doors.push(...spawns.doors);
-        this.authoredItems.push(...spawns.items);
-        if (this.initialGroundItemsBuilt) {
-          for (const s of spawns.items) this.addGroundItemSprite(s, "authored");
-        }
-      },
+    phase("loadWorld (eager chunks)", () => {
+      this.world = loadWorld({
+        scene: this,
+        manifest,
+        chunkKeyPrefix: CHUNK_KEY_PREFIX,
+        onChunkReady: (_chunk, spawns) => {
+          this.doors.push(...spawns.doors);
+          this.authoredItems.push(...spawns.items);
+          if (this.initialGroundItemsBuilt) {
+            for (const s of spawns.items) this.addGroundItemSprite(s, "authored");
+          }
+        },
+      });
     });
 
-    const spawnPx = {
-      x: (DEFAULT_PLAYER_SPAWN_TILE.x + 0.5) * TILE_SIZE,
-      y: (DEFAULT_PLAYER_SPAWN_TILE.y + 0.5) * TILE_SIZE,
-    };
-    // Model is shared across scenes (registry-owned, survives sleep/wake);
-    // the sprite is scene-local and torn down on shutdown.
-    const playerModel = getOrCreatePlayerModel({ x: spawnPx.x, y: spawnPx.y });
-    entityRegistry.setMap(playerModel.id, { kind: "world" });
-    this.player = new Player(this, playerModel);
+    phase("player spawn", () => {
+      // Prefer the saved player position from the prefetched envelope so the
+      // first rendered frame places the Player at the correct spot — otherwise
+      // we'd spawn at the default tile and then teleport once playerSaveable
+      // hydrated, which is visible to the user as a stutter.
+      const prefetchedEnv = getPrefetchedEnvelope(this.game);
+      const savedSpawn = getSavedPlayerSpawn(prefetchedEnv);
+      const spawnPx = savedSpawn ?? {
+        x: (DEFAULT_PLAYER_SPAWN_TILE.x + 0.5) * TILE_SIZE,
+        y: (DEFAULT_PLAYER_SPAWN_TILE.y + 0.5) * TILE_SIZE,
+      };
+      // Model is shared across scenes (registry-owned, survives sleep/wake);
+      // the sprite is scene-local and torn down on shutdown.
+      const playerModel = getOrCreatePlayerModel({ x: spawnPx.x, y: spawnPx.y });
+      entityRegistry.setMap(playerModel.id, { kind: "world" });
+      this.player = new Player(this, playerModel);
+    });
 
-    const shipsFile = loadShipsFile();
-    this.shipDefs = shipsFile.defs;
-    this.shipInstanceData = shipsFile.instances.map((i) => ({ ...i }));
-    for (const inst of this.shipInstanceData) {
-      this.spawnShip(inst);
-    }
+    phase("ships", () => {
+      const shipsFile = loadShipsFile();
+      this.shipDefs = shipsFile.defs;
+      this.shipInstanceData = shipsFile.instances.map((i) => ({ ...i }));
+      for (const inst of this.shipInstanceData) {
+        this.spawnShip(inst);
+      }
+    });
 
-    this.loadEditorItems();
-    this.respawnGroundItems();
+    phase("loadEditorItems", () => this.loadEditorItems());
+    phase("respawnGroundItems", () => this.respawnGroundItems());
     // Initialize the quest subsystem eagerly so that spawn gating
     // (Phase 7) sees the PredicateContext. `ensureQuestSubsystem` is
     // idempotent; `initSave` calls it again later and reuses the
     // same singletons.
-    const { flags: _flags } = ensureQuestSubsystem();
-    void _flags;
-    const questCtx = getPredicateContext();
+    let questCtx!: ReturnType<typeof getPredicateContext>;
+    phase("ensureQuestSubsystem", () => {
+      const { flags: _flags } = ensureQuestSubsystem();
+      void _flags;
+      questCtx = getPredicateContext();
+    });
     // Populate the registry before subscribing the reconciler so it picks up
     // existing models via getByMap with this live scene, instead of being
     // triggered by registry mutations from outside the scene lifecycle.
-    bootstrapNpcs(this.npcData, questCtx);
-    this.setupNpcReconciler();
-    this.spawnGatheringNodes(questCtx);
-    this.spawnCraftingStations(questCtx);
-    this.loadDropTables();
-    this.spawnEnemies(questCtx);
+    phase("bootstrapNpcs", () => bootstrapNpcs(this.npcData, questCtx));
+    phase("setupNpcReconciler", () => this.setupNpcReconciler());
+    phase("spawnGatheringNodes", () => this.spawnGatheringNodes(questCtx));
+    phase("spawnDecorations", () => this.spawnDecorations());
+    phase("spawnCraftingStations", () => this.spawnCraftingStations(questCtx));
+    phase("loadDropTables", () => this.loadDropTables());
+    phase("spawnEnemies", () => this.spawnEnemies(questCtx));
     this.shopsForEdit = (shopsDataRaw as ShopsFile).shops.map((s) => ({
       ...s,
       stock: s.stock.map((row) => ({ ...row })),
@@ -733,6 +780,8 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       if (activeWorldScene === this) activeWorldScene = null;
       for (const e of this.enemies) entityRegistry.remove(e.id);
       this.enemies = [];
+      for (const d of this.decorations) d.destroy();
+      this.decorations = [];
       for (const p of this.projectiles) p.destroy();
       this.projectiles = [];
       this.bowReticle?.destroy();
@@ -742,7 +791,16 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       // Destroy the scene-local sprite; the PlayerModel persists in the
       // registry and rebinds to whichever scene wakes next.
       this.player?.destroy();
-      this.saveController.shutdown();
+      // SaveController is game-scoped (booted at title time) and shuts down
+      // on Phaser game destroy — not on scene shutdown. Unregister the
+      // scene-bound saveables so a re-entry can re-register cleanly.
+      this.saveController.unregisterSystems([
+        "player",
+        "ships",
+        "groundItems",
+        "droppedItems",
+        "scene",
+      ]);
     });
 
     setHud({
@@ -760,44 +818,36 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       reason: "load",
     });
 
-    void this.initSave();
+    phase("initSceneSave (rehydrate + applyAfterLoad)", () => this.initSceneSave());
+
+    if (import.meta.env.DEV) {
+      const total = performance.now() - createStart;
+      console.log(`[WorldScene.create] TOTAL ${total.toFixed(1)}ms`);
+    }
   }
 
-  private async initSave(): Promise<void> {
-    await this.saveController.init();
-    setActiveSaveController(this.saveController);
-    const questSubsystem = ensureQuestSubsystem();
+  /** Register the scene-bound saveables (player, ships, scene mode, ground &
+   *  dropped items) with the game-scoped controller and rehydrate so their
+   *  slice of the envelope is applied and `applyAfterLoad` runs the post-load
+   *  scene fix-ups (mode, ship parking, walkability rescue, ground respawn).
+   *  The store-only saveables were registered + hydrated during TitleScene's
+   *  boot, so inventory/equipment/etc. are already live by the time we get
+   *  here. `rehydrate()` re-applies the store-only slice idempotently. */
+  private initSceneSave(): void {
     this.saveController.registerSystems([
-      saveSystems.inventorySaveable(),
-      saveSystems.equipmentSaveable(),
-      saveSystems.jobsSaveable(),
-      saveSystems.healthSaveable(),
       saveSystems.playerSaveable(this.player),
-      saveSystems.shipsSaveable(() => Array.from(this.ships.values()), (states) => this.hydrateShips(states)),
+      saveSystems.shipsSaveable(
+        () => Array.from(this.ships.values()),
+        (states) => this.hydrateShips(states),
+      ),
       saveSystems.groundItemsSaveable(this.groundItemsState),
       saveSystems.droppedItemsSaveable(this.droppedItemsState),
       saveSystems.sceneSaveable(this.sceneState),
-      saveSystems.appearanceSaveable(),
-      saveSystems.shopsSaveable(),
-      // Flags MUST register before quests: hydrate order follows
-      // registration order, and QuestManager.hydrate reads flags to
-      // reconcile cursors.
-      questSubsystem.flags,
-      questSubsystem.quests,
     ]);
-    await this.saveController.refreshMenu();
-    // If PreloadScene prefetched the latest envelope while the title was up,
-    // hydrate from it synchronously here — no IDB round-trip on the critical
-    // path. We pop it from the registry so a later scene re-entry can't apply
-    // a stale snapshot.
-    const registry = this.game.registry;
-    if (registry.has(PREFETCHED_SAVE_REGISTRY_KEY)) {
-      const prefetched = registry.get(PREFETCHED_SAVE_REGISTRY_KEY) as SaveEnvelope | null;
-      registry.remove(PREFETCHED_SAVE_REGISTRY_KEY);
-      this.saveController.loadPrefetched(prefetched);
-    } else {
-      await this.saveController.loadLatest();
-    }
+    // Pop the prefetched envelope from the registry so a later scene
+    // re-entry can't apply a stale snapshot (matches prior behaviour).
+    this.game.registry.remove(PREFETCHED_SAVE_REGISTRY_KEY);
+    this.saveController.rehydrate();
   }
 
   update(_time: number, dtMs: number) {
@@ -931,8 +981,11 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     const sprinting = !mounted && moving && this.keys.sprint.isDown && stamina.current > 0;
     if (sprinting) stamina.drain(dt);
     const speed = PLAYER_SPEED * (mounted || sprinting ? SPRINT_SPEED_MULT : 1);
-    this.player.tryMove(dx * speed * dt, dy * speed * dt, (px, py) =>
-      this.isWalkablePx(px, py),
+    this.player.tryMove(
+      dx * speed * dt,
+      dy * speed * dt,
+      (px, py) => this.isWalkablePx(px, py),
+      (px, py) => this.world.manager.slopeAtPx(px, py),
     );
   }
 
@@ -1543,6 +1596,19 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       },
     });
     this.nodeGate.register(file.instances);
+  }
+
+  private spawnDecorations() {
+    const file = loadDecorationsFile(decorationsDataRaw);
+    const defs = new Map(file.defs.map((d) => [d.id, d]));
+    for (const inst of file.instances) {
+      const def = defs.get(inst.defId);
+      if (!def) {
+        console.warn(`Unknown decoration defId: ${inst.defId}`);
+        continue;
+      }
+      this.decorations.push(new Decoration(this, def, inst));
+    }
   }
 
   private spawnCraftingStations(ctx: PredicateContext) {
@@ -2586,20 +2652,10 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       heading: this.activeShip ? normalizeAngle(this.activeShip.headingRad) : 0,
       stamina: Math.round(stamina.current),
       staminaMax: STAMINA_MAX,
-      wind: showSailingHud
-        ? { angle: this.wind.angle, strength: this.wind.strength }
-        : null,
       shipMaxSpeed: showSailingHud ? SHIP_MAX_SPEED : null,
-      shipVel:
-        showSailingHud && this.activeShip
-          ? { vx: this.activeShip.vx, vy: this.activeShip.vy }
-          : null,
       sail:
         showSailingHud && this.activeShip
-          ? {
-              state: this.activeShip.sail,
-              overCanvas: this.activeShip.isOverCanvassed(this.wind.strength),
-            }
+          ? { state: this.activeShip.sail }
           : null,
     });
   }

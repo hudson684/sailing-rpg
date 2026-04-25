@@ -167,9 +167,11 @@ export function SpawnEditor() {
     npc: useJsonFile<unknown>("src/game/data/npcs.json"),
     enemy: useJsonFile<unknown>("src/game/data/enemies.json"),
     node: useJsonFile<unknown>("src/game/data/nodes.json"),
+    decoration: useJsonFile<unknown>("src/game/data/decorations.json"),
     station: useJsonFile<unknown>("src/game/data/craftingStations.json"),
     ship: useJsonFile<unknown>("src/game/data/ships.json"),
     item: useJsonFile<unknown>("src/game/data/itemInstances.json"),
+    spawn: useJsonFile<unknown>("src/game/data/playerSpawn.json"),
   } as const;
   // Items.json is read-only for the editor (we only place references to it).
   const itemsFile = useJsonFile<{ items?: Array<{ id: string; name?: string }> }>(
@@ -195,7 +197,7 @@ export function SpawnEditor() {
       };
     }
     return out;
-  }, [files.npc.data, files.enemy.data, files.node.data, files.station.data, files.ship.data, files.item.data, itemsFile.data]);
+  }, [files.npc.data, files.enemy.data, files.node.data, files.decoration.data, files.station.data, files.ship.data, files.item.data, files.spawn.data, itemsFile.data]);
 
   // Draft state — the working copy of instances per kind.
   const [draft, setDraft] = useState<DraftByKind | null>(null);
@@ -212,9 +214,11 @@ export function SpawnEditor() {
       npc: parsed.npc!.entities,
       enemy: parsed.enemy!.entities,
       node: parsed.node!.entities,
+      decoration: parsed.decoration!.entities,
       station: parsed.station!.entities,
       ship: parsed.ship!.entities,
       item: parsed.item!.entities,
+      spawn: parsed.spawn!.entities,
     };
     setDraft(next);
   }, [parsed, draft]);
@@ -315,7 +319,7 @@ export function SpawnEditor() {
       if (JSON.stringify(candidate) !== JSON.stringify(original)) out.add(info.kind);
     }
     return out;
-  }, [draft, files.npc.data, files.enemy.data, files.node.data, files.station.data, files.ship.data, files.item.data]);
+  }, [draft, files.npc.data, files.enemy.data, files.node.data, files.decoration.data, files.station.data, files.ship.data, files.item.data, files.spawn.data]);
 
   const onSave = useCallback(async () => {
     if (!draft) return;
@@ -332,9 +336,11 @@ export function SpawnEditor() {
       npc: parsed.npc?.entities ?? [],
       enemy: parsed.enemy?.entities ?? [],
       node: parsed.node?.entities ?? [],
+      decoration: parsed.decoration?.entities ?? [],
       station: parsed.station?.entities ?? [],
       ship: parsed.ship?.entities ?? [],
       item: parsed.item?.entities ?? [],
+      spawn: parsed.spawn?.entities ?? [],
     };
     setDraft(next);
     setUndoStack([]);
@@ -497,7 +503,8 @@ function LeftRail(props: {
       ? ["npc"]
       : mapKind === "ship"
       ? ["npc"]
-      : ["npc", "enemy", "node", "station", "ship", "item"];
+      : ["npc", "enemy", "node", "decoration", "station", "ship", "item"];
+  // `spawn` is a singleton — drag the existing marker, no Place dropdown.
 
   return (
     <aside style={{ width: 200, background: "#12121a", padding: 10, border: "1px solid #222", overflow: "auto" }}>

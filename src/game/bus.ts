@@ -12,20 +12,11 @@ export interface HudState {
   message: string | null;
   stamina: number;
   staminaMax: number;
-  /** Current wind, or null when nothing should render a wind indicator
-   *  (e.g. on foot). Angle is radians (0 = east); strength is 0..1. */
-  wind: { angle: number; strength: number } | null;
   /** Ship top speed (px/s) used as the denominator for the speed HUD. Set
    *  while AtHelm; null otherwise so the HUD can decide when to render. */
   shipMaxSpeed: number | null;
-  /** Current ship velocity (px/s), in world coordinates. Used to draw a
-   *  leeway arrow on the compass — the direction the ship is actually
-   *  moving, which diverges from the bow whenever wind is pushing the hull
-   *  sideways. Null when not sailing. */
-  shipVel: { vx: number; vy: number } | null;
-  /** Current sail state and whether the ship is over-canvassed (full sails
-   *  in a strong wind). Null when not sailing. */
-  sail: { state: "furled" | "reefed" | "trim" | "full"; overCanvas: boolean } | null;
+  /** Current sail state. Null when not sailing. */
+  sail: { state: "furled" | "reefed" | "trim" | "full" } | null;
 }
 
 export type InventoryAction =

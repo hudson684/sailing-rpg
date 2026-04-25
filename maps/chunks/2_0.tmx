@@ -1,9 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="64" height="64" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="1">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="64" height="64" tilewidth="32" tileheight="32" infinite="0" nextlayerid="5" nextobjectid="1">
  <tileset firstgid="1" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/deep sea.tsx"/>
+ <tileset firstgid="226" source="../themes/Sea Adventures/TiledMap Editor/Tilesets/beach - with thick foam.tsx"/>
  <layer id="1" name="ocean" width="64" height="64">
   <data encoding="base64" compression="zlib">
    eJztw0ENAAAMA6Hzr66SJmMfSFg1VVVVVVVVVVVVVVVVVVVV9fUBou4AxA==
+  </data>
+ </layer>
+ <layer id="3" name="beach" width="64" height="64">
+  <data encoding="base64" compression="zlib">
+   eJzt1UsOwjAMhGF3UbgJUE5CCUfh2BQQjzvgkR2pSxYIpPB/0ihq2TBxCGYAAAAAAAAAAAAAAAAAAAAAAAAAAACfterMFpll9+tv813qvvZsPHvP4Q/697N5q/vJ3509V8/gz9vG92Dn/UbPZDH3o+dm0b80fgb6nPmYne8W89eqM3CxtvvX2Svqqj3Qqv5Pi/PQav/5XaeZ67xPmZLvtRdDg/8Ftbvm/LDoqrXOXXd/yc91H+i38O4+vABDyiLn
+  </data>
+ </layer>
+ <layer id="4" name="roof" width="64" height="64">
+  <data encoding="base64" compression="zlib">
+   eJztwTEBAAAAwqD1T20MH6AAAAAAAAAAAAAAAAAAAACAtwFAAAAB
   </data>
  </layer>
 </map>

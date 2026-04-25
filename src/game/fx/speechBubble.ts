@@ -5,6 +5,10 @@ import * as Phaser from "phaser";
  * Intended for short, reactive, non-dialogue lines ("Just like Mum used to
  * make!"). Formal NPC conversations still belong to the DialogueDirector —
  * this is just a visual flourish.
+ *
+ * Visuals match the rest of the pixel UI: a wooden 9-slice frame
+ * (`ui-panel-tan`, the same texture HTML panels use via `border-image`)
+ * with a parchment-filled tail in matching colors.
  */
 
 export interface SpeechBubbleOpts {
@@ -27,14 +31,19 @@ export interface SpeechBubbleTarget {
 
 const ACTIVE = new WeakMap<object, () => void>();
 
-const BG_COLOR = 0xfdf6e3;
-const BG_ALPHA = 1;
-const LINE_COLOR = 0x1a1a1a;
-const LINE_WIDTH = 2;
-const PAD_X = 8;
-const PAD_Y = 5;
-const TAIL_HEIGHT = 6;
-const TAIL_HALF_WIDTH = 4;
+const PANEL_TEXTURE = "ui-panel-tan";
+// panel-tan.png is 48×48 with 16px pixel-art corners — same slice values
+// the HTML panels use in pixel-ui.css.
+const SLICE = 16;
+// Inner parchment + outer wood colors sampled from the panel art so the
+// hand-drawn tail matches the 9-slice body seamlessly.
+const PARCHMENT = 0xf1d6ac;
+const WOOD_DARK = 0x6a3a1f;
+const PAD_X = 10;
+const PAD_Y = 8;
+const TAIL_HEIGHT = 8;
+const TAIL_HALF_WIDTH = 6;
+const MIN_BODY = SLICE * 2 + 4;
 
 export function showSpeechBubble(
   scene: Phaser.Scene,
@@ -56,9 +65,9 @@ export function showSpeechBubble(
 
   const label = scene.add
     .text(0, 0, text, {
-      fontFamily: "'Press Start 2P', 'Courier New', monospace",
-      fontSize: "10px",
-      color: "#1a1a1a",
+      fontFamily: "'Pixelify Sans', 'Press Start 2P', 'Courier New', monospace",
+      fontSize: "12px",
+      color: "#2a1b17",
       align: "center",
       wordWrap: { width: maxWidth, useAdvancedWrap: true },
       resolution: 2,
@@ -66,36 +75,43 @@ export function showSpeechBubble(
     .setOrigin(0.5, 1);
 
   const textBounds = label.getBounds();
-  const bodyW = Math.ceil(textBounds.width) + PAD_X * 2;
-  const bodyH = Math.ceil(textBounds.height) + PAD_Y * 2;
+  const bodyW = Math.max(MIN_BODY, Math.ceil(textBounds.width) + PAD_X * 2);
+  const bodyH = Math.max(MIN_BODY, Math.ceil(textBounds.height) + PAD_Y * 2);
   const left = -bodyW / 2;
-  const right = bodyW / 2;
   const bottom = -TAIL_HEIGHT;
   const top = bottom - bodyH;
 
   label.setPosition(0, bottom - PAD_Y);
 
-  const bg = scene.add.graphics();
-  // Solid fill for body + tail (two shapes so the seam is covered by fills
-  // on both sides — no visible line where they meet).
-  bg.fillStyle(BG_COLOR, BG_ALPHA);
-  bg.fillRect(left, top, bodyW, bodyH);
-  bg.fillTriangle(-TAIL_HALF_WIDTH, bottom, TAIL_HALF_WIDTH, bottom, 0, 0);
-  // Outline as a single connected polyline so the body's bottom edge breaks
-  // cleanly around the tail instead of cutting across it.
-  bg.lineStyle(LINE_WIDTH, LINE_COLOR, 1);
-  bg.beginPath();
-  bg.moveTo(left, top);
-  bg.lineTo(right, top);
-  bg.lineTo(right, bottom);
-  bg.lineTo(TAIL_HALF_WIDTH, bottom);
-  bg.lineTo(0, 0);
-  bg.lineTo(-TAIL_HALF_WIDTH, bottom);
-  bg.lineTo(left, bottom);
-  bg.lineTo(left, top);
-  bg.strokePath();
+  const body = scene.add.nineslice(
+    left + bodyW / 2,
+    top + bodyH / 2,
+    PANEL_TEXTURE,
+    undefined,
+    bodyW,
+    bodyH,
+    SLICE,
+    SLICE,
+    SLICE,
+    SLICE,
+  );
 
-  container.add([bg, label]);
+  // Tail: filled parchment triangle with a dark-wood outline. Drawn so the
+  // top edge sits 1px inside the body's bottom slice — the panel's bottom
+  // border has its own wood line, so overlapping by a pixel hides any seam
+  // between the slice's parchment fill and the tail.
+  const tail = scene.add.graphics();
+  const tailTop = bottom + 1;
+  tail.fillStyle(PARCHMENT, 1);
+  tail.fillTriangle(-TAIL_HALF_WIDTH, tailTop, TAIL_HALF_WIDTH, tailTop, 0, 0);
+  tail.lineStyle(2, WOOD_DARK, 1);
+  tail.beginPath();
+  tail.moveTo(-TAIL_HALF_WIDTH, tailTop);
+  tail.lineTo(0, 0);
+  tail.lineTo(TAIL_HALF_WIDTH, tailTop);
+  tail.strokePath();
+
+  container.add([body, tail, label]);
 
   // Pop-in: scale + fade from the tail tip so it looks like it sprouts off
   // the character's head.

@@ -1,6 +1,197 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.9" tiledversion="1.9.2" name="Tileset - Terrain - new grass2" tilewidth="32" tileheight="32" tilecount="3960" columns="55">
+<tileset version="1.10" tiledversion="1.12.1" name="Tileset - Terrain - new grass2" tilewidth="32" tileheight="32" tilecount="3960" columns="55">
  <image source="../../Tilesets/Tileset-Terrain-new grass.png" width="1760" height="2304"/>
+ <tile id="56">
+  <objectgroup draworder="index" id="3">
+   <object id="4" x="25.5625" y="12.75">
+    <capsule/>
+   </object>
+   <object id="5" x="12.25" y="26.625">
+    <capsule/>
+   </object>
+   <object id="6" x="16.75" y="20.8125">
+    <capsule/>
+   </object>
+  </objectgroup>
+ </tile>
+ <tile id="61">
+  <properties>
+   <property name="slope" value="ne"/>
+  </properties>
+ </tile>
+ <tile id="62">
+  <properties>
+   <property name="slope" value="ne"/>
+  </properties>
+ </tile>
+ <tile id="63">
+  <properties>
+   <property name="slope" value="nw"/>
+  </properties>
+ </tile>
+ <tile id="64">
+  <properties>
+   <property name="slope" value="nw"/>
+  </properties>
+ </tile>
+ <tile id="110">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="11.375" y="31.5625">
+    <capsule/>
+   </object>
+   <object id="2" x="18.1875" y="23.875">
+    <capsule/>
+   </object>
+   <object id="3" x="27.75" y="12.625" width="0.25" height="0.1875">
+    <capsule/>
+   </object>
+   <object id="4" x="22.5625" y="17.75">
+    <capsule/>
+   </object>
+   <object id="5" x="28.375" y="12.5625">
+    <capsule/>
+   </object>
+  </objectgroup>
+ </tile>
+ <tile id="111">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="8.9375" y="7.4375">
+    <capsule/>
+   </object>
+  </objectgroup>
+ </tile>
+ <tile id="116">
+  <properties>
+   <property name="slope" value="ne"/>
+  </properties>
+ </tile>
+ <tile id="117">
+  <properties>
+   <property name="slope" value="ne"/>
+  </properties>
+ </tile>
+ <tile id="118">
+  <properties>
+   <property name="slope" value="nw"/>
+  </properties>
+ </tile>
+ <tile id="119">
+  <properties>
+   <property name="slope" value="nw"/>
+  </properties>
+ </tile>
+ <tile id="165">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="1.72727" y="0.0909091" width="24.4545" height="32.2727"/>
+  </objectgroup>
+ </tile>
+ <tile id="169">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="11.0909" y="0.272727" width="19.5455" height="32.9091"/>
+  </objectgroup>
+ </tile>
+ <tile id="171">
+  <properties>
+   <property name="slope" value="ne"/>
+  </properties>
+ </tile>
+ <tile id="172">
+  <properties>
+   <property name="slope" value="ne"/>
+  </properties>
+ </tile>
+ <tile id="173">
+  <properties>
+   <property name="slope" value="nw"/>
+  </properties>
+ </tile>
+ <tile id="174">
+  <properties>
+   <property name="slope" value="nw"/>
+  </properties>
+ </tile>
+ <tile id="220">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="1.72727" y="0.272727" width="30.2727" height="21.9091"/>
+   <object id="2" x="2" y="22.0909" width="29.6364" height="8.81818"/>
+  </objectgroup>
+ </tile>
+ <tile id="221">
+  <objectgroup draworder="index" id="3">
+   <object id="2" x="-4.54545" y="5.18182" width="28.3636" height="26.2727"/>
+  </objectgroup>
+ </tile>
+ <tile id="223">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="20.0909" y="27.7273">
+    <ellipse/>
+   </object>
+   <object id="2" x="25.1818" y="17.2727" height="0.454545">
+    <ellipse/>
+   </object>
+   <object id="3" x="26.7273" y="15.4545">
+    <ellipse/>
+   </object>
+   <object id="4" x="26.4545" y="26.3636">
+    <ellipse/>
+   </object>
+  </objectgroup>
+ </tile>
+ <tile id="224">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="3.90909" y="21.3636">
+    <ellipse/>
+   </object>
+   <object id="2" x="12" y="19">
+    <ellipse/>
+   </object>
+   <object id="3" x="18.0909" y="14">
+    <ellipse/>
+   </object>
+   <object id="4" x="21.4545" y="6.54545">
+    <ellipse/>
+   </object>
+   <object id="5" x="8.72727" y="13">
+    <ellipse/>
+   </object>
+  </objectgroup>
+ </tile>
+ <tile id="276">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="2" y="0" width="29.5455" height="14.9091"/>
+   <object id="2" x="24.2727" y="22.0909"/>
+   <object id="4" x="12.7273" y="13.9091">
+    <capsule/>
+   </object>
+   <object id="5" x="18.2727" y="20.3636">
+    <capsule/>
+   </object>
+  </objectgroup>
+ </tile>
+ <tile id="277">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0.181818" y="6.18182" width="31.6364" height="21.9091"/>
+  </objectgroup>
+ </tile>
+ <tile id="278">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="5.27273" y="19.4545" height="0.0909091">
+    <ellipse/>
+   </object>
+   <object id="2" x="22.2727" y="6.72727">
+    <ellipse/>
+   </object>
+   <object id="3" x="15.4545" y="15.6364">
+    <ellipse/>
+   </object>
+   <object id="4" x="5.63636" y="20.5455">
+    <ellipse/>
+   </object>
+   <object id="5" x="7.27273" y="14.5455" height="0.454545">
+    <ellipse/>
+   </object>
+  </objectgroup>
+ </tile>
  <tile id="416" probability="0.25"/>
  <tile id="417" probability="0.25"/>
  <tile id="418" probability="0.25"/>
@@ -31,6 +222,86 @@
  <tile id="655" probability="0.25"/>
  <tile id="656" probability="0.25"/>
  <tile id="657" probability="0.25"/>
+ <tile id="936">
+  <properties>
+   <property name="slope" value="nw"/>
+  </properties>
+ </tile>
+ <tile id="937">
+  <properties>
+   <property name="slope" value="nw"/>
+  </properties>
+ </tile>
+ <tile id="940">
+  <properties>
+   <property name="slope" value="ne"/>
+  </properties>
+ </tile>
+ <tile id="941">
+  <properties>
+   <property name="slope" value="ne"/>
+  </properties>
+ </tile>
+ <tile id="991">
+  <properties>
+   <property name="slope" value="nw"/>
+  </properties>
+ </tile>
+ <tile id="992">
+  <properties>
+   <property name="slope" value="nw"/>
+  </properties>
+ </tile>
+ <tile id="995">
+  <properties>
+   <property name="slope" value="ne"/>
+  </properties>
+ </tile>
+ <tile id="996">
+  <properties>
+   <property name="slope" value="ne"/>
+  </properties>
+ </tile>
+ <tile id="1046">
+  <properties>
+   <property name="slope" value="nw"/>
+  </properties>
+ </tile>
+ <tile id="1047">
+  <properties>
+   <property name="slope" value="nw"/>
+  </properties>
+ </tile>
+ <tile id="1050">
+  <properties>
+   <property name="slope" value="ne"/>
+  </properties>
+ </tile>
+ <tile id="1051">
+  <properties>
+   <property name="slope" value="ne"/>
+  </properties>
+ </tile>
+ <tile id="1101">
+  <properties>
+   <property name="slope" value="nw"/>
+  </properties>
+ </tile>
+ <tile id="1102">
+  <properties>
+   <property name="slope" value="nw"/>
+  </properties>
+ </tile>
+ <tile id="1105">
+  <properties>
+   <property name="slope" value="ne"/>
+  </properties>
+ </tile>
+ <tile id="1106">
+  <properties>
+   <property name="slope" value="ne"/>
+  </properties>
+ </tile>
  <tile id="1131" probability="0.25"/>
  <tile id="1132" probability="0.25"/>
  <tile id="1133" probability="0.25"/>

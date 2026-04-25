@@ -44,9 +44,7 @@ const INITIAL_HUD: HudState = {
   message: null,
   stamina: 100,
   staminaMax: 100,
-  wind: null,
   shipMaxSpeed: null,
-  shipVel: null,
   sail: null,
 };
 

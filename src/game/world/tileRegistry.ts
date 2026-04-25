@@ -1,5 +1,44 @@
 import * as Phaser from "phaser";
 
+/** Unit vector along a ramp surface. Sign of the vector doesn't matter — the
+ *  projection used to deflect motion is symmetric. */
+export interface Slope {
+  ux: number;
+  uy: number;
+}
+
+const INV_SQRT2 = 1 / Math.SQRT2;
+export const SLOPE_FORWARD_SLASH: Slope = { ux: INV_SQRT2, uy: -INV_SQRT2 };
+export const SLOPE_BACK_SLASH: Slope = { ux: INV_SQRT2, uy: INV_SQRT2 };
+
+/**
+ * Deflect a movement vector onto a slope. Decomposes (dx, dy) into a
+ * component parallel to the slope (kept) and perpendicular to the slope
+ * (attenuated by `bleed`). Output magnitude is always ≤ input magnitude, so
+ * the player can never move faster on a slope than on flat ground.
+ *
+ * `bleed` controls how much off-axis input survives: 0 = strict projection
+ * (player can only slide along the ramp, no sideways exit), 1 = no deflection
+ * at all (passthrough). The default ~0.25 lets you walk along the ramp at full
+ * speed while still being able to step off sideways onto adjacent tiles.
+ */
+export function applySlopeDeflection(
+  dx: number,
+  dy: number,
+  slope: Slope,
+  bleed = 0.25,
+): { dx: number; dy: number } {
+  const dot = dx * slope.ux + dy * slope.uy;
+  const parX = dot * slope.ux;
+  const parY = dot * slope.uy;
+  const perpX = dx - parX;
+  const perpY = dy - parY;
+  return {
+    dx: parX + perpX * bleed,
+    dy: parY + perpY * bleed,
+  };
+}
+
 /**
  * Per-tile property lookup derived from Tiled tileset custom properties.
  * Callers query by tile coordinate (indices into the tilemap, not pixels).
@@ -73,6 +112,31 @@ export class TileRegistry {
 
   isBlocked(tileX: number, tileY: number): boolean {
     return this.anyLayerHasProp(tileX, tileY, "collides");
+  }
+
+  /**
+   * Slope orientation for a tile, or null if it isn't a slope. Returned as a
+   * unit vector along the ramp surface — direction sign is irrelevant (the
+   * projection in `applySlopeDeflection` is symmetric).
+   *
+   * Tiles are flagged in Tiled with a `slope` string property:
+   * `"ne" | "sw"` → `/` diagonal, `"nw" | "se"` → `\` diagonal. The four
+   * compass names map to two physical orientations; map authors pick whichever
+   * matches the art.
+   */
+  slopeAt(tileX: number, tileY: number): Slope | null {
+    const dir = this.firstLayerProp(tileX, tileY, "slope");
+    if (typeof dir !== "string") return null;
+    switch (dir) {
+      case "ne":
+      case "sw":
+        return SLOPE_FORWARD_SLASH;
+      case "nw":
+      case "se":
+        return SLOPE_BACK_SLASH;
+      default:
+        return null;
+    }
   }
 
   /**
