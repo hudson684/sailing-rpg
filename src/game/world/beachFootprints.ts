@@ -1,6 +1,11 @@
 import { TILE_SIZE } from "../constants";
 import type { ChunkManager } from "./chunkManager";
 
+/** Temporary kill-switch for the beach-walk footprint feature. When false,
+ *  the controller is inert: no tiles are stamped and no fades run. Flip
+ *  back to `true` to re-enable. */
+export const BEACH_WALK_ENABLED = false;
+
 const FOOTPRINT_TILESET = "Exterior_Five";
 const FOOTPRINT_LOCAL_ID = 11;
 const FOOTPRINT_LAYER = "beach_walk";
@@ -46,6 +51,7 @@ export class BeachFootprintController {
   }
 
   update(playerPxX: number, playerPxY: number, nowMs: number): void {
+    if (!BEACH_WALK_ENABLED) return;
     const gtx = Math.floor(playerPxX / TILE_SIZE);
     const gty = Math.floor(playerPxY / TILE_SIZE);
     if (
