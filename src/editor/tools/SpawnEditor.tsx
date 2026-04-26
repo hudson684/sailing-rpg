@@ -170,9 +170,12 @@ export function SpawnEditor() {
     decoration: useJsonFile<unknown>("src/game/data/decorations.json"),
     station: useJsonFile<unknown>("src/game/data/craftingStations.json"),
     ship: useJsonFile<unknown>("src/game/data/ships.json"),
+    chest: useJsonFile<unknown>("src/game/data/chests.json"),
     item: useJsonFile<unknown>("src/game/data/itemInstances.json"),
     spawn: useJsonFile<unknown>("src/game/data/playerSpawn.json"),
   } as const;
+  // Shops live in their own file; the NPC inspector edits them inline.
+  const shopsFile = useJsonFile<ShopsFileShape>("src/game/data/shops.json");
   // Items.json is read-only for the editor (we only place references to it).
   const itemsFile = useJsonFile<{ items?: Array<{ id: string; name?: string }> }>(
     "src/game/data/items.json",
@@ -197,7 +200,7 @@ export function SpawnEditor() {
       };
     }
     return out;
-  }, [files.npc.data, files.enemy.data, files.node.data, files.decoration.data, files.station.data, files.ship.data, files.item.data, files.spawn.data, itemsFile.data]);
+  }, [files.npc.data, files.enemy.data, files.node.data, files.decoration.data, files.station.data, files.ship.data, files.chest.data, files.item.data, files.spawn.data, itemsFile.data]);
 
   // Draft state — the working copy of instances per kind.
   const [draft, setDraft] = useState<DraftByKind | null>(null);
@@ -217,11 +220,23 @@ export function SpawnEditor() {
       decoration: parsed.decoration!.entities,
       station: parsed.station!.entities,
       ship: parsed.ship!.entities,
+      chest: parsed.chest!.entities,
       item: parsed.item!.entities,
       spawn: parsed.spawn!.entities,
     };
     setDraft(next);
   }, [parsed, draft]);
+
+  // Shops draft, mirrored from disk on load and saved alongside other dirty
+  // files. Inspector mutates this when the selected NPC has a `shopId`.
+  const [shopsDraft, setShopsDraft] = useState<ShopsFileShape | null>(null);
+  useEffect(() => {
+    if (shopsFile.data && !shopsDraft) setShopsDraft(shopsFile.data);
+  }, [shopsFile.data, shopsDraft]);
+  const shopsDirty = useMemo(() => {
+    if (!shopsDraft || !shopsFile.data) return false;
+    return JSON.stringify(shopsDraft) !== JSON.stringify(shopsFile.data);
+  }, [shopsDraft, shopsFile.data]);
 
   const pushUndo = useCallback(() => {
     setUndoStack((s) => (draft ? [...s.slice(-49), draft] : s));
@@ -319,7 +334,7 @@ export function SpawnEditor() {
       if (JSON.stringify(candidate) !== JSON.stringify(original)) out.add(info.kind);
     }
     return out;
-  }, [draft, files.npc.data, files.enemy.data, files.node.data, files.decoration.data, files.station.data, files.ship.data, files.item.data, files.spawn.data]);
+  }, [draft, files.npc.data, files.enemy.data, files.node.data, files.decoration.data, files.station.data, files.ship.data, files.chest.data, files.item.data, files.spawn.data]);
 
   const onSave = useCallback(async () => {
     if (!draft) return;
@@ -329,7 +344,10 @@ export function SpawnEditor() {
       // eslint-disable-next-line no-await-in-loop
       await files[info.kind].save(payload);
     }
-  }, [draft, dirtyKinds, files]);
+    if (shopsDirty && shopsDraft) {
+      await shopsFile.save(shopsDraft);
+    }
+  }, [draft, dirtyKinds, files, shopsDirty, shopsDraft, shopsFile]);
 
   const onRevert = useCallback(() => {
     const next: DraftByKind = {
@@ -339,18 +357,21 @@ export function SpawnEditor() {
       decoration: parsed.decoration?.entities ?? [],
       station: parsed.station?.entities ?? [],
       ship: parsed.ship?.entities ?? [],
+      chest: parsed.chest?.entities ?? [],
       item: parsed.item?.entities ?? [],
       spawn: parsed.spawn?.entities ?? [],
     };
     setDraft(next);
     setUndoStack([]);
     setSelection(null);
-  }, [parsed]);
+    if (shopsFile.data) setShopsDraft(shopsFile.data);
+  }, [parsed, shopsFile.data]);
 
   const anyLoading =
-    !draft || mapLoading || ENTITY_TYPES.some((t) => files[t.kind].loading) || itemsFile.loading;
-  const saving = ENTITY_TYPES.some((t) => files[t.kind].saving);
-  const saveError = ENTITY_TYPES.map((t) => files[t.kind].error).find((e) => e);
+    !draft || mapLoading || ENTITY_TYPES.some((t) => files[t.kind].loading) || itemsFile.loading || shopsFile.loading;
+  const saving = ENTITY_TYPES.some((t) => files[t.kind].saving) || shopsFile.saving;
+  const saveError = ENTITY_TYPES.map((t) => files[t.kind].error).find((e) => e) ?? shopsFile.error;
+  const totalDirty = dirtyKinds.size + (shopsDirty ? 1 : 0);
 
   // UI ---------------------------------------------------------------
   return (
@@ -367,7 +388,7 @@ export function SpawnEditor() {
         onSave={onSave}
         onRevert={onRevert}
         onUndo={undo}
-        dirtyCount={dirtyKinds.size}
+        dirtyCount={totalDirty}
         undoCount={undoStack.length}
         saving={saving}
         saveError={saveError}
@@ -414,6 +435,9 @@ export function SpawnEditor() {
           visible={visible}
           selection={selection}
           setSelection={setSelection}
+          shopsDraft={shopsDraft}
+          setShopsDraft={setShopsDraft}
+          itemDefs={itemsFile.data?.items ?? []}
         />
       </div>
     </div>
@@ -503,7 +527,7 @@ function LeftRail(props: {
       ? ["npc"]
       : mapKind === "ship"
       ? ["npc"]
-      : ["npc", "enemy", "node", "decoration", "station", "ship", "item"];
+      : ["npc", "enemy", "node", "decoration", "station", "ship", "chest", "item"];
   // `spawn` is a singleton — drag the existing marker, no Place dropdown.
 
   return (
@@ -554,8 +578,11 @@ function Inspector(props: {
   visible: EditorEntity[];
   selection: { kind: EntityKind; id: string } | null;
   setSelection: (s: { kind: EntityKind; id: string } | null) => void;
+  shopsDraft: ShopsFileShape | null;
+  setShopsDraft: (s: ShopsFileShape | null) => void;
+  itemDefs: Array<{ id: string; name?: string }>;
 }) {
-  const { selected, updateEntity, deleteSelected, visible, selection, setSelection } = props;
+  const { selected, updateEntity, deleteSelected, visible, selection, setSelection, shopsDraft, setShopsDraft, itemDefs } = props;
   return (
     <aside style={{ width: 280, background: "#12121a", padding: 12, border: "1px solid #222", overflow: "auto" }}>
       <div style={{ fontWeight: 600, marginBottom: 8 }}>Inspector</div>
@@ -604,6 +631,24 @@ function Inspector(props: {
                   label: `${selected.defId} x${v}`,
                 })
               }
+            />
+          )}
+          {selected.kind === "npc" && (
+            <MovementEditor
+              movement={(selected.underlying.movement as NpcMovementShape) ?? { type: "static" }}
+              onChange={(m) =>
+                updateEntity(selected.kind, selected.id, {
+                  underlying: { ...selected.underlying, movement: m },
+                })
+              }
+            />
+          )}
+          {selected.kind === "npc" && typeof selected.underlying.shopId === "string" && shopsDraft && (
+            <ShopEditor
+              shopId={selected.underlying.shopId as string}
+              shopsDraft={shopsDraft}
+              setShopsDraft={setShopsDraft}
+              itemDefs={itemDefs}
             />
           )}
           <button onClick={deleteSelected} style={btn("danger")}>
@@ -754,22 +799,31 @@ function MapCanvas(props: MapCanvasProps) {
     for (const e of entities) {
       const cacheKey = `${e.kind}:${e.defId}`;
       const frame = spriteCache.current.get(cacheKey) ?? null;
+      const def = rawDefs[e.kind]?.rawDefs[e.defId] as
+        | { display?: { originY?: number }; sprite?: { originY?: number } }
+        | undefined;
+      // In-game origin: sprite is positioned so (0.5, originY) lands on tile
+      // center. Default originY to 1 (foot anchor) when the def doesn't say.
+      const originY = def?.display?.originY ?? def?.sprite?.originY ?? 1;
       const cx = (e.tileX + 0.5) * tile;
       const cy = (e.tileY + 0.5) * tile;
       const selected = e.id === selectionId;
+      const dw = frame ? frame.sw * scale : 0;
+      const dh = frame ? frame.sh * scale : 0;
+      // Marker sits on the sprite's foot (or tile center when no sprite).
+      const markerY = cy;
       // Selectable-area ring — same radius hitTest uses.
       const hitR = Math.max(10, tile * 0.45);
       ctx.beginPath();
-      ctx.arc(cx, cy, hitR, 0, Math.PI * 2);
+      ctx.arc(cx, markerY, hitR, 0, Math.PI * 2);
       ctx.fillStyle = selected ? "rgba(255, 221, 68, 0.18)" : "rgba(255, 255, 255, 0.06)";
       ctx.fill();
       ctx.strokeStyle = selected ? "rgba(255, 221, 68, 0.9)" : "rgba(255, 255, 255, 0.35)";
       ctx.lineWidth = selected ? 1.5 : 1;
       ctx.stroke();
       if (frame) {
-        // Draw sprite centered with its bottom anchored to the tile bottom.
-        const dw = frame.sw * scale;
-        const dh = frame.sh * scale;
+        // Match in-game placement: top = cy - dh*originY.
+        const spriteTop = cy - dh * originY;
         ctx.drawImage(
           frame.image,
           frame.sx,
@@ -777,14 +831,14 @@ function MapCanvas(props: MapCanvasProps) {
           frame.sw,
           frame.sh,
           cx - dw / 2,
-          cy + tile / 2 - dh,
+          spriteTop,
           dw,
           dh,
         );
         if (selected) {
           ctx.strokeStyle = "#ffdd44";
           ctx.lineWidth = 2;
-          ctx.strokeRect(cx - dw / 2 - 2, cy + tile / 2 - dh - 2, dw + 4, dh + 4);
+          ctx.strokeRect(cx - dw / 2 - 2, spriteTop - 2, dw + 4, dh + 4);
         }
       } else {
         const r = Math.max(5, Math.min(14, tile * 0.35));
@@ -796,12 +850,12 @@ function MapCanvas(props: MapCanvasProps) {
         ctx.lineWidth = 2;
         ctx.stroke();
       }
-      // Label when zoomed in reasonably.
+      // Label when zoomed in reasonably — under the sprite's foot.
       if (tile >= 20) {
         ctx.font = `${Math.max(10, Math.min(12, tile * 0.3))}px system-ui, sans-serif`;
         ctx.textBaseline = "top";
         ctx.textAlign = "center";
-        const textY = cy + tile / 2 + 2;
+        const textY = cy + Math.max(tile / 2, 2) + 2;
         const m = ctx.measureText(e.label);
         ctx.fillStyle = "rgba(0,0,0,0.7)";
         ctx.fillRect(cx - m.width / 2 - 3, textY - 1, m.width + 6, 14);
@@ -967,4 +1021,194 @@ function btn(variant: "primary" | "danger" | "ghost"): React.CSSProperties {
   if (variant === "primary") return { ...base, background: "#2b4d7a", color: "#fff", borderColor: "#3d6aa8" };
   if (variant === "danger") return { ...base, background: "#5a2020", color: "#fff", borderColor: "#8a3030" };
   return { ...base, background: "transparent", color: "#ccc" };
+}
+
+// --- Movement editor (NPC) ----------------------------------------
+
+type NpcMovementShape =
+  | { type: "static" }
+  | { type: "wander"; radiusTiles: number; moveSpeed: number; pauseMs: number; stepMs: number }
+  | { type: "patrol"; waypoints: Array<{ tileX: number; tileY: number }>; moveSpeed: number; pauseMs: number };
+
+const DEFAULT_WANDER: Extract<NpcMovementShape, { type: "wander" }> = {
+  type: "wander",
+  radiusTiles: 3,
+  moveSpeed: 25,
+  pauseMs: 1500,
+  stepMs: 1200,
+};
+
+function MovementEditor({
+  movement,
+  onChange,
+}: {
+  movement: NpcMovementShape;
+  onChange: (m: NpcMovementShape) => void;
+}) {
+  const canMove = movement.type !== "static";
+  const onTypeChange = (type: NpcMovementShape["type"]) => {
+    if (type === movement.type) return;
+    if (type === "static") onChange({ type: "static" });
+    else if (type === "wander") onChange({ ...DEFAULT_WANDER });
+    else if (type === "patrol") {
+      onChange({ type: "patrol", waypoints: [], moveSpeed: 50, pauseMs: 1500 });
+    }
+  };
+  return (
+    <div style={{ borderTop: "1px solid #2a2a36", paddingTop: 8, marginTop: 4 }}>
+      <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 12 }}>Movement</div>
+      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+        <input
+          type="checkbox"
+          checked={canMove}
+          onChange={(e) => onTypeChange(e.target.checked ? "wander" : "static")}
+        />
+        Can move
+      </label>
+      {canMove && (
+        <label style={{ display: "flex", flexDirection: "column", marginTop: 6 }}>
+          <span style={{ color: "#888", fontSize: 11 }}>pattern</span>
+          <select
+            value={movement.type}
+            onChange={(e) => onTypeChange(e.target.value as NpcMovementShape["type"])}
+            style={selectStyle}
+          >
+            <option value="wander">Wander</option>
+            <option value="patrol">Patrol</option>
+          </select>
+        </label>
+      )}
+      {movement.type === "wander" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6 }}>
+          <NumberField label="radius (tiles)" value={movement.radiusTiles} onChange={(v) => onChange({ ...movement, radiusTiles: v })} />
+          <NumberField label="speed (px/s)" value={movement.moveSpeed} onChange={(v) => onChange({ ...movement, moveSpeed: v })} />
+          <NumberField label="pause (ms)" value={movement.pauseMs} onChange={(v) => onChange({ ...movement, pauseMs: v })} />
+          <NumberField label="step (ms)" value={movement.stepMs} onChange={(v) => onChange({ ...movement, stepMs: v })} />
+        </div>
+      )}
+      {movement.type === "patrol" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6 }}>
+          <NumberField label="speed (px/s)" value={movement.moveSpeed} onChange={(v) => onChange({ ...movement, moveSpeed: v })} />
+          <NumberField label="pause (ms)" value={movement.pauseMs} onChange={(v) => onChange({ ...movement, pauseMs: v })} />
+          <Field
+            label="waypoints"
+            value={
+              movement.waypoints.length === 0
+                ? "(none — edit npcs.json to author)"
+                : movement.waypoints.map((w) => `${w.tileX},${w.tileY}`).join(" → ")
+            }
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- Shop editor (NPC) --------------------------------------------
+
+interface ShopRow {
+  itemId: string;
+  restockQuantity: number;
+}
+interface ShopEntry {
+  id: string;
+  name: string;
+  greeting?: string;
+  stock: ShopRow[];
+}
+interface ShopsFileShape {
+  shops: ShopEntry[];
+}
+
+function ShopEditor({
+  shopId,
+  shopsDraft,
+  setShopsDraft,
+  itemDefs,
+}: {
+  shopId: string;
+  shopsDraft: ShopsFileShape;
+  setShopsDraft: (s: ShopsFileShape) => void;
+  itemDefs: Array<{ id: string; name?: string }>;
+}) {
+  const idx = shopsDraft.shops.findIndex((s) => s.id === shopId);
+  if (idx === -1) {
+    return (
+      <div style={{ borderTop: "1px solid #2a2a36", paddingTop: 8, marginTop: 4, fontSize: 12, color: "#888" }}>
+        Shop "{shopId}" not found in shops.json.
+      </div>
+    );
+  }
+  const shop = shopsDraft.shops[idx];
+
+  const updateShop = (next: ShopEntry) => {
+    const shops = shopsDraft.shops.slice();
+    shops[idx] = next;
+    setShopsDraft({ ...shopsDraft, shops });
+  };
+
+  return (
+    <div style={{ borderTop: "1px solid #2a2a36", paddingTop: 8, marginTop: 4 }}>
+      <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 12 }}>Shop: {shop.name}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        {shop.stock.map((row, ri) => (
+          <div key={ri} style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            <select
+              value={row.itemId}
+              onChange={(e) => {
+                const stock = shop.stock.slice();
+                stock[ri] = { ...row, itemId: e.target.value };
+                updateShop({ ...shop, stock });
+              }}
+              style={{ ...selectStyle, flex: 1, minWidth: 0 }}
+            >
+              {itemDefs.map((d) => (
+                <option key={d.id} value={d.id}>{d.name ?? d.id}</option>
+              ))}
+            </select>
+            <input
+              type="number"
+              min={0}
+              value={row.restockQuantity}
+              onChange={(e) => {
+                const stock = shop.stock.slice();
+                stock[ri] = { ...row, restockQuantity: Number(e.target.value) };
+                updateShop({ ...shop, stock });
+              }}
+              style={{
+                width: 60,
+                background: "#0c0c12",
+                color: "inherit",
+                border: "1px solid #333",
+                padding: "3px 6px",
+                font: "inherit",
+                fontSize: 12,
+              }}
+            />
+            <button
+              onClick={() => {
+                const stock = shop.stock.filter((_, i) => i !== ri);
+                updateShop({ ...shop, stock });
+              }}
+              style={{ ...btn("ghost"), padding: "2px 6px" }}
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={() => {
+          const first = itemDefs[0];
+          updateShop({
+            ...shop,
+            stock: [...shop.stock, { itemId: first?.id ?? "", restockQuantity: 1 }],
+          });
+        }}
+        style={{ ...btn("ghost"), marginTop: 6 }}
+      >
+        + Add row
+      </button>
+    </div>
+  );
 }

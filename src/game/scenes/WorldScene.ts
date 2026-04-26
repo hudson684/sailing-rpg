@@ -3,17 +3,8 @@ import { TILE_SIZE } from "../constants";
 import {
   bus,
   type DialogueAction,
-  type EditDeleteRequest,
-  type EditEntityKind,
-  type EditMapId,
-  type EditMoveRequest,
-  type EditPlaceRequest,
-  type EditShopUpdate,
-  type EditSnapshot,
   type InventoryAction,
 } from "../bus";
-import { EditSystem } from "../edit/EditSystem";
-import type { EditEntityRef, EditHost } from "../edit/EditHost";
 import { ALL_ITEM_IDS, ITEMS } from "../inventory/items";
 import { ALL_JOB_IDS, type JobId } from "../jobs/jobs";
 import { useGameStore } from "../store/gameStore";
@@ -65,7 +56,7 @@ import {
   WORLD_MANIFEST_KEY,
   itemIconTextureKey,
 } from "../assets/keys";
-import { NpcSprite, NPC_INTERACT_RADIUS, registerNpcAnimations } from "../entities/NpcSprite";
+import { NpcSprite, NPC_INTERACT_RADIUS } from "../entities/NpcSprite";
 import { CharacterSprite } from "../entities/CharacterSprite";
 import { charModelManifestKey, type CharacterModelManifest } from "../entities/npcTypes";
 import { NpcModel } from "../entities/NpcModel";
@@ -73,7 +64,7 @@ import { SpriteReconciler } from "../entities/SpriteReconciler";
 import { entityRegistry } from "../entities/registry";
 import type { MapId } from "../entities/mapId";
 import { worldTicker } from "../entities/WorldTicker";
-import { addNpc, clearNpcs, bootstrapNpcs, removeNpcById } from "../entities/npcBootstrap";
+import { clearNpcs, bootstrapNpcs } from "../entities/npcBootstrap";
 import { SKIN_PALETTES, bakePlayerSkin, type SkinPaletteId } from "../entities/playerSkin";
 import {
   type NpcData,
@@ -148,9 +139,7 @@ import type {
 import enemiesDataRaw from "../data/enemies.json";
 import dropTablesDataRaw from "../data/dropTables.json";
 import itemInstancesRaw from "../data/itemInstances.json";
-import shopsDataRaw from "../data/shops.json";
 import type { NodeDef, NodeInstanceData } from "../world/GatheringNode";
-import type { ShopDef } from "../shops/types";
 import type { ItemId } from "../inventory/items";
 import { spawnFloatingNumber } from "../fx/floatingText";
 import { showSpeechBubble } from "../fx/speechBubble";
@@ -205,10 +194,6 @@ interface ItemInstancesFile {
   }>;
 }
 
-interface ShopsFile {
-  shops: ShopDef[];
-}
-
 interface EditorItemData {
   id: string;
   itemId: ItemId;
@@ -244,7 +229,7 @@ function angleToFacing(angle: number): Facing {
 
 let activeWorldScene: WorldScene | null = null;
 
-export class WorldScene extends Phaser.Scene implements EditHost {
+export class WorldScene extends Phaser.Scene {
   private world!: WorldMap;
   private player!: Player;
   /** All ship instances, keyed by instance id. */
@@ -310,23 +295,14 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     void this.playCutsceneById(payload.id);
   };
 
-  // ── Edit mode ──────────────────────────────────────────────────
-  /** Owns F7, pointer, highlights, snapshot/bus wiring. This scene acts as
-   *  the `EditHost`. DEV-only. */
-  private editSystem?: EditSystem;
-  /** Editor-placed ground items (sidecar to TMJ-authored items). Keyed by uid.
-   *  Survives across edit-mode toggles inside one session; serialized to
-   *  itemInstances.json on save. */
+  /** Authored ground items from itemInstances.json (loaded on boot). */
   private editorItems = new Map<string, EditorItemData>();
-  private editAutoIncrement = 0;
-  /** Cached defs the React overlay can pick from when placing new entities. */
+  /** Cached defs available at runtime. */
   private enemyDefs = new Map<string, EnemyDef>();
   private nodeDefs = new Map<string, NodeDef>();
   /** Coconuts shaken off each palm by a bare-handed Q. Cap is the def's HP;
    *  when reached, the palm is swapped to its bare variant for ~2 minutes. */
   private palmShakeCounts = new WeakMap<GatheringNode, number>();
-  /** Initial shops (mutated by edit:shopUpdate; read on snapshot). */
-  private shopsForEdit: ShopDef[] = [];
 
   private zoom!: ZoomController;
   private movement!: MovementController;
@@ -506,11 +482,6 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     phase("spawnChests", () => this.spawnChests());
     phase("loadDropTables", () => this.loadDropTables());
     phase("spawnEnemies", () => this.spawnEnemies(questCtx));
-    this.shopsForEdit = (shopsDataRaw as ShopsFile).shops.map((s) => ({
-      ...s,
-      stock: s.stock.map((row) => ({ ...row })),
-    }));
-
     // Ocean-blue backdrop for any viewport area outside authored chunks.
     this.cameras.main.setBackgroundColor("#1f4d78");
     const b = this.world.bounds;
@@ -614,8 +585,6 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     this.input.on(
       "pointerdown",
       (pointer: Phaser.Input.Pointer) => {
-        // While edit mode is on, EditSystem consumes all pointer events.
-        if (this.editSystem?.isActive()) return;
         if (pointer.leftButtonDown()) {
           this.onLeftClick(pointer.worldX, pointer.worldY);
           return;
@@ -730,7 +699,6 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     if (import.meta.env.DEV) {
       bus.onTyped("player:resetSpawn", this.onResetSpawn);
       bus.onTyped("ships:resetAll", this.onResetAllShips);
-      this.editSystem = new EditSystem(this);
     }
     activeWorldScene = this;
 
@@ -860,7 +828,6 @@ export class WorldScene extends Phaser.Scene implements EditHost {
 
   private tickExterior(dt: number, dtMs: number) {
     this.world.manager.tick(dtMs);
-    if (this.editSystem?.isActive()) return;
     if (this.sceneState.mode === "OnFoot" && !this.activeDialogue) this.updateOnFoot(dt);
     else if (this.sceneState.mode === "AtHelm") this.updateAtHelm(dt);
     else if (this.sceneState.mode === "Anchoring") {
@@ -2794,7 +2761,8 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     showToast(`+${amount} ${id} XP`, 1200);
   }
 
-  // ─── Edit mode ────────────────────────────────────────────────────
+  // ─── Authored item instances ─────────────────────────────────────
+  // Loaded from src/game/data/itemInstances.json (authored via /editor).
 
   private loadEditorItems() {
     const file = itemInstancesRaw as ItemInstancesFile;
@@ -2807,541 +2775,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
         tileX: inst.tileX,
         tileY: inst.tileY,
       });
-      // Pick the highest numeric suffix so the id allocator never collides
-      // with previously-saved editor items.
-      const m = /^ed-(\d+)$/.exec(inst.id);
-      if (m) this.editAutoIncrement = Math.max(this.editAutoIncrement, Number(m[1]));
     }
-  }
-
-  private nextEditId(prefix: string): string {
-    // `editAutoIncrement` is only seeded from `ed-N` item ids, so enemy /
-    // node / ship ids authored in previous sessions (e.g. `skeleton-7`) may
-    // collide. Bump past any taken id before returning.
-    for (;;) {
-      this.editAutoIncrement += 1;
-      const candidate = `${prefix}-${this.editAutoIncrement}`;
-      if (!entityRegistry.get(candidate)) return candidate;
-    }
-  }
-
-  // ── EditHost impl ─────────────────────────────────────────────────
-  // EditSystem delegates place/move/delete/export to this scene. Kinds
-  // supported here include ships and crafting stations; interiors drop ships.
-
-  readonly supportedKinds: readonly EditEntityKind[] = [
-    "npc",
-    "enemy",
-    "node",
-    "station",
-    "chest",
-    "item",
-    "ship",
-  ];
-
-  get mapId(): EditMapId {
-    return "world";
-  }
-
-  get editScene(): Phaser.Scene {
-    return this;
-  }
-
-  *entities(): Iterable<EditEntityRef> {
-    for (const npc of npcModelsIn({ kind: "world" })) {
-      yield { kind: "npc", id: npc.def.id, x: npc.x, y: npc.y };
-    }
-    for (const e of this.enemies) yield { kind: "enemy", id: e.id, x: e.x, y: e.y };
-    for (const n of this.nodes) yield { kind: "node", id: n.id, x: n.x, y: n.y };
-    for (const s of this.craftingStations) {
-      yield { kind: "station", id: s.id, x: s.x, y: s.y };
-    }
-    for (const c of this.chests) {
-      yield { kind: "chest", id: c.id, x: c.x, y: c.y };
-    }
-    for (const gi of this.groundItems.values()) {
-      if (gi.source === "dropped") continue;
-      yield { kind: "item", id: gi.uid, x: gi.x, y: gi.y };
-    }
-    for (const ship of this.ships.values()) {
-      yield { kind: "ship", id: ship.id, x: ship.x, y: ship.y };
-    }
-  }
-
-  getDefs(): EditSnapshot["defs"] {
-    return {
-      npcs: this.npcData.npcs.map((n) => ({ id: n.id, name: n.name })),
-      enemies: Array.from(this.enemyDefs.values()).map((d) => ({ id: d.id, name: d.name })),
-      nodes: Array.from(this.nodeDefs.values()).map((d) => ({ id: d.id, name: d.name })),
-      stations: craftingStations.all().map((d) => ({ id: d.id, name: d.name })),
-      chests: loadChestsFile(chestsDataRaw).defs.map((d) => ({ id: d.id, name: d.name })),
-      items: ALL_ITEM_IDS.map((id) => ({ id, name: ITEMS[id]?.name ?? id })),
-      ships: Array.from(this.shipDefs.values()).map((d) => ({ id: d.id, name: d.id })),
-    };
-  }
-
-  buildSnapshot(): Omit<EditSnapshot, "defs" | "supportedKinds"> {
-    const map = this.mapId;
-    const npcs = Array.from(npcModelsIn({ kind: "world" })).map((n) => ({
-      id: n.def.id,
-      name: n.def.name,
-      tileX: Math.floor(n.x / TILE_SIZE),
-      tileY: Math.floor(n.y / TILE_SIZE),
-      shopId: n.def.shopId,
-      map,
-    }));
-    const enemies = this.enemies.map((e) => ({
-      id: e.id,
-      defId: e.def.id,
-      defName: e.def.name,
-      tileX: Math.floor(e.x / TILE_SIZE),
-      tileY: Math.floor(e.y / TILE_SIZE),
-      map,
-    }));
-    const nodes = this.nodes.map((n) => ({
-      id: n.id,
-      defId: n.def.id,
-      defName: n.def.name,
-      tileX: Math.floor(n.x / TILE_SIZE),
-      tileY: Math.floor(n.y / TILE_SIZE),
-      map,
-    }));
-    const stations = this.craftingStations.map((s) => ({
-      id: s.id,
-      defId: s.def.id,
-      defName: s.def.name,
-      tileX: Math.floor(s.x / TILE_SIZE),
-      tileY: Math.floor(s.y / TILE_SIZE),
-      map,
-    }));
-    const chests = this.chests.map((c) => ({
-      id: c.id,
-      defId: c.def.id,
-      defName: c.def.name,
-      tileX: Math.floor(c.x / TILE_SIZE),
-      tileY: Math.floor(c.y / TILE_SIZE),
-      map,
-    }));
-    const items = Array.from(this.groundItems.values())
-      .filter((gi) => gi.source !== "dropped")
-      .map((gi) => ({
-        id: gi.uid,
-        itemId: gi.itemId,
-        itemName: ITEMS[gi.itemId]?.name ?? gi.itemId,
-        quantity: gi.quantity,
-        tileX: Math.floor(gi.x / TILE_SIZE),
-        tileY: Math.floor(gi.y / TILE_SIZE),
-        source: gi.source as "authored" | "editor",
-        map,
-      }));
-    const headingStr: Record<number, "N" | "E" | "S" | "W"> = { 0: "N", 1: "E", 2: "S", 3: "W" };
-    const ships = Array.from(this.ships.values()).map((s) => ({
-      id: s.id,
-      defId: s.vessel.id,
-      defName: s.vessel.id,
-      tileX: s.docked.tx,
-      tileY: s.docked.ty,
-      heading: headingStr[s.docked.heading],
-      map,
-    }));
-    return {
-      map,
-      npcs,
-      enemies,
-      nodes,
-      stations,
-      chests,
-      items,
-      ships,
-      shops: this.shopsForEdit.map((s) => ({
-        id: s.id,
-        name: s.name,
-        greeting: s.greeting,
-        stock: s.stock.map((row) => ({ ...row })),
-      })),
-    };
-  }
-
-  dragTo(kind: EditEntityKind, id: string, px: number, py: number): void {
-    if (kind === "npc") {
-      const model = entityRegistry.get(`npc:${id}`) as NpcModel | undefined;
-      if (!model) return;
-      model.setPositionPx(px, py);
-      this.npcReconciler.spriteFor(model.id)?.syncFromModel();
-    } else if (kind === "enemy") {
-      const e = this.enemies.find((x) => x.id === id);
-      if (!e) return;
-      e.setPositionPx(px, py);
-    } else if (kind === "node") {
-      const n = this.nodes.find((x) => x.id === id);
-      if (!n) return;
-      n.setPositionPx(px, py);
-    } else if (kind === "item") {
-      const gi = this.groundItems.get(id);
-      if (!gi || gi.source !== "editor") return;
-      gi.x = px;
-      gi.y = py;
-      gi.sprite.setPosition(px, py);
-      gi.sprite.setDepth(py);
-    } else if (kind === "ship") {
-      const ship = this.ships.get(id);
-      if (!ship) return;
-      const tx = Math.floor(px / TILE_SIZE);
-      const ty = Math.floor(py / TILE_SIZE);
-      ship.finalizeDock({ tx, ty, heading: ship.docked.heading });
-    }
-    // Stations and chests don't track live drag position — they rebuild on move.
-  }
-
-  onEntityTap(kind: EditEntityKind, id: string): boolean {
-    if (kind === "ship") {
-      const ship = this.ships.get(id);
-      if (!ship) return false;
-      const nextH = ((ship.docked.heading + 1) % 4) as 0 | 1 | 2 | 3;
-      ship.finalizeDock({ tx: ship.docked.tx, ty: ship.docked.ty, heading: nextH });
-      const stored = this.shipInstanceData.find((s) => s.id === id);
-      if (stored) stored.heading = nextH;
-      return true;
-    }
-    return false;
-  }
-
-  move(req: EditMoveRequest): boolean {
-    const px = (req.tileX + 0.5) * TILE_SIZE;
-    const py = (req.tileY + 0.5) * TILE_SIZE;
-    if (req.kind === "npc") {
-      const model = entityRegistry.get(`npc:${req.id}`) as NpcModel | undefined;
-      if (!model) return false;
-      model.def.spawn = { tileX: req.tileX, tileY: req.tileY };
-      model.setPositionPx(px, py);
-      this.npcReconciler.spriteFor(model.id)?.syncFromModel();
-      return true;
-    }
-    if (req.kind === "enemy") {
-      const e = this.enemies.find((x) => x.id === req.id);
-      if (!e) return false;
-      e.setPositionPx(px, py);
-      return true;
-    }
-    if (req.kind === "node") {
-      const idx = this.nodes.findIndex((n) => n.id === req.id);
-      if (idx === -1) return false;
-      const old = this.nodes[idx];
-      old.destroy();
-      this.nodes[idx] = new GatheringNode(this, old.def, {
-        id: old.id,
-        defId: old.def.id,
-        tileX: req.tileX,
-        tileY: req.tileY,
-      });
-      return true;
-    }
-    if (req.kind === "station") {
-      const idx = this.craftingStations.findIndex((s) => s.id === req.id);
-      if (idx === -1) return false;
-      const old = this.craftingStations[idx];
-      old.destroy();
-      const inst: CraftingStationInstanceData = {
-        id: old.id,
-        defId: old.def.id,
-        tileX: req.tileX,
-        tileY: req.tileY,
-      };
-      this.craftingStations[idx] = new CraftingStation(this, old.def, inst);
-      const stored = this.stationInstanceData.find((s) => s.id === req.id);
-      if (stored) {
-        stored.tileX = req.tileX;
-        stored.tileY = req.tileY;
-      }
-      return true;
-    }
-    if (req.kind === "chest") {
-      const idx = this.chests.findIndex((c) => c.id === req.id);
-      if (idx === -1) return false;
-      const old = this.chests[idx];
-      const wasOpen = old.isOpen();
-      old.destroy();
-      this.chests[idx] = new Chest(
-        this,
-        old.def,
-        { id: old.id, defId: old.def.id, tileX: req.tileX, tileY: req.tileY },
-        wasOpen,
-      );
-      const stored = this.chestInstanceData.find((c) => c.id === req.id);
-      if (stored) {
-        stored.tileX = req.tileX;
-        stored.tileY = req.tileY;
-      }
-      return true;
-    }
-    if (req.kind === "item") {
-      const gi = this.groundItems.get(req.id);
-      if (!gi || gi.source !== "editor") return false;
-      gi.x = px;
-      gi.y = py;
-      gi.sprite.setPosition(px, py);
-      gi.sprite.setDepth(py);
-      const stored = this.editorItems.get(req.id);
-      if (stored) {
-        stored.tileX = req.tileX;
-        stored.tileY = req.tileY;
-      }
-      return true;
-    }
-    if (req.kind === "ship") {
-      const ship = this.ships.get(req.id);
-      if (!ship) return false;
-      ship.finalizeDock({ tx: req.tileX, ty: req.tileY, heading: ship.docked.heading });
-      const stored = this.shipInstanceData.find((s) => s.id === req.id);
-      if (stored) {
-        stored.tileX = req.tileX;
-        stored.tileY = req.tileY;
-      }
-      return true;
-    }
-    return false;
-  }
-
-  place(req: EditPlaceRequest): boolean {
-    if (req.kind === "npc") {
-      const template = this.npcData.npcs.find((n) => n.id === req.defId);
-      if (!template) return false;
-      const newId = this.nextEditId(`${template.id}-copy`);
-      const clone = JSON.parse(JSON.stringify(template));
-      clone.id = newId;
-      clone.spawn = { tileX: req.tileX, tileY: req.tileY };
-      clone.map = "world";
-      this.npcData.npcs.push(clone);
-      registerNpcAnimations(this, clone);
-      addNpc(clone, { kind: "world" });
-      return true;
-    }
-    if (req.kind === "enemy") {
-      const def = this.enemyDefs.get(req.defId);
-      if (!def) return false;
-      const inst: EnemyInstanceData = {
-        id: this.nextEditId(`${def.id}`),
-        defId: def.id,
-        tileX: req.tileX,
-        tileY: req.tileY,
-      };
-      this.addEnemy(new Enemy(this, def, inst));
-      return true;
-    }
-    if (req.kind === "node") {
-      const def = this.nodeDefs.get(req.defId);
-      if (!def) return false;
-      const inst: NodeInstanceData = {
-        id: this.nextEditId(`${def.id}`),
-        defId: def.id,
-        tileX: req.tileX,
-        tileY: req.tileY,
-      };
-      this.nodes.push(new GatheringNode(this, def, inst));
-      return true;
-    }
-    if (req.kind === "station") {
-      const def = craftingStations.tryGet(req.defId);
-      if (!def) return false;
-      const inst: CraftingStationInstanceData = {
-        id: this.nextEditId(`${def.id}`),
-        defId: def.id,
-        tileX: req.tileX,
-        tileY: req.tileY,
-      };
-      this.stationInstanceData.push(inst);
-      this.craftingStations.push(new CraftingStation(this, def, inst));
-      return true;
-    }
-    if (req.kind === "chest") {
-      const def = this.chestDef(req.defId);
-      if (!def) return false;
-      const inst = {
-        id: this.nextEditId(`${def.id}`),
-        defId: def.id,
-        tileX: req.tileX,
-        tileY: req.tileY,
-      };
-      this.chestInstanceData.push(inst);
-      this.chests.push(new Chest(this, def, inst, false));
-      return true;
-    }
-    if (req.kind === "item") {
-      const id = this.nextEditId("ed");
-      this.editorItems.set(id, {
-        id,
-        itemId: req.defId as ItemId,
-        quantity: req.quantity ?? 1,
-        tileX: req.tileX,
-        tileY: req.tileY,
-      });
-      this.respawnGroundItems();
-      return true;
-    }
-    if (req.kind === "ship") {
-      const def = this.shipDefs.get(req.defId);
-      if (!def) return false;
-      const id = this.nextEditId(`${def.id}`);
-      const inst: ShipInstanceData = {
-        id,
-        defId: def.id,
-        tileX: req.tileX,
-        tileY: req.tileY,
-        heading: 1,
-      };
-      this.shipInstanceData.push(inst);
-      this.spawnShip(inst);
-      return true;
-    }
-    return false;
-  }
-
-  delete(req: EditDeleteRequest): boolean {
-    if (req.kind === "npc") {
-      if (!entityRegistry.get(`npc:${req.id}`)) return false;
-      removeNpcById(req.id);
-      this.npcData.npcs = this.npcData.npcs.filter((n) => n.id !== req.id);
-      return true;
-    }
-    if (req.kind === "enemy") {
-      const idx = this.enemies.findIndex((e) => e.id === req.id);
-      if (idx === -1) return false;
-      this.removeEnemyAt(idx);
-      return true;
-    }
-    if (req.kind === "node") {
-      const idx = this.nodes.findIndex((n) => n.id === req.id);
-      if (idx === -1) return false;
-      this.nodes[idx].destroy();
-      this.nodes.splice(idx, 1);
-      return true;
-    }
-    if (req.kind === "station") {
-      const idx = this.craftingStations.findIndex((s) => s.id === req.id);
-      if (idx === -1) return false;
-      this.craftingStations[idx].destroy();
-      this.craftingStations.splice(idx, 1);
-      this.stationInstanceData = this.stationInstanceData.filter((s) => s.id !== req.id);
-      return true;
-    }
-    if (req.kind === "chest") {
-      const idx = this.chests.findIndex((c) => c.id === req.id);
-      if (idx === -1) return false;
-      this.chests[idx].destroy();
-      this.chests.splice(idx, 1);
-      this.chestInstanceData = this.chestInstanceData.filter((c) => c.id !== req.id);
-      this.chestPendingLoot.delete(req.id);
-      return true;
-    }
-    if (req.kind === "item") {
-      const gi = this.groundItems.get(req.id);
-      if (!gi || gi.source !== "editor") return false;
-      gi.sprite.destroy();
-      this.groundItems.delete(req.id);
-      this.editorItems.delete(req.id);
-      return true;
-    }
-    if (req.kind === "ship") {
-      const ship = this.ships.get(req.id);
-      if (!ship) return false;
-      ship.destroy();
-      this.ships.delete(req.id);
-      this.shipInstanceData = this.shipInstanceData.filter((s) => s.id !== req.id);
-      if (this.activeShip === ship) this.activeShip = null;
-      return true;
-    }
-    return false;
-  }
-
-  updateShop(req: EditShopUpdate): boolean {
-    const shop = this.shopsForEdit.find((s) => s.id === req.shopId);
-    if (!shop) return false;
-    shop.stock = req.stock.map((row) => ({
-      itemId: row.itemId as ItemId,
-      restockQuantity: row.restockQuantity,
-    }));
-    useShopStore.getState().reset();
-    return true;
-  }
-
-  exportFiles(): Array<{ name: string; content: string }> {
-    // Apply moved positions back into the def list before serializing.
-    for (const model of entityRegistry.all()) {
-      if (model.kind !== "npc") continue;
-      const npc = model as NpcModel;
-      const def = this.npcData.npcs.find((n) => n.id === npc.def.id);
-      if (def) def.spawn = { tileX: Math.floor(npc.x / TILE_SIZE), tileY: Math.floor(npc.y / TILE_SIZE) };
-    }
-    const enemiesFile: EnemiesFile = {
-      defs: (enemiesDataRaw as EnemiesFile).defs,
-      instances: this.enemies.map((e) => ({
-        id: e.id,
-        defId: e.def.id,
-        tileX: Math.floor(e.x / TILE_SIZE),
-        tileY: Math.floor(e.y / TILE_SIZE),
-      })),
-    };
-    const nodesFile = {
-      defs: (loadNodesFile(nodesDataRaw)).defs,
-      instances: this.nodes.map((n) => ({
-        id: n.id,
-        defId: n.def.id,
-        tileX: Math.floor(n.x / TILE_SIZE),
-        tileY: Math.floor(n.y / TILE_SIZE),
-      })),
-    };
-    const stationsFile = {
-      defs: craftingStations.all(),
-      instances: this.craftingStations.map((s) => ({
-        id: s.id,
-        defId: s.def.id,
-        tileX: Math.floor(s.x / TILE_SIZE),
-        tileY: Math.floor(s.y / TILE_SIZE),
-      })),
-    };
-    const chestsFile = {
-      defs: loadChestsFile(chestsDataRaw).defs,
-      instances: this.chests.map((c) => ({
-        id: c.id,
-        defId: c.def.id,
-        tileX: Math.floor(c.x / TILE_SIZE),
-        tileY: Math.floor(c.y / TILE_SIZE),
-      })),
-    };
-    const itemInstancesFile: ItemInstancesFile = {
-      instances: Array.from(this.editorItems.values()).map((e) => ({
-        id: e.id,
-        itemId: e.itemId,
-        quantity: e.quantity,
-        tileX: e.tileX,
-        tileY: e.tileY,
-      })),
-    };
-    const shopsFile: ShopsFile = { shops: this.shopsForEdit };
-
-    const headingStr: Record<number, "N" | "E" | "S" | "W"> = { 0: "N", 1: "E", 2: "S", 3: "W" };
-    const shipsFile = {
-      defs: Array.from(this.shipDefs.values()),
-      instances: this.shipInstanceData.map((s) => ({
-        id: s.id,
-        defId: s.defId,
-        tileX: s.tileX,
-        tileY: s.tileY,
-        heading: headingStr[s.heading],
-      })),
-    };
-
-    const stringify = (obj: unknown) => JSON.stringify(obj, null, 2) + "\n";
-    return [
-      { name: "npcs.json", content: stringify(this.npcData) },
-      { name: "enemies.json", content: stringify(enemiesFile) },
-      { name: "nodes.json", content: stringify(nodesFile) },
-      { name: "craftingStations.json", content: stringify(stationsFile) },
-      { name: "chests.json", content: stringify(chestsFile) },
-      { name: "itemInstances.json", content: stringify(itemInstancesFile) },
-      { name: "shops.json", content: stringify(shopsFile) },
-      { name: "ships.json", content: stringify(shipsFile) },
-    ];
   }
 
   private grantRandomItem() {

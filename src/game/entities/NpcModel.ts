@@ -63,6 +63,27 @@ export class NpcModel implements EntityModel {
     this.y = y;
   }
 
+  /** Snap back to the spawn position the model was constructed with and reset
+   *  the movement state machine. Used by edit mode to make WYSIWYG editing
+   *  possible while NPCs would otherwise be wandering. */
+  returnHome() {
+    this.x = this.homePx.x;
+    this.y = this.homePx.y;
+    this.facing = this.def.facing;
+    this.animState = "idle";
+    this.phase = "pausing";
+    this.phaseTimer = 0;
+    this.targetPx = null;
+    this.patrolIdx = 0;
+  }
+
+  /** Recompute homePx from the current def.spawn. Call after editing
+   *  def.spawn so future returnHome() goes to the new spawn. */
+  rebindHome() {
+    this.homePx.x = (this.def.spawn.tileX + 0.5) * TILE_SIZE;
+    this.homePx.y = (this.def.spawn.tileY + 0.5) * TILE_SIZE;
+  }
+
   tick(dtMs: number, isWalkablePx: WalkableProbe) {
     if (this.scripted) return;
     const move = this.def.movement;

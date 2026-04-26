@@ -33,7 +33,6 @@ const LootPanel = lazy(() =>
 const CharacterCustomizer = lazy(() =>
   import("./ui/CharacterCustomizer").then((m) => ({ default: m.CharacterCustomizer })),
 );
-const EditMode = lazy(() => import("./ui/EditMode").then((m) => ({ default: m.EditMode })));
 const NodeDefEditor = lazy(() =>
   import("./ui/NodeDefEditor").then((m) => ({ default: m.NodeDefEditor })),
 );
@@ -117,7 +116,6 @@ export default function App() {
               open={customizerOpen}
               onClose={() => setCustomizerOpen(false)}
             />
-            {import.meta.env.DEV && <EditMode />}
             {import.meta.env.DEV && <NodeDefEditor />}
             <TouchControls visible={isMobile && !isPortrait && !inventoryOpen} />
             <PauseButton />

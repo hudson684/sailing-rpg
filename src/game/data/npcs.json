@@ -25,12 +25,16 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 96,
-        "tileY": 93
+        "tileX": 103,
+        "tileY": 81
       },
       "facing": "right",
       "movement": {
-        "type": "static"
+        "type": "wander",
+        "radiusTiles": 2,
+        "moveSpeed": 25,
+        "pauseMs": 1500,
+        "stepMs": 1200
       },
       "dialogue": "brom_blacksmith"
     },
@@ -135,7 +139,7 @@
       },
       "spawn": {
         "tileX": 99,
-        "tileY": 86
+        "tileY": 81
       },
       "facing": "right",
       "movement": {
@@ -172,7 +176,7 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 106,
+        "tileX": 105,
         "tileY": 90
       },
       "facing": "right",
@@ -206,8 +210,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 105,
-        "tileY": 81
+        "tileX": 83,
+        "tileY": 94
       },
       "facing": "right",
       "movement": {
@@ -336,8 +340,8 @@
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 111,
-        "tileY": 84
+        "tileX": 118,
+        "tileY": 76
       },
       "facing": "right",
       "movement": {
@@ -398,7 +402,7 @@
       },
       "spawn": {
         "tileX": 103,
-        "tileY": 104
+        "tileY": 105
       },
       "facing": "right",
       "movement": {

@@ -1,5 +1,6 @@
 import type { MapKind } from "./mapLoader";
 import {
+  loadChestFrame,
   loadDecorationFrame,
   loadEnemyFrame,
   loadNodeFrame,
@@ -14,6 +15,7 @@ export type EntityKind =
   | "decoration"
   | "station"
   | "ship"
+  | "chest"
   | "item"
   | "spawn";
 
@@ -356,6 +358,32 @@ const shipInfo: EntityTypeInfo = {
   defaultColor: "#a27040",
 };
 
+// Chests ------------------------------------------------------------
+
+const chestInfo: EntityTypeInfo = {
+  kind: "chest",
+  label: "Chest",
+  jsonPath: "src/game/data/chests.json",
+  parseFile: (raw) => parseDefsInstances(raw, "chest", "#c78a4a"),
+  toFile: (orig, entities) => toDefsInstancesFile(orig, entities),
+  isOnMap: (_e, _mapId, mapKind) => mapKind === "world",
+  makeNew(defId, tileX, tileY, existingIds) {
+    const id = nextId(`c_${defId}_`, existingIds);
+    return {
+      kind: "chest",
+      id,
+      tileX,
+      tileY,
+      defId,
+      label: defId,
+      color: "#c78a4a",
+      underlying: { id, defId, tileX, tileY },
+    };
+  },
+  loadSprite: loadChestFrame,
+  defaultColor: "#c78a4a",
+};
+
 // Items -------------------------------------------------------------
 
 const itemInfo: EntityTypeInfo = {
@@ -462,6 +490,7 @@ export const ENTITY_TYPES: EntityTypeInfo[] = [
   decorationInfo,
   stationInfo,
   shipInfo,
+  chestInfo,
   itemInfo,
   spawnInfo,
 ];

@@ -7,9 +7,6 @@
         "."
     ],
     "fileStates": {
-        "": {
-            "scaleInDock": 1
-        },
         "chunks/0_0.tmx": {
             "scale": 0.75,
             "selectedLayer": 6,
@@ -27,30 +24,31 @@
             }
         },
         "chunks/1_0.tmx": {
-            "scale": 2,
-            "selectedLayer": 8,
+            "scale": 3,
+            "selectedLayer": 6,
             "viewCenter": {
                 "x": 512,
-                "y": 512
+                "y": 512.1666666666666
             }
         },
         "chunks/1_1.tmx": {
-            "scale": 5.5,
-            "selectedLayer": 0,
+            "expandedObjectLayers": [
+                12,
+                10
+            ],
+            "scale": 3,
+            "selectedLayer": 13,
             "viewCenter": {
-                "x": 512,
-                "y": 512
+                "x": 631.1666666666666,
+                "y": 351
             }
-        },
-        "chunks/1_1.tmx#Houses_One": {
-            "scaleInDock": 1
         },
         "chunks/1_2.tmx": {
             "scale": 2,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 512,
-                "y": 509
+                "x": 512.25,
+                "y": 511.75
             }
         },
         "chunks/1_3.tmx": {
@@ -58,7 +56,7 @@
             "selectedLayer": 0,
             "viewCenter": {
                 "x": 512,
-                "y": 512
+                "y": 510
             }
         },
         "chunks/2_1.tmx": {
@@ -84,23 +82,23 @@
             "expandedObjectLayers": [
                 6
             ],
-            "scale": 3,
+            "scale": 5.5,
             "selectedLayer": 8,
             "viewCenter": {
-                "x": 240,
-                "y": 160
+                "x": 95.18181818181817,
+                "y": 210.1818181818182
             }
         },
         "interiors/general_store.tmx": {
             "expandedObjectLayers": [
-                5,
-                10
+                10,
+                5
             ],
             "scale": 3,
             "selectedLayer": 9,
             "viewCenter": {
                 "x": 104,
-                "y": 80
+                "y": 79.83333333333331
             }
         },
         "tilesets/Beach_Objects_Normal.tsx": {
@@ -116,11 +114,11 @@
             "scaleInEditor": 1.5
         },
         "tilesets/Blacksmith Furniture.tsx": {
-            "scaleInDock": 1.5,
+            "scaleInDock": 4,
             "scaleInEditor": 1.5
         },
         "tilesets/Blacksmith House.tsx": {
-            "scaleInDock": 2,
+            "scaleInDock": 1.5,
             "scaleInEditor": 1.5
         },
         "tilesets/Blacksmith Walls.tsx": {
@@ -143,29 +141,22 @@
             "scaleInEditor": 3
         },
         "tilesets/Exterior Objects One.tsx": {
-            "scaleInDock": 1.5,
+            "scaleInDock": 3,
             "scaleInEditor": 1.5
         },
         "tilesets/Exterior Objects Two.tsx": {
-            "scaleInDock": 2,
-            "scaleInEditor": 1.5
-        },
-        "tilesets/Exterior_Five.tsx": {
             "scaleInDock": 3,
-            "scaleInEditor": 1
-        },
-        "tilesets/Houses_Four.tsx": {
-            "scaleInDock": 1.5
+            "scaleInEditor": 1.5
         },
         "tilesets/Houses_One.tsx": {
             "scaleInDock": 2
         },
         "tilesets/Houses_Six.tsx": {
-            "scaleInDock": 4,
+            "scaleInDock": 2,
             "scaleInEditor": 1.5
         },
         "tilesets/Houses_Two.tsx": {
-            "scaleInDock": 1,
+            "scaleInDock": 2,
             "scaleInEditor": 1.5
         },
         "tilesets/Market Objects.tsx": {
@@ -176,7 +167,7 @@
             "scaleInDock": 2
         },
         "tilesets/Rural Village Interior Objects.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 1.5
         },
         "tilesets/Rural Village Interior Walls.tsx": {
             "scaleInDock": 3

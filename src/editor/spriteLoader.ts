@@ -94,3 +94,14 @@ export async function loadNodeFrame(def: unknown): Promise<SpriteFrame | null> {
 export async function loadDecorationFrame(def: unknown): Promise<SpriteFrame | null> {
   return loadNodeFrame(def);
 }
+
+/** Chest: animated strip; show the first frame (closed). */
+export async function loadChestFrame(def: unknown): Promise<SpriteFrame | null> {
+  const d = def as {
+    sprite?: { sheet?: string; frameWidth?: number; frameHeight?: number };
+  };
+  const s = d.sprite;
+  if (!s?.sheet || !s.frameWidth || !s.frameHeight) return null;
+  const image = await loadImage(`/${s.sheet.replace(/^\/+/, "")}`);
+  return { image, sx: 0, sy: 0, sw: s.frameWidth, sh: s.frameHeight };
+}

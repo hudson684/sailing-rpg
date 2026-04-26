@@ -211,8 +211,8 @@
     {
       "id": "n_tree_1",
       "defId": "tree_palm",
-      "tileX": 93,
-      "tileY": 84
+      "tileX": 102,
+      "tileY": 72
     },
     {
       "id": "n_tree_2",
@@ -223,8 +223,8 @@
     {
       "id": "n_tree_3",
       "defId": "tree_palm",
-      "tileX": 99,
-      "tileY": 74
+      "tileX": 103,
+      "tileY": 73
     },
     {
       "id": "n_ore_1",
@@ -235,7 +235,7 @@
     {
       "id": "n_ore_2",
       "defId": "ore_hopeite",
-      "tileX": 81,
+      "tileX": 157,
       "tileY": 91
     },
     {
@@ -253,20 +253,20 @@
     {
       "id": "ore_hopeite-7",
       "defId": "ore_hopeite",
-      "tileX": 79,
-      "tileY": 87
+      "tileX": 84,
+      "tileY": 80
     },
     {
       "id": "ore_hopeite-8",
       "defId": "ore_hopeite",
-      "tileX": 82,
-      "tileY": 86
+      "tileX": 81,
+      "tileY": 82
     },
     {
       "id": "ore_hopeite-9",
       "defId": "ore_hopeite",
-      "tileX": 78,
-      "tileY": 88
+      "tileX": 86,
+      "tileY": 79
     },
     {
       "id": "ore_hopeite-10",
@@ -307,8 +307,8 @@
     {
       "id": "n_tree_palm_4",
       "defId": "tree_palm",
-      "tileX": 75,
-      "tileY": 88
+      "tileX": 68,
+      "tileY": 80
     },
     {
       "id": "n_tree_palm_5",
@@ -320,6 +320,36 @@
       "id": "n_tree_palm_6",
       "defId": "tree_palm",
       "tileX": 90,
+      "tileY": 70
+    },
+    {
+      "id": "n_tree_palm_7",
+      "defId": "tree_palm",
+      "tileX": 104,
+      "tileY": 71
+    },
+    {
+      "id": "n_tree_palm_8",
+      "defId": "tree_palm",
+      "tileX": 101,
+      "tileY": 73
+    },
+    {
+      "id": "n_tree_palm_9",
+      "defId": "tree_palm",
+      "tileX": 106,
+      "tileY": 70
+    },
+    {
+      "id": "n_tree_palm_10",
+      "defId": "tree_palm",
+      "tileX": 108,
+      "tileY": 70
+    },
+    {
+      "id": "n_tree_palm_11",
+      "defId": "tree_palm",
+      "tileX": 110,
       "tileY": 70
     }
   ]

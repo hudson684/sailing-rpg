@@ -5,8 +5,6 @@ import react from "@vitejs/plugin-react";
 // @ts-expect-error — local plugin, no types
 import sailingMaps from "./tools/vite-plugin-sailing-maps/index.mjs";
 // @ts-expect-error — local plugin, no types
-import editSave from "./tools/vite-plugin-edit-save/index.mjs";
-// @ts-expect-error — local plugin, no types
 import editorWrite from "./tools/editor-write-plugin.mjs";
 
 function versionServiceWorker(): Plugin {
@@ -27,7 +25,6 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     sailingMaps(),
-    editSave(),
     ...(mode === "development" ? [editorWrite()] : []),
     versionServiceWorker(),
   ],
