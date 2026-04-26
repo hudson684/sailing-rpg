@@ -12,12 +12,10 @@ import {
   type EditSnapshot,
 } from "../bus";
 import { setHud, showToast } from "../../ui/store/ui";
-import { Player, PLAYER_SPEED, type Facing } from "../entities/Player";
+import { Player, type Facing } from "../entities/Player";
 import { getOrCreatePlayerModel } from "../entities/Player";
-import { syncPlayerVisualsFromEquipment } from "../entities/playerEquipmentVisuals";
-import { CF_WARDROBE_LAYERS } from "../entities/playerWardrobe";
+import { bindPlayerVisualSubscriptions } from "../entities/playerEquipmentVisuals";
 import { useGameStore } from "../store/gameStore";
-import { useSettingsStore } from "../store/settingsStore";
 import { useShopStore } from "../store/shopStore";
 import { stamina, STAMINA_MAX } from "../player/stamina";
 import { NpcSprite, NPC_INTERACT_RADIUS, registerNpcAnimations } from "../entities/NpcSprite";
@@ -61,18 +59,11 @@ import { bindSceneToVirtualInput } from "../input/virtualInputBridge";
 import { FishingSession } from "../fishing/fishingSession";
 import { bobberOffsetPx, type FishingSurface } from "../fishing/fishingSurface";
 import type { ItemId } from "../inventory/items";
+import { ZoomController } from "../camera/ZoomController";
+import { MovementController } from "../player/MovementController";
 
-const SPRINT_SPEED_MULT = 1.35;
 const DOOR_INTERACT_RADIUS = TILE_SIZE * 0.9;
 const SHOP_CLICK_RADIUS = TILE_SIZE * 1.5;
-
-const ZOOM_STEPS = [0.5, 1, 1.5, 2, 3, 4, 6, 8] as const;
-const MIN_ZOOM = ZOOM_STEPS[0];
-const MAX_ZOOM = ZOOM_STEPS[ZOOM_STEPS.length - 1];
-const WHEEL_ZOOM_SENSITIVITY = 0.0015;
-const ZOOM_SMOOTH_RATE = 12;
-const ZOOM_SNAP_EPSILON = 0.001;
-const WHEEL_SETTLE_MS = 140;
 
 /** Payload passed to `scene.launch("Interior", ...)` from WorldScene. */
 export interface InteriorLaunchData {
@@ -125,9 +116,8 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
   private editSystem?: EditSystem;
   private npcData: NpcData = npcDataRaw as NpcData;
 
-  private zoomTarget = useSettingsStore.getState().zoom;
-  private wheelZoomDir: 1 | -1 | 0 = 0;
-  private lastWheelAt = 0;
+  private zoom!: ZoomController;
+  private movement!: MovementController;
 
   private keys!: {
     up: Phaser.Input.Keyboard.Key;
@@ -144,9 +134,7 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     sprint: Phaser.Input.Keyboard.Key;
   };
 
-  private unsubEquipment: (() => void) | null = null;
-  private unsubWardrobe: (() => void) | null = null;
-  private unsubZoom: (() => void) | null = null;
+  private unsubPlayerVisuals: (() => void) | null = null;
 
   constructor() {
     super("Interior");
@@ -186,9 +174,11 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     this.lastExitTile = { x: entryTx, y: entryTy };
 
     // Camera: bounds to interior, center on player, restore persisted zoom.
-    this.cameras.main.setZoom(this.zoomTarget);
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
     this.cameras.main.setBackgroundColor("#1a1208");
+    this.zoom = new ZoomController(this, {
+      onZoomApplied: () => this.updateCenteredCameraBounds(),
+    });
     this.updateCenteredCameraBounds();
 
     // Track canvas resizes (window/orientation change). Otherwise the main
@@ -268,52 +258,21 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
       bus.emitTyped("save:request", { type: "load", slot: "quicksave" });
     });
 
-    const zoomInPlus = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.PLUS);
-    const zoomInEq = this.input.keyboard!.addKey("=");
-    const zoomOut = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.MINUS);
-    zoomInPlus.on("down", () => this.stepZoomKeyboard(+1));
-    zoomInEq.on("down", () => this.stepZoomKeyboard(+1));
-    zoomOut.on("down", () => this.stepZoomKeyboard(-1));
-    this.input.on(
-      "wheel",
-      (_p: unknown, _o: unknown, _dx: number, dy: number) => {
-        if (dy === 0) return;
-        const factor = Math.exp(-dy * WHEEL_ZOOM_SENSITIVITY);
-        this.zoomTarget = Phaser.Math.Clamp(this.zoomTarget * factor, MIN_ZOOM, MAX_ZOOM);
-        useSettingsStore.getState().setZoom(this.zoomTarget);
-        this.wheelZoomDir = dy < 0 ? 1 : -1;
-        this.lastWheelAt = this.time.now;
+    this.movement = new MovementController({
+      keys: this.keys,
+      player: this.player,
+      isWalkablePx: (px, py) => this.isWalkablePx(px, py),
+      slopeAtPx: (px, py) => {
+        const tx = Math.floor(px / TILE_SIZE);
+        const ty = Math.floor(py / TILE_SIZE);
+        return this.interior.registry.slopeAt(tx, ty);
       },
-    );
+    });
 
     // Wire equipment + wardrobe to the interior's Player instance. (These
     // stores are global, but the sprite layers are per-Player and must be
     // refreshed when a new Player is built in a newly-woken scene.)
-    const initialWardrobe = useSettingsStore.getState().wardrobe;
-    for (const layer of CF_WARDROBE_LAYERS) {
-      this.player.setBaselineLayer(layer, initialWardrobe[layer] ?? null);
-    }
-    syncPlayerVisualsFromEquipment(this.player, useGameStore.getState().equipment.equipped);
-    this.unsubEquipment = useGameStore.subscribe((state, prev) => {
-      if (state.equipment.equipped === prev.equipment.equipped) return;
-      syncPlayerVisualsFromEquipment(this.player, state.equipment.equipped);
-    });
-    this.unsubWardrobe = useSettingsStore.subscribe((state, prev) => {
-      if (state.wardrobe === prev.wardrobe) return;
-      for (const layer of CF_WARDROBE_LAYERS) {
-        const next = state.wardrobe[layer] ?? null;
-        const previous = prev.wardrobe[layer] ?? null;
-        if (next !== previous) this.player.setBaselineLayer(layer, next);
-      }
-      syncPlayerVisualsFromEquipment(this.player, useGameStore.getState().equipment.equipped);
-    });
-    this.unsubZoom = useSettingsStore.subscribe((state, prev) => {
-      if (state.zoom === prev.zoom) return;
-      if (Math.abs(state.zoom - this.zoomTarget) <= ZOOM_SNAP_EPSILON) return;
-      this.zoomTarget = state.zoom;
-      this.wheelZoomDir = 0;
-    });
-
+    this.unsubPlayerVisuals = bindPlayerVisualSubscriptions(this.player);
     bus.onTyped("dialogue:action", this.onDialogueAction);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.onShutdown());
@@ -337,7 +296,7 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     const dt = dtMs / 1000;
     if (this.editSystem?.isActive()) {
       this.npcReconciler.syncAll();
-      this.updateZoom(dtMs);
+      this.zoom.update(dtMs);
       this.emitHud();
       return;
     }
@@ -360,36 +319,12 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
       );
     }
     this.npcReconciler.syncAll();
-    this.updateZoom(dtMs);
+    this.zoom.update(dtMs);
     this.emitHud();
   }
 
   private updateOnFoot(dt: number) {
-    let dx = 0;
-    let dy = 0;
-    if (this.keys.left.isDown || this.keys.a.isDown) dx -= 1;
-    if (this.keys.right.isDown || this.keys.d.isDown) dx += 1;
-    if (this.keys.up.isDown || this.keys.w.isDown) dy -= 1;
-    if (this.keys.down.isDown || this.keys.s.isDown) dy += 1;
-    if (dx !== 0 && dy !== 0) {
-      const inv = 1 / Math.SQRT2;
-      dx *= inv;
-      dy *= inv;
-    }
-    const moving = dx !== 0 || dy !== 0;
-    const sprinting = moving && this.keys.sprint.isDown && stamina.current > 0;
-    if (sprinting) stamina.drain(dt);
-    const speed = PLAYER_SPEED * (sprinting ? SPRINT_SPEED_MULT : 1);
-    this.player.tryMove(
-      dx * speed * dt,
-      dy * speed * dt,
-      (px, py) => this.isWalkablePx(px, py),
-      (px, py) => {
-        const tx = Math.floor(px / TILE_SIZE);
-        const ty = Math.floor(py / TILE_SIZE);
-        return this.interior.registry.slopeAt(tx, ty);
-      },
-    );
+    this.movement.update(dt);
   }
 
   private isWalkablePx(px: number, py: number): boolean {
@@ -665,67 +600,12 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     cam.setBounds(bx, by, bw, bh, false);
   }
 
-  private stepZoomKeyboard(dir: 1 | -1) {
-    const cur = this.zoomTarget;
-    let target: number;
-    if (dir > 0) {
-      const next = ZOOM_STEPS.find((s) => s > cur + ZOOM_SNAP_EPSILON);
-      target = next ?? MAX_ZOOM;
-    } else {
-      let prev: number = MIN_ZOOM;
-      for (const s of ZOOM_STEPS) {
-        if (s < cur - ZOOM_SNAP_EPSILON) prev = s;
-        else break;
-      }
-      target = prev;
-    }
-    this.zoomTarget = Phaser.Math.Clamp(target, MIN_ZOOM, MAX_ZOOM);
-    useSettingsStore.getState().setZoom(this.zoomTarget);
-  }
-
-  private updateZoom(dtMs: number) {
-    if (this.wheelZoomDir !== 0 && this.time.now - this.lastWheelAt >= WHEEL_SETTLE_MS) {
-      const cur = this.zoomTarget;
-      let snapped: number;
-      if (this.wheelZoomDir > 0) {
-        const next = ZOOM_STEPS.find((s) => s >= cur - ZOOM_SNAP_EPSILON);
-        snapped = next ?? MAX_ZOOM;
-      } else {
-        let prev: number = MIN_ZOOM;
-        for (const s of ZOOM_STEPS) {
-          if (s <= cur + ZOOM_SNAP_EPSILON) prev = s;
-          else break;
-        }
-        snapped = prev;
-      }
-      this.zoomTarget = Phaser.Math.Clamp(snapped, MIN_ZOOM, MAX_ZOOM);
-      useSettingsStore.getState().setZoom(this.zoomTarget);
-      this.wheelZoomDir = 0;
-    }
-    const cam = this.cameras.main;
-    const diff = this.zoomTarget - cam.zoom;
-    if (Math.abs(diff) < ZOOM_SNAP_EPSILON) {
-      if (cam.zoom !== this.zoomTarget) {
-        cam.setZoom(this.zoomTarget);
-        this.updateCenteredCameraBounds();
-      }
-      return;
-    }
-    const t = 1 - Math.exp(-ZOOM_SMOOTH_RATE * (dtMs / 1000));
-    cam.setZoom(cam.zoom + diff * t);
-    this.updateCenteredCameraBounds();
-  }
-
   private onShutdown() {
     this.fishingSession?.cancel("scene");
     this.fishingSession = null;
     bus.offTyped("dialogue:action", this.onDialogueAction);
-    this.unsubEquipment?.();
-    this.unsubWardrobe?.();
-    this.unsubZoom?.();
-    this.unsubEquipment = null;
-    this.unsubWardrobe = null;
-    this.unsubZoom = null;
+    this.unsubPlayerVisuals?.();
+    this.unsubPlayerVisuals = null;
     const mapId: MapId = { kind: "interior", key: this.launchData.interiorKey };
     worldTicker.unregisterWalkable(mapId);
     this.npcReconciler?.shutdown();

@@ -116,8 +116,10 @@ const npcInfo: EntityTypeInfo = {
     }
     return { entities, defs, rawDefs };
   },
-  toFile(_originalFile, entities) {
+  toFile(originalFile, entities) {
+    const orig = (originalFile ?? {}) as Record<string, unknown>;
     return {
+      ...orig,
       npcs: entities.map((e) => {
         const next = { ...e.underlying };
         next.id = e.id;

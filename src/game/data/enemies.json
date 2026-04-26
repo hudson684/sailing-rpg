@@ -51,7 +51,7 @@
       },
       "combat": {
         "attackRangePx": 24,
-        "aggroRadiusPx": 80,
+        "aggroRadiusPx": 40,
         "leashRadiusPx": 160,
         "chaseSpeedPx": 50,
         "regenPerSec": 0.5,
@@ -111,7 +111,7 @@
       },
       "combat": {
         "attackRangePx": 24,
-        "aggroRadiusPx": 96,
+        "aggroRadiusPx": 48,
         "leashRadiusPx": 192,
         "chaseSpeedPx": 44,
         "regenPerSec": 0.6,
@@ -277,7 +277,7 @@
       },
       "combat": {
         "attackRangePx": 28,
-        "aggroRadiusPx": 120,
+        "aggroRadiusPx": 60,
         "leashRadiusPx": 220,
         "chaseSpeedPx": 54,
         "regenPerSec": 0.5,
@@ -337,7 +337,7 @@
       },
       "combat": {
         "attackRangePx": 32,
-        "aggroRadiusPx": 112,
+        "aggroRadiusPx": 56,
         "leashRadiusPx": 224,
         "chaseSpeedPx": 40,
         "regenPerSec": 1,
@@ -352,30 +352,30 @@
       "id": "e_slime_1",
       "defId": "slime_small_green",
       "tileX": 115,
-      "tileY": 69
+      "tileY": 66
     },
     {
       "id": "e_slime_2",
       "defId": "slime_small_green",
-      "tileX": 114,
+      "tileX": 113,
       "tileY": 60
     },
     {
       "id": "e_slime_3",
       "defId": "slime_small_blue",
-      "tileX": 111,
+      "tileX": 109,
       "tileY": 62
     },
     {
       "id": "e_slime_4",
       "defId": "slime_small_blue",
-      "tileX": 110,
-      "tileY": 73
+      "tileX": 111,
+      "tileY": 69
     },
     {
       "id": "e_slime_5",
       "defId": "slime_medium_red",
-      "tileX": 114,
+      "tileX": 115,
       "tileY": 57
     },
     {
@@ -394,7 +394,7 @@
       "id": "slime_small_green-3",
       "defId": "slime_small_green",
       "tileX": 102,
-      "tileY": 199
+      "tileY": 202
     },
     {
       "id": "skeleton-7",
@@ -411,8 +411,8 @@
     {
       "id": "skeleton-10",
       "defId": "skeleton",
-      "tileX": 122,
-      "tileY": 197
+      "tileX": 120,
+      "tileY": 194
     },
     {
       "id": "skeleton-8",
@@ -423,37 +423,37 @@
     {
       "id": "skeleton-9",
       "defId": "skeleton",
-      "tileX": 126,
-      "tileY": 200
+      "tileX": 127,
+      "tileY": 196
     },
     {
       "id": "pirate-7",
       "defId": "pirate",
-      "tileX": 76,
-      "tileY": 71
+      "tileX": 75,
+      "tileY": 72
     },
     {
       "id": "pirate-8",
       "defId": "pirate",
-      "tileX": 72,
-      "tileY": 74
+      "tileX": 70,
+      "tileY": 75
     },
     {
       "id": "pirate-9",
       "defId": "pirate",
-      "tileX": 74,
+      "tileX": 71,
       "tileY": 71
     },
     {
       "id": "pirate-10",
       "defId": "pirate",
-      "tileX": 77,
-      "tileY": 80
+      "tileX": 76,
+      "tileY": 79
     },
     {
       "id": "pirate-11",
       "defId": "pirate",
-      "tileX": 77,
+      "tileX": 80,
       "tileY": 77
     }
   ]

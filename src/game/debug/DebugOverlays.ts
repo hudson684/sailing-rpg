@@ -47,6 +47,7 @@ export class DebugOverlays {
     hitbox: false,
   };
   private readonly hud: Phaser.GameObjects.Text;
+  private readonly zoomHud: Phaser.GameObjects.Text;
   private readonly spawnLabels: Phaser.GameObjects.Text[] = [];
   private readonly chunkLabels: Phaser.GameObjects.Text[] = [];
 
@@ -70,6 +71,13 @@ export class DebugOverlays {
       .setPadding(6, 3, 6, 3)
       .setVisible(false);
 
+    this.zoomHud = scene.add
+      .text(0, 0, "", { fontSize: "12px", color: "#cfe7ff", backgroundColor: "rgba(0,0,0,0.55)" })
+      .setOrigin(1, 1)
+      .setDepth(OVERLAY_DEPTH + 10)
+      .setPadding(6, 3, 6, 3)
+      .setVisible(false);
+
     this.refreshHud();
   }
 
@@ -77,6 +85,7 @@ export class DebugOverlays {
     this.active[name] = !this.active[name];
     this.gfx[name].setVisible(this.active[name]);
     if (!this.active[name]) this.clearLabels(name);
+    if (name === "hitbox") this.zoomHud.setVisible(this.active.hitbox);
     this.refreshHud();
     // Redraw immediately so the toggle feels instant when paused.
     this.update();
@@ -88,6 +97,20 @@ export class DebugOverlays {
     if (this.active.spawns) this.drawSpawns();
     if (this.active.anchorSearch) this.drawAnchorSearch();
     if (this.active.hitbox) this.drawHitbox();
+    if (this.active.hitbox) this.updateZoomHud();
+  }
+
+  private updateZoomHud(): void {
+    const cam = this.scene.cameras.main;
+    const z = cam.zoom || 1;
+    // Pin to the bottom-right of the camera viewport. Working in world
+    // coords (rather than scrollFactor 0) avoids Phaser 4's quirk where
+    // scrollFactor only cancels scroll, not zoom — at zoom != 1 a fixed
+    // (cam.width - 8, cam.height - 8) position renders off-screen.
+    const margin = 8 / z;
+    this.zoomHud.setText(`zoom ${z.toFixed(2)}×`);
+    this.zoomHud.setScale(1 / z);
+    this.zoomHud.setPosition(cam.worldView.right - margin, cam.worldView.bottom - margin);
   }
 
   // ── hitbox ────────────────────────────────────────────────────

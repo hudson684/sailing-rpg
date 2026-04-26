@@ -129,8 +129,8 @@
     {
       "id": "station_forge_3",
       "defId": "blacksmith_forge_3",
-      "tileX": 101,
-      "tileY": 81
+      "tileX": 104,
+      "tileY": 79
     },
     {
       "id": "station_sawmill_1",

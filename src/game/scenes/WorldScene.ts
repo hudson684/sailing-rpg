@@ -18,21 +18,19 @@ import { ALL_ITEM_IDS, ITEMS } from "../inventory/items";
 import { ALL_JOB_IDS, type JobId } from "../jobs/jobs";
 import { useGameStore } from "../store/gameStore";
 import { useShopStore } from "../store/shopStore";
-import { useSettingsStore } from "../store/settingsStore";
 import { setHud, showToast } from "../../ui/store/ui";
 import {
   Player,
-  PLAYER_SPEED,
   PLAYER_FEET_WIDTH,
   PLAYER_FEET_HEIGHT,
   PLAYER_FEET_OFFSET_Y,
   getOrCreatePlayerModel,
   type Facing,
 } from "../entities/Player";
-import { syncPlayerVisualsFromEquipment } from "../entities/playerEquipmentVisuals";
+import { bindPlayerVisualSubscriptions } from "../entities/playerEquipmentVisuals";
+import { MovementController } from "../player/MovementController";
 import { stamina, STAMINA_MAX } from "../player/stamina";
 import { foodRegen } from "../player/foodRegen";
-import { CF_WARDROBE_LAYERS } from "../entities/playerWardrobe";
 import {
   Ship,
   SHIP_MAX_SPEED,
@@ -45,7 +43,6 @@ import { Wind } from "../entities/wind";
 import type { VirtualKey } from "../input/virtualInput";
 import { bindSceneToVirtualInput } from "../input/virtualInputBridge";
 
-const SPRINT_SPEED_MULT = 1.35;
 const MOUNT_SPEED_MULT = 2;
 
 const HEADING_TO_FACING: Record<Heading, Facing> = {
@@ -90,6 +87,7 @@ import {
 } from "../cutscenes/CutsceneDirector";
 import type { CutsceneData, CutsceneFacing } from "../cutscenes/types";
 import { DebugOverlays, type OverlayName } from "../debug/DebugOverlays";
+import { ZoomController } from "../camera/ZoomController";
 import { ensureQuestSubsystem, getPredicateContext } from "../quests/activeQuestManager";
 import { SpawnGateRegistry } from "../world/spawnGating";
 import type { PredicateContext } from "../quests/predicates";
@@ -180,14 +178,6 @@ const DEFAULT_PLAYER_SPAWN_TILE = {
   y: (playerSpawnRaw as { instance: { tileX: number; tileY: number } }).instance.tileY,
 } as const;
 
-const ZOOM_STEPS = [0.5, 1, 1.5, 2, 3, 4, 6, 8] as const;
-const MIN_ZOOM = ZOOM_STEPS[0];
-const MAX_ZOOM = ZOOM_STEPS[ZOOM_STEPS.length - 1];
-
-const WHEEL_ZOOM_SENSITIVITY = 0.0015;
-const ZOOM_SMOOTH_RATE = 12;
-const ZOOM_SNAP_EPSILON = 0.001;
-const WHEEL_SETTLE_MS = 140;
 
 interface GroundItem {
   uid: string;
@@ -331,12 +321,14 @@ export class WorldScene extends Phaser.Scene implements EditHost {
   /** Cached defs the React overlay can pick from when placing new entities. */
   private enemyDefs = new Map<string, EnemyDef>();
   private nodeDefs = new Map<string, NodeDef>();
+  /** Coconuts shaken off each palm by a bare-handed Q. Cap is the def's HP;
+   *  when reached, the palm is swapped to its bare variant for ~2 minutes. */
+  private palmShakeCounts = new WeakMap<GatheringNode, number>();
   /** Initial shops (mutated by edit:shopUpdate; read on snapshot). */
   private shopsForEdit: ShopDef[] = [];
 
-  private zoomTarget = useSettingsStore.getState().zoom;
-  private wheelZoomDir: 1 | -1 | 0 = 0;
-  private lastWheelAt = 0;
+  private zoom!: ZoomController;
+  private movement!: MovementController;
 
   private debug!: DebugOverlays;
 
@@ -527,7 +519,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       (b.maxTy - b.minTy) * TILE_SIZE,
     );
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
-    this.cameras.main.setZoom(this.zoomTarget);
+    this.zoom = new ZoomController(this);
 
     // Keep the camera viewport in sync with the canvas when it resizes
     // (window resize, orientation change, mobile URL-bar collapse). Without
@@ -650,28 +642,14 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     this.keys.quickload.on("down", () => void this.saveController.load("quicksave"));
     this.keys.mount.on("down", () => this.toggleMount());
 
-    // Camera zoom: mouse wheel + `+`/`=` and `-` keys.
-    const zoomInPlus = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.PLUS);
-    const zoomInEq = this.input.keyboard!.addKey("=");
-    const zoomOut = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.MINUS);
-    zoomInPlus.on("down", () => this.stepZoomKeyboard(+1));
-    zoomInEq.on("down", () => this.stepZoomKeyboard(+1));
-    zoomOut.on("down", () => this.stepZoomKeyboard(-1));
-    this.input.on(
-      "wheel",
-      (_p: unknown, _o: unknown, _dx: number, dy: number) => {
-        if (dy === 0) return;
-        const factor = Math.exp(-dy * WHEEL_ZOOM_SENSITIVITY);
-        this.zoomTarget = Phaser.Math.Clamp(
-          this.zoomTarget * factor,
-          MIN_ZOOM,
-          MAX_ZOOM,
-        );
-        useSettingsStore.getState().setZoom(this.zoomTarget);
-        this.wheelZoomDir = dy < 0 ? 1 : -1;
-        this.lastWheelAt = this.time.now;
-      },
-    );
+    this.movement = new MovementController({
+      keys: this.keys,
+      player: this.player,
+      isWalkablePx: (px, py) => this.isWalkablePx(px, py),
+      slopeAtPx: (px, py) => this.world.manager.slopeAtPx(px, py),
+      isMounted: () => this.player.mounted,
+      mountSpeedMult: MOUNT_SPEED_MULT,
+    });
 
     this.debug = new DebugOverlays(this, this.world, {
       getShipPose: () =>
@@ -752,43 +730,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     }
     activeWorldScene = this;
 
-    // Mirror the equipment loadout onto the player's paper-doll. Apply the
-    // current state once for the initial render, then subscribe so future
-    // equip/unequip ops re-sync. The selector returns the equipped map by
-    // reference, so Zustand's default Object.is comparison fires only when a
-    // store action actually replaces it.
-    // Apply the wardrobe baseline first, then layer equipment overlays on top
-    // so an equipped chest piece (e.g.) wins over the wardrobe shirt.
-    const initialWardrobe = useSettingsStore.getState().wardrobe;
-    for (const layer of CF_WARDROBE_LAYERS) {
-      this.player.setBaselineLayer(layer, initialWardrobe[layer] ?? null);
-    }
-    syncPlayerVisualsFromEquipment(this.player, useGameStore.getState().equipment.equipped);
-    const unsubEquipment = useGameStore.subscribe((state, prev) => {
-      if (state.equipment.equipped === prev.equipment.equipped) return;
-      syncPlayerVisualsFromEquipment(this.player, state.equipment.equipped);
-    });
-    const unsubWardrobe = useSettingsStore.subscribe((state, prev) => {
-      if (state.wardrobe === prev.wardrobe) return;
-      for (const layer of CF_WARDROBE_LAYERS) {
-        const next = state.wardrobe[layer] ?? null;
-        const previous = prev.wardrobe[layer] ?? null;
-        if (next !== previous) this.player.setBaselineLayer(layer, next);
-      }
-      // Re-overlay equipment so a wardrobe change to a slot occupied by gear
-      // doesn't visually drop the equipped item.
-      syncPlayerVisualsFromEquipment(this.player, useGameStore.getState().equipment.equipped);
-    });
-    // Pick up zoom changes that come from outside the scene (pause-menu
-    // buttons). Wheel/keyboard handlers update the store too, but they also
-    // mutate `zoomTarget` first, so the equality check makes this a no-op.
-    const unsubZoom = useSettingsStore.subscribe((state, prev) => {
-      if (state.zoom === prev.zoom) return;
-      if (Math.abs(state.zoom - this.zoomTarget) <= ZOOM_SNAP_EPSILON) return;
-      this.zoomTarget = state.zoom;
-      this.wheelZoomDir = 0;
-    });
-
+    const unsubPlayerVisuals = bindPlayerVisualSubscriptions(this.player);
     this.events.on(Phaser.Scenes.Events.WAKE, (_sys: unknown, data: InteriorReturnData | undefined) => {
       this.onInteriorWake(data);
     });
@@ -810,9 +752,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
         bus.offTyped("player:resetSpawn", this.onResetSpawn);
         bus.offTyped("ships:resetAll", this.onResetAllShips);
       }
-      unsubEquipment();
-      unsubWardrobe();
-      unsubZoom();
+      unsubPlayerVisuals();
       this.unsubVirtualInput?.();
       this.unsubVirtualInput = null;
       if (activeWorldScene === this) activeWorldScene = null;
@@ -909,7 +849,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     }
     // Pull NPC sprites forward to match models mutated by the global ticker.
     this.npcReconciler?.syncAll();
-    this.updateZoom(dtMs);
+    this.zoom.update(dtMs);
     this.emitHud();
     this.debug.update();
   }
@@ -1004,30 +944,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
   // ─── Mode: OnFoot ────────────────────────────────────────────────
 
   private updateOnFoot(dt: number) {
-    let dx = 0;
-    let dy = 0;
-    if (this.keys.left.isDown || this.keys.a.isDown) dx -= 1;
-    if (this.keys.right.isDown || this.keys.d.isDown) dx += 1;
-    if (this.keys.up.isDown || this.keys.w.isDown) dy -= 1;
-    if (this.keys.down.isDown || this.keys.s.isDown) dy += 1;
-    if (dx !== 0 && dy !== 0) {
-      const inv = 1 / Math.SQRT2;
-      dx *= inv;
-      dy *= inv;
-    }
-    const moving = dx !== 0 || dy !== 0;
-    const mounted = this.player.mounted;
-    // Mounts cruise at sprint speed without burning stamina — that's the
-    // whole point of climbing onto one.
-    const sprinting = !mounted && moving && this.keys.sprint.isDown && stamina.current > 0;
-    if (sprinting) stamina.drain(dt);
-    const speed = PLAYER_SPEED * (mounted ? MOUNT_SPEED_MULT : sprinting ? SPRINT_SPEED_MULT : 1);
-    this.player.tryMove(
-      dx * speed * dt,
-      dy * speed * dt,
-      (px, py) => this.isWalkablePx(px, py),
-      (px, py) => this.world.manager.slopeAtPx(px, py),
-    );
+    this.movement.update(dt);
     this.checkAutoEnter();
   }
 
@@ -1296,6 +1213,11 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     } else if (mainHand === "bow") {
       showToast("Left-click to fire the bow.", 1500);
     } else {
+      const palm = this.nearestPalmWithCoconut();
+      if (palm) {
+        this.shakePalm(palm);
+        return;
+      }
       showToast("Equip a sword, pickaxe, axe, or rod to act with Q.", 1500);
     }
   }
@@ -1488,6 +1410,44 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       }
     }
     return best;
+  }
+
+  private nearestPalmWithCoconut(): GatheringNode | null {
+    let best: GatheringNode | null = null;
+    let bestDist = Infinity;
+    for (const node of this.nodes) {
+      if (!node.isAlive()) continue;
+      if (node.def.id !== "tree_palm") continue;
+      const reach = NODE_INTERACT_RADIUS * (node.def.interactRadiusMul ?? 1);
+      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, node.x, node.y);
+      if (d <= reach && d <= bestDist) {
+        best = node;
+        bestDist = d;
+      }
+    }
+    return best;
+  }
+
+  private shakePalm(palm: GatheringNode) {
+    const ok = this.player.playAction("chop", () => {
+      this.dropPerHitFromNode(palm);
+      const next = (this.palmShakeCounts.get(palm) ?? 0) + 1;
+      this.palmShakeCounts.set(palm, next);
+      if (next >= palm.def.hp) {
+        const bare = this.nodeDefs.get("tree_palm_bare");
+        if (!bare) return;
+        palm.transformTo(this, bare);
+        this.palmShakeCounts.delete(palm);
+        this.time.delayedCall(2 * 60 * 1000, () => {
+          if (!palm.isAlive()) return;
+          if (palm.def.id !== "tree_palm_bare") return;
+          const ripe = this.nodeDefs.get("tree_palm");
+          if (!ripe) return;
+          palm.transformTo(this, ripe);
+        });
+      }
+    });
+    if (!ok) return;
   }
 
   private nearestAnyNodeInReach(): GatheringNode | null {
@@ -2731,56 +2691,6 @@ export class WorldScene extends Phaser.Scene implements EditHost {
 
   private onScaleResize(gameSize: Phaser.Structs.Size) {
     this.cameras.main.setViewport(0, 0, gameSize.width, gameSize.height);
-  }
-
-  private stepZoomKeyboard(dir: 1 | -1) {
-    const cur = this.zoomTarget;
-    let target: number;
-    if (dir > 0) {
-      const next = ZOOM_STEPS.find((s) => s > cur + ZOOM_SNAP_EPSILON);
-      target = next ?? MAX_ZOOM;
-    } else {
-      let prev: number = MIN_ZOOM;
-      for (const s of ZOOM_STEPS) {
-        if (s < cur - ZOOM_SNAP_EPSILON) prev = s;
-        else break;
-      }
-      target = prev;
-    }
-    this.zoomTarget = Phaser.Math.Clamp(target, MIN_ZOOM, MAX_ZOOM);
-    useSettingsStore.getState().setZoom(this.zoomTarget);
-  }
-
-  private updateZoom(dtMs: number) {
-    if (
-      this.wheelZoomDir !== 0 &&
-      this.time.now - this.lastWheelAt >= WHEEL_SETTLE_MS
-    ) {
-      const cur = this.zoomTarget;
-      let snapped: number;
-      if (this.wheelZoomDir > 0) {
-        const next = ZOOM_STEPS.find((s) => s >= cur - ZOOM_SNAP_EPSILON);
-        snapped = next ?? MAX_ZOOM;
-      } else {
-        let prev: number = MIN_ZOOM;
-        for (const s of ZOOM_STEPS) {
-          if (s <= cur + ZOOM_SNAP_EPSILON) prev = s;
-          else break;
-        }
-        snapped = prev;
-      }
-      this.zoomTarget = Phaser.Math.Clamp(snapped, MIN_ZOOM, MAX_ZOOM);
-      useSettingsStore.getState().setZoom(this.zoomTarget);
-      this.wheelZoomDir = 0;
-    }
-    const cam = this.cameras.main;
-    const diff = this.zoomTarget - cam.zoom;
-    if (Math.abs(diff) < ZOOM_SNAP_EPSILON) {
-      if (cam.zoom !== this.zoomTarget) cam.setZoom(this.zoomTarget);
-      return;
-    }
-    const t = 1 - Math.exp(-ZOOM_SMOOTH_RATE * (dtMs / 1000));
-    cam.setZoom(cam.zoom + diff * t);
   }
 
   private emitHud() {

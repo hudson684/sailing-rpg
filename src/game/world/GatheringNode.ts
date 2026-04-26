@@ -69,7 +69,7 @@ export const NODE_INTERACT_RADIUS = TILE_SIZE * 1.4;
 
 export class GatheringNode {
   readonly id: string;
-  readonly def: NodeDef;
+  def: NodeDef;
   x: number;
   y: number;
   private hp: number;
@@ -206,6 +206,19 @@ export class GatheringNode {
     this.sprite?.setAlpha(1);
     this.hpBar.setVisible(false);
     this.hpBarBg.setVisible(false);
+  }
+
+  /** Swap this node's def in place — used e.g. when a palm runs out of
+   *  coconuts and should look bare. Assumes the new def has a sprite and
+   *  matching footprint; texture & idle anim are swapped, HP is reset. */
+  transformTo(scene: Phaser.Scene, newDef: NodeDef): void {
+    this.def = newDef;
+    this.hp = newDef.hp;
+    if (this.sprite && newDef.sprite) {
+      this.sprite.setTexture(nodeSpriteTextureKey(newDef.id));
+      const animKey = nodeSpriteAnimKey(newDef.id);
+      if (scene.anims.exists(animKey)) this.sprite.play(animKey);
+    }
   }
 
   setPositionPx(x: number, y: number) {

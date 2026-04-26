@@ -45,5 +45,8 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     target: "es2022",
+    // Phaser ships as a single ~1.35 MB pre-bundled ESM file with no
+    // tree-shaking hooks; for a game that's normal, so silence the warning.
+    chunkSizeWarningLimit: 1500,
   },
 }));

@@ -2,6 +2,9 @@ import { ITEMS } from "../inventory/items";
 import type { Equipped } from "../equipment/operations";
 import type { Player } from "./Player";
 import type { CfLayer } from "./playerAnims";
+import { useGameStore } from "../store/gameStore";
+import { useSettingsStore } from "../store/settingsStore";
+import { CF_WARDROBE_LAYERS } from "./playerWardrobe";
 
 /**
  * CF layers that participate in equipment-driven visuals. Order is irrelevant
@@ -44,4 +47,38 @@ export function syncPlayerVisualsFromEquipment(
     const variant = next.get(layer) ?? null;
     player.setLayerToEquipmentDefault(layer, variant);
   }
+}
+
+/** Apply the persisted wardrobe + equipment to `player` immediately, then keep
+ *  it in sync by subscribing to the relevant stores. Returns an unsubscribe
+ *  function — call it on scene shutdown. Both WorldScene and InteriorScene
+ *  build their own Player instance per scene start, so each scene calls this
+ *  in `create()` to bind that scene-local Player to the global stores. */
+export function bindPlayerVisualSubscriptions(player: Player): () => void {
+  const initialWardrobe = useSettingsStore.getState().wardrobe;
+  for (const layer of CF_WARDROBE_LAYERS) {
+    player.setBaselineLayer(layer, initialWardrobe[layer] ?? null);
+  }
+  syncPlayerVisualsFromEquipment(player, useGameStore.getState().equipment.equipped);
+
+  const unsubEquipment = useGameStore.subscribe((state, prev) => {
+    if (state.equipment.equipped === prev.equipment.equipped) return;
+    syncPlayerVisualsFromEquipment(player, state.equipment.equipped);
+  });
+  const unsubWardrobe = useSettingsStore.subscribe((state, prev) => {
+    if (state.wardrobe === prev.wardrobe) return;
+    for (const layer of CF_WARDROBE_LAYERS) {
+      const next = state.wardrobe[layer] ?? null;
+      const previous = prev.wardrobe[layer] ?? null;
+      if (next !== previous) player.setBaselineLayer(layer, next);
+    }
+    // Re-overlay equipment so a wardrobe change to a slot occupied by gear
+    // doesn't visually drop the equipped item.
+    syncPlayerVisualsFromEquipment(player, useGameStore.getState().equipment.equipped);
+  });
+
+  return () => {
+    unsubEquipment();
+    unsubWardrobe();
+  };
 }

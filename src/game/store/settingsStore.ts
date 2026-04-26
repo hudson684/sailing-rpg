@@ -11,15 +11,15 @@ import { DEFAULT_WARDROBE, type CfWardrobe } from "../entities/playerWardrobe";
  * so copying a save between machines doesn't carry someone else's preferences.
  */
 
-export const ZOOM_STEPS = [0.5, 1, 1.5, 2, 3, 4, 6, 8] as const;
+export const ZOOM_STEPS = [1.5, 2, 3, 4, 6, 8] as const;
 const MIN_ZOOM = ZOOM_STEPS[0];
 const MAX_ZOOM = ZOOM_STEPS[ZOOM_STEPS.length - 1];
 const ZOOM_SNAP_EPSILON = 0.001;
 
 /** Coarse-pointer devices (touch screens) get a closer default zoom because
  *  the fixed 960×640 viewport renders very small on phone screens. */
-const DEFAULT_ZOOM_DESKTOP = 1;
-const DEFAULT_ZOOM_MOBILE = 2;
+const DEFAULT_ZOOM_DESKTOP = 2;
+const DEFAULT_ZOOM_MOBILE = 3;
 
 function isCoarsePointer(): boolean {
   if (typeof window === "undefined") return false;
@@ -89,7 +89,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: "sailing-rpg:settings",
-      version: 6,
+      version: 7,
       storage: createJSONStorage(() => localStorage),
       // Old saves without `wardrobe` get the default outfit. No data loss.
       migrate: (persisted: unknown, version: number) => {
@@ -105,6 +105,11 @@ export const useSettingsStore = create<SettingsState>()(
         // zoom keeps it.
         if (version < 6 && state.zoom === 1 && isCoarsePointer()) {
           state.zoom = DEFAULT_ZOOM_MOBILE;
+        }
+        // v7: dropped the 0.5 and 1 zoom steps — they let players see too much
+        // of the world. Anyone parked below the new minimum gets pulled in.
+        if (version < 7 && typeof state.zoom === "number" && state.zoom < MIN_ZOOM) {
+          state.zoom = defaultZoom();
         }
         return state as SettingsState;
       },
