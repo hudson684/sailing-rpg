@@ -47,7 +47,6 @@ export interface EnemySprite {
 }
 
 export interface EnemyDisplay {
-  scale: number;
   /** Sprite origin Y as a fraction of frame height (1.0 = bottom = feet). */
   originY: number;
 }

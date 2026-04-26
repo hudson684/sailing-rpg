@@ -9,7 +9,34 @@ export interface NpcAnimSheet {
   frameRate: number;
 }
 
-export type NpcFacing = "left" | "right";
+/** A 4-direction anim. `side` is the right-facing source; `setFlipX` is
+ *  applied at runtime when the NPC faces left. `up` and `down` get their
+ *  own sheets and are never flipped. */
+export interface NpcDirectionalAnimSheet {
+  down: NpcAnimSheet;
+  up: NpcAnimSheet;
+  side: NpcAnimSheet;
+}
+
+export type NpcAnimSheetEntry = NpcAnimSheet | NpcDirectionalAnimSheet;
+
+export function isDirectionalAnimSheet(
+  s: NpcAnimSheetEntry,
+): s is NpcDirectionalAnimSheet {
+  return (s as NpcDirectionalAnimSheet).down !== undefined;
+}
+
+export type NpcFacing = "left" | "right" | "up" | "down";
+
+/** The three render directions an NPC can be in. Left/right both render
+ *  the `side` sheet; left flips it. */
+export type NpcRenderDir = "up" | "down" | "side";
+
+export function facingToRenderDir(f: NpcFacing): NpcRenderDir {
+  if (f === "up") return "up";
+  if (f === "down") return "down";
+  return "side";
+}
 
 export interface NpcSpawnTile {
   tileX: number;
@@ -33,7 +60,6 @@ export type NpcMovement =
     };
 
 export interface NpcDisplay {
-  scale: number;
   originY: number;
 }
 
@@ -58,8 +84,10 @@ export interface NpcDef {
    *  NPC is not added to the entity registry on boot and is despawned
    *  if a later flag change flips it false. */
   when?: Predicate;
-  /** Legacy single-sheet look. Mutually exclusive with `layered`. */
-  sprite?: { idle: NpcAnimSheet; walk?: NpcAnimSheet };
+  /** Legacy single-sheet look. Mutually exclusive with `layered`.
+   *  Each entry can be a single side-view sheet (mirrored for left) or
+   *  a directional triple ({down,up,side}) for true 4-way facing. */
+  sprite?: { idle: NpcAnimSheetEntry; walk?: NpcAnimSheetEntry };
   /** Layered slot-based look. Preferred for new NPCs. */
   layered?: NpcLayeredSprite;
   display: NpcDisplay;
@@ -96,12 +124,20 @@ export interface NpcData {
   dialogues: Record<string, DialogueDef>;
 }
 
-export function npcTextureKey(npcId: string, state: "idle" | "walk"): string {
-  return `npc-${npcId}-${state}`;
+export function npcTextureKey(
+  npcId: string,
+  state: "idle" | "walk",
+  dir?: NpcRenderDir,
+): string {
+  return dir ? `npc-${npcId}-${state}-${dir}` : `npc-${npcId}-${state}`;
 }
 
-export function npcAnimKey(npcId: string, state: "idle" | "walk"): string {
-  return `npc-${npcId}-${state}`;
+export function npcAnimKey(
+  npcId: string,
+  state: "idle" | "walk",
+  dir?: NpcRenderDir,
+): string {
+  return dir ? `npc-${npcId}-${state}-${dir}` : `npc-${npcId}-${state}`;
 }
 
 export function charTextureKey(model: string, slot: string, variant: string, state: string): string {

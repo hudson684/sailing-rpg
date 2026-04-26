@@ -69,9 +69,9 @@ Notes:
   left/right), so exporting just that group keeps sheets tight.
 - The default post-process computes one bounding box across every
   frame of every exported tag and crops all sheets to match. That
-  drops editor whitespace (so `display.scale` doesn't have to
-  compensate) while keeping the character's feet pinned to the same
-  relative position in every animation. Pass `--no-trim` to skip.
+  drops editor whitespace and keeps the character's feet pinned to
+  the same relative position in every animation. Pass `--no-trim`
+  to skip.
 - Default `--columns 1` matches Hana Caraka files, where each aseprite
   frame is a single composite. Bump `--columns` for files where each
   facing or variant is a separate aseprite frame.
@@ -82,5 +82,6 @@ Notes:
 
 After export, set `frameWidth` / `frameHeight` / `sheetCols` in the
 matching def (e.g. `src/game/data/enemies.json`) to match the new
-trimmed dimensions the script prints at the end. `display.scale` then
-tunes the in-world size.
+trimmed dimensions the script prints at the end. Characters are
+always rendered at 1× — there is no `display.scale`, so the source
+sheet must already be the size you want in-world.

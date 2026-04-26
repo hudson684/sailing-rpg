@@ -6,16 +6,16 @@
       "kind": "tree",
       "color": "#3a6b2a",
       "outlineColor": "#1f3d18",
-      "width": 25,
-      "height": 16,
+      "width": 16,
+      "height": 6,
       "sprite": {
         "sheet": "sprites/nodes/palm-tree.png",
-        "frameWidth": 156,
-        "frameHeight": 215,
-        "frames": 10,
-        "frameRate": 8,
-        "scale": 0.5,
-        "originY": 0.92
+        "frameWidth": 32,
+        "frameHeight": 32,
+        "frames": 1,
+        "frameRate": 1,
+        "scale": 1,
+        "originY": 1
       },
       "hp": 4,
       "respawnSec": 30,
@@ -31,10 +31,93 @@
         "quantity": 1
       },
       "blocks": true,
-      "ySortOffset": -57.71429443359375,
-      "collisionOffsetX": 3.28573608398438,
-      "collisionOffsetY": -52,
       "interactRadiusMul": 1.5
+    },
+    {
+      "id": "tree_palm_bare",
+      "name": "Palm Tree",
+      "kind": "tree",
+      "color": "#3a6b2a",
+      "outlineColor": "#1f3d18",
+      "width": 16,
+      "height": 6,
+      "sprite": {
+        "sheet": "sprites/nodes/palm-tree-bare.png",
+        "frameWidth": 32,
+        "frameHeight": 32,
+        "frames": 1,
+        "frameRate": 1,
+        "scale": 1,
+        "originY": 1
+      },
+      "hp": 4,
+      "respawnSec": 30,
+      "requiredTool": "axe",
+      "skill": "lumberjack",
+      "xpPerHit": 4,
+      "drop": {
+        "itemId": "coconut_wood",
+        "quantity": 4
+      },
+      "blocks": true,
+      "interactRadiusMul": 1.5
+    },
+    {
+      "id": "ore_hopeite_xs",
+      "name": "Hopeite Pebble",
+      "kind": "ore",
+      "color": "#7a6a55",
+      "outlineColor": "#4a3a25",
+      "width": 10,
+      "height": 6,
+      "sprite": {
+        "sheet": "sprites/nodes/hopeite-1.png",
+        "frameWidth": 16,
+        "frameHeight": 16,
+        "frames": 1,
+        "frameRate": 1,
+        "scale": 1,
+        "originY": 1
+      },
+      "hp": 1,
+      "respawnSec": 30,
+      "requiredTool": "pickaxe",
+      "skill": "orecheologist",
+      "xpPerHit": 5,
+      "drop": {
+        "itemId": "hopeite_ore",
+        "quantity": 1
+      },
+      "blocks": true
+    },
+    {
+      "id": "ore_hopeite_s",
+      "name": "Hopeite Stone",
+      "kind": "ore",
+      "color": "#7a6a55",
+      "outlineColor": "#4a3a25",
+      "width": 12,
+      "height": 6,
+      "sprite": {
+        "sheet": "sprites/nodes/hopeite-2.png",
+        "frameWidth": 16,
+        "frameHeight": 16,
+        "frames": 1,
+        "frameRate": 1,
+        "scale": 1,
+        "originY": 1
+      },
+      "hp": 2,
+      "respawnSec": 30,
+      "requiredTool": "pickaxe",
+      "skill": "orecheologist",
+      "xpPerHit": 5,
+      "drop": {
+        "itemId": "hopeite_ore",
+        "quantity": 1,
+        "quantityMax": 2
+      },
+      "blocks": true
     },
     {
       "id": "ore_hopeite",
@@ -42,16 +125,45 @@
       "kind": "ore",
       "color": "#7a6a55",
       "outlineColor": "#4a3a25",
-      "width": 24,
-      "height": 22,
+      "width": 14,
+      "height": 8,
       "sprite": {
-        "sheet": "sprites/nodes/hopeite-rocks.png",
-        "frameWidth": 64,
-        "frameHeight": 64,
+        "sheet": "sprites/nodes/hopeite-3.png",
+        "frameWidth": 16,
+        "frameHeight": 16,
         "frames": 1,
         "frameRate": 1,
-        "scale": 0.5,
-        "originY": 0.85
+        "scale": 1,
+        "originY": 1
+      },
+      "hp": 3,
+      "respawnSec": 30,
+      "requiredTool": "pickaxe",
+      "skill": "orecheologist",
+      "xpPerHit": 5,
+      "drop": {
+        "itemId": "hopeite_ore",
+        "quantity": 2,
+        "quantityMax": 3
+      },
+      "blocks": true
+    },
+    {
+      "id": "ore_hopeite_l",
+      "name": "Hopeite Ore Cluster",
+      "kind": "ore",
+      "color": "#7a6a55",
+      "outlineColor": "#4a3a25",
+      "width": 14,
+      "height": 8,
+      "sprite": {
+        "sheet": "sprites/nodes/hopeite-4.png",
+        "frameWidth": 16,
+        "frameHeight": 16,
+        "frames": 1,
+        "frameRate": 1,
+        "scale": 1,
+        "originY": 1
       },
       "hp": 4,
       "respawnSec": 30,
@@ -64,38 +176,67 @@
         "quantityMax": 4
       },
       "blocks": true
+    },
+    {
+      "id": "ore_hopeite_xl",
+      "name": "Hopeite Ore Boulder",
+      "kind": "ore",
+      "color": "#7a6a55",
+      "outlineColor": "#4a3a25",
+      "width": 28,
+      "height": 10,
+      "sprite": {
+        "sheet": "sprites/nodes/hopeite-5.png",
+        "frameWidth": 32,
+        "frameHeight": 16,
+        "frames": 1,
+        "frameRate": 1,
+        "scale": 1,
+        "originY": 1
+      },
+      "hp": 6,
+      "respawnSec": 45,
+      "requiredTool": "pickaxe",
+      "skill": "orecheologist",
+      "xpPerHit": 5,
+      "drop": {
+        "itemId": "hopeite_ore",
+        "quantity": 5,
+        "quantityMax": 7
+      },
+      "blocks": true
     }
   ],
   "instances": [
     {
       "id": "n_tree_1",
       "defId": "tree_palm",
-      "tileX": 105,
-      "tileY": 90
+      "tileX": 93,
+      "tileY": 84
     },
     {
       "id": "n_tree_2",
       "defId": "tree_palm",
-      "tileX": 102,
-      "tileY": 87
+      "tileX": 96,
+      "tileY": 79
     },
     {
       "id": "n_tree_3",
       "defId": "tree_palm",
-      "tileX": 101,
-      "tileY": 79
+      "tileX": 99,
+      "tileY": 74
     },
     {
       "id": "n_ore_1",
       "defId": "ore_hopeite",
-      "tileX": 112,
+      "tileX": 85,
       "tileY": 90
     },
     {
       "id": "n_ore_2",
       "defId": "ore_hopeite",
-      "tileX": 108,
-      "tileY": 90
+      "tileX": 81,
+      "tileY": 91
     },
     {
       "id": "tree_palm-4",
@@ -112,8 +253,8 @@
     {
       "id": "ore_hopeite-7",
       "defId": "ore_hopeite",
-      "tileX": 86,
-      "tileY": 84
+      "tileX": 79,
+      "tileY": 87
     },
     {
       "id": "ore_hopeite-8",
@@ -130,8 +271,8 @@
     {
       "id": "ore_hopeite-10",
       "defId": "ore_hopeite",
-      "tileX": 88,
-      "tileY": 82
+      "tileX": 83,
+      "tileY": 84
     },
     {
       "id": "tree_palm-11",
@@ -142,20 +283,20 @@
     {
       "id": "tree_palm-12",
       "defId": "tree_palm",
-      "tileX": 67,
-      "tileY": 76
+      "tileX": 69,
+      "tileY": 82
     },
     {
       "id": "n_tree_palm_1",
       "defId": "tree_palm",
-      "tileX": 67,
-      "tileY": 81
+      "tileX": 71,
+      "tileY": 88
     },
     {
       "id": "n_tree_palm_2",
       "defId": "tree_palm",
-      "tileX": 89,
-      "tileY": 78
+      "tileX": 86,
+      "tileY": 77
     },
     {
       "id": "n_tree_palm_3",
@@ -166,134 +307,20 @@
     {
       "id": "n_tree_palm_4",
       "defId": "tree_palm",
-      "tileX": 68,
-      "tileY": 85
+      "tileX": 75,
+      "tileY": 88
     },
     {
       "id": "n_tree_palm_5",
       "defId": "tree_palm",
-      "tileX": 71,
-      "tileY": 78
+      "tileX": 70,
+      "tileY": 86
     },
     {
       "id": "n_tree_palm_6",
       "defId": "tree_palm",
-      "tileX": 80,
-      "tileY": 74
-    },
-    {
-      "id": "n_tree_palm_7",
-      "defId": "tree_palm",
-      "tileX": 186,
-      "tileY": 92
-    },
-    {
-      "id": "n_tree_palm_8",
-      "defId": "tree_palm",
-      "tileX": 185,
-      "tileY": 96
-    },
-    {
-      "id": "n_tree_palm_9",
-      "defId": "tree_palm",
-      "tileX": 184,
-      "tileY": 100
-    },
-    {
-      "id": "n_tree_palm_10",
-      "defId": "tree_palm",
-      "tileX": 185,
-      "tileY": 104
-    },
-    {
-      "id": "n_tree_palm_11",
-      "defId": "tree_palm",
-      "tileX": 186,
-      "tileY": 110
-    },
-    {
-      "id": "n_tree_palm_12",
-      "defId": "tree_palm",
-      "tileX": 178,
-      "tileY": 105
-    },
-    {
-      "id": "n_tree_palm_13",
-      "defId": "tree_palm",
-      "tileX": 156,
-      "tileY": 109
-    },
-    {
-      "id": "n_tree_palm_14",
-      "defId": "tree_palm",
-      "tileX": 130,
-      "tileY": 110
-    },
-    {
-      "id": "n_tree_palm_15",
-      "defId": "tree_palm",
-      "tileX": 129,
-      "tileY": 99
-    },
-    {
-      "id": "n_ore_hopeite_1",
-      "defId": "ore_hopeite",
-      "tileX": 129,
-      "tileY": 107
-    },
-    {
-      "id": "n_ore_hopeite_2",
-      "defId": "ore_hopeite",
-      "tileX": 131,
-      "tileY": 102
-    },
-    {
-      "id": "n_ore_hopeite_3",
-      "defId": "ore_hopeite",
-      "tileX": 182,
-      "tileY": 104
-    },
-    {
-      "id": "n_ore_hopeite_4",
-      "defId": "ore_hopeite",
-      "tileX": 182,
-      "tileY": 98
-    },
-    {
-      "id": "n_ore_hopeite_5",
-      "defId": "ore_hopeite",
-      "tileX": 184,
-      "tileY": 93
-    },
-    {
-      "id": "n_ore_hopeite_6",
-      "defId": "ore_hopeite",
-      "tileX": 183,
-      "tileY": 107
-    },
-    {
-      "id": "tree_palm-7",
-      "defId": "tree_palm",
-      "tileX": 147,
-      "tileY": 68
-    },
-    {
-      "id": "tree_palm-8",
-      "defId": "tree_palm",
-      "tileX": 141,
-      "tileY": 67
-    },
-    {
-      "id": "tree_palm-9",
-      "defId": "tree_palm",
-      "tileX": 135,
-      "tileY": 67
-    },
-    {
-      "id": "tree_palm-10",
-      "defId": "tree_palm",
-      "tileX": 151,
-      "tileY": 68
+      "tileX": 90,
+      "tileY": 70
     }
   ]
 }

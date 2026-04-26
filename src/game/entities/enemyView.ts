@@ -63,7 +63,6 @@ export class SingleSpriteEnemyView implements EnemyView {
   constructor(scene: Phaser.Scene, def: EnemyDef, x: number, y: number) {
     this.def = def;
     this.sprite = scene.add.sprite(x, y, enemyTextureKey(def.id), 0);
-    this.sprite.setScale(def.display.scale);
     this.sprite.setOrigin(0.5, def.display.originY);
   }
 
@@ -116,13 +115,12 @@ export class LayeredEnemyView implements EnemyView {
     x: number,
     y: number,
   ) {
-    // `def` kept on the instance only for consistency with the single-sprite
+    // `def` kept on the parameter list for consistency with the single-sprite
     // view; layered views don't currently need it after construction, but
     // future per-anim origin overrides would live here.
     void def;
     this.layered = layered;
     this.container = scene.add.container(x, y);
-    this.container.setScale(def.display.scale);
 
     // Model manifest's slotOrder decides render order; skip slots the NPC
     // instance didn't fill or whose texture didn't load for any reason.

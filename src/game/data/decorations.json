@@ -196,24 +196,5 @@
       }
     }
   ],
-  "instances": [
-    {
-      "id": "d_wind_cartoonish_1",
-      "defId": "wind_cartoonish",
-      "tileX": 179,
-      "tileY": 74
-    },
-    {
-      "id": "d_butterfly_1_1",
-      "defId": "butterfly_1",
-      "tileX": 185,
-      "tileY": 73
-    },
-    {
-      "id": "d_wind_cartoonish_2",
-      "defId": "wind_cartoonish",
-      "tileX": 182,
-      "tileY": 83
-    }
-  ]
+  "instances": []
 }

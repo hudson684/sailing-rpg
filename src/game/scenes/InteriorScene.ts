@@ -547,7 +547,7 @@ export class InteriorScene extends Phaser.Scene implements EditHost {
     const ret: InteriorReturnData = {
       returnWorldTx: this.launchData.returnWorldTx,
       returnWorldTy: this.launchData.returnWorldTy,
-      returnFacing: this.launchData.returnFacing,
+      returnFacing: this.player.facing,
     };
     // Wake World first; pass the return payload via wake data — WorldScene
     // listens for SCENE_WAKE. Then stop self.

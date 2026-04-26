@@ -22,12 +22,11 @@
         }
       },
       "display": {
-        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 119,
-        "tileY": 88
+        "tileX": 96,
+        "tileY": 93
       },
       "facing": "right",
       "movement": {
@@ -57,7 +56,6 @@
         }
       },
       "display": {
-        "scale": 1.0,
         "originY": 0.506
       },
       "map": {
@@ -65,7 +63,7 @@
       },
       "spawn": {
         "tileX": 7,
-        "tileY": 6
+        "tileY": 4
       },
       "facing": "right",
       "movement": {
@@ -74,6 +72,80 @@
       "dialogue": "mera_vendor",
       "shopId": "mera_general",
       "interactRadiusTiles": 2.5
+    },
+    {
+      "id": "odderf_frog",
+      "name": "Odderf",
+      "sprite": {
+        "idle": {
+          "down": {
+            "sheet": "sprites/npcs/odderf-idle-down.png",
+            "frameWidth": 14,
+            "frameHeight": 15,
+            "start": 0,
+            "end": 5,
+            "frameRate": 6
+          },
+          "up": {
+            "sheet": "sprites/npcs/odderf-idle-up.png",
+            "frameWidth": 14,
+            "frameHeight": 15,
+            "start": 0,
+            "end": 5,
+            "frameRate": 6
+          },
+          "side": {
+            "sheet": "sprites/npcs/odderf-idle-side.png",
+            "frameWidth": 14,
+            "frameHeight": 15,
+            "start": 0,
+            "end": 5,
+            "frameRate": 6
+          }
+        },
+        "walk": {
+          "down": {
+            "sheet": "sprites/npcs/odderf-walk-down.png",
+            "frameWidth": 14,
+            "frameHeight": 15,
+            "start": 0,
+            "end": 5,
+            "frameRate": 8
+          },
+          "up": {
+            "sheet": "sprites/npcs/odderf-walk-up.png",
+            "frameWidth": 14,
+            "frameHeight": 15,
+            "start": 0,
+            "end": 5,
+            "frameRate": 8
+          },
+          "side": {
+            "sheet": "sprites/npcs/odderf-walk-side.png",
+            "frameWidth": 14,
+            "frameHeight": 15,
+            "start": 0,
+            "end": 5,
+            "frameRate": 8
+          }
+        }
+      },
+      "display": {
+        "originY": 0.95
+      },
+      "spawn": {
+        "tileX": 97,
+        "tileY": 86
+      },
+      "facing": "right",
+      "movement": {
+        "type": "wander",
+        "radiusTiles": 3,
+        "moveSpeed": 25,
+        "pauseMs": 1500,
+        "stepMs": 1200
+      },
+      "dialogue": "odderf_frog"
     },
     {
       "id": "garra_chef",
@@ -97,12 +169,11 @@
         }
       },
       "display": {
-        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 119,
-        "tileY": 84
+        "tileX": 106,
+        "tileY": 90
       },
       "facing": "right",
       "movement": {
@@ -132,12 +203,11 @@
         }
       },
       "display": {
-        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
         "tileX": 104,
-        "tileY": 83
+        "tileY": 81
       },
       "facing": "right",
       "movement": {
@@ -171,12 +241,11 @@
         }
       },
       "display": {
-        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 117,
-        "tileY": 84
+        "tileX": 118,
+        "tileY": 88
       },
       "facing": "right",
       "movement": {
@@ -226,12 +295,11 @@
         }
       },
       "display": {
-        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 101,
-        "tileY": 82
+        "tileX": 105,
+        "tileY": 86
       },
       "facing": "left",
       "movement": {
@@ -265,12 +333,11 @@
         }
       },
       "display": {
-        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 110,
-        "tileY": 86
+        "tileX": 111,
+        "tileY": 84
       },
       "facing": "right",
       "movement": {
@@ -300,130 +367,17 @@
         }
       },
       "display": {
-        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
         "tileX": 115,
-        "tileY": 89
+        "tileY": 91
       },
       "facing": "left",
       "movement": {
         "type": "static"
       },
       "dialogue": "lilan_florist"
-    },
-    {
-      "id": "steve",
-      "name": "Steve",
-      "layered": {
-        "model": "humanoid",
-        "slots": {
-          "hand_back": "default",
-          "body": "pirate_outfit",
-          "head": "default",
-          "hair": "short_brown",
-          "helmet": "tricorn",
-          "hand_front": "default"
-        }
-      },
-      "display": {
-        "scale": 1.0,
-        "originY": 0.506
-      },
-      "spawn": {
-        "tileX": 115,
-        "tileY": 84
-      },
-      "facing": "right",
-      "movement": {
-        "type": "static"
-      },
-      "dialogue": "steve"
-    },
-    {
-      "id": "steve-copy-8",
-      "name": "Steve",
-      "layered": {
-        "model": "humanoid",
-        "slots": {
-          "hand_back": "default",
-          "body": "pirate_outfit",
-          "head": "default",
-          "hair": "short_brown",
-          "helmet": "tricorn",
-          "hand_front": "default"
-        }
-      },
-      "display": {
-        "scale": 1.0,
-        "originY": 0.506
-      },
-      "spawn": {
-        "tileX": 148,
-        "tileY": 115
-      },
-      "facing": "right",
-      "movement": {
-        "type": "static"
-      },
-      "dialogue": "steve"
-    },
-    {
-      "id": "steve-copy-9",
-      "name": "Steve",
-      "layered": {
-        "model": "humanoid",
-        "slots": {
-          "hand_back": "default",
-          "body": "pirate_outfit",
-          "head": "default",
-          "hair": "short_brown",
-          "helmet": "tricorn",
-          "hand_front": "default"
-        }
-      },
-      "display": {
-        "scale": 1.0,
-        "originY": 0.506
-      },
-      "spawn": {
-        "tileX": 148,
-        "tileY": 115
-      },
-      "facing": "right",
-      "movement": {
-        "type": "static"
-      },
-      "dialogue": "steve"
-    },
-    {
-      "id": "steve-copy-10",
-      "name": "Steve",
-      "layered": {
-        "model": "humanoid",
-        "slots": {
-          "hand_back": "default",
-          "body": "pirate_outfit",
-          "head": "default",
-          "hair": "short_brown",
-          "helmet": "tricorn",
-          "hand_front": "default"
-        }
-      },
-      "display": {
-        "scale": 1.0,
-        "originY": 0.506
-      },
-      "spawn": {
-        "tileX": 148,
-        "tileY": 115
-      },
-      "facing": "right",
-      "movement": {
-        "type": "static"
-      },
-      "dialogue": "steve"
     },
     {
       "id": "steve-copy-11",
@@ -440,12 +394,11 @@
         }
       },
       "display": {
-        "scale": 1.0,
         "originY": 0.506
       },
       "spawn": {
-        "tileX": 148,
-        "tileY": 115
+        "tileX": 103,
+        "tileY": 104
       },
       "facing": "right",
       "movement": {
@@ -453,70 +406,5 @@
       },
       "dialogue": "steve"
     }
-  ],
-  "dialogues": {
-    "brom_blacksmith": {
-      "speaker": "Brom",
-      "pages": [
-        "Mind the sparks, sailor. The forge runs hot today.",
-        "Bring me iron and I'll bring you steel. Fair trade."
-      ]
-    },
-    "mera_vendor": {
-      "speaker": "Josie",
-      "pages": [
-        "Welcome to my shop! I've got a bit of everything — rope, rations, tools, the usual sundries.",
-        "Have a look around. If you see something you like, just say the word."
-      ]
-    },
-    "garra_chef": {
-      "speaker": "Garra",
-      "pages": [
-        "Ha! You smell that? Garlic, butter, and a fish that didn't see it coming.",
-        "A full belly makes a brave sailor. Come back when you're hungry."
-      ]
-    },
-    "old_salt_fisherman": {
-      "speaker": "Old Salt",
-      "pages": [
-        "Sea's been quiet today. Too quiet, if you ask me.",
-        "Cast your line where the gulls dive, friend. They know better than we do."
-      ]
-    },
-    "jory_miner": {
-      "speaker": "Jory",
-      "pages": [
-        "Rock's stubborn today. Wants to stay rock.",
-        "Find me a vein of copper and I'll show you what these arms can do."
-      ]
-    },
-    "elin_innkeeper": {
-      "speaker": "Elin",
-      "pages": [
-        "Evenin', traveler. Bed's warm, stew's warmer.",
-        "Stay long enough and you'll hear every story this island has to tell."
-      ]
-    },
-    "tomas_farmer": {
-      "speaker": "Tomas",
-      "pages": [
-        "Soil's good this season. Rains came when they were meant to.",
-        "If you're heading inland, mind the goats. They've got opinions."
-      ]
-    },
-    "lilan_florist": {
-      "speaker": "Lilan",
-      "pages": [
-        "Careful — that one bites back if you're rough with it.",
-        "A bouquet for someone special? Or just for yourself? Both are good answers."
-      ]
-    },
-    "steve": {
-      "speaker": "Steve",
-      "pages": [
-        "Aye. Name's Steve.",
-        "Don't let the hat fool you. I'm mostly retired."
-      ]
-    }
-  }
+  ]
 }

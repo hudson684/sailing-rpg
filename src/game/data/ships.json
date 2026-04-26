@@ -1,4 +1,26 @@
 {
-  "defs": [],
-  "instances": []
+  "defs": [
+    {
+      "id": "rowboat",
+      "tmjPrefix": "rowboat",
+      "tilesLong": 3,
+      "tilesWide": 2
+    }
+  ],
+  "instances": [
+    {
+      "id": "rowboat-1",
+      "defId": "rowboat",
+      "tileX": 160,
+      "tileY": 160,
+      "heading": "E"
+    },
+    {
+      "id": "rowboat-7",
+      "defId": "rowboat",
+      "tileX": 75,
+      "tileY": 109,
+      "heading": "E"
+    }
+  ]
 }

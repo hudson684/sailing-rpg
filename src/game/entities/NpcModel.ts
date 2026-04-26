@@ -47,10 +47,15 @@ export class NpcModel implements EntityModel {
     this.facing = f;
   }
 
-  faceToward(px: number, _py: number) {
+  faceToward(px: number, py: number) {
     const dx = px - this.x;
-    if (Math.abs(dx) < 1) return;
-    this.facing = dx < 0 ? "left" : "right";
+    const dy = py - this.y;
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+    if (Math.abs(dy) > Math.abs(dx)) {
+      this.facing = dy < 0 ? "up" : "down";
+    } else {
+      this.facing = dx < 0 ? "left" : "right";
+    }
   }
 
   setPositionPx(x: number, y: number) {
@@ -124,7 +129,13 @@ export class NpcModel implements EntityModel {
       return;
     }
 
-    if (Math.abs(dx) > 1) this.facing = dx < 0 ? "left" : "right";
+    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+      if (Math.abs(dy) > Math.abs(dx)) {
+        this.facing = dy < 0 ? "up" : "down";
+      } else {
+        this.facing = dx < 0 ? "left" : "right";
+      }
+    }
     // Layered NPCs always have a walk animation if the model ships one;
     // legacy NPCs only have one when their sprite.walk sheet is present.
     const hasWalk = this.def.layered !== undefined || this.def.sprite?.walk !== undefined;

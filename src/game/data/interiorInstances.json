@@ -1,3 +1,16 @@
 {
-  "interiors": {}
+  "interiors": {
+    "general_store": {
+      "enemies": [],
+      "nodes": [],
+      "stations": [],
+      "items": []
+    },
+    "blacksmiths": {
+      "enemies": [],
+      "nodes": [],
+      "stations": [],
+      "items": []
+    }
+  }
 }

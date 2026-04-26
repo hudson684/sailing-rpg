@@ -5,6 +5,9 @@ import type {
   CraftingStationInstanceData,
 } from "../crafting/types";
 
+export const stationTextureKey = (defId: string) => `station_${defId}`;
+export const stationAnimKey = (defId: string) => `station_${defId}_loop`;
+
 /**
  * World object for a crafting station. Same shape story as GatheringNode —
  * colored rectangle with a label above it and a blocking footprint. Kept
@@ -36,6 +39,22 @@ export class CraftingStation {
 
     this.container = scene.add.container(this.x, this.y);
     this.container.setDepth(this.y);
+
+    if (def.sprite) {
+      const s = def.sprite;
+      const sprite = scene.add
+        .sprite(
+          def.collisionOffsetX ?? 0,
+          (def.collisionOffsetY ?? 0) + def.height / 2,
+          stationTextureKey(def.id),
+        )
+        .setOrigin(0.5, s.originY ?? 1)
+        .setScale(s.scale ?? 1);
+      const animKey = stationAnimKey(def.id);
+      if (scene.anims.exists(animKey)) sprite.play(animKey);
+      this.container.add(sprite);
+      return;
+    }
 
     if (def.invisible) return;
 

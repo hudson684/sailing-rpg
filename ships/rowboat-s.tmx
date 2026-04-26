@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="2" height="3" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="3">
+ <tileset firstgid="1" source="../maps/tilesets/Beach_Objects_Normal.tsx"/>
+ <layer id="1" name="moving" width="2" height="3">
+  <data encoding="csv">
+185,186,
+201,202,
+217,218
+</data>
+ </layer>
+ <layer id="2" name="idle" width="2" height="3">
+  <data encoding="csv">
+185,186,
+201,202,
+217,218
+</data>
+ </layer>
+ <objectgroup id="3" name="boat-hitbox">
+  <object id="1" x="0" y="0" width="32" height="48"/>
+ </objectgroup>
+ <objectgroup id="4" name="helm">
+  <object id="2" x="8.125" y="15.125" width="16" height="16"/>
+ </objectgroup>
+</map>

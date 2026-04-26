@@ -29,13 +29,20 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   return p;
 }
 
-/** NPC: prefer `sprite.idle` if present; skip if layered-only. */
+/** NPC: prefer `sprite.idle` if present; skip if layered-only.
+ *  Directional NPCs nest per-direction sheets — fall back to `idle.side`
+ *  (or `down` if no side) so the editor still shows one frame. */
 export async function loadNpcFrame(def: unknown): Promise<SpriteFrame | null> {
+  type Sheet = { sheet?: string; frameWidth?: number; frameHeight?: number; start?: number };
   const d = def as {
-    sprite?: { idle?: { sheet?: string; frameWidth?: number; frameHeight?: number; start?: number } };
+    sprite?: { idle?: Sheet & { side?: Sheet; down?: Sheet; up?: Sheet } };
   };
-  const idle = d.sprite?.idle;
-  if (!idle?.sheet || !idle.frameWidth || !idle.frameHeight) return null;
+  const idleEntry = d.sprite?.idle;
+  if (!idleEntry) return null;
+  const idle: Sheet = idleEntry.sheet
+    ? idleEntry
+    : idleEntry.side ?? idleEntry.down ?? idleEntry.up ?? {};
+  if (!idle.sheet || !idle.frameWidth || !idle.frameHeight) return null;
   const image = await loadImage(`/${idle.sheet.replace(/^\/+/, "")}`);
   const cols = Math.max(1, Math.floor(image.width / idle.frameWidth));
   const start = idle.start ?? 0;

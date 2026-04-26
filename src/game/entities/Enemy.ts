@@ -121,8 +121,8 @@ export class Enemy implements EntityModel {
     }
     this.view.setDepth(this.sortY());
 
-    const barW = Math.max(18, this.frameWidth * def.display.scale * 0.9);
-    const barY = -this.frameHeight * def.display.scale * def.display.originY - 4;
+    const barW = Math.max(18, this.frameWidth * 0.9);
+    const barY = -this.frameHeight * def.display.originY - 4;
     this.hpBarBg = scene.add.rectangle(x, y + barY, barW, 3, 0x000000, 0.6).setOrigin(0.5, 1);
     this.hpBar = scene.add.rectangle(x - barW / 2, y + barY, barW, 3, 0xcc4444).setOrigin(0, 1);
     this.hpBarBg.setVisible(false);
@@ -149,14 +149,14 @@ export class Enemy implements EntityModel {
 
   sortY(): number {
     const { display } = this.def;
-    return this.view.y + (1 - display.originY) * this.frameHeight * display.scale;
+    return this.view.y + (1 - display.originY) * this.frameHeight;
   }
 
   /** Pixel-rect blocking footprint for living enemies. */
   blocksPx(px: number, py: number): boolean {
     if (!this.isAlive()) return false;
-    const w = this.frameWidth * this.def.display.scale * 0.45;
-    const h = this.frameHeight * this.def.display.scale * 0.35;
+    const w = this.frameWidth * 0.45;
+    const h = this.frameHeight * 0.35;
     const cy = this.view.y - 2;
     return (
       px >= this.view.x - w / 2 &&
@@ -173,9 +173,9 @@ export class Enemy implements EntityModel {
    */
   arrowHitPx(px: number, py: number): boolean {
     if (!this.isAlive()) return false;
-    const w = this.frameWidth * this.def.display.scale * 0.75;
-    const h = this.frameHeight * this.def.display.scale * 0.7;
-    const cy = this.view.y - this.frameHeight * this.def.display.scale * 0.25;
+    const w = this.frameWidth * 0.75;
+    const h = this.frameHeight * 0.7;
+    const cy = this.view.y - this.frameHeight * 0.25;
     return (
       px >= this.view.x - w / 2 &&
       px <= this.view.x + w / 2 &&
@@ -556,7 +556,7 @@ export class Enemy implements EntityModel {
   private syncOverlayPositions() {
     const barY =
       this.view.y -
-      this.frameHeight * this.def.display.scale * this.def.display.originY -
+      this.frameHeight * this.def.display.originY -
       4;
     this.hpBarBg.setPosition(this.view.x, barY);
     this.hpBar.setPosition(this.view.x - this.hpBarBg.width / 2, barY);

@@ -1,7 +1,7 @@
 {
   "defs": [
     {
-      "id": "blacksmith_forge",
+      "id": "blacksmith_forge_1",
       "name": "Forge",
       "kinds": [
         "smelter",
@@ -14,7 +14,87 @@
       "width": 26,
       "height": 22,
       "blocks": false,
-      "invisible": true
+      "sprite": {
+        "sheet": "sprites/stations/forge-1.png",
+        "frameWidth": 32,
+        "frameHeight": 32,
+        "frames": 4,
+        "frameRate": 8,
+        "scale": 1,
+        "originY": 1
+      }
+    },
+    {
+      "id": "blacksmith_forge_2",
+      "name": "Forge",
+      "kinds": [
+        "smelter",
+        "anvil"
+      ],
+      "skill": "blacksmith",
+      "bgColor": "#3a2a20",
+      "accentColor": "#e0823a",
+      "labelColor": "#f0b060",
+      "width": 26,
+      "height": 22,
+      "blocks": false,
+      "sprite": {
+        "sheet": "sprites/stations/forge-2.png",
+        "frameWidth": 32,
+        "frameHeight": 32,
+        "frames": 4,
+        "frameRate": 8,
+        "scale": 1,
+        "originY": 1
+      }
+    },
+    {
+      "id": "blacksmith_forge_3",
+      "name": "Forge",
+      "kinds": [
+        "smelter",
+        "anvil"
+      ],
+      "skill": "blacksmith",
+      "bgColor": "#3a2a20",
+      "accentColor": "#e0823a",
+      "labelColor": "#f0b060",
+      "width": 26,
+      "height": 22,
+      "blocks": false,
+      "sprite": {
+        "sheet": "sprites/stations/forge-3.png",
+        "frameWidth": 32,
+        "frameHeight": 32,
+        "frames": 4,
+        "frameRate": 8,
+        "scale": 1,
+        "originY": 1
+      }
+    },
+    {
+      "id": "blacksmith_forge_4",
+      "name": "Forge",
+      "kinds": [
+        "smelter",
+        "anvil"
+      ],
+      "skill": "blacksmith",
+      "bgColor": "#3a2a20",
+      "accentColor": "#e0823a",
+      "labelColor": "#f0b060",
+      "width": 26,
+      "height": 22,
+      "blocks": false,
+      "sprite": {
+        "sheet": "sprites/stations/forge-4.png",
+        "frameWidth": 32,
+        "frameHeight": 32,
+        "frames": 4,
+        "frameRate": 8,
+        "scale": 1,
+        "originY": 1
+      }
     },
     {
       "id": "sawmill",
@@ -47,28 +127,22 @@
   ],
   "instances": [
     {
-      "id": "station_forge_1",
-      "defId": "blacksmith_forge",
-      "tileX": 179,
-      "tileY": 113
+      "id": "station_forge_3",
+      "defId": "blacksmith_forge_3",
+      "tileX": 101,
+      "tileY": 81
     },
     {
       "id": "station_sawmill_1",
       "defId": "sawmill",
-      "tileX": 171,
-      "tileY": 113
-    },
-    {
-      "id": "station_cooking_fire_1",
-      "defId": "cooking_fire",
-      "tileX": 182,
-      "tileY": 101
+      "tileX": 120,
+      "tileY": 92
     },
     {
       "id": "cooking_fire-7",
       "defId": "cooking_fire",
-      "tileX": 107,
-      "tileY": 86
+      "tileX": 103,
+      "tileY": 92
     }
   ]
 }

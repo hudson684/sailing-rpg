@@ -34,7 +34,6 @@
         }
       },
       "display": {
-        "scale": 0.8,
         "originY": 0.95
       },
       "hp": 3,
@@ -95,7 +94,6 @@
         }
       },
       "display": {
-        "scale": 0.8,
         "originY": 0.95
       },
       "hp": 4,
@@ -156,7 +154,6 @@
         }
       },
       "display": {
-        "scale": 0.7,
         "originY": 0.95
       },
       "hp": 6,
@@ -222,7 +219,6 @@
         }
       },
       "display": {
-        "scale": 0.75,
         "originY": 0.95
       },
       "hp": 12,
@@ -264,7 +260,6 @@
         }
       },
       "display": {
-        "scale": 1.0,
         "originY": 0.95
       },
       "hp": 10,
@@ -325,7 +320,6 @@
         }
       },
       "display": {
-        "scale": 0.7,
         "originY": 0.9
       },
       "hp": 8,
@@ -357,32 +351,32 @@
     {
       "id": "e_slime_1",
       "defId": "slime_small_green",
-      "tileX": 111,
-      "tileY": 73
+      "tileX": 115,
+      "tileY": 69
     },
     {
       "id": "e_slime_2",
       "defId": "slime_small_green",
-      "tileX": 115,
-      "tileY": 67
+      "tileX": 114,
+      "tileY": 60
     },
     {
       "id": "e_slime_3",
       "defId": "slime_small_blue",
-      "tileX": 108,
-      "tileY": 69
+      "tileX": 111,
+      "tileY": 62
     },
     {
       "id": "e_slime_4",
       "defId": "slime_small_blue",
-      "tileX": 102,
-      "tileY": 70
+      "tileX": 110,
+      "tileY": 73
     },
     {
       "id": "e_slime_5",
       "defId": "slime_medium_red",
-      "tileX": 111,
-      "tileY": 73
+      "tileX": 114,
+      "tileY": 57
     },
     {
       "id": "slime_small_green-1",
@@ -399,8 +393,8 @@
     {
       "id": "slime_small_green-3",
       "defId": "slime_small_green",
-      "tileX": 105,
-      "tileY": 201
+      "tileX": 102,
+      "tileY": 199
     },
     {
       "id": "skeleton-7",
@@ -417,50 +411,50 @@
     {
       "id": "skeleton-10",
       "defId": "skeleton",
-      "tileX": 121,
-      "tileY": 194
+      "tileX": 122,
+      "tileY": 197
     },
     {
       "id": "skeleton-8",
       "defId": "skeleton",
-      "tileX": 124,
-      "tileY": 196
+      "tileX": 127,
+      "tileY": 193
     },
     {
       "id": "skeleton-9",
       "defId": "skeleton",
-      "tileX": 123,
-      "tileY": 198
+      "tileX": 126,
+      "tileY": 200
     },
     {
       "id": "pirate-7",
       "defId": "pirate",
-      "tileX": 75,
-      "tileY": 70
+      "tileX": 76,
+      "tileY": 71
     },
     {
       "id": "pirate-8",
       "defId": "pirate",
-      "tileX": 76,
-      "tileY": 78
+      "tileX": 72,
+      "tileY": 74
     },
     {
       "id": "pirate-9",
       "defId": "pirate",
-      "tileX": 80,
-      "tileY": 85
+      "tileX": 74,
+      "tileY": 71
     },
     {
       "id": "pirate-10",
       "defId": "pirate",
-      "tileX": 74,
+      "tileX": 77,
       "tileY": 80
     },
     {
       "id": "pirate-11",
       "defId": "pirate",
-      "tileX": 83,
-      "tileY": 76
+      "tileX": 77,
+      "tileY": 77
     }
   ]
 }

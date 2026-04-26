@@ -25,10 +25,13 @@ import {
   charModelManifestUrl,
   charSlotSheetUrl,
   charTextureKey,
+  isDirectionalAnimSheet,
   npcTextureKey,
   type CharacterModelManifest,
+  type NpcAnimSheetEntry,
   type NpcData,
   type NpcDef,
+  type NpcRenderDir,
 } from "../entities/npcTypes";
 import { registerNpcAnimations } from "../entities/NpcSprite";
 import npcDataRaw from "../data/npcs.json";
@@ -57,6 +60,12 @@ import {
   loadChestsFile,
 } from "../world/Chest";
 import chestsDataRaw from "../data/chests.json";
+import {
+  stationAnimKey,
+  stationTextureKey,
+} from "../world/CraftingStation";
+import craftingStationsDataRaw from "../data/craftingStations.json";
+import type { CraftingStationsFile } from "../crafting/types";
 import {
   SKIN_PALETTES,
   bakePlayerSkin,
@@ -107,6 +116,7 @@ export function queueAllAssets(scene: Phaser.Scene): void {
   queueNodeSheets(scene);
   queueDecorationSheets(scene);
   queueChestSheets(scene);
+  queueCraftingStationSheets(scene);
   queueNpcSheets(scene);
   queueCharacterModels(scene);
   queueUiTextures(scene);
@@ -283,6 +293,17 @@ function queueDecorationSheets(scene: Phaser.Scene): void {
   }
 }
 
+function queueCraftingStationSheets(scene: Phaser.Scene): void {
+  const file = craftingStationsDataRaw as CraftingStationsFile;
+  for (const def of file.defs) {
+    if (!def.sprite) continue;
+    scene.load.spritesheet(stationTextureKey(def.id), def.sprite.sheet, {
+      frameWidth: def.sprite.frameWidth,
+      frameHeight: def.sprite.frameHeight,
+    });
+  }
+}
+
 function queueNodeSheets(scene: Phaser.Scene): void {
   for (const def of loadNodesFile(nodesDataRaw).defs) {
     if (!def.sprite) continue;
@@ -294,22 +315,29 @@ function queueNodeSheets(scene: Phaser.Scene): void {
 }
 
 function queueNpcSheets(scene: Phaser.Scene): void {
+  const dirs: NpcRenderDir[] = ["down", "up", "side"];
+  function queue(id: string, state: "idle" | "walk", entry: NpcAnimSheetEntry) {
+    if (isDirectionalAnimSheet(entry)) {
+      for (const dir of dirs) {
+        const sheet = entry[dir];
+        scene.load.spritesheet(npcTextureKey(id, state, dir), sheet.sheet, {
+          frameWidth: sheet.frameWidth,
+          frameHeight: sheet.frameHeight,
+        });
+      }
+    } else {
+      scene.load.spritesheet(npcTextureKey(id, state), entry.sheet, {
+        frameWidth: entry.frameWidth,
+        frameHeight: entry.frameHeight,
+      });
+    }
+  }
   for (const npc of npcData.npcs) {
     // Layered NPCs load via queueCharacterModels below — skip the legacy
     // single-sheet path for them.
     if (!npc.sprite) continue;
-    const idle = npc.sprite.idle;
-    scene.load.spritesheet(npcTextureKey(npc.id, "idle"), idle.sheet, {
-      frameWidth: idle.frameWidth,
-      frameHeight: idle.frameHeight,
-    });
-    if (npc.sprite.walk) {
-      const walk = npc.sprite.walk;
-      scene.load.spritesheet(npcTextureKey(npc.id, "walk"), walk.sheet, {
-        frameWidth: walk.frameWidth,
-        frameHeight: walk.frameHeight,
-      });
-    }
+    queue(npc.id, "idle", npc.sprite.idle);
+    if (npc.sprite.walk) queue(npc.id, "walk", npc.sprite.walk);
   }
 }
 
@@ -371,6 +399,7 @@ export function runPostLoadSetup(scene: Phaser.Scene): void {
   setupNodeAnims(scene);
   setupDecorationAnims(scene);
   setupChestAnims(scene);
+  setupCraftingStationAnims(scene);
   setupNpcAnims(scene);
   setupCharacterAnims(scene);
 }
@@ -480,6 +509,24 @@ function setupChestAnims(scene: Phaser.Scene): void {
       }),
       frameRate: def.sprite.frameRate,
       repeat: 0,
+    });
+  }
+}
+
+function setupCraftingStationAnims(scene: Phaser.Scene): void {
+  const file = craftingStationsDataRaw as CraftingStationsFile;
+  for (const def of file.defs) {
+    if (!def.sprite) continue;
+    const animKey = stationAnimKey(def.id);
+    if (scene.anims.exists(animKey)) continue;
+    scene.anims.create({
+      key: animKey,
+      frames: scene.anims.generateFrameNumbers(stationTextureKey(def.id), {
+        start: 0,
+        end: def.sprite.frames - 1,
+      }),
+      frameRate: def.sprite.frameRate,
+      repeat: -1,
     });
   }
 }

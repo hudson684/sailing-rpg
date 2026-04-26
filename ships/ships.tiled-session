@@ -1,6 +1,7 @@
 {
-    "activeFile": "",
+    "activeFile": "rowboat-s.tmx",
     "expandedProjectPaths": [
+        "."
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -313,6 +314,9 @@
         "C:/dev/sailing-rpg/maps/themes/Sea Adventures/props/animated/wind fx-48frames.tsx": {
             "scaleInDock": 1
         },
+        "C:/dev/sailing-rpg/maps/tilesets/Beach_Objects_Normal.tsx": {
+            "scaleInDock": 1.5
+        },
         "C:/dev/sailing-rpg/themes/Sea Adventures/props/animated/ship/ship-animations - down-idle-baked.tsx": {
             "scaleInDock": 1
         },
@@ -375,43 +379,49 @@
         },
         "rowboat-e.tmx": {
             "expandedObjectLayers": [
-                3
+                3,
+                4
             ],
-            "scale": 3,
+            "scale": 8,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 81.5,
-                "y": 26.333333333333343
+                "x": 75.25,
+                "y": 0.5
             }
         },
         "rowboat-n.tmx": {
             "expandedObjectLayers": [
-                3
+                3,
+                4
             ],
-            "scale": 3,
+            "scale": 8,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 91.5,
-                "y": 137.33333333333334
+                "x": 40.5,
+                "y": 64.5
             }
         },
         "rowboat-s.tmx": {
             "expandedObjectLayers": [
-                3
+                3,
+                4
             ],
-            "scale": 3,
+            "scale": 5.5,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 45.83333333333332,
-                "y": 50
+                "x": 4,
+                "y": 55.27272727272728
             }
         },
         "rowboat-w.tmx": {
-            "scale": 3.7465625,
-            "selectedLayer": 2,
+            "expandedObjectLayers": [
+                4
+            ],
+            "scale": 8,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 79.93994494953706,
-                "y": 48.04404037033949
+                "x": -19.25,
+                "y": -11.25
             }
         }
     },
@@ -421,10 +431,17 @@
         "C:/dev/sailing-rpg/ships/rowboat.world"
     ],
     "openFiles": [
+        "rowboat-e.tmx",
+        "rowboat-w.tmx",
+        "rowboat-s.tmx",
+        "rowboat-n.tmx"
     ],
     "project": "ships.tiled-project",
     "recentFiles": [
-        "rowboat-n.tmx"
+        "rowboat-e.tmx",
+        "rowboat-w.tmx",
+        "rowboat-n.tmx",
+        "rowboat-s.tmx"
     ],
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)"
 }

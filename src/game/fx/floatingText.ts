@@ -35,9 +35,13 @@ export function spawnFloatingNumber(
           ? `+${amount}`
           : `${amount}`;
 
-  const jx = opts.jitter === false ? 0 : (Math.random() - 0.5) * 14;
+  const jx = opts.jitter === false ? 0 : (Math.random() - 0.5) * 7;
   const startX = x + jx;
   const startY = y;
+
+  // Render at original high resolution and scale down so the text stays
+  // crisp under camera zoom on a 16x16 tile world.
+  const BASE = 0.5;
 
   const label = scene.add
     .text(startX, startY, text, {
@@ -54,22 +58,22 @@ export function spawnFloatingNumber(
     .setScrollFactor(1)
     .setShadow(2, 2, "rgba(0,0,0,0.55)", 3, false, true);
 
-  // Pop in: scale from 0.4 → 1.15 → 1.0
-  label.setScale(0.4);
+  // Pop in: scale from 0.4 → 1.15 → 1.0 (multiplied by BASE)
+  label.setScale(0.4 * BASE);
   scene.tweens.add({
     targets: label,
-    scale: 1.15,
+    scale: 1.15 * BASE,
     duration: 110,
     ease: "Back.Out",
     onComplete: () => {
-      scene.tweens.add({ targets: label, scale: 1.0, duration: 80, ease: "Sine.Out" });
+      scene.tweens.add({ targets: label, scale: 1.0 * BASE, duration: 80, ease: "Sine.Out" });
     },
   });
 
   // Float up + fade.
   scene.tweens.add({
     targets: label,
-    y: startY - 36,
+    y: startY - 18,
     duration: 750,
     ease: "Sine.Out",
   });

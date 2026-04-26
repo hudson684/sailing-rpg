@@ -63,6 +63,17 @@ export interface RecipeDef {
 /** Craft outcome tier. "fail" = minigame ran out of moves before completion. */
 export type CraftOutcomeTier = "fail" | "normal" | "good" | "great" | "perfect";
 
+export interface StationSpriteDef {
+  sheet: string;
+  frameWidth: number;
+  frameHeight: number;
+  frames: number;
+  frameRate: number;
+  scale?: number;
+  /** 0..1 vertical origin: 1 = bottom of sprite sits on station anchor. */
+  originY?: number;
+}
+
 export interface CraftingStationDef {
   id: string;
   name: string;
@@ -83,6 +94,8 @@ export interface CraftingStationDef {
   /** If true, the placeholder rectangle/label are not drawn — the station is
    *  purely an interaction point layered over existing tilemap art. */
   invisible?: boolean;
+  /** Optional looping animated sprite drawn in place of the placeholder. */
+  sprite?: StationSpriteDef;
   collisionOffsetX?: number;
   collisionOffsetY?: number;
 }

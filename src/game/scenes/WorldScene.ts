@@ -46,6 +46,7 @@ import type { VirtualKey } from "../input/virtualInput";
 import { bindSceneToVirtualInput } from "../input/virtualInputBridge";
 
 const SPRINT_SPEED_MULT = 1.35;
+const MOUNT_SPEED_MULT = 2;
 
 const HEADING_TO_FACING: Record<Heading, Facing> = {
   0: "up",
@@ -168,7 +169,6 @@ import { getBootedSaveController } from "../save/bootSave";
 import { getPrefetchedEnvelope, getSavedPlayerSpawn } from "../save/storeHydrate";
 
 const HELM_INTERACT_RADIUS = TILE_SIZE * 0.7;
-const DOOR_INTERACT_RADIUS = TILE_SIZE * 0.9;
 const PICKUP_RADIUS = TILE_SIZE * 0.8;
 const SHOP_CLICK_RADIUS = TILE_SIZE * 1.5;
 /** Time after last damage before player HP regen kicks in. */
@@ -276,6 +276,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
   private saveController!: SaveController;
   private groundItems = new Map<string, GroundItem>();
   private doors: DoorSpawn[] = [];
+  private lastDoorTile: { x: number; y: number } | null = null;
   /** Accumulated authored item spawns from every chunk that has been
    *  instantiated so far. Populated incrementally via the ChunkManager's
    *  `onChunkReady` callback, so a new entry appears whenever a streamed
@@ -1020,13 +1021,32 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     // whole point of climbing onto one.
     const sprinting = !mounted && moving && this.keys.sprint.isDown && stamina.current > 0;
     if (sprinting) stamina.drain(dt);
-    const speed = PLAYER_SPEED * (mounted || sprinting ? SPRINT_SPEED_MULT : 1);
+    const speed = PLAYER_SPEED * (mounted ? MOUNT_SPEED_MULT : sprinting ? SPRINT_SPEED_MULT : 1);
     this.player.tryMove(
       dx * speed * dt,
       dy * speed * dt,
       (px, py) => this.isWalkablePx(px, py),
       (px, py) => this.world.manager.slopeAtPx(px, py),
     );
+    this.checkAutoEnter();
+  }
+
+  /** Step-on door entry — mirrors InteriorScene.checkAutoExit so doors don't
+   *  need an E-press. Tracks the last tile we evaluated so we don't retrigger
+   *  every frame while the player stands on the door. */
+  private checkAutoEnter() {
+    if (this.player.mounted) return;
+    const tx = Math.floor(this.player.x / TILE_SIZE);
+    const ty = Math.floor(this.player.y / TILE_SIZE);
+    const last = this.lastDoorTile;
+    if (last && last.x === tx && last.y === ty) return;
+    this.lastDoorTile = { x: tx, y: ty };
+    for (const d of this.doors) {
+      if (d.tileX === tx && d.tileY === ty) {
+        this.enterInterior(d);
+        return;
+      }
+    }
   }
 
   private onRightClick(worldX: number, worldY: number) {
@@ -1201,6 +1221,10 @@ export class WorldScene extends Phaser.Scene implements EditHost {
         (ret.returnWorldTx + 0.5) * TILE_SIZE,
         (ret.returnWorldTy + 1.5) * TILE_SIZE,
       );
+      this.lastDoorTile = {
+        x: Math.floor(this.player.x / TILE_SIZE),
+        y: Math.floor(this.player.y / TILE_SIZE),
+      };
       const f = ret.returnFacing;
       if (
         f === "up" || f === "down" || f === "left" || f === "right" ||
@@ -1258,7 +1282,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
         const swordDmg = Phaser.Math.Between(melee.damageMin, melee.damageMax);
         const killed = target.hit(this, swordDmg, this.player.x, this.player.y);
         const enemyHeadY =
-          target.y - (target.frameHeight * target.def.display.scale) / 2 - 4;
+          target.y - target.frameHeight / 2 - 4;
         spawnFloatingNumber(this, target.x, enemyHeadY, swordDmg, {
           kind: "damage-enemy",
         });
@@ -1353,7 +1377,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     const dmg = projectile.damage;
     const killed = target.hit(this, dmg, projectile.x, projectile.y);
     const enemyHeadY =
-      target.y - (target.frameHeight * target.def.display.scale) / 2 - 4;
+      target.y - target.frameHeight / 2 - 4;
     spawnFloatingNumber(this, target.x, enemyHeadY, dmg, {
       kind: "damage-enemy",
     });
@@ -1996,11 +2020,6 @@ export class WorldScene extends Phaser.Scene implements EditHost {
         this.openChest(chest);
         return;
       }
-      const door = this.nearestDoor();
-      if (door) {
-        this.enterInterior(door);
-        return;
-      }
       const pickup = this.nearestGroundItem();
       if (pickup) {
         this.pickUp(pickup);
@@ -2016,21 +2035,6 @@ export class WorldScene extends Phaser.Scene implements EditHost {
     } else if (this.sceneState.mode === "AtHelm") {
       this.beginAnchoring();
     }
-  }
-
-  private nearestDoor(): DoorSpawn | null {
-    let best: DoorSpawn | null = null;
-    let bestDist = DOOR_INTERACT_RADIUS;
-    for (const d of this.doors) {
-      const dx = (d.tileX + 0.5) * TILE_SIZE - this.player.x;
-      const dy = (d.tileY + 0.5) * TILE_SIZE - this.player.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist <= bestDist) {
-        best = d;
-        bestDist = dist;
-      }
-    }
-    return best;
   }
 
   private setupNpcReconciler() {
@@ -2171,9 +2175,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       get y() { return candidate.y; },
       setPositionPx: (x, y) => candidate.setPositionPx(x, y),
       setFacing: (dir: CutsceneFacing) => {
-        // NpcFacing is left/right only — clamp 8-way dirs onto the closest
-        // axis. Vertical hints fall back to whatever the NPC was facing.
-        if (dir === "left" || dir === "right") candidate.setFacing(dir);
+        candidate.setFacing(dir);
       },
       setAnimState: (state) => {
         candidate.animState = state;
@@ -2580,20 +2582,6 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       );
       this.resetShipsAndParkPlayer();
       showToast("Your ship's state couldn't be restored. Returned to port.", 4000);
-    } else if (
-      this.sceneState.mode === "OnFoot" &&
-      !this.isWalkablePx(this.player.x, this.player.y)
-    ) {
-      // OnFoot but the hydrated player position isn't walkable. Happens when
-      // a broken load degraded AtHelm → OnFoot and then autosave persisted
-      // that state, leaving the player saved at ocean coords with no ship
-      // nearby. Rescue them to the nearest dock — otherwise reloading keeps
-      // regurgitating the stuck state.
-      console.warn(
-        "[WorldScene] Hydrated player position is not walkable — returning to port.",
-      );
-      this.resetShipsAndParkPlayer();
-      showToast("You were adrift at sea. Returned to port.", 4000);
     }
 
     this.respawnGroundItems();
@@ -2815,8 +2803,6 @@ export class WorldScene extends Phaser.Scene implements EditHost {
         prompt = `Press E to use ${station.def.name}`;
       } else if (this.nearestChest()) {
         prompt = `Press E to open ${this.nearestChest()!.def.name}`;
-      } else if (this.nearestDoor()) {
-        prompt = "Press E to go inside";
       } else {
         const pickup = this.nearestGroundItem();
         if (pickup) {

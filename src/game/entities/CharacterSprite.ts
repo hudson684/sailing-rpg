@@ -31,7 +31,6 @@ export class CharacterSprite implements ReconcilableSprite {
     this.model = model;
     const layered = model.def.layered!;
     this.container = scene.add.container(model.x, model.y);
-    this.container.setScale(model.def.display.scale);
 
     const kids: typeof this.children = [];
     for (const slot of manifest.slotOrder) {
