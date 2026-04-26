@@ -57,7 +57,7 @@ import {
   type ItemSpawn,
 } from "../world/spawns";
 import { type WorldManifest } from "../world/chunkManager";
-import { BeachFootprintController } from "../world/beachFootprints";
+import { BeachFootprintController, BEACH_WALK_ENABLED } from "../world/beachFootprints";
 import type { InteriorReturnData } from "./InteriorScene";
 import { findAnchorPose } from "../util/anchor";
 import {
@@ -949,7 +949,9 @@ export class WorldScene extends Phaser.Scene implements EditHost {
 
   private updateOnFoot(dt: number) {
     this.movement.update(dt);
-    this.footprints.update(this.player.x, this.player.y, this.time.now);
+    if (BEACH_WALK_ENABLED) {
+      this.footprints.update(this.player.x, this.player.y, this.time.now);
+    }
     this.checkAutoEnter();
   }
 
