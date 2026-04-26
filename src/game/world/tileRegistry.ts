@@ -191,7 +191,14 @@ export class TileRegistry {
     const hasShallow = !!this.tilemap.getTileAt(tileX, tileY, false, "shallow water");
     const hasBeach = !!this.tilemap.getTileAt(tileX, tileY, false, "beach");
     for (const layerName of this.tileLayerNames) {
-      if (layerName === "ocean" || layerName === "shallow water" || layerName === "beach") continue;
+      // `beach_walk` is a runtime-painted footprint layer over beach tiles —
+      // it must not flip a beach tile to "blocked" when a footprint is present.
+      if (
+        layerName === "ocean" ||
+        layerName === "shallow water" ||
+        layerName === "beach" ||
+        layerName === "beach_walk"
+      ) continue;
       if (this.tilemap.getTileAt(tileX, tileY, false, layerName)) return "blocked";
     }
     if (hasBeach) return "beach";

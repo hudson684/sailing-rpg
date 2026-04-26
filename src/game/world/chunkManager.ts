@@ -628,6 +628,12 @@ export class ChunkManager {
     return this.chunks.get(`${cx}_${cy}`) ?? null;
   }
 
+  /** Public lookup for the chunk owning a global tile coordinate. Used by
+   *  systems that mutate per-chunk tile layers at runtime (e.g. footprints). */
+  chunkAtTile(gtx: number, gty: number): Chunk | null {
+    return this.chunkAtGlobalTile(gtx, gty);
+  }
+
   private instantiateChunk(cx: number, cy: number): Chunk {
     const devStart = import.meta.env.DEV ? performance.now() : 0;
     const cacheKey = `${this.chunkKeyPrefix}${cx}_${cy}`;

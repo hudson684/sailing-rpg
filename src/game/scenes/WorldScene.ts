@@ -57,6 +57,7 @@ import {
   type ItemSpawn,
 } from "../world/spawns";
 import { type WorldManifest } from "../world/chunkManager";
+import { BeachFootprintController } from "../world/beachFootprints";
 import type { InteriorReturnData } from "./InteriorScene";
 import { findAnchorPose } from "../util/anchor";
 import {
@@ -329,6 +330,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
 
   private zoom!: ZoomController;
   private movement!: MovementController;
+  private footprints!: BeachFootprintController;
 
   private debug!: DebugOverlays;
 
@@ -651,6 +653,8 @@ export class WorldScene extends Phaser.Scene implements EditHost {
       mountSpeedMult: MOUNT_SPEED_MULT,
     });
 
+    this.footprints = new BeachFootprintController(this.world.manager);
+
     this.debug = new DebugOverlays(this, this.world, {
       getShipPose: () =>
         this.activeShip
@@ -945,6 +949,7 @@ export class WorldScene extends Phaser.Scene implements EditHost {
 
   private updateOnFoot(dt: number) {
     this.movement.update(dt);
+    this.footprints.update(this.player.x, this.player.y, this.time.now);
     this.checkAutoEnter();
   }
 
