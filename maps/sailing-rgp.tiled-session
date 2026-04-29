@@ -174,7 +174,7 @@
         }
     },
     "last.externalTilesetPath": "C:/dev/sailing-rpg/maps/tilesets",
-    "last.imagePath": "/Users/joshua/dev/sailing-rpg/maps/themes/Exteriors/RPG_Maker_16/Exteriors",
+    "last.imagePath": "/Users/joshua/dev/sailing-rpg/maps/tilesets",
     "last.worldFilePath": "/Users/joshua/dev/sailing-rpg/maps",
     "loadedWorlds": [
         "/Users/joshua/dev/sailing-rpg/maps/sailing-rpg.world"
