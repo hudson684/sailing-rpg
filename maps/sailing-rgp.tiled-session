@@ -39,10 +39,10 @@
                 12
             ],
             "scale": 2.3933,
-            "selectedLayer": 17,
+            "selectedLayer": 15,
             "viewCenter": {
-                "x": 715.7481301967994,
-                "y": 380.64596999958223
+                "x": 589.9803618434797,
+                "y": 242.34320812267583
             }
         },
         "chunks/1_1.tmx#Houses_One": {
@@ -104,6 +104,14 @@
             "viewCenter": {
                 "x": 104,
                 "y": 80
+            }
+        },
+        "interiors/tavern_rusty_anchor.tmx": {
+            "scale": 2.4083,
+            "selectedLayer": 14,
+            "viewCenter": {
+                "x": 445.95772951874767,
+                "y": 626.1678362330274
             }
         },
         "tilesets/Bch_Bldg_01.tsx": {

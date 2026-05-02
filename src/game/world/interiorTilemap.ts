@@ -38,15 +38,49 @@ export interface InteriorTilemap {
   unsubscribe: () => void;
 }
 
-/** Parse a layer name following the `<base>@tier:<nodeId>` convention. Layers
- *  without the suffix gate on nothing (always visible). */
-export function parseGatedLayerName(name: string): {
-  base: string;
-  gateNodeId: string | null;
-} {
-  const m = /^(.+)@tier:([A-Za-z0-9_]+)$/.exec(name);
-  if (!m) return { base: name, gateNodeId: null };
-  return { base: m[1], gateNodeId: m[2] };
+/** Parse a layer name's visibility-gate suffix. Three forms are recognised:
+ *
+ *   `<base>`                          — ungated, always visible.
+ *   `<base>@tier:<nodeId>`            — additive: visible iff `nodeId` is
+ *                                       unlocked. Use for things that simply
+ *                                       appear on upgrade and don't replace
+ *                                       anything (e.g. extra props, decor).
+ *   `<base>@slot:<slotId>`            — slot base: the broken/default state
+ *                                       for a slot. Visible iff no variant
+ *                                       of `slotId` is currently active.
+ *   `<base>@slot:<slotId>:<nodeId>`   — slot variant: belongs to `slotId`,
+ *                                       visible iff `nodeId` is unlocked.
+ *                                       When several variants of the same
+ *                                       slot are unlocked the LAST one in
+ *                                       layer order wins (others + base
+ *                                       hide). This makes multi-stage
+ *                                       evolution (broken → patched →
+ *                                       polished) and customisation
+ *                                       (wooden vs stone) fall out of the
+ *                                       same primitive — author the
+ *                                       preferred variant later in the
+ *                                       Tiled layer list.
+ */
+export type LayerGate =
+  | { kind: "none"; base: string }
+  | { kind: "tier"; base: string; nodeId: string }
+  | { kind: "slot-base"; base: string; slotId: string }
+  | { kind: "slot-variant"; base: string; slotId: string; nodeId: string };
+
+const SLOT_RE = /^(.+)@slot:([A-Za-z0-9_]+)(?::([A-Za-z0-9_]+))?$/;
+const TIER_RE = /^(.+)@tier:([A-Za-z0-9_]+)$/;
+
+export function parseLayerGate(name: string): LayerGate {
+  const slot = SLOT_RE.exec(name);
+  if (slot) {
+    const [, base, slotId, nodeId] = slot;
+    return nodeId
+      ? { kind: "slot-variant", base, slotId, nodeId }
+      : { kind: "slot-base", base, slotId };
+  }
+  const tier = TIER_RE.exec(name);
+  if (tier) return { kind: "tier", base: tier[1], nodeId: tier[2] };
+  return { kind: "none", base: name };
 }
 
 function layerHasYSort(layerData: Phaser.Tilemaps.LayerData): boolean {
@@ -141,40 +175,71 @@ export function buildInteriorTilemap(
   const renderScale = TILE_SIZE / tilemap.tileWidth;
   const layers: Phaser.Tilemaps.TilemapLayer[] = [];
   const ySortImages: Phaser.GameObjects.Image[] = [];
-  /** Tile + ysort-image pairs keyed by gateNodeId, for live visibility flips. */
-  const gatedTileLayers = new Map<string, Phaser.Tilemaps.TilemapLayer[]>();
-  const gatedYSortImages = new Map<string, Phaser.GameObjects.Image[]>();
+
+  /** A handle to something we can flip visibility on. For y-sort layers the
+   *  underlying tile layer is hidden permanently and the per-tile Images
+   *  carry visibility instead, so we abstract over both via setVisible. */
+  type Toggleable = { setVisible: (v: boolean) => unknown };
+
+  /** Additive gates (`@tier:`): targets show when their nodeId is unlocked. */
+  const tierTargets = new Map<string, Toggleable[]>();
+  /** Slot gates: a slot has an optional base (shown when no variant is
+   *  active) and zero-or-more variants in author order. The latest unlocked
+   *  variant wins. */
+  const slots = new Map<
+    string,
+    {
+      base: Toggleable[];
+      variants: Array<{ nodeId: string; targets: Toggleable[] }>;
+    }
+  >();
+  const ensureSlot = (slotId: string) => {
+    let s = slots.get(slotId);
+    if (!s) {
+      s = { base: [], variants: [] };
+      slots.set(slotId, s);
+    }
+    return s;
+  };
 
   tilemap.layers.forEach((layerData, idx) => {
-    const { gateNodeId } = parseGatedLayerName(layerData.name);
+    const gate = parseLayerGate(layerData.name);
     const layer = tilemap.createLayer(layerData.name, boundTilesets, 0, 0) as
       | Phaser.Tilemaps.TilemapLayer
       | null;
     if (!layer) return;
     if (renderScale !== 1) layer.setScale(renderScale);
-    const overhead = INTERIOR_OVERHEAD_LAYERS.has(layerData.name.toLowerCase());
+    const overhead = INTERIOR_OVERHEAD_LAYERS.has(gate.base.toLowerCase());
     layer.setDepth(overhead ? INTERIOR_OVERHEAD_DEPTH_BASE + idx : idx);
     layers.push(layer);
-    if (gateNodeId) {
-      const list = gatedTileLayers.get(gateNodeId) ?? [];
-      list.push(layer);
-      gatedTileLayers.set(gateNodeId, list);
-    }
+
+    let targets: Toggleable[] = [layer];
     if (layerHasYSort(layerData)) {
       const imgs = extractYSortImages(scene, layer, renderScale);
       for (const img of imgs) ySortImages.push(img);
-      if (gateNodeId) {
-        const list = gatedYSortImages.get(gateNodeId) ?? [];
-        list.push(...imgs);
-        gatedYSortImages.set(gateNodeId, list);
+      targets = imgs;
+    }
+
+    switch (gate.kind) {
+      case "none":
+        break;
+      case "tier": {
+        const arr = tierTargets.get(gate.nodeId) ?? [];
+        arr.push(...targets);
+        tierTargets.set(gate.nodeId, arr);
+        break;
       }
+      case "slot-base":
+        ensureSlot(gate.slotId).base.push(...targets);
+        break;
+      case "slot-variant":
+        ensureSlot(gate.slotId).variants.push({
+          nodeId: gate.nodeId,
+          targets,
+        });
+        break;
     }
   });
-
-  // Object-layer gating (Tiled object layers can also carry @tier:). The
-  // tilemap doesn't materialize them as game objects; gameplay code that
-  // reads object layers should additionally filter using
-  // `objectLayerGateNodeId(name)` (see helper below).
 
   const registry = new TileRegistry(tilemap);
   const shapes = new ShapeCollider({
@@ -191,13 +256,24 @@ export function buildInteriorTilemap(
   const ownerId = businessIdForInteriorKey(key);
 
   const applyVisibility = (unlocked: ReadonlySet<string>) => {
-    for (const [nodeId, lyrs] of gatedTileLayers) {
+    for (const [nodeId, targets] of tierTargets) {
       const visible = unlocked.has(nodeId);
-      for (const l of lyrs) l.setVisible(visible);
+      for (const t of targets) t.setVisible(visible);
     }
-    for (const [nodeId, imgs] of gatedYSortImages) {
-      const visible = unlocked.has(nodeId);
-      for (const img of imgs) img.setVisible(visible);
+    for (const slot of slots.values()) {
+      // Latest variant in author order wins. This makes both linear tiers
+      // (broken → patched → polished) and customisation forks resolve via
+      // the same rule: author the preferred option later in the layer list.
+      let activeIdx = -1;
+      for (let i = 0; i < slot.variants.length; i++) {
+        if (unlocked.has(slot.variants[i].nodeId)) activeIdx = i;
+      }
+      const baseVisible = activeIdx === -1;
+      for (const t of slot.base) t.setVisible(baseVisible);
+      for (let i = 0; i < slot.variants.length; i++) {
+        const visible = i === activeIdx;
+        for (const t of slot.variants[i].targets) t.setVisible(visible);
+      }
     }
   };
 
