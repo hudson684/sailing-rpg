@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { selectHud, selectToasts, useUIStore } from "./store/uiStore";
+import { showToast } from "./store/ui";
 import { computeMaxHp, selectJobXp, useGameStore } from "../game/store/gameStore";
 import { Hotbar } from "./Hotbar";
 import { Clock } from "./Clock";
 import { useIsMobile, useIsPortrait } from "./mobile/useMobile";
 import { bus } from "../game/bus";
+import { businesses } from "../game/business/registry";
 import { JOBS, type JobId } from "../game/jobs/jobs";
 import {
   MAX_LEVEL,
@@ -32,6 +34,17 @@ export function Hud() {
     staminaMax > 0 ? Math.max(0, Math.min(1, stamina / staminaMax)) : 0;
 
   const hudScale = isMobile && !isPortrait ? 2 : 3;
+
+  useEffect(() => {
+    const onSale = ({ businessId, amount }: { businessId: string; amount: number }) => {
+      const name = businesses.get(businessId)?.displayName ?? "Business";
+      showToast(`${name}: +${amount}g`, 2000, "success");
+    };
+    bus.onTyped("business:saleRecorded", onSale);
+    return () => {
+      bus.offTyped("business:saleRecorded", onSale);
+    };
+  }, []);
 
   return (
     <div

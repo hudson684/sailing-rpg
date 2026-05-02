@@ -7,6 +7,9 @@
         "."
     ],
     "fileStates": {
+        "": {
+            "scaleInDock": 1
+        },
         "chunks/0_0.tmx": {
             "scale": 0.75,
             "selectedLayer": 6,
@@ -24,35 +27,41 @@
             }
         },
         "chunks/1_0.tmx": {
-            "scale": 3,
-            "selectedLayer": 6,
+            "scale": 2,
+            "selectedLayer": 8,
             "viewCenter": {
-                "x": 523.1666666666666,
-                "y": 512.1666666666666
+                "x": 910.5,
+                "y": 1076.5
             }
         },
         "chunks/1_1.tmx": {
-            "scale": 3,
-            "selectedLayer": 19,
+            "expandedObjectLayers": [
+                12
+            ],
+            "scale": 2.3933,
+            "selectedLayer": 17,
             "viewCenter": {
-                "x": 853.1666666666666,
-                "y": 121.83333333333334
+                "x": 715.7481301967994,
+                "y": 380.64596999958223
             }
+        },
+        "chunks/1_1.tmx#Houses_One": {
+            "scaleInDock": 1
         },
         "chunks/1_2.tmx": {
             "scale": 2,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 512.5,
-                "y": 511.75
+                "x": 512,
+                "y": 509
             }
         },
         "chunks/1_3.tmx": {
             "scale": 0.25,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 1010,
-                "y": 510
+                "x": 512,
+                "y": 512
             }
         },
         "chunks/2_1.tmx": {
@@ -74,30 +83,15 @@
                 "y": 549
             }
         },
-        "interiors/Crypt Objects.tsx": {
-            "scaleInDock": 1.5,
-            "scaleInEditor": 3
-        },
         "interiors/blacksmiths.tmx": {
             "expandedObjectLayers": [
                 6
             ],
-            "scale": 5.5,
+            "scale": 3,
             "selectedLayer": 8,
             "viewCenter": {
-                "x": 117.90909090909092,
-                "y": 210.2727272727273
-            }
-        },
-        "interiors/first_dungeon.tmx": {
-            "expandedObjectLayers": [
-                12
-            ],
-            "scale": 3,
-            "selectedLayer": 9,
-            "viewCenter": {
-                "x": 41.83333333333333,
-                "y": 311.8333333333333
+                "x": 240,
+                "y": 160
             }
         },
         "interiors/general_store.tmx": {
@@ -108,19 +102,8 @@
             "scale": 3,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 115.16666666666666,
-                "y": 79.83333333333334
-            }
-        },
-        "interiors/tavern_rusty_anchor.tmx": {
-            "expandedObjectLayers": [
-                9
-            ],
-            "scale": 3,
-            "selectedLayer": 3,
-            "viewCenter": {
-                "x": 109.83333333333334,
-                "y": 126.5
+                "x": 104,
+                "y": 80
             }
         },
         "tilesets/Bch_Bldg_01.tsx": {
@@ -142,11 +125,11 @@
             "scaleInEditor": 1.5
         },
         "tilesets/Blacksmith Furniture.tsx": {
-            "scaleInDock": 4,
+            "scaleInDock": 1.5,
             "scaleInEditor": 1.5
         },
         "tilesets/Blacksmith House.tsx": {
-            "scaleInDock": 1.5,
+            "scaleInDock": 2,
             "scaleInEditor": 1.5
         },
         "tilesets/Blacksmith Walls.tsx": {
@@ -156,10 +139,6 @@
         "tilesets/Blacksmith Weapons.tsx": {
             "scaleInDock": 1,
             "scaleInEditor": 3
-        },
-        "tilesets/Cave Tiles 1.0.tsx": {
-            "scaleInDock": 2,
-            "scaleInEditor": 1.5
         },
         "tilesets/Ext_A1.tsx": {
             "scaleInDock": 1,
@@ -173,22 +152,29 @@
             "scaleInEditor": 3
         },
         "tilesets/Exterior Objects One.tsx": {
-            "scaleInDock": 3,
+            "scaleInDock": 1.5,
             "scaleInEditor": 1.5
         },
         "tilesets/Exterior Objects Two.tsx": {
-            "scaleInDock": 3,
+            "scaleInDock": 2,
             "scaleInEditor": 1.5
+        },
+        "tilesets/Exterior_Five.tsx": {
+            "scaleInDock": 3,
+            "scaleInEditor": 1
+        },
+        "tilesets/Houses_Four.tsx": {
+            "scaleInDock": 1.5
         },
         "tilesets/Houses_One.tsx": {
             "scaleInDock": 2
         },
         "tilesets/Houses_Six.tsx": {
-            "scaleInDock": 2,
+            "scaleInDock": 4,
             "scaleInEditor": 1.5
         },
         "tilesets/Houses_Two.tsx": {
-            "scaleInDock": 2,
+            "scaleInDock": 1,
             "scaleInEditor": 1.5
         },
         "tilesets/Market Objects.tsx": {
@@ -199,13 +185,10 @@
             "scaleInDock": 2
         },
         "tilesets/Rural Village Interior Objects.tsx": {
-            "scaleInDock": 1.5
+            "scaleInDock": 1
         },
         "tilesets/Rural Village Interior Walls.tsx": {
             "scaleInDock": 3
-        },
-        "tilesets/grass_tropical.tsx": {
-            "scaleInDock": 1
         }
     },
     "last.externalTilesetPath": "C:/dev/sailing-rpg/maps/tilesets",
@@ -232,8 +215,6 @@
     "project": "sailing-rgp.tiled-project",
     "property.type": "bool",
     "recentFiles": [
-        "interiors/Crypt Objects.tsx",
-        "tilesets/Cave Tiles 1.0.tsx",
         "tilesets/Exterior_Five.tsx",
         "chunks/1_2.tmx",
         "tilesets/Blacksmith Walls.tsx",
@@ -243,7 +224,9 @@
         "chunks/1_0.tmx",
         "chunks/1_1.tmx",
         "tilesets/Exterior Maps 5.tsx",
-        "tilesets/Blacksmith Weapons.tsx"
+        "tilesets/Blacksmith Weapons.tsx",
+        "tilesets/Blacksmith Furniture.tsx",
+        "tilesets/Blacksmith Floors.tsx"
     ],
     "resizeMap.removeObjects": false,
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",

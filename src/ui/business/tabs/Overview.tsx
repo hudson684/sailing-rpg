@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { useBusinessStore } from "../../../game/business/businessStore";
+import { businesses, businessKinds } from "../../../game/business/registry";
+import { getEffectiveStats } from "../../../game/business/upgradeEffects";
 import {
   selectInventorySlots,
   useGameStore,
@@ -21,8 +23,16 @@ export function Overview({ businessId }: { businessId: string }) {
 
   if (!state) return null;
 
-  const todaysNet = 0;
-  const capacityUtilPct = 0;
+  const def = businesses.tryGet(businessId);
+  const kind = def ? businessKinds.tryGet(def.kindId) : null;
+  const stats = kind ? getEffectiveStats(state, kind) : null;
+
+  const draft = state.todaysDraft;
+  const todaysNet = draft
+    ? draft.revenue - draft.expenses - draft.wages
+    : 0;
+  const todaysWalkouts = draft?.walkouts ?? 0;
+  const capacity = stats?.capacity ?? 0;
   const ledger = state.ledger.slice(-7);
 
   const tryDeposit = () => {
@@ -83,13 +93,17 @@ export function Overview({ businessId }: { businessId: string }) {
       </div>
       <div className="biz-card">
         <span className="biz-card-label">Today's net</span>
-        <span className="biz-card-value">{todaysNet}g</span>
-        <span className="biz-card-sub">No data yet.</span>
+        <span className="biz-card-value is-coin">{todaysNet}g</span>
+        <span className="biz-card-sub">
+          {draft
+            ? `${todaysWalkouts} walkout${todaysWalkouts === 1 ? "" : "s"}`
+            : "No activity yet."}
+        </span>
       </div>
       <div className="biz-card">
         <span className="biz-card-label">Capacity</span>
-        <span className="biz-card-value">{capacityUtilPct}%</span>
-        <span className="biz-card-sub">No patrons yet.</span>
+        <span className="biz-card-value">{capacity}</span>
+        <span className="biz-card-sub">Max patrons at once.</span>
       </div>
       <div className="biz-card">
         <span className="biz-card-label">Reputation</span>
