@@ -34,7 +34,9 @@
         { "itemId": "coin", "min": 3, "max": 8, "chance": 0.95 },
         { "itemId": "rope", "min": 1, "max": 2, "chance": 0.3 },
         { "itemId": "message_bottle", "min": 1, "max": 1, "chance": 0.08 },
-        { "itemId": "cutlass", "min": 1, "max": 1, "chance": 0.05 },
+        { "itemId": "crab_cake", "min": 1, "max": 1, "chance": 0.5 },
+        { "itemId": "signet_ring", "min": 1, "max": 1, "chance": 0.4 },
+        { "itemId": "cutlass", "min": 1, "max": 1, "chance": 0.3 },
         { "itemId": "tricorn", "min": 1, "max": 1, "chance": 0.03 }
       ]
     }
