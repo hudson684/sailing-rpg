@@ -1,0 +1,84 @@
+{
+  "spritePacks": {
+    "innkeeper": "elin_innkeeper",
+    "chef": "garra_chef",
+    "fisher": "old_salt_fisherman",
+    "miner": "jory_miner",
+    "farmer": "tomas_farmer",
+    "florist": "lilan_florist"
+  },
+  "candidates": [
+    {
+      "id": "henrik_swiftpour",
+      "name": "Henrik Swiftpour",
+      "spritePack": "innkeeper",
+      "roles": ["bartender", "server"],
+      "skill": 4,
+      "wagePerDay": 12,
+      "traits": []
+    },
+    {
+      "id": "marla_quickhand",
+      "name": "Marla Quickhand",
+      "spritePack": "innkeeper",
+      "roles": ["bartender"],
+      "skill": 2,
+      "wagePerDay": 6,
+      "traits": []
+    },
+    {
+      "id": "old_pete",
+      "name": "Old Pete",
+      "spritePack": "fisher",
+      "roles": ["bartender", "cook"],
+      "skill": 3,
+      "wagePerDay": 9,
+      "traits": ["drunk"]
+    },
+    {
+      "id": "ren_softstep",
+      "name": "Ren Softstep",
+      "spritePack": "florist",
+      "roles": ["server"],
+      "skill": 3,
+      "wagePerDay": 7,
+      "traits": ["fastlearner"]
+    },
+    {
+      "id": "garrick_iron",
+      "name": "Garrick Iron",
+      "spritePack": "miner",
+      "roles": ["cook", "server"],
+      "skill": 5,
+      "wagePerDay": 18,
+      "traits": []
+    },
+    {
+      "id": "tilly_brown",
+      "name": "Tilly Brown",
+      "spritePack": "farmer",
+      "roles": ["cook"],
+      "skill": 2,
+      "wagePerDay": 5,
+      "traits": []
+    },
+    {
+      "id": "boras_grim",
+      "name": "Boras Grim",
+      "spritePack": "chef",
+      "roles": ["cook", "bartender"],
+      "skill": 4,
+      "wagePerDay": 14,
+      "traits": []
+    },
+    {
+      "id": "nessa_lark",
+      "name": "Nessa Lark",
+      "spritePack": "innkeeper",
+      "roles": ["server", "bartender"],
+      "skill": 3,
+      "wagePerDay": 8,
+      "traits": []
+    }
+  ]
+}

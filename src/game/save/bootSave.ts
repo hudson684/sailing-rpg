@@ -2,9 +2,12 @@ import * as Phaser from "phaser";
 import { SaveController } from "./SaveController";
 import * as saveSystems from "./systems";
 import { ensureQuestSubsystem } from "../quests/activeQuestManager";
+import { initHireablesSubsystem } from "../business/hireables";
 import { getPrefetchedEnvelope } from "./storeHydrate";
+import { DroppedItemsState } from "../world/droppedItemsState";
 
 export const BOOT_CONTROLLER_REGISTRY_KEY = "saveController";
+export const DROPPED_ITEMS_STATE_REGISTRY_KEY = "droppedItemsState";
 
 /** Construct and initialize the game-scoped SaveController behind the title
  *  screen: registers every saveable that writes to a module store (inventory,
@@ -31,6 +34,9 @@ export async function bootSaveController(
   });
   await controller.init();
 
+  const droppedItemsState = new DroppedItemsState();
+  game.registry.set(DROPPED_ITEMS_STATE_REGISTRY_KEY, droppedItemsState);
+
   const q = ensureQuestSubsystem();
   controller.registerSystems([
     saveSystems.inventorySaveable(),
@@ -38,12 +44,19 @@ export async function bootSaveController(
     saveSystems.jobsSaveable(),
     saveSystems.healthSaveable(),
     saveSystems.appearanceSaveable(),
+    saveSystems.timeSaveable(),
+    saveSystems.businessSaveable(),
     saveSystems.shopsSaveable(),
+    // Drops persist across scene transitions — register at boot so a save
+    // taken inside an interior still serializes the world's drops, and
+    // vice versa.
+    saveSystems.droppedItemsSaveable(droppedItemsState),
     // Flags MUST register before quests: hydrate order follows registration
     // order, and QuestManager.hydrate reads flags to reconcile cursors.
     q.flags,
     q.quests,
   ]);
+  initHireablesSubsystem();
   await controller.refreshMenu();
 
   const env = getPrefetchedEnvelope(game);
@@ -63,6 +76,18 @@ export function getBootedSaveController(
   return (
     (game.registry.get(BOOT_CONTROLLER_REGISTRY_KEY) as
       | SaveController
+      | undefined) ?? null
+  );
+}
+
+/** Game-scoped drop store. Created in `bootSaveController` and shared by
+ *  every gameplay scene. */
+export function getDroppedItemsState(
+  game: Phaser.Game,
+): DroppedItemsState | null {
+  return (
+    (game.registry.get(DROPPED_ITEMS_STATE_REGISTRY_KEY) as
+      | DroppedItemsState
       | undefined) ?? null
   );
 }

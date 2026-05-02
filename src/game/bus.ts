@@ -120,6 +120,17 @@ type Events = {
   "wardrobe:apply": (change: WardrobeApply) => void;
   "shop:open": (request: ShopOpenRequest) => void;
   "shop:close": () => void;
+  "business:open": (payload: { businessId: string }) => void;
+  "business:close": () => void;
+  /** Hired-staff roster for `businessId` changed (hire/fire/etc). Interior
+   *  scenes use this to despawn/respawn staff NPCs in the affected interior. */
+  "business:staffChanged": (payload: { businessId: string }) => void;
+  /** A customer just paid. Fired by `customerSim` after `recordSale`. */
+  "business:saleRecorded": (payload: {
+    businessId: string;
+    sourceId: string;
+    amount: number;
+  }) => void;
   "chest:open": (request: ChestOpenRequest) => void;
   "chest:close": () => void;
   "chest:take": (request: ChestTakeRequest) => void;
@@ -199,6 +210,20 @@ type Events = {
   "quest:stepCompleted": (payload: { questId: string; stepId: string }) => void;
   "quest:completed": (payload: { questId: string }) => void;
   "quest:unlocked": (payload: { questId: string }) => void;
+
+  // ── Time-of-day ──────────────────────────────────────────────────
+  // Emitted by timeStore.tick(). `hourTick` fires HOURS_PER_PHASE times
+  // per phase (currently 6 day-hours + 6 night-hours per cycle); idle
+  // simulations should subscribe here instead of polling deltas.
+  "time:phaseChange": (payload: {
+    phase: "day" | "night";
+    dayCount: number;
+  }) => void;
+  "time:hourTick": (payload: {
+    dayCount: number;
+    phase: "day" | "night";
+    hourIndex: number;
+  }) => void;
 
   // ── Cutscene → scene: forced map change ──────────────────────────
   "cutscene:changeMapRequest": (payload: {

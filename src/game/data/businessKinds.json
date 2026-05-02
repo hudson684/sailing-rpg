@@ -1,0 +1,81 @@
+{
+  "kinds": [
+    {
+      "id": "tavern",
+      "displayName": "Tavern",
+      "defaultCapacity": 6,
+      "roles": [
+        {
+          "id": "bartender",
+          "workstationTag": "bar",
+          "produces": ["drinks_basic"]
+        },
+        {
+          "id": "server",
+          "workstationTag": "floor",
+          "produces": []
+        },
+        {
+          "id": "cook",
+          "workstationTag": "kitchen",
+          "produces": []
+        }
+      ],
+      "revenueSources": [
+        {
+          "id": "drinks_basic",
+          "displayName": "Mug of ale",
+          "requiresRole": "bartender",
+          "pricePerSale": 8,
+          "serviceTimeMs": 4000
+        }
+      ],
+      "customerProfiles": [
+        {
+          "id": "drinker",
+          "displayName": "Drinker",
+          "spawnWeight": 1,
+          "phaseMultiplier": { "day": 0.7, "night": 1.4 },
+          "buys": ["drinks_basic"]
+        }
+      ],
+      "upgradeTree": [
+        {
+          "id": "repair_bar",
+          "displayName": "Repair the bar",
+          "description": "The bartop is splintered. Fix it before serving drinks.",
+          "kind": "repair",
+          "cost": 250,
+          "requires": [],
+          "effects": [
+            { "op": "unlockMenu", "val": "drinks_basic" }
+          ]
+        },
+        {
+          "id": "repair_floor",
+          "displayName": "Refurbish the dining floor",
+          "description": "Tables wobble and chairs splinter. Patrons won't linger.",
+          "kind": "repair",
+          "cost": 200,
+          "requires": [],
+          "effects": [
+            { "op": "unlockRole", "val": "server" },
+            { "op": "+capacity", "val": 4 }
+          ]
+        },
+        {
+          "id": "repair_kitchen",
+          "displayName": "Restore the kitchen",
+          "description": "The hearth is cold and the pots are rusted through.",
+          "kind": "repair",
+          "cost": 400,
+          "requires": [],
+          "effects": [
+            { "op": "unlockRole", "val": "cook" },
+            { "op": "unlockMenu", "val": "food_basic" }
+          ]
+        }
+      ]
+    }
+  ]
+}

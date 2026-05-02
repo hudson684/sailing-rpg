@@ -223,8 +223,14 @@ const enemyInfo: EntityTypeInfo = {
   label: "Enemy",
   jsonPath: "src/game/data/enemies.json",
   parseFile: (raw) => parseDefsInstances(raw, "enemy", "#d04848"),
-  toFile: (orig, entities) => toDefsInstancesFile(orig, entities),
-  isOnMap: (_e, _mapId, mapKind) => mapKind === "world",
+  // Only world enemies live in enemies.json; interior enemies (tagged with
+  // `interior`) are persisted into interiorInstances.json by SpawnEditor.
+  toFile: (orig, entities) =>
+    toDefsInstancesFile(orig, entities.filter((e) => !e.interior)),
+  isOnMap(e, mapId, mapKind) {
+    if (mapKind === "interior") return e.interior === mapId;
+    return mapKind === "world" && !e.interior;
+  },
   makeNew(defId, tileX, tileY, existingIds) {
     const id = nextId(`e_${defId}_`, existingIds);
     return {

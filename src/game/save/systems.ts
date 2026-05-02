@@ -10,6 +10,9 @@ import { useGameStore } from "../store/gameStore";
 import { useShopStore } from "../store/shopStore";
 import type { ShopInstance } from "../shops/types";
 import { useSettingsStore } from "../store/settingsStore";
+import { useTimeStore } from "../time/timeStore";
+import { useBusinessStore } from "../business/businessStore";
+import type { BusinessState } from "../business/businessTypes";
 import { SKIN_PALETTE_IDS, type SkinPaletteId } from "../entities/playerSkin";
 import { bus } from "../bus";
 import type { Equipped } from "../equipment/operations";
@@ -187,6 +190,8 @@ const DroppedItemSchema = z.object({
   x: z.number(),
   y: z.number(),
   expiresAt: z.number().int().nonnegative(),
+  /** Added in v2 — `"world"` or `"interior:<key>"`. */
+  mapId: z.string().min(1),
 });
 
 const DroppedItemsDataSchema = z.array(DroppedItemSchema);
@@ -196,10 +201,17 @@ export function droppedItemsSaveable(
 ): Saveable<z.infer<typeof DroppedItemsDataSchema>> {
   return {
     id: "droppedItems",
-    version: 1,
+    version: 2,
     schema: DroppedItemsDataSchema,
     serialize: () => state.serialize() as z.infer<typeof DroppedItemsDataSchema>,
     hydrate: (data) => state.hydrate(data as DroppedItem[]),
+    migrations: {
+      // v1 → v2: only the world had drops, so backfill mapId="world".
+      1: (from) => {
+        const arr = from as Array<Record<string, unknown>>;
+        return arr.map((entry) => ({ ...entry, mapId: "world" }));
+      },
+    },
   };
 }
 
@@ -278,5 +290,79 @@ export function appearanceSaveable(): Saveable<z.infer<typeof AppearanceDataSche
       useSettingsStore.getState().setSkinTone(data.skinTone);
       bus.emitTyped("skin:apply", data.skinTone);
     },
+  };
+}
+
+// ─── Time of day ──────────────────────────────────────────────────────────
+
+const TimeDataSchema = z.object({
+  dayCount: z.number().int().positive(),
+  phase: z.enum(["day", "night"]),
+  elapsedInPhaseMs: z.number().nonnegative(),
+  hoursEmittedThisPhase: z.number().int().nonnegative(),
+});
+
+export function timeSaveable(): Saveable<z.infer<typeof TimeDataSchema>> {
+  return {
+    id: "time",
+    version: 1,
+    schema: TimeDataSchema,
+    serialize: () => useTimeStore.getState().serialize(),
+    hydrate: (data) => useTimeStore.getState().hydrate(data),
+  };
+}
+
+// ─── Businesses ───────────────────────────────────────────────────────────
+
+const HiredNpcSchema = z.object({
+  hireableId: z.string().min(1),
+  roleId: z.string().min(1),
+  hiredOnDay: z.number().int().nonnegative(),
+  unpaidDays: z.number().int().nonnegative(),
+});
+
+const DailyEntrySchema = z.object({
+  dayCount: z.number().int().nonnegative(),
+  revenue: z.number().nonnegative(),
+  expenses: z.number().nonnegative(),
+  wages: z.number().nonnegative(),
+  walkouts: z.number().int().nonnegative(),
+  note: z.string().optional(),
+});
+
+const LastTickRefSchema = z.object({
+  dayCount: z.number().int().nonnegative(),
+  phase: z.enum(["day", "night"]),
+  hourIndex: z.number().int().nonnegative(),
+});
+
+const BusinessStateSchema = z.object({
+  id: z.string().min(1),
+  owned: z.boolean(),
+  coffers: z.number().nonnegative(),
+  unlockedNodes: z.array(z.string().min(1)),
+  staff: z.array(HiredNpcSchema),
+  stock: z.record(z.string().min(1), z.number().nonnegative()),
+  reputation: z.number().min(0).max(100),
+  ledger: z.array(DailyEntrySchema),
+  lastTick: LastTickRefSchema.nullable(),
+  todaysDraft: DailyEntrySchema.nullable().optional(),
+});
+
+const BusinessesDataSchema = z.record(z.string().min(1), BusinessStateSchema);
+
+export function businessSaveable(): Saveable<z.infer<typeof BusinessesDataSchema>> {
+  return {
+    id: "businesses",
+    version: 1,
+    schema: BusinessesDataSchema,
+    serialize: () =>
+      useBusinessStore.getState().serialize() as z.infer<
+        typeof BusinessesDataSchema
+      >,
+    hydrate: (data) =>
+      useBusinessStore
+        .getState()
+        .hydrate(data as Record<string, BusinessState>),
   };
 }

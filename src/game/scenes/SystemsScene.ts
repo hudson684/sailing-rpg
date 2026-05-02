@@ -3,6 +3,7 @@ import { worldTicker } from "../entities/WorldTicker";
 import { stamina } from "../player/stamina";
 import { foodRegen } from "../player/foodRegen";
 import { getActiveSaveController } from "../save/activeController";
+import { useTimeStore } from "../time/timeStore";
 
 /** Always-running scene that drives globally-scoped per-frame systems: the
  *  entity-model ticker, food-based HP regen, stamina regen, and playtime
@@ -17,6 +18,7 @@ export class SystemsScene extends Phaser.Scene {
     worldTicker.tick(dtMs);
     foodRegen.tick(dtMs);
     stamina.regen(dtMs / 1000);
+    useTimeStore.getState().tick(dtMs);
     getActiveSaveController()?.playtime.tick();
   }
 }

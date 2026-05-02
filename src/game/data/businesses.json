@@ -1,0 +1,12 @@
+{
+  "businesses": [
+    {
+      "id": "rusty_anchor",
+      "kindId": "tavern",
+      "displayName": "The Rusty Anchor",
+      "interiorKey": "tavern_rusty_anchor",
+      "signObjectId": "sign_rusty_anchor",
+      "purchasePrice": 1000
+    }
+  ]
+}

@@ -36,6 +36,11 @@ const CharacterCustomizer = lazy(() =>
 const NodeDefEditor = lazy(() =>
   import("./ui/NodeDefEditor").then((m) => ({ default: m.NodeDefEditor })),
 );
+const BusinessManager = lazy(() =>
+  import("./ui/business/BusinessManager").then((m) => ({
+    default: m.BusinessManager,
+  })),
+);
 
 export default function App() {
   const parentRef = useRef<HTMLDivElement>(null);
@@ -109,6 +114,7 @@ export default function App() {
             <PauseMenu />
             <Dialogue />
             {isMobile ? <ShopTouch /> : <Shop />}
+            <BusinessManager />
             <CraftingModal />
             <LootPanel />
             <CharacterCustomizer

@@ -34,10 +34,11 @@ export class NpcSprite {
     const startFrame = isDirectionalAnimSheet(sheet.idle)
       ? sheet.idle[dir!].start
       : sheet.idle.start;
+    const keyId = def.spritePackId ?? def.id;
     this.sprite = scene.add.sprite(
       model.x,
       model.y,
-      npcTextureKey(def.id, "idle", dir),
+      npcTextureKey(keyId, "idle", dir),
       startFrame,
     );
     this.sprite.setOrigin(0.5, def.display.originY);
@@ -60,7 +61,8 @@ export class NpcSprite {
     const hasWalk = !!m.def.sprite?.walk;
     const resolvedState: "idle" | "walk" =
       m.animState === "walk" && !hasWalk ? "idle" : m.animState;
-    const key = npcAnimKey(m.def.id, resolvedState, dir);
+    const keyId = m.def.spritePackId ?? m.def.id;
+    const key = npcAnimKey(keyId, resolvedState, dir);
     if (this.currentAnim !== key) {
       this.sprite.anims.play(key, true);
       this.currentAnim = key;
@@ -83,7 +85,8 @@ export class NpcSprite {
       ? dir === "side" && this.model.facing === "left"
       : this.model.facing === "left";
     this.sprite.setFlipX(flip);
-    const key = npcAnimKey(def.id, "idle", dir);
+    const keyId = def.spritePackId ?? def.id;
+    const key = npcAnimKey(keyId, "idle", dir);
     this.sprite.anims.play(key, true);
     this.currentAnim = key;
   }

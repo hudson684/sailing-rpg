@@ -90,6 +90,11 @@ export interface NpcDef {
   sprite?: { idle: NpcAnimSheetEntry; walk?: NpcAnimSheetEntry };
   /** Layered slot-based look. Preferred for new NPCs. */
   layered?: NpcLayeredSprite;
+  /** When set, NpcSprite resolves its texture/anim keys against this id
+   *  instead of `def.id`. Used by runtime-spawned NPCs (e.g. hired staff)
+   *  that share their look with a pre-loaded NPC and don't have their own
+   *  preload entry. */
+  spritePackId?: string;
   display: NpcDisplay;
   /** Defaults to "world" when absent, for backward compat with existing data. */
   map?: NpcMap;

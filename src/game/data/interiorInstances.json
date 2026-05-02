@@ -11,6 +11,19 @@
       "nodes": [],
       "stations": [],
       "items": []
+    },
+    "first_dungeon": {
+      "enemies": [
+        {
+          "id": "e_skeleton_1",
+          "defId": "skeleton",
+          "tileX": 3,
+          "tileY": 13
+        }
+      ],
+      "nodes": [],
+      "stations": [],
+      "items": []
     }
   }
 }

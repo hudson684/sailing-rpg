@@ -45,13 +45,80 @@ export interface InteriorEntrySpawn {
   uid: string;
   tileX: number;
   tileY: number;
+  /** Optional override for the player's facing on entry. When omitted, the
+   *  scene picks a sensible default (up — i.e. facing into the interior). */
+  facing?: string;
 }
 
-export type Spawn = ItemSpawn | DoorSpawn | InteriorExitSpawn | InteriorEntrySpawn;
+/** A static light source (torch, lantern, campfire) painted into a chunk's
+ *  `torches` object layer. The lighting system reads these on chunk-ready and
+ *  registers a fixed point light at the tile center. */
+export interface TorchSpawn {
+  kind: "torch";
+  uid: string;
+  tileX: number;
+  tileY: number;
+  /** Light radius in tiles. Defaults to 2. */
+  radiusTiles: number;
+  /** Hex color (0xRRGGBB) of the warm tint over the lit area. */
+  color: number;
+  /** 0–1 strength of the carve through the darkness. Default 0.95. */
+  intensity: number;
+  /** 0–1 strength of the warm color overlay. Default 0.45. */
+  tintStrength: number;
+}
+
+export type Spawn =
+  | ItemSpawn
+  | DoorSpawn
+  | InteriorExitSpawn
+  | InteriorEntrySpawn
+  | TorchSpawn;
 
 export interface ParsedSpawns {
   items: ItemSpawn[];
   doors: DoorSpawn[];
+  torches: TorchSpawn[];
+}
+
+/** A `repair_target` object placed inside an interior map. Stands in for a
+ *  broken-but-fixable feature (the bar, the kitchen, a door). When the player
+ *  presses E nearby and confirms, the linked upgrade node is unlocked which
+ *  in turn flips layer visibility (see `interiorTilemap.ts`). */
+export interface RepairTargetSpawn {
+  kind: "repair_target";
+  uid: string;
+  tileX: number;
+  tileY: number;
+  /** Business this repair belongs to. Lets one interior host multiple
+   *  businesses (e.g. shared building) without the engine having to guess. */
+  businessId: string;
+  /** Upgrade-node id in the kind's `upgradeTree`. */
+  nodeId: string;
+}
+
+/** A `seat` object placed inside an interior map. The customer sim picks a
+ *  free seat (one not already in its claimed-set) for each arriving customer
+ *  to walk to. Seats are interchangeable for now — no per-seat configuration
+ *  beyond the tile position. */
+export interface SeatSpawn {
+  kind: "seat";
+  uid: string;
+  tileX: number;
+  tileY: number;
+}
+
+/** A `workstation` object placed inside an interior map. Anchors hired-staff
+ *  NPC spawns: each `RoleDef.workstationTag` matches one or more
+ *  `WorkstationSpawn.tag` values. Hired staff with that role wander a short
+ *  radius around the matching workstation tile. */
+export interface WorkstationSpawn {
+  kind: "workstation";
+  uid: string;
+  tileX: number;
+  tileY: number;
+  /** Maps to `RoleDef.workstationTag` in `businessKinds.json`. */
+  tag: string;
 }
 
 /** Spawns parsed from a standalone interior map. */
@@ -59,6 +126,9 @@ export interface InteriorParsedSpawns {
   exits: InteriorExitSpawn[];
   entries: InteriorEntrySpawn[];
   items: ItemSpawn[];
+  repairTargets: RepairTargetSpawn[];
+  workstations: WorkstationSpawn[];
+  seats: SeatSpawn[];
 }
 
 export interface ParseSpawnsOptions {
@@ -83,6 +153,7 @@ function collectSpawns(
 ): ParsedSpawns {
   const items: ItemSpawn[] = [];
   const doors: DoorSpawn[] = [];
+  const torches: TorchSpawn[] = [];
 
   for (const raw of objects) {
     const props = propMap(raw.properties);
@@ -126,12 +197,41 @@ function collectSpawns(
         });
         break;
       }
+      case "torch": {
+        const uid = String(props.uid ?? "");
+        if (!uid) {
+          throw new Error(
+            `torch at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+          );
+        }
+        torches.push({
+          kind: "torch",
+          uid,
+          tileX,
+          tileY,
+          radiusTiles: Number(props.radiusTiles ?? 2),
+          color: parseHexColor(props.color, 0xfdc878),
+          intensity: Number(props.intensity ?? 0.95),
+          tintStrength: Number(props.tintStrength ?? 0.45),
+        });
+        break;
+      }
       default:
         break;
     }
   }
 
-  return { items, doors };
+  return { items, doors, torches };
+}
+
+function parseHexColor(value: unknown, fallback: number): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const hex = value.replace(/^#/, "").replace(/^0x/i, "");
+    const n = parseInt(hex, 16);
+    if (!Number.isNaN(n)) return n;
+  }
+  return fallback;
 }
 
 /** Parse the `objects` layer of a (chunk) tilemap into typed, global-tile spawns. */
@@ -141,9 +241,13 @@ export function parseSpawns(
 ): ParsedSpawns {
   const { offsetTx = 0, offsetTy = 0 } = opts;
   const layer = tilemap.getObjectLayer("objects");
-  if (!layer) return { items: [], doors: [] };
+  const objectLayerObjects = (layer?.objects ?? []) as TiledObjectLike[];
+  // Torches live in their own object layer so map authors can toggle their
+  // visibility independently in Tiled.
+  const torchLayer = tilemap.getObjectLayer("torches");
+  const torchObjects = (torchLayer?.objects ?? []) as TiledObjectLike[];
   return collectSpawns(
-    layer.objects as TiledObjectLike[],
+    [...objectLayerObjects, ...torchObjects],
     tilemap.tileWidth,
     tilemap.tileHeight,
     offsetTx,
@@ -162,7 +266,10 @@ export function parseInteriorSpawns(
   const exits: InteriorExitSpawn[] = [];
   const entries: InteriorEntrySpawn[] = [];
   const items: ItemSpawn[] = [];
-  if (!layer) return { exits, entries, items };
+  const repairTargets: RepairTargetSpawn[] = [];
+  const workstations: WorkstationSpawn[] = [];
+  const seats: SeatSpawn[] = [];
+  if (!layer) return { exits, entries, items, repairTargets, workstations, seats };
 
   for (const raw of layer.objects) {
     const props = propMap(raw.properties as TiledProperty[] | undefined);
@@ -189,11 +296,70 @@ export function parseInteriorSpawns(
           `interior_entry at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
         );
       }
+      const facingProp = props.facing;
       entries.push({
         kind: "interior_entry",
         uid,
         tileX,
         tileY,
+        ...(typeof facingProp === "string" && facingProp.length > 0
+          ? { facing: facingProp }
+          : {}),
+      });
+    } else if (raw.type === "repair_target") {
+      const uid = String(props.uid ?? "");
+      if (!uid) {
+        throw new Error(
+          `repair_target at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+        );
+      }
+      const businessId = String(props.businessId ?? "");
+      const nodeId = String(props.nodeId ?? "");
+      if (!businessId) {
+        throw new Error(
+          `repair_target at (${tileX},${tileY}) missing businessId property.`,
+        );
+      }
+      if (!nodeId) {
+        throw new Error(
+          `repair_target at (${tileX},${tileY}) missing nodeId property.`,
+        );
+      }
+      repairTargets.push({
+        kind: "repair_target",
+        uid,
+        tileX,
+        tileY,
+        businessId,
+        nodeId,
+      });
+    } else if (raw.type === "seat") {
+      const uid = String(props.uid ?? "");
+      if (!uid) {
+        throw new Error(
+          `seat at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+        );
+      }
+      seats.push({ kind: "seat", uid, tileX, tileY });
+    } else if (raw.type === "workstation") {
+      const uid = String(props.uid ?? "");
+      if (!uid) {
+        throw new Error(
+          `workstation at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+        );
+      }
+      const tag = String(props.tag ?? "");
+      if (!tag) {
+        throw new Error(
+          `workstation at (${tileX},${tileY}) missing tag property.`,
+        );
+      }
+      workstations.push({
+        kind: "workstation",
+        uid,
+        tileX,
+        tileY,
+        tag,
       });
     } else if (raw.type === "item_spawn") {
       const itemId = String(props.itemId ?? "") as ItemId;
@@ -209,7 +375,7 @@ export function parseInteriorSpawns(
     }
   }
 
-  return { exits, entries, items };
+  return { exits, entries, items, repairTargets, workstations, seats };
 }
 
 interface TiledProperty {

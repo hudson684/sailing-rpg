@@ -1,0 +1,10 @@
+{
+  "instances": [
+    {
+      "id": "sign_rusty_anchor",
+      "businessId": "rusty_anchor",
+      "tileX": 127,
+      "tileY": 70
+    }
+  ]
+}

@@ -46,6 +46,7 @@ import { loadWorld, type WorldMap } from "../world/worldMap";
 import {
   type DoorSpawn,
   type ItemSpawn,
+  type TorchSpawn,
 } from "../world/spawns";
 import { type WorldManifest } from "../world/chunkManager";
 import { BeachFootprintController, BEACH_WALK_ENABLED } from "../world/beachFootprints";
@@ -54,7 +55,6 @@ import { findAnchorPose } from "../util/anchor";
 import {
   CHUNK_KEY_PREFIX,
   WORLD_MANIFEST_KEY,
-  itemIconTextureKey,
 } from "../assets/keys";
 import { NpcSprite, NPC_INTERACT_RADIUS } from "../entities/NpcSprite";
 import { CharacterSprite } from "../entities/CharacterSprite";
@@ -80,11 +80,12 @@ import {
 import type { CutsceneData, CutsceneFacing } from "../cutscenes/types";
 import { DebugOverlays, type OverlayName } from "../debug/DebugOverlays";
 import { ZoomController } from "../camera/ZoomController";
+import { DayNightLighting } from "../time/dayNightLighting";
 import { ensureQuestSubsystem, getPredicateContext } from "../quests/activeQuestManager";
 import { SpawnGateRegistry } from "../world/spawnGating";
 import type { PredicateContext } from "../quests/predicates";
 import { GroundItemsState } from "../world/groundItemsState";
-import { DroppedItemsState, type DroppedItem } from "../world/droppedItemsState";
+import { getBootedSaveController } from "../save/bootSave";
 import {
   GatheringNode,
   NODE_INTERACT_RADIUS,
@@ -102,6 +103,15 @@ import {
   rollChestLoot,
 } from "../world/Chest";
 import chestsDataRaw from "../data/chests.json";
+import {
+  BUSINESS_SIGN_INTERACT_RADIUS,
+  BusinessSign,
+  loadBusinessSignsFile,
+} from "../world/BusinessSign";
+import businessSignsDataRaw from "../data/businessSigns.json";
+import { businesses as businessRegistry } from "../business/registry";
+import { useBusinessStore } from "../business/businessStore";
+import type { DialogueChoiceOption } from "../bus";
 import { useChestStore } from "../store/chestStore";
 import type {
   ChestTakeAllRequest,
@@ -128,21 +138,17 @@ import type {
   CraftingCompleteResult,
 } from "../bus";
 import { Enemy, registerEnemyAnimations } from "../entities/Enemy";
-import { Projectile, rayBlocked } from "../entities/Projectile";
 import type {
-  DropTable,
-  DropTablesFile,
   EnemiesFile,
   EnemyDef,
   EnemyInstanceData,
 } from "../entities/enemyTypes";
 import enemiesDataRaw from "../data/enemies.json";
-import dropTablesDataRaw from "../data/dropTables.json";
+import { GameplayScene } from "./GameplayScene";
 import itemInstancesRaw from "../data/itemInstances.json";
 import type { NodeDef, NodeInstanceData } from "../world/GatheringNode";
 import type { ItemId } from "../inventory/items";
 import { spawnFloatingNumber } from "../fx/floatingText";
-import { showSpeechBubble } from "../fx/speechBubble";
 import { FishingSession } from "../fishing/fishingSession";
 import { bobberOffsetPx, type FishingSurface } from "../fishing/fishingSurface";
 import {
@@ -153,11 +159,9 @@ import {
 } from "../save";
 import { setActiveSaveController } from "../save/activeController";
 import { PREFETCHED_SAVE_REGISTRY_KEY } from "./PreloadScene";
-import { getBootedSaveController } from "../save/bootSave";
 import { getPrefetchedEnvelope, getSavedPlayerSpawn } from "../save/storeHydrate";
 
 const HELM_INTERACT_RADIUS = TILE_SIZE * 0.7;
-const PICKUP_RADIUS = TILE_SIZE * 0.8;
 const SHOP_CLICK_RADIUS = TILE_SIZE * 1.5;
 /** Time after last damage before player HP regen kicks in. */
 /** Tile where a new game drops the player. Authored in
@@ -168,19 +172,6 @@ const DEFAULT_PLAYER_SPAWN_TILE = {
   y: (playerSpawnRaw as { instance: { tileX: number; tileY: number } }).instance.tileY,
 } as const;
 
-
-interface GroundItem {
-  uid: string;
-  itemId: ItemId;
-  quantity: number;
-  x: number;
-  y: number;
-  sprite: Phaser.GameObjects.Image;
-  /** "authored" = from map TMJ; "editor" = from itemInstances.json (also
-   *  dev-authored, but mutable via the in-game edit overlay); "dropped" =
-   *  player-dropped at runtime with a TTL. */
-  source: "authored" | "editor" | "dropped";
-}
 
 interface ItemInstancesFile {
   instances: Array<{
@@ -202,36 +193,10 @@ interface EditorItemData {
   tileY: number;
 }
 
-/**
- * Snap a radian angle to the nearest 8-way `Facing`. The player sprite sheets
- * only ship 8 directions, so every aim angle collapses to the closest octant
- * for rendering purposes — the projectile still flies at the true angle.
- */
-function angleToFacing(angle: number): Facing {
-  // Normalize to [0, 2π). 0 rad = "right"; angles grow clockwise in screen
-  // space (+y points down in Phaser world coords).
-  const twoPi = Math.PI * 2;
-  let a = angle % twoPi;
-  if (a < 0) a += twoPi;
-  const octant = Math.round(a / (Math.PI / 4)) % 8;
-  const byOctant: Facing[] = [
-    "right",
-    "down-right",
-    "down",
-    "down-left",
-    "left",
-    "up-left",
-    "up",
-    "up-right",
-  ];
-  return byOctant[octant];
-}
-
 let activeWorldScene: WorldScene | null = null;
 
-export class WorldScene extends Phaser.Scene {
+export class WorldScene extends GameplayScene {
   private world!: WorldMap;
-  private player!: Player;
   /** All ship instances, keyed by instance id. */
   private ships = new Map<string, Ship>();
   /** Cached vessel defs (for edit-mode placement and respawn). */
@@ -244,14 +209,16 @@ export class WorldScene extends Phaser.Scene {
    *  direction on load is part of the charm and avoids a "stuck" wind. */
   private readonly wind = new Wind();
   private readonly groundItemsState = new GroundItemsState();
-  private readonly droppedItemsState = new DroppedItemsState();
+  /** Game-scoped drop store — created in `bootSaveController` and shared
+   *  with InteriorScene. Filtered by mapId when rendering sprites. */
   private droppedExpiryAccum = 0;
   private readonly sceneState = new SceneState();
   // Assigned in create() from the game-scoped controller booted behind the
   // title. Marked `!` because TS can't see create() as a constructor.
   private saveController!: SaveController;
-  private groundItems = new Map<string, GroundItem>();
   private doors: DoorSpawn[] = [];
+  private pendingTorches: TorchSpawn[] = [];
+  private registeredTorchUids = new Set<string>();
   private lastDoorTile: { x: number; y: number } | null = null;
   /** Accumulated authored item spawns from every chunk that has been
    *  instantiated so far. Populated incrementally via the ChunkManager's
@@ -264,21 +231,14 @@ export class WorldScene extends Phaser.Scene {
   private initialGroundItemsBuilt = false;
   private nodes: GatheringNode[] = [];
   private decorations: Decoration[] = [];
-  private fishingSession: FishingSession | null = null;
   private craftingStations: CraftingStation[] = [];
   private chests: Chest[] = [];
   /** Mirror of chests.json instances so editor mutations can round-trip on export. */
   private chestInstanceData: Array<{ id: string; defId: string; tileX: number; tileY: number }> = [];
   /** Pre-rolled loot for chests still pending interaction. Cleared on take-all. */
   private chestPendingLoot = new Map<string, Array<{ itemId: ItemId; qty: number }>>();
+  private signs: BusinessSign[] = [];
   private stationInstanceData: CraftingStationInstanceData[] = [];
-  private enemies: Enemy[] = [];
-  private projectiles: Projectile[] = [];
-  /** Monotonic ms remaining until the player may fire their bow again. */
-  private bowCooldownMs = 0;
-  /** Graphics layer for the bow aiming reticle. Hidden unless a bow is equipped. */
-  private bowReticle?: Phaser.GameObjects.Graphics;
-  private dropTables = new Map<string, DropTable>();
   /** Owns scene-local sprites for world-mapped NPC models. Interior NPC
    *  sprites are owned by InteriorScene's own reconciler. */
   private npcReconciler!: SpriteReconciler<NpcSprite | CharacterSprite>;
@@ -286,7 +246,14 @@ export class WorldScene extends Phaser.Scene {
    *  is source-of-truth for runtime state; this stays for authoring flows. */
   private npcData: NpcData = npcDataRaw as NpcData;
   private dialogues: Record<string, DialogueDef> = {};
-  private activeDialogue: { speaker: string; pages: string[]; page: number; shopId?: string } | null = null;
+  private activeDialogue: {
+    speaker: string;
+    pages: string[];
+    page: number;
+    shopId?: string;
+    choices?: DialogueChoiceOption[];
+    onSelect?: (index: number) => void;
+  } | null = null;
   /** Director for scripted scenes. Created in `create`, drives NPCs/player
    *  via setPositionPx + setFacing while it's running. */
   private cutsceneDirector!: CutsceneDirector;
@@ -305,6 +272,7 @@ export class WorldScene extends Phaser.Scene {
   private palmShakeCounts = new WeakMap<GatheringNode, number>();
 
   private zoom!: ZoomController;
+  lighting!: DayNightLighting;
   private movement!: MovementController;
   private footprints!: BeachFootprintController;
 
@@ -344,7 +312,19 @@ export class WorldScene extends Phaser.Scene {
       this.closeDialogue();
       return;
     }
-    // advance
+    if (action.type === "select") {
+      const handler = this.activeDialogue.onSelect;
+      if (handler) {
+        const index = action.index;
+        this.closeDialogue();
+        handler(index);
+      }
+      return;
+    }
+    // advance — block while waiting on a choice so E doesn't dismiss.
+    if (this.activeDialogue.choices && this.activeDialogue.choices.length > 0) {
+      return;
+    }
     this.activeDialogue.page += 1;
     if (this.activeDialogue.page >= this.activeDialogue.pages.length) {
       this.closeDialogue();
@@ -373,6 +353,7 @@ export class WorldScene extends Phaser.Scene {
           removed,
           this.player.x,
           this.player.y,
+          "world",
         );
         this.spawnDroppedSprite(entry);
         showToast(`Dropped ${removed} ${ITEMS[itemId].name}.`, 1500);
@@ -428,6 +409,11 @@ export class WorldScene extends Phaser.Scene {
           if (this.initialGroundItemsBuilt) {
             for (const s of spawns.items) this.addGroundItemSprite(s, "authored");
           }
+          if (this.lighting) {
+            for (const t of spawns.torches) this.spawnTorch(t);
+          } else {
+            this.pendingTorches.push(...spawns.torches);
+          }
         },
       });
     });
@@ -459,6 +445,7 @@ export class WorldScene extends Phaser.Scene {
       }
     });
 
+    phase("setupCombat", () => this.setupCombat());
     phase("loadEditorItems", () => this.loadEditorItems());
     phase("respawnGroundItems", () => this.respawnGroundItems());
     // Initialize the quest subsystem eagerly so that spawn gating
@@ -480,7 +467,7 @@ export class WorldScene extends Phaser.Scene {
     phase("spawnDecorations", () => this.spawnDecorations());
     phase("spawnCraftingStations", () => this.spawnCraftingStations(questCtx));
     phase("spawnChests", () => this.spawnChests());
-    phase("loadDropTables", () => this.loadDropTables());
+    phase("spawnBusinessSigns", () => this.spawnBusinessSigns());
     phase("spawnEnemies", () => this.spawnEnemies(questCtx));
     // Ocean-blue backdrop for any viewport area outside authored chunks.
     this.cameras.main.setBackgroundColor("#1f4d78");
@@ -493,6 +480,9 @@ export class WorldScene extends Phaser.Scene {
     );
     this.cameras.main.startFollow(this.player.sprite, true, 0.15, 0.15);
     this.zoom = new ZoomController(this);
+    this.lighting = new DayNightLighting();
+    this.lighting.attach(this, this.cameras.main);
+    this.flushPendingTorches();
 
     // Keep the camera viewport in sync with the canvas when it resizes
     // (window resize, orientation change, mobile URL-bar collapse). Without
@@ -593,20 +583,7 @@ export class WorldScene extends Phaser.Scene {
         this.onRightClick(pointer.worldX, pointer.worldY);
       },
     );
-    this.keys.attack.on("down", () => this.onAttack());
-
-    // Number keys 1–5 quick-equip the corresponding hotbar slot's item.
-    const digitCodes = [
-      Phaser.Input.Keyboard.KeyCodes.ONE,
-      Phaser.Input.Keyboard.KeyCodes.TWO,
-      Phaser.Input.Keyboard.KeyCodes.THREE,
-      Phaser.Input.Keyboard.KeyCodes.FOUR,
-      Phaser.Input.Keyboard.KeyCodes.FIVE,
-    ];
-    digitCodes.forEach((code, i) => {
-      const key = this.input.keyboard!.addKey(code);
-      key.on("down", () => this.onHotbarKey(i));
-    });
+    // Q-attack and hotbar 1–5 are wired by `setupCombat()` in the base.
     this.keys.debugGrant.on("down", () => this.grantRandomItem());
     this.keys.debugXp.on("down", () => this.grantDebugXp());
     this.keys.quicksave.on("down", () => void this.saveController.save("quicksave"));
@@ -735,6 +712,8 @@ export class WorldScene extends Phaser.Scene {
       for (const c of this.chests) c.destroy();
       this.chests = [];
       this.chestPendingLoot.clear();
+      for (const s of this.signs) s.destroy();
+      this.signs = [];
       for (const p of this.projectiles) p.destroy();
       this.projectiles = [];
       this.bowReticle?.destroy();
@@ -751,7 +730,6 @@ export class WorldScene extends Phaser.Scene {
         "player",
         "ships",
         "groundItems",
-        "droppedItems",
         "scene",
       ]);
     });
@@ -794,7 +772,6 @@ export class WorldScene extends Phaser.Scene {
         (states) => this.hydrateShips(states),
       ),
       saveSystems.groundItemsSaveable(this.groundItemsState),
-      saveSystems.droppedItemsSaveable(this.droppedItemsState),
       saveSystems.sceneSaveable(this.sceneState),
     ]);
     // Pop the prefetched envelope from the registry so a later scene
@@ -834,25 +811,10 @@ export class WorldScene extends Phaser.Scene {
       // Tween drives the ship; nothing to do here.
     }
     for (const node of this.nodes) node.update(this.time.now);
-    // Enemies are passive while the player is at the helm or anchoring.
-    const playerCtx =
-      this.sceneState.mode === "OnFoot"
-        ? {
-            x: this.player.x,
-            y: this.player.y,
-            onHit: (dmg: number) => this.onPlayerHit(dmg),
-          }
-        : undefined;
-    for (const enemy of this.enemies) {
-      enemy.update(
-        dtMs,
-        this.time.now,
-        (x, y) => this.isWalkablePx(x, y, enemy),
-        playerCtx,
-      );
-    }
-    this.updateProjectiles(dtMs);
-    this.updateBowReticle();
+    // Enemies / projectiles / bow reticle are owned by the GameplayScene base.
+    // It uses `isOnFoot()` to suspend enemy AI while the player is at the
+    // helm or anchoring.
+    this.tickCombat(dtMs);
     const pTile = this.player.tile();
     this.world.manager.updateOverheadFade(pTile.x, pTile.y, dtMs);
     this.syncPlayerShipDepth();
@@ -973,55 +935,6 @@ export class WorldScene extends Phaser.Scene {
     return best;
   }
 
-  private onHotbarKey(index: number) {
-    if (this.activeDialogue) return;
-    if (this.sceneState.mode !== "OnFoot") return;
-    if (useShopStore.getState().openShopId) return;
-    const store = useGameStore.getState();
-    const slot = store.inventory.slots[index];
-    if (!slot) return;
-    const def = ITEMS[slot.itemId];
-    if (def?.consumable) {
-      const itemId = slot.itemId;
-      const res = store.useConsumable(index);
-      if (!res.ok && res.reason === "no_effect") showToast("Already at full health.", 1200);
-      else if (res.ok && def.consumable.healHp) showToast(`+${def.consumable.healHp} HP`, 1200, "success");
-      else if (res.ok && def.consumable.regenHp) showToast(`+${def.consumable.regenHp} HP regen`, 1200, "success");
-      if (res.ok && itemId === "crab_cake") {
-        showSpeechBubble(this, this.player, "Just like Mum used to make!");
-      }
-      return;
-    }
-    if (!def?.slot) return;
-    const res = store.equipFromInventory(index);
-    if (!res.ok && res.reason === "inventory_full") {
-      showToast("Inventory full", 1500);
-    }
-  }
-
-  /** Apply enemy damage to the player. Handles death → respawn at the dock. */
-  private onPlayerHit(damage: number) {
-    if (damage <= 0) return;
-    const taken = useGameStore.getState().healthDamage(damage);
-    if (taken <= 0) return;
-    this.flashPlayer();
-    spawnFloatingNumber(this, this.player.x, this.player.y - 22, taken, {
-      kind: "damage-player",
-    });
-    if (useGameStore.getState().health.current <= 0) this.handlePlayerDeath();
-  }
-
-
-  private flashPlayer() {
-    this.tweens.add({
-      targets: this.player.sprite,
-      alpha: 0.35,
-      duration: 80,
-      yoyo: true,
-      repeat: 1,
-    });
-  }
-
   private onResetSpawn = () => {
     if (this.scene.isActive("Interior") || this.scene.isSleeping("Interior")) {
       this.scene.stop("Interior");
@@ -1055,14 +968,30 @@ export class WorldScene extends Phaser.Scene {
     showToast("Reset ship positions.", 1500);
   };
 
-  private handlePlayerDeath() {
-    showToast("You were defeated. Respawning…", 2500, "error");
+  protected onPlayerDeathRespawn(): void {
     this.player.setPosition(
       (DEFAULT_PLAYER_SPAWN_TILE.x + 0.5) * TILE_SIZE,
       (DEFAULT_PLAYER_SPAWN_TILE.y + 0.5) * TILE_SIZE,
     );
-    useGameStore.getState().healthReset();
     foodRegen.reset();
+  }
+
+  // ─── GameplayScene hook implementations ──────────────────────────────────
+
+  protected getMapId(): string {
+    return "world";
+  }
+
+  protected isOnFoot(): boolean {
+    return this.sceneState.mode === "OnFoot";
+  }
+
+  protected isDialogueActive(): boolean {
+    return this.activeDialogue !== null;
+  }
+
+  protected isBlockedPx(x: number, y: number): boolean {
+    return this.world.manager.isBlockedPx(x, y);
   }
 
   // ─── Building interiors ───────────────────────────────────────────
@@ -1128,74 +1057,6 @@ export class WorldScene extends Phaser.Scene {
     void this.saveController.autosave();
   }
 
-  private onAttack() {
-    if (this.activeDialogue) return;
-    if (this.sceneState.mode !== "OnFoot") return;
-    const mainHand = useGameStore.getState().equipment.equipped.mainHand;
-
-    // Active fishing session: Q presses drive bite-window reel / cancel.
-    if (this.fishingSession && this.fishingSession.isActive()) {
-      this.fishingSession.pressReel();
-      return;
-    }
-
-    // Fishing rod: skip node scan and try the new water-tile flow.
-    if (mainHand === "fishing_rod") {
-      if (this.tryStartFishing()) return;
-      showToast("Face water to cast your line.", 1500);
-      return;
-    }
-
-    // If a matching gathering node is in reach, harvest it.
-    const node = this.nearestNodeForTool(mainHand);
-    if (node) {
-      this.gatherFrom(node);
-      return;
-    }
-
-    if (mainHand === "pickaxe") {
-      const ok = this.player.playAction("mine", () => {
-        useGameStore.getState().jobsAddXp("orecheologist", 10);
-      });
-      if (!ok) return;
-      showToast("Mining…", 800);
-    } else if (mainHand === "axe") {
-      const ok = this.player.playAction("chop", () => {});
-      if (!ok) return;
-      showToast("No tree in reach.", 1200);
-    } else if (mainHand && ITEMS[mainHand]?.melee) {
-      const melee = ITEMS[mainHand].melee!;
-      const reach = TILE_SIZE * 1.4;
-      const target = this.nearestEnemyInReach(reach);
-      this.player.playAction("attack", () => {
-        useGameStore.getState().jobsAddXp("combat", 5);
-        if (!target || !target.isAlive()) return;
-        const swordDmg = Phaser.Math.Between(melee.damageMin, melee.damageMax);
-        const killed = target.hit(this, swordDmg, this.player.x, this.player.y);
-        const enemyHeadY =
-          target.y - target.frameHeight / 2 - 4;
-        spawnFloatingNumber(this, target.x, enemyHeadY, swordDmg, {
-          kind: "damage-enemy",
-        });
-        if (killed) {
-          useGameStore.getState().jobsAddXp(target.def.xpSkill, target.def.xpPerKill);
-          this.rollAndDrop(target.def.dropTable, target.x, target.y);
-          target.beginRespawn(this.time.now);
-          showToast(`Slain — ${target.def.name}`, 1200);
-        }
-      });
-    } else if (mainHand === "bow") {
-      showToast("Left-click to fire the bow.", 1500);
-    } else {
-      const palm = this.nearestPalmWithCoconut();
-      if (palm) {
-        this.shakePalm(palm);
-        return;
-      }
-      showToast("Equip a sword, pickaxe, axe, or rod to act with Q.", 1500);
-    }
-  }
-
   /**
    * Primary left-click handler for on-foot gameplay. Today this only fires a
    * bow when equipped; edit-mode clicks are routed earlier in the dispatcher.
@@ -1208,142 +1069,12 @@ export class WorldScene extends Phaser.Scene {
     this.fireBow(worldX, worldY);
   }
 
-  private fireBow(worldX: number, worldY: number): void {
-    const def = ITEMS["bow"];
-    const ranged = def?.ranged;
-    if (!ranged) return;
-    if (this.bowCooldownMs > 0) return;
-
-    const slots = useGameStore.getState().inventory.slots;
-    const ammoIdx = slots.findIndex((s) => s && s.itemId === ranged.projectile);
-    if (ammoIdx < 0) {
-      showToast("Out of arrows.", 1200);
-      return;
-    }
-
-    const fromX = this.player.x;
-    const fromY = this.player.y - 10; // eye-ish height so the arrow leaves the torso, not the feet
-    const angle = Math.atan2(worldY - fromY, worldX - fromX);
-    // Snap player sprite to the nearest 8-way facing for the shoot anim.
-    this.player.setFacing(angleToFacing(angle));
-    const ok = this.player.playAction("shoot", () => {
-      useGameStore.getState().jobsAddXp("ranger", 2);
-    });
-    if (!ok) return;
-
-    const removed = useGameStore.getState().inventoryRemoveAt(ammoIdx, 1);
-    if (removed <= 0) return;
-
-    // Release the arrow mid-animation (frame ~4 of 6 @ 12 fps) so it leaves
-    // the bow when the string snaps forward, not on the first draw frame.
-    const releaseDelayMs = 330;
-    this.time.delayedCall(releaseDelayMs, () => {
-      if (!this.scene.isActive()) return;
-      const projectile = new Projectile(this, {
-        x: this.player.x,
-        y: this.player.y - 10,
-        angle,
-        speedPx: ranged.projectileSpeedPx,
-        rangePx: ranged.rangePx,
-        damage: ranged.damage,
-        ownerId: "player",
-      });
-      this.projectiles.push(projectile);
-    });
-    this.bowCooldownMs = ranged.cooldownMs;
-  }
-
-  private updateProjectiles(dtMs: number): void {
-    if (this.bowCooldownMs > 0) this.bowCooldownMs = Math.max(0, this.bowCooldownMs - dtMs);
-    if (this.projectiles.length === 0) return;
-    const stillAlive: Projectile[] = [];
-    for (const p of this.projectiles) {
-      const hit = p.update(dtMs, this.enemies, (x, y) => this.world.manager.isBlockedPx(x, y));
-      if (hit) {
-        this.applyArrowHit(hit.enemy, p);
-        p.destroy();
-        continue;
-      }
-      if (p.isAlive()) stillAlive.push(p);
-    }
-    this.projectiles = stillAlive;
-  }
-
-  private applyArrowHit(target: Enemy, projectile: Projectile): void {
-    const dmg = projectile.damage;
-    const killed = target.hit(this, dmg, projectile.x, projectile.y);
-    const enemyHeadY =
-      target.y - target.frameHeight / 2 - 4;
-    spawnFloatingNumber(this, target.x, enemyHeadY, dmg, {
-      kind: "damage-enemy",
-    });
-    if (killed) {
-      // Bow kills train ranger, not the enemy's default combat xpSkill.
-      useGameStore.getState().jobsAddXp("ranger", target.def.xpPerKill);
-      this.rollAndDrop(target.def.dropTable, target.x, target.y);
-      if (Math.random() < 0.5) {
-        const ox = (Math.random() - 0.5) * TILE_SIZE * 0.6;
-        const oy = (Math.random() - 0.5) * TILE_SIZE * 0.4;
-        const entry = this.droppedItemsState.add("arrow", 1, target.x + ox, target.y + oy);
-        this.spawnDroppedSprite(entry);
-      }
-      target.beginRespawn(this.time.now);
-      showToast(`Slain — ${target.def.name}`, 1200);
-    }
-  }
-
-  private updateBowReticle(): void {
-    const equipped = useGameStore.getState().equipment.equipped.mainHand;
-    const show =
-      equipped === "bow" &&
-      this.sceneState.mode === "OnFoot" &&
-      !this.activeDialogue &&
-      !this.player.mounted;
-    if (!show) {
-      if (this.bowReticle?.visible) this.bowReticle.setVisible(false);
-      return;
-    }
-    if (!this.bowReticle) {
-      this.bowReticle = this.add.graphics().setDepth(9600);
-    }
-    const pointer = this.input.activePointer;
-    const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-    const wx = worldPoint.x;
-    const wy = worldPoint.y;
-    const def = ITEMS["bow"];
-    const ranged = def?.ranged;
-    if (!ranged) return;
-    const fromX = this.player.x;
-    const fromY = this.player.y - 10;
-    const dist = Phaser.Math.Distance.Between(fromX, fromY, wx, wy);
-    const inRange = dist <= ranged.rangePx;
-    const blocked = rayBlocked(fromX, fromY, wx, wy, (x, y) => this.world.manager.isBlockedPx(x, y));
-    const color = !inRange || blocked ? 0xff4a4a : 0xffe27a;
-
-    const g = this.bowReticle;
-    g.clear();
-    g.setVisible(true);
-    g.lineStyle(2, color, 1);
-    g.strokeCircle(wx, wy, 8);
-    g.lineStyle(1, color, 0.8);
-    g.beginPath();
-    g.moveTo(wx - 12, wy);
-    g.lineTo(wx - 4, wy);
-    g.moveTo(wx + 4, wy);
-    g.lineTo(wx + 12, wy);
-    g.moveTo(wx, wy - 12);
-    g.lineTo(wx, wy - 4);
-    g.moveTo(wx, wy + 4);
-    g.lineTo(wx, wy + 12);
-    g.strokePath();
-  }
-
   /**
    * Try to start a fishing cast on the water tile directly ahead of the
    * player. Returns true if a session started; false if the facing tile
    * isn't a fishable surface.
    */
-  private tryStartFishing(): boolean {
+  protected tryStartFishing(): boolean {
     const off = bobberOffsetPx(this.player.facing);
     const bobberX = this.player.x + off.dx;
     const bobberY = this.player.y + off.dy;
@@ -1369,7 +1100,7 @@ export class WorldScene extends Phaser.Scene {
     return true;
   }
 
-  private nearestNodeForTool(toolId: string | undefined): GatheringNode | null {
+  protected nearestNodeForTool(toolId: string | undefined): GatheringNode | null {
     if (!toolId) return null;
     let best: GatheringNode | null = null;
     let bestDist = Infinity;
@@ -1386,7 +1117,7 @@ export class WorldScene extends Phaser.Scene {
     return best;
   }
 
-  private nearestPalmWithCoconut(): GatheringNode | null {
+  protected nearestPalmWithCoconut(): GatheringNode | null {
     let best: GatheringNode | null = null;
     let bestDist = Infinity;
     for (const node of this.nodes) {
@@ -1402,7 +1133,7 @@ export class WorldScene extends Phaser.Scene {
     return best;
   }
 
-  private shakePalm(palm: GatheringNode) {
+  protected shakePalm(palm: GatheringNode) {
     const ok = this.player.playAction("chop", () => {
       this.dropPerHitFromNode(palm);
       const next = (this.palmShakeCounts.get(palm) ?? 0) + 1;
@@ -1439,7 +1170,7 @@ export class WorldScene extends Phaser.Scene {
     return best;
   }
 
-  private gatherFrom(node: GatheringNode) {
+  protected gatherFromNode(node: GatheringNode) {
     const animState = node.def.kind === "tree" ? "chop" : "mine";
     const ok = this.player.playAction(animState, () => {
       const nodeDmg = 1;
@@ -1472,6 +1203,7 @@ export class WorldScene extends Phaser.Scene {
       quantity,
       node.x + offsetX,
       node.y + offsetY,
+      "world",
     );
     this.spawnDroppedSprite(entry);
   }
@@ -1484,7 +1216,7 @@ export class WorldScene extends Phaser.Scene {
     const { itemId, quantity: qMin, quantityMax } = node.def.drop;
     const qMax = quantityMax ?? qMin;
     const quantity = qMin + Math.floor(Math.random() * (qMax - qMin + 1));
-    const entry = this.droppedItemsState.add(itemId, quantity, x, y);
+    const entry = this.droppedItemsState.add(itemId, quantity, x, y, "world");
     this.spawnDroppedSprite(entry);
     showToast(`+${quantity} ${ITEMS[itemId].name}`, 1500);
     bus.emitTyped("gathering:nodeHarvested", {
@@ -1493,11 +1225,6 @@ export class WorldScene extends Phaser.Scene {
       yieldedItemId: itemId,
       yieldedQuantity: quantity,
     });
-  }
-
-  private loadDropTables() {
-    const file = dropTablesDataRaw as DropTablesFile;
-    for (const t of file.tables) this.dropTables.set(t.id, t);
   }
 
   private enemyGate: SpawnGateRegistry<EnemyInstanceData, Enemy> | null = null;
@@ -1529,48 +1256,6 @@ export class WorldScene extends Phaser.Scene {
     this.enemyGate.register(file.instances);
   }
 
-  private addEnemy(enemy: Enemy) {
-    this.enemies.push(enemy);
-    entityRegistry.add(enemy);
-  }
-
-  private removeEnemyAt(index: number) {
-    const e = this.enemies[index];
-    if (!e) return;
-    entityRegistry.remove(e.id);
-    e.destroy();
-    this.enemies.splice(index, 1);
-  }
-
-  /** Roll a drop table and spawn drops at (x, y) as dropped items. */
-  private rollAndDrop(tableId: string, x: number, y: number) {
-    const table = this.dropTables.get(tableId);
-    if (!table) return;
-    for (const roll of table.rolls) {
-      if (Math.random() > roll.chance) continue;
-      const qty = roll.min + Math.floor(Math.random() * (roll.max - roll.min + 1));
-      if (qty <= 0) continue;
-      const ox = (Math.random() - 0.5) * TILE_SIZE * 0.6;
-      const oy = (Math.random() - 0.5) * TILE_SIZE * 0.4;
-      const entry = this.droppedItemsState.add(roll.itemId, qty, x + ox, y + oy);
-      this.spawnDroppedSprite(entry);
-    }
-  }
-
-  private nearestEnemyInReach(rangePx: number): Enemy | null {
-    let best: Enemy | null = null;
-    let bestDist = rangePx;
-    for (const e of this.enemies) {
-      if (!e.isAlive()) continue;
-      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, e.x, e.y);
-      if (d <= bestDist) {
-        best = e;
-        bestDist = d;
-      }
-    }
-    return best;
-  }
-
   private spawnGatheringNodes(ctx: PredicateContext) {
     const file = loadNodesFile(nodesDataRaw);
     this.nodeDefs = indexDefs(file.defs);
@@ -1594,6 +1279,43 @@ export class WorldScene extends Phaser.Scene {
       },
     });
     this.nodeGate.register(file.instances);
+  }
+
+  /** Drain torches buffered during the eager chunk load (which runs before
+   *  lighting is attached) and register them with the lighting system. */
+  private flushPendingTorches() {
+    for (const t of this.pendingTorches) this.spawnTorch(t);
+    this.pendingTorches.length = 0;
+  }
+
+  private spawnTorch(t: TorchSpawn) {
+    if (this.registeredTorchUids.has(t.uid)) return;
+    this.registeredTorchUids.add(t.uid);
+
+    const wx = t.tileX * TILE_SIZE + TILE_SIZE / 2;
+    const wy = t.tileY * TILE_SIZE + TILE_SIZE / 2;
+
+    // Small visual flame so the torch is locatable in daylight too. Color
+    // matches the lit-area tint so the source reads as the same fire.
+    const flame = this.add.circle(wx, wy, 2, t.color).setDepth(wy);
+    this.add.circle(wx, wy, 1, 0xfff2c0).setDepth(wy + 0.1);
+    this.tweens.add({
+      targets: flame,
+      scale: { from: 0.85, to: 1.15 },
+      duration: 220,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+
+    this.lighting.addLight({
+      id: `torch:${t.uid}`,
+      position: () => ({ x: wx, y: wy }),
+      radius: t.radiusTiles * TILE_SIZE,
+      intensity: t.intensity,
+      color: t.color,
+      tintStrength: t.tintStrength,
+    });
   }
 
   private spawnDecorations() {
@@ -1654,6 +1376,95 @@ export class WorldScene extends Phaser.Scene {
   private chestDef(defId: string) {
     const file = loadChestsFile(chestsDataRaw);
     return file.defs.find((d) => d.id === defId);
+  }
+
+  private spawnBusinessSigns() {
+    for (const s of this.signs) s.destroy();
+    this.signs = [];
+    const file = loadBusinessSignsFile(businessSignsDataRaw);
+    for (const inst of file.instances) {
+      const def = businessRegistry.tryGet(inst.businessId);
+      if (!def) {
+        console.warn(`Unknown businessId on sign "${inst.id}": ${inst.businessId}`);
+        continue;
+      }
+      this.signs.push(new BusinessSign(this, inst, def.displayName));
+    }
+  }
+
+  private nearestSign(): BusinessSign | null {
+    let best: BusinessSign | null = null;
+    let bestDist = BUSINESS_SIGN_INTERACT_RADIUS;
+    for (const sign of this.signs) {
+      const d = Phaser.Math.Distance.Between(
+        this.player.x,
+        this.player.y,
+        sign.x,
+        sign.y,
+      );
+      if (d <= bestDist) {
+        best = sign;
+        bestDist = d;
+      }
+    }
+    return best;
+  }
+
+  private getPlayerCoinTotal(): number {
+    const slots = useGameStore.getState().inventory.slots;
+    let t = 0;
+    for (const s of slots) if (s?.itemId === "coin") t += s.quantity;
+    return t;
+  }
+
+  private interactWithSign(sign: BusinessSign) {
+    const def = businessRegistry.tryGet(sign.businessId);
+    if (!def) return;
+    const store = useBusinessStore.getState();
+    const state = store.get(sign.businessId);
+    if (state?.owned) {
+      bus.emitTyped("business:open", { businessId: sign.businessId });
+      return;
+    }
+    const coins = this.getPlayerCoinTotal();
+    const canAfford = coins >= def.purchasePrice;
+    const speaker = def.displayName;
+    const pages = canAfford
+      ? [`Buy ${def.displayName} for ${def.purchasePrice} coin?`]
+      : [
+          `${def.displayName} is for sale at ${def.purchasePrice} coin. ` +
+            `You only have ${coins}.`,
+        ];
+    const choices: DialogueChoiceOption[] = canAfford
+      ? [
+          { label: "Buy it", goto: "" },
+          { label: "Maybe later", goto: "" },
+        ]
+      : [{ label: "Walk away", goto: "" }];
+    this.activeDialogue = {
+      speaker,
+      pages,
+      page: 0,
+      choices,
+      onSelect: (index) => {
+        if (!canAfford) return;
+        if (index !== 0) return;
+        const result = useBusinessStore.getState().purchase(sign.businessId);
+        if (result.ok) {
+          showToast(`You own ${def.displayName}!`, 2500, "success");
+          bus.emitTyped("business:open", { businessId: sign.businessId });
+        } else {
+          const reasonMsg: Record<string, string> = {
+            alreadyOwned: "You already own this property.",
+            unknownBusiness: "This sign points to nothing.",
+            insufficientCoin: "Not enough coin.",
+            inventoryFull: "Inventory full.",
+          };
+          showToast(reasonMsg[result.reason] ?? "Purchase failed.", 1800, "warn");
+        }
+      },
+    };
+    this.emitDialogue();
   }
 
   private nearestChest(): Chest | null {
@@ -1954,11 +1765,12 @@ export class WorldScene extends Phaser.Scene {
         this.openChest(chest);
         return;
       }
-      const pickup = this.nearestGroundItem();
-      if (pickup) {
-        this.pickUp(pickup);
+      const sign = this.nearestSign();
+      if (sign) {
+        this.interactWithSign(sign);
         return;
       }
+      if (this.tryPickupNearby()) return;
       if (this.isNearHelm()) {
         if (this.player.mounted) {
           showToast("Dismount before taking the helm.", 1500);
@@ -2068,6 +1880,7 @@ export class WorldScene extends Phaser.Scene {
       pages: this.activeDialogue.pages,
       page: this.activeDialogue.page,
       shopId: this.activeDialogue.shopId,
+      choices: this.activeDialogue.choices,
     });
   }
 
@@ -2165,9 +1978,11 @@ export class WorldScene extends Phaser.Scene {
       );
     }
 
-    // Respawn player-dropped items that haven't expired yet.
+    // Respawn player-dropped items that haven't expired yet. Drops live in a
+    // shared, game-scoped store keyed by mapId; this scene only owns sprites
+    // for entries on the world map.
     const now = Date.now();
-    for (const d of this.droppedItemsState.list()) {
+    for (const d of this.droppedItemsState.listForMap("world")) {
       if (d.expiresAt <= now) continue;
       this.spawnDroppedSprite(d);
     }
@@ -2175,105 +1990,21 @@ export class WorldScene extends Phaser.Scene {
     this.initialGroundItemsBuilt = true;
   }
 
-  private addGroundItemSprite(s: ItemSpawn, source: "authored" | "editor") {
+  private addGroundItemSprite(s: ItemSpawn, _source: "authored" | "editor") {
     if (this.groundItemsState.isPickedUp(s.uid)) return;
-    const x = (s.tileX + 0.5) * TILE_SIZE;
-    const y = (s.tileY + 0.5) * TILE_SIZE;
-    const sprite = this.add
-      .image(x, y, itemIconTextureKey(s.itemId))
-      .setOrigin(0.5)
-      .setDepth(y);
-    sprite.setDisplaySize(10, 10);
-    this.tweens.add({
-      targets: sprite,
-      y: y - 3,
-      duration: 900,
-      ease: "Sine.easeInOut",
-      yoyo: true,
-      repeat: -1,
-    });
-    this.groundItems.set(s.uid, {
+    this.spawnGroundItemSprite({
       uid: s.uid,
       itemId: s.itemId,
       quantity: s.quantity,
-      x,
-      y,
-      sprite,
-      source,
+      x: (s.tileX + 0.5) * TILE_SIZE,
+      y: (s.tileY + 0.5) * TILE_SIZE,
+      source: "static",
     });
   }
 
-  private spawnDroppedSprite(d: DroppedItem) {
-    const sprite = this.add
-      .image(d.x, d.y, itemIconTextureKey(d.itemId))
-      .setOrigin(0.5)
-      .setDepth(d.y);
-    sprite.setDisplaySize(10, 10);
-    this.tweens.add({
-      targets: sprite,
-      y: d.y - 3,
-      duration: 900,
-      ease: "Sine.easeInOut",
-      yoyo: true,
-      repeat: -1,
-    });
-    this.groundItems.set(d.uid, {
-      uid: d.uid,
-      itemId: d.itemId,
-      quantity: d.quantity,
-      x: d.x,
-      y: d.y,
-      sprite,
-      source: "dropped",
-    });
-  }
-
-  private nearestGroundItem(): GroundItem | null {
-    let best: GroundItem | null = null;
-    let bestDist = PICKUP_RADIUS;
-    for (const gi of this.groundItems.values()) {
-      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, gi.x, gi.y);
-      if (d <= bestDist) {
-        best = gi;
-        bestDist = d;
-      }
-    }
-    return best;
-  }
-
-  private pickUp(gi: GroundItem) {
-    const leftover = useGameStore.getState().inventoryAdd(gi.itemId, gi.quantity);
-    const taken = gi.quantity - leftover;
-    if (taken <= 0) {
-      showToast("Inventory is full.", 1500);
-      return;
-    }
-    const def = ITEMS[gi.itemId];
-    if (leftover > 0) {
-      gi.quantity = leftover;
-      showToast(`Picked up ${taken} ${def.name} (full).`, 1800);
-    } else {
-      gi.sprite.destroy();
-      this.groundItems.delete(gi.uid);
-      if (gi.source === "authored" || gi.source === "editor") {
-        this.groundItemsState.markPickedUp(gi.uid);
-      } else {
-        this.droppedItemsState.remove(gi.uid);
-      }
-      showToast(`Picked up ${taken} ${def.name}.`, 1500);
-    }
-  }
-
-  private expireDroppedItems() {
-    const now = Date.now();
-    const expired = this.droppedItemsState.pruneExpired(now);
-    for (const d of expired) {
-      const gi = this.groundItems.get(d.uid);
-      if (gi) {
-        gi.sprite.destroy();
-        this.groundItems.delete(d.uid);
-      }
-    }
+  /** Persist authored/editor item pickups so they don't respawn next session. */
+  protected onStaticPickedUp(uid: string): void {
+    this.groundItemsState.markPickedUp(uid);
   }
 
   /** Closest docked ship whose helm tile is within the player's interact
@@ -2609,7 +2340,7 @@ export class WorldScene extends Phaser.Scene {
 
   // ─── Walkability ─────────────────────────────────────────────────
 
-  private isWalkablePx(px: number, py: number, ignoreEnemy?: Enemy): boolean {
+  protected isWalkablePx(px: number, py: number, ignoreEnemy?: Enemy): boolean {
     // Feet hitbox: axis-aligned rectangle centered on (px, py + offsetY).
     const hw = PLAYER_FEET_WIDTH / 2;
     const hh = PLAYER_FEET_HEIGHT / 2;
@@ -2653,6 +2384,9 @@ export class WorldScene extends Phaser.Scene {
     for (const c of this.chests) {
       if (c.blocksPx(px, py)) return false;
     }
+    for (const s of this.signs) {
+      if (s.blocksPx(px, py)) return false;
+    }
     // Enemies only collide with each other — players and enemies pass through freely.
     if (ignoreEnemy) {
       for (const enemy of this.enemies) {
@@ -2687,6 +2421,11 @@ export class WorldScene extends Phaser.Scene {
         prompt = `Press E to use ${station.def.name}`;
       } else if (this.nearestChest()) {
         prompt = `Press E to open ${this.nearestChest()!.def.name}`;
+      } else if (this.nearestSign()) {
+        const sign = this.nearestSign()!;
+        const owned =
+          useBusinessStore.getState().get(sign.businessId)?.owned ?? false;
+        prompt = owned ? "Press E to manage" : "Press E to inspect";
       } else {
         const pickup = this.nearestGroundItem();
         if (pickup) {

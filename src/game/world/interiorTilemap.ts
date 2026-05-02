@@ -3,8 +3,17 @@ import { TILE_SIZE } from "../constants";
 import { interiorTilemapKey } from "../assets/keys";
 import { tilesetImageKeyFor } from "./chunkManager";
 import { ShapeCollider } from "./shapeCollision";
-import { parseInteriorSpawns, type InteriorEntrySpawn, type InteriorExitSpawn } from "./spawns";
+import {
+  parseInteriorSpawns,
+  type InteriorEntrySpawn,
+  type InteriorExitSpawn,
+  type RepairTargetSpawn,
+  type SeatSpawn,
+  type WorkstationSpawn,
+} from "./spawns";
 import { TileRegistry } from "./tileRegistry";
+import { businessIdForInteriorKey } from "../business/registry";
+import { useBusinessStore } from "../business/businessStore";
 
 const INTERIOR_OVERHEAD_LAYERS = new Set(["props_high", "roof"]);
 const INTERIOR_OVERHEAD_DEPTH_BASE = 1_000_000;
@@ -17,10 +26,27 @@ export interface InteriorTilemap {
   shapes: ShapeCollider;
   exits: InteriorExitSpawn[];
   entries: InteriorEntrySpawn[];
+  repairTargets: RepairTargetSpawn[];
+  workstations: WorkstationSpawn[];
+  seats: SeatSpawn[];
   /** Per-tile images extracted from layers flagged with the `y-sort` custom
    *  property — each one gets its own depth so it sorts against the player
    *  (and other entities) by world y. */
   ySortImages: Phaser.GameObjects.Image[];
+  /** Unsubscribes the visibility-gating subscription from `useBusinessStore`.
+   *  Called by `destroyInteriorTilemap`. */
+  unsubscribe: () => void;
+}
+
+/** Parse a layer name following the `<base>@tier:<nodeId>` convention. Layers
+ *  without the suffix gate on nothing (always visible). */
+export function parseGatedLayerName(name: string): {
+  base: string;
+  gateNodeId: string | null;
+} {
+  const m = /^(.+)@tier:([A-Za-z0-9_]+)$/.exec(name);
+  if (!m) return { base: name, gateNodeId: null };
+  return { base: m[1], gateNodeId: m[2] };
 }
 
 function layerHasYSort(layerData: Phaser.Tilemaps.LayerData): boolean {
@@ -115,7 +141,12 @@ export function buildInteriorTilemap(
   const renderScale = TILE_SIZE / tilemap.tileWidth;
   const layers: Phaser.Tilemaps.TilemapLayer[] = [];
   const ySortImages: Phaser.GameObjects.Image[] = [];
+  /** Tile + ysort-image pairs keyed by gateNodeId, for live visibility flips. */
+  const gatedTileLayers = new Map<string, Phaser.Tilemaps.TilemapLayer[]>();
+  const gatedYSortImages = new Map<string, Phaser.GameObjects.Image[]>();
+
   tilemap.layers.forEach((layerData, idx) => {
+    const { gateNodeId } = parseGatedLayerName(layerData.name);
     const layer = tilemap.createLayer(layerData.name, boundTilesets, 0, 0) as
       | Phaser.Tilemaps.TilemapLayer
       | null;
@@ -124,11 +155,26 @@ export function buildInteriorTilemap(
     const overhead = INTERIOR_OVERHEAD_LAYERS.has(layerData.name.toLowerCase());
     layer.setDepth(overhead ? INTERIOR_OVERHEAD_DEPTH_BASE + idx : idx);
     layers.push(layer);
+    if (gateNodeId) {
+      const list = gatedTileLayers.get(gateNodeId) ?? [];
+      list.push(layer);
+      gatedTileLayers.set(gateNodeId, list);
+    }
     if (layerHasYSort(layerData)) {
       const imgs = extractYSortImages(scene, layer, renderScale);
       for (const img of imgs) ySortImages.push(img);
+      if (gateNodeId) {
+        const list = gatedYSortImages.get(gateNodeId) ?? [];
+        list.push(...imgs);
+        gatedYSortImages.set(gateNodeId, list);
+      }
     }
   });
+
+  // Object-layer gating (Tiled object layers can also carry @tier:). The
+  // tilemap doesn't materialize them as game objects; gameplay code that
+  // reads object layers should additionally filter using
+  // `objectLayerGateNodeId(name)` (see helper below).
 
   const registry = new TileRegistry(tilemap);
   const shapes = new ShapeCollider({
@@ -137,12 +183,63 @@ export function buildInteriorTilemap(
     rawTmj: cached?.data,
     renderScale,
   });
-  const { exits, entries } = parseInteriorSpawns(tilemap);
+  const { exits, entries, repairTargets, workstations, seats } = parseInteriorSpawns(tilemap);
 
-  return { key, tilemap, layers, registry, shapes, exits, entries, ySortImages };
+  // ─── Visibility gating ──────────────────────────────────────────────────
+  // Look up the business that "owns" this interior. If none, every gated
+  // layer stays hidden — no business → no unlocks possible.
+  const ownerId = businessIdForInteriorKey(key);
+
+  const applyVisibility = (unlocked: ReadonlySet<string>) => {
+    for (const [nodeId, lyrs] of gatedTileLayers) {
+      const visible = unlocked.has(nodeId);
+      for (const l of lyrs) l.setVisible(visible);
+    }
+    for (const [nodeId, imgs] of gatedYSortImages) {
+      const visible = unlocked.has(nodeId);
+      for (const img of imgs) img.setVisible(visible);
+    }
+  };
+
+  const initialUnlocked = ownerId
+    ? new Set(useBusinessStore.getState().get(ownerId)?.unlockedNodes ?? [])
+    : new Set<string>();
+  applyVisibility(initialUnlocked);
+
+  let lastSig = serializeUnlocked(initialUnlocked);
+  const unsubscribe = ownerId
+    ? useBusinessStore.subscribe((s) => {
+        const cur = s.byId[ownerId]?.unlockedNodes ?? [];
+        const set = new Set(cur);
+        const sig = serializeUnlocked(set);
+        if (sig === lastSig) return;
+        lastSig = sig;
+        applyVisibility(set);
+      })
+    : () => {};
+
+  return {
+    key,
+    tilemap,
+    layers,
+    registry,
+    shapes,
+    exits,
+    entries,
+    repairTargets,
+    workstations,
+    seats,
+    ySortImages,
+    unsubscribe,
+  };
+}
+
+function serializeUnlocked(set: ReadonlySet<string>): string {
+  return [...set].sort().join("|");
 }
 
 export function destroyInteriorTilemap(t: InteriorTilemap): void {
+  t.unsubscribe();
   for (const img of t.ySortImages) img.destroy();
   for (const layer of t.layers) layer.destroy();
   t.tilemap.destroy();

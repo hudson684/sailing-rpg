@@ -3,9 +3,16 @@ import { TILE_SIZE } from "../constants";
 import {
   bus,
   type DialogueAction,
+  type DialogueChoiceOption,
 } from "../bus";
+import { businesses as businessRegistry, businessKinds } from "../business/registry";
+import { useBusinessStore } from "../business/businessStore";
+import { findUpgradeNode } from "../business/upgradeEffects";
+import { getHireable, spritePackSourceNpc } from "../business/hireables";
+import type { HiredNpc } from "../business/businessTypes";
+import { CustomerSim } from "../business/customerSim";
 import { setHud, showToast } from "../../ui/store/ui";
-import { Player, type Facing } from "../entities/Player";
+import { Player, type Facing, FACING_VALUES } from "../entities/Player";
 import { getOrCreatePlayerModel } from "../entities/Player";
 import { bindPlayerVisualSubscriptions } from "../entities/playerEquipmentVisuals";
 import { useGameStore } from "../store/gameStore";
@@ -24,13 +31,14 @@ import npcDataRaw from "../data/npcs.json";
 import { Enemy, registerEnemyAnimations } from "../entities/Enemy";
 import enemiesDataRaw from "../data/enemies.json";
 import type { EnemiesFile, EnemyDef } from "../entities/enemyTypes";
+import { GameplayScene } from "./GameplayScene";
+import { foodRegen } from "../player/foodRegen";
 import { GatheringNode, type NodeDef } from "../world/GatheringNode";
 import { loadNodesFile } from "../world/GatheringNode";
 import nodesDataRaw from "../data/nodes.json";
 import { CraftingStation } from "../world/CraftingStation";
 import { craftingStations } from "../crafting/stations";
 import type { CraftingStationInstanceData } from "../crafting/types";
-import { itemIconTextureKey } from "../assets/keys";
 import {
   loadInteriorInstances,
   type InteriorEditorItem,
@@ -41,17 +49,18 @@ import {
   interiorPixelSize,
   type InteriorTilemap,
 } from "../world/interiorTilemap";
-import type { InteriorExitSpawn } from "../world/spawns";
+import type { InteriorExitSpawn, RepairTargetSpawn, WorkstationSpawn } from "../world/spawns";
 import { getActiveSaveController } from "../save/activeController";
 import { bindSceneToVirtualInput } from "../input/virtualInputBridge";
 import { FishingSession } from "../fishing/fishingSession";
 import { bobberOffsetPx, type FishingSurface } from "../fishing/fishingSurface";
-import type { ItemId } from "../inventory/items";
+import { ITEMS, type ItemId } from "../inventory/items";
 import { ZoomController } from "../camera/ZoomController";
 import { MovementController } from "../player/MovementController";
 
 const DOOR_INTERACT_RADIUS = TILE_SIZE * 0.9;
 const SHOP_CLICK_RADIUS = TILE_SIZE * 1.5;
+const REPAIR_TARGET_INTERACT_RADIUS = TILE_SIZE * 1.6;
 
 /** Payload passed to `scene.launch("Interior", ...)` from WorldScene. */
 export interface InteriorLaunchData {
@@ -72,34 +81,35 @@ export interface InteriorReturnData {
   returnFacing: Facing;
 }
 
-interface InteriorGroundItem {
-  uid: string;
-  itemId: string;
-  quantity: number;
-  x: number;
-  y: number;
-  sprite: Phaser.GameObjects.Image;
-}
-
-export class InteriorScene extends Phaser.Scene {
+export class InteriorScene extends GameplayScene {
   private launchData!: InteriorLaunchData;
   private interior!: InteriorTilemap;
-  private player!: Player;
   private npcReconciler!: SpriteReconciler<NpcSprite | CharacterSprite>;
   private lastExitTile: { x: number; y: number } | null = null;
   private dialogues: Record<string, DialogueDef> = {};
-  private activeDialogue: { speaker: string; pages: string[]; page: number; shopId?: string } | null = null;
-  private fishingSession: FishingSession | null = null;
-
+  private activeDialogue: {
+    speaker: string;
+    pages: string[];
+    page: number;
+    shopId?: string;
+    choices?: DialogueChoiceOption[];
+    onSelect?: (index: number) => void;
+  } | null = null;
   // Interior-scoped entities (editor-placed, loaded from interiorInstances.json).
-  private enemies: Enemy[] = [];
   private nodes: GatheringNode[] = [];
   private craftingStationsList: CraftingStation[] = [];
   private stationInstanceData: CraftingStationInstanceData[] = [];
   private enemyDefs: Map<string, EnemyDef> = new Map();
   private nodeDefs: Map<string, NodeDef> = new Map();
   private editorItems = new Map<string, InteriorEditorItem>();
-  private groundItems = new Map<string, InteriorGroundItem>();
+  /** Entity-registry ids of NPCs spawned for the staff of business(es)
+   *  whose `interiorKey` matches this scene. Tracked separately from
+   *  `npcDataRaw`-sourced NPCs so we can selectively rebuild them on
+   *  `business:staffChanged` without disturbing static NPCs. */
+  private hiredStaffNpcIds: string[] = [];
+  /** Per-business customer sims for whichever owned business(es) this
+   *  interior hosts. Created on enter, torn down on exit. */
+  private customerSims: CustomerSim[] = [];
 
   private zoom!: ZoomController;
   private movement!: MovementController;
@@ -153,7 +163,10 @@ export class InteriorScene extends Phaser.Scene {
     entityRegistry.setMap(model.id, mapId);
     model.x = (entryTx + 0.5) * TILE_SIZE;
     model.y = (entryTy + 0.5) * TILE_SIZE;
-    model.facing = "up";
+    model.facing =
+      entry && FACING_VALUES.includes(entry.facing as Facing)
+        ? (entry.facing as Facing)
+        : "up";
     model.frozen = false;
     this.player = new Player(this, model);
     this.lastExitTile = { x: entryTx, y: entryTy };
@@ -258,8 +271,13 @@ export class InteriorScene extends Phaser.Scene {
     // refreshed when a new Player is built in a newly-woken scene.)
     this.unsubPlayerVisuals = bindPlayerVisualSubscriptions(this.player);
     bus.onTyped("dialogue:action", this.onDialogueAction);
+    bus.onTyped("business:staffChanged", this.onStaffChanged);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.onShutdown());
+
+    // Wire combat (Q-attack, hotbar, projectiles, drop-table loader). Must
+    // run after `this.player` is assigned.
+    this.setupCombat();
 
     this.spawnInteriorEntities();
 
@@ -277,21 +295,9 @@ export class InteriorScene extends Phaser.Scene {
     if (!this.activeDialogue) this.updateOnFoot(dt);
     this.checkAutoExit();
     for (const node of this.nodes) node.update(this.time.now);
-    const playerCtx = this.activeDialogue
-      ? undefined
-      : {
-          x: this.player.x,
-          y: this.player.y,
-          onHit: (_dmg: number) => {},
-        };
-    for (const enemy of this.enemies) {
-      enemy.update(
-        dtMs,
-        this.time.now,
-        (x, y) => this.isWalkablePx(x, y),
-        playerCtx,
-      );
-    }
+    // Enemies, projectiles, and bow reticle are owned by the GameplayScene base.
+    this.tickCombat(dtMs);
+    this.tickCustomerSims(dtMs);
     this.npcReconciler.syncAll();
     this.zoom.update(dtMs);
     this.emitHud();
@@ -301,7 +307,7 @@ export class InteriorScene extends Phaser.Scene {
     this.movement.update(dt);
   }
 
-  private isWalkablePx(px: number, py: number): boolean {
+  protected isWalkablePx(px: number, py: number): boolean {
     const tx = Math.floor(px / TILE_SIZE);
     const ty = Math.floor(py / TILE_SIZE);
     if (
@@ -311,6 +317,92 @@ export class InteriorScene extends Phaser.Scene {
     ) return false;
     if (this.interior.registry.isBlocked(tx, ty)) return false;
     return !this.interior.shapes.isBlockedAtLocalPx(px, py);
+  }
+
+  // ─── GameplayScene hook implementations ──────────────────────────────────
+
+  protected getMapId(): string {
+    return `interior:${this.launchData.interiorKey}`;
+  }
+
+  /** Interior is always on-foot when not in dialogue — no helm or anchoring. */
+  protected isOnFoot(): boolean {
+    return !this.activeDialogue;
+  }
+
+  protected isDialogueActive(): boolean {
+    return this.activeDialogue !== null;
+  }
+
+  protected isBlockedPx(x: number, y: number): boolean {
+    const tx = Math.floor(x / TILE_SIZE);
+    const ty = Math.floor(y / TILE_SIZE);
+    if (
+      tx < 0 || ty < 0 ||
+      tx >= this.interior.tilemap.width ||
+      ty >= this.interior.tilemap.height
+    ) return true;
+    if (this.interior.registry.isBlocked(tx, ty)) return true;
+    return this.interior.shapes.isBlockedAtLocalPx(x, y);
+  }
+
+  protected nearestNodeForTool(toolId: string | undefined): GatheringNode | null {
+    if (!toolId) return null;
+    let best: GatheringNode | null = null;
+    let bestDist = Infinity;
+    for (const node of this.nodes) {
+      if (!node.isAlive()) continue;
+      if (node.def.requiredTool !== toolId) continue;
+      const reach = TILE_SIZE * 1.4 * (node.def.interactRadiusMul ?? 1);
+      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, node.x, node.y);
+      if (d <= reach && d <= bestDist) {
+        best = node;
+        bestDist = d;
+      }
+    }
+    return best;
+  }
+
+  protected gatherFromNode(node: GatheringNode): void {
+    const animState = node.def.kind === "tree" ? "chop" : "mine";
+    const mapId = this.getMapId();
+    this.player.playAction(animState, () => {
+      const broken = node.hit(this);
+      useGameStore.getState().jobsAddXp(node.def.skill, node.def.xpPerHit);
+      bus.emitTyped("gathering:nodeHit", { defId: node.def.id, mapId });
+      if (node.def.perHitDrop) {
+        const drop = node.def.perHitDrop;
+        const ox = (Math.random() - 0.5) * TILE_SIZE * 0.5;
+        const oy = TILE_SIZE * 0.4 + Math.random() * 6;
+        const qMax = drop.quantityMax ?? drop.quantity;
+        const qty = drop.quantity + Math.floor(Math.random() * (qMax - drop.quantity + 1));
+        if (qty > 0) this.dropLoot(drop.itemId, qty, node.x + ox, node.y + oy);
+      }
+      if (broken) {
+        const { itemId, quantity: qMin, quantityMax } = node.def.drop;
+        const qMax = quantityMax ?? qMin;
+        const quantity = qMin + Math.floor(Math.random() * (qMax - qMin + 1));
+        const ox = (Math.random() - 0.5) * TILE_SIZE * 0.5;
+        const oy = TILE_SIZE * 0.4 + Math.random() * 6;
+        this.dropLoot(itemId, quantity, node.x + ox, node.y + oy);
+        showToast(`+${quantity} ${ITEMS[itemId].name}`, 1500);
+        bus.emitTyped("gathering:nodeHarvested", {
+          defId: node.def.id,
+          mapId,
+          yieldedItemId: itemId,
+          yieldedQuantity: quantity,
+        });
+      }
+    });
+  }
+
+  // spawnDroppedSprite + pickup helpers are inherited from GameplayScene.
+
+  /** On death inside an interior, kick the player back out to the world
+   *  and let `onInteriorWake` snap them to the saved respawn point. */
+  protected onPlayerDeathRespawn(): void {
+    foodRegen.reset();
+    this.exitBack();
   }
 
   private onInteract() {
@@ -328,17 +420,109 @@ export class InteriorScene extends Phaser.Scene {
       this.openDialogueWith(npc);
       return;
     }
+    const repair = this.nearestRepairTarget();
+    if (repair) {
+      this.interactWithRepairTarget(repair);
+      return;
+    }
+    if (this.tryPickupNearby()) return;
     const exit = this.nearestExit();
     if (exit) {
       this.exitBack();
       return;
     }
-    this.tryStartFishing();
+    if (useGameStore.getState().equipment.equipped.mainHand === "fishing_rod") {
+      this.tryStartFishing();
+    }
   }
 
-  private tryStartFishing(): void {
-    const mainHand = useGameStore.getState().equipment.equipped.mainHand;
-    if (mainHand !== "fishing_rod") return;
+  private nearestRepairTarget(): RepairTargetSpawn | null {
+    let best: RepairTargetSpawn | null = null;
+    let bestDist = REPAIR_TARGET_INTERACT_RADIUS;
+    const unlocked = (id: string) => {
+      const state = useBusinessStore.getState().get(id);
+      return new Set(state?.unlockedNodes ?? []);
+    };
+    for (const r of this.interior.repairTargets) {
+      // Already-unlocked nodes don't show a prompt — the repaired view has
+      // taken over.
+      if (unlocked(r.businessId).has(r.nodeId)) continue;
+      const x = (r.tileX + 0.5) * TILE_SIZE;
+      const y = (r.tileY + 0.5) * TILE_SIZE;
+      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, x, y);
+      if (d <= bestDist) {
+        best = r;
+        bestDist = d;
+      }
+    }
+    return best;
+  }
+
+  private interactWithRepairTarget(target: RepairTargetSpawn) {
+    const def = businessRegistry.tryGet(target.businessId);
+    if (!def) {
+      showToast("Unknown business.", 1500, "warn");
+      return;
+    }
+    const kind = businessKinds.tryGet(def.kindId);
+    if (!kind) return;
+    const node = findUpgradeNode(kind, target.nodeId);
+    if (!node) {
+      showToast("Unknown upgrade.", 1500, "warn");
+      return;
+    }
+    const state = useBusinessStore.getState().get(target.businessId);
+    if (!state || !state.owned) {
+      showToast(`You don't own ${def.displayName}.`, 1800, "warn");
+      return;
+    }
+    const coffers = state.coffers;
+    const canAfford = coffers >= node.cost;
+    const speaker = node.displayName;
+    const pages = canAfford
+      ? [
+          `${node.description}\n\nPay ${node.cost} coin from coffers? ` +
+            `(coffers: ${coffers})`,
+        ]
+      : [
+          `${node.description}\n\nNeeds ${node.cost} coin in the till. ` +
+            `Coffers hold ${coffers}.`,
+        ];
+    const choices: DialogueChoiceOption[] = canAfford
+      ? [
+          { label: "Yes — fix it", goto: "" },
+          { label: "Not yet", goto: "" },
+        ]
+      : [{ label: "Walk away", goto: "" }];
+    this.activeDialogue = {
+      speaker,
+      pages,
+      page: 0,
+      choices,
+      onSelect: (index) => {
+        if (!canAfford || index !== 0) return;
+        const result = useBusinessStore
+          .getState()
+          .tryUnlockNode(target.businessId, target.nodeId);
+        if (result.ok) {
+          showToast(`${node.displayName} — done!`, 2500, "success");
+        } else {
+          const reasonMsg: Record<string, string> = {
+            unknownBusiness: "Unknown business.",
+            unknownNode: "Unknown upgrade.",
+            notOwned: "You don't own this property.",
+            alreadyUnlocked: "Already done.",
+            missingPrerequisites: "Finish the earlier repairs first.",
+            insufficientCoffers: "Not enough coin in the till.",
+          };
+          showToast(reasonMsg[result.reason] ?? "Repair failed.", 1800, "warn");
+        }
+      },
+    };
+    this.emitDialogue();
+  }
+
+  protected tryStartFishing(): boolean {
     const off = bobberOffsetPx(this.player.facing);
     const bobberX = this.player.x + off.dx;
     const bobberY = this.player.y + off.dy;
@@ -348,10 +532,10 @@ export class InteriorScene extends Phaser.Scene {
       targetTx < 0 || targetTy < 0 ||
       targetTx >= this.interior.tilemap.width ||
       targetTy >= this.interior.tilemap.height
-    ) return;
+    ) return false;
     const surface = this.interior.registry.fishingSurface(targetTx, targetTy) as FishingSurface | null;
-    if (!surface) return;
-    if (!this.player.enterFishingPose()) return;
+    if (!surface) return false;
+    if (!this.player.enterFishingPose()) return false;
     const session = new FishingSession({
       scene: this,
       player: this.player,
@@ -366,6 +550,7 @@ export class InteriorScene extends Phaser.Scene {
     });
     this.fishingSession = session;
     session.start();
+    return true;
   }
 
   private onRightClick(worldX: number, worldY: number) {
@@ -490,6 +675,18 @@ export class InteriorScene extends Phaser.Scene {
       this.closeDialogue();
       return;
     }
+    if (action.type === "select") {
+      const handler = this.activeDialogue.onSelect;
+      if (handler) {
+        const index = action.index;
+        this.closeDialogue();
+        handler(index);
+      }
+      return;
+    }
+    if (this.activeDialogue.choices && this.activeDialogue.choices.length > 0) {
+      return;
+    }
     this.activeDialogue.page += 1;
     if (this.activeDialogue.page >= this.activeDialogue.pages.length) {
       this.closeDialogue();
@@ -511,6 +708,7 @@ export class InteriorScene extends Phaser.Scene {
       pages: this.activeDialogue.pages,
       page: this.activeDialogue.page,
       shopId: this.activeDialogue.shopId,
+      choices: this.activeDialogue.choices,
     });
   }
 
@@ -521,8 +719,20 @@ export class InteriorScene extends Phaser.Scene {
       if (npc) {
         prompt = `Press E to talk to ${npc.def.name}`;
       } else {
-        const exit = this.nearestExit();
-        if (exit?.promptOnly) prompt = "Press E to leave";
+        const repair = this.nearestRepairTarget();
+        if (repair) {
+          const kind = (() => {
+            const def = businessRegistry.tryGet(repair.businessId);
+            return def ? businessKinds.tryGet(def.kindId) : null;
+          })();
+          const node = kind ? findUpgradeNode(kind, repair.nodeId) : null;
+          prompt = node
+            ? `Press E — ${node.displayName.toLowerCase()}`
+            : "Press E to repair";
+        } else {
+          const exit = this.nearestExit();
+          if (exit?.promptOnly) prompt = "Press E to leave";
+        }
       }
     }
     setHud({
@@ -578,16 +788,15 @@ export class InteriorScene extends Phaser.Scene {
     this.fishingSession?.cancel("scene");
     this.fishingSession = null;
     bus.offTyped("dialogue:action", this.onDialogueAction);
+    bus.offTyped("business:staffChanged", this.onStaffChanged);
+    this.stopCustomerSims();
+    this.despawnHiredStaff();
     this.unsubPlayerVisuals?.();
     this.unsubPlayerVisuals = null;
     const mapId: MapId = { kind: "interior", key: this.launchData.interiorKey };
     worldTicker.unregisterWalkable(mapId);
     this.npcReconciler?.shutdown();
-    for (const e of this.enemies) {
-      entityRegistry.remove(e.id);
-      e.destroy();
-    }
-    this.enemies = [];
+    this.teardownCombat();
     for (const n of this.nodes) n.destroy();
     this.nodes = [];
     for (const s of this.craftingStationsList) s.destroy();
@@ -616,9 +825,7 @@ export class InteriorScene extends Phaser.Scene {
     for (const e of inst.enemies) {
       const def = this.enemyDefs.get(e.defId);
       if (!def) continue;
-      const enemy = new Enemy(this, def, e);
-      this.enemies.push(enemy);
-      entityRegistry.add(enemy);
+      this.addEnemy(new Enemy(this, def, e));
       this.bumpAutoIncrement(e.id);
     }
     for (const n of inst.nodes) {
@@ -638,36 +845,156 @@ export class InteriorScene extends Phaser.Scene {
       this.editorItems.set(it.id, { ...it });
       this.addGroundItemSprite(it);
     }
+    this.spawnHiredStaff();
+    this.startCustomerSims();
   }
+
+  private startCustomerSims(): void {
+    for (const def of businessRegistry.all()) {
+      if (def.interiorKey !== this.launchData.interiorKey) continue;
+      const state = useBusinessStore.getState().get(def.id);
+      if (!state || !state.owned) continue;
+      const sim = new CustomerSim({
+        scene: this,
+        businessId: def.id,
+        interiorKey: this.launchData.interiorKey,
+        interior: this.interior,
+        isWalkablePx: (px, py) => this.isWalkablePx(px, py),
+      });
+      sim.start();
+      this.customerSims.push(sim);
+    }
+  }
+
+  private tickCustomerSims(dtMs: number): void {
+    for (const sim of this.customerSims) sim.tick(dtMs);
+  }
+
+  private stopCustomerSims(): void {
+    for (const sim of this.customerSims) sim.stop();
+    this.customerSims = [];
+  }
+
+  /** Spawn one wandering NpcModel per HiredNpc whose business `interiorKey`
+   *  matches this scene's interior. Each is anchored at the workstation
+   *  Tiled object whose `tag` matches the role's `workstationTag`. Staff
+   *  with no matching workstation fall back to the entry tile so they're
+   *  not invisible — easy to spot and fix in Tiled. */
+  private spawnHiredStaff() {
+    const interiorKey = this.launchData.interiorKey;
+    const wsByTag = new Map<string, WorkstationSpawn[]>();
+    for (const w of this.interior.workstations) {
+      const list = wsByTag.get(w.tag) ?? [];
+      list.push(w);
+      wsByTag.set(w.tag, list);
+    }
+    const fallbackEntry = this.interior.entries[0];
+    const fallbackTile = fallbackEntry
+      ? { tileX: fallbackEntry.tileX, tileY: fallbackEntry.tileY }
+      : { tileX: 1, tileY: 1 };
+
+    const mapId: MapId = { kind: "interior", key: interiorKey };
+    for (const bizDef of businessRegistry.all()) {
+      if (bizDef.interiorKey !== interiorKey) continue;
+      const state = useBusinessStore.getState().get(bizDef.id);
+      if (!state || !state.owned) continue;
+      const kind = businessKinds.tryGet(bizDef.kindId);
+      if (!kind) continue;
+      const rolesById = new Map(kind.roles.map((r) => [r.id, r]));
+      for (const hire of state.staff) {
+        const role = rolesById.get(hire.roleId);
+        if (!role) continue;
+        const sources = wsByTag.get(role.workstationTag) ?? [];
+        // Pick a stable workstation per (hireableId) so re-spawns land in
+        // the same spot — hash the id into the slot index.
+        const tile = sources.length > 0
+          ? sources[hashIndex(hire.hireableId, sources.length)]
+          : fallbackTile;
+        const npc = this.synthesizeStaffNpc(bizDef.id, hire, tile.tileX, tile.tileY);
+        if (!npc) continue;
+        if (entityRegistry.get(npc.id)) entityRegistry.remove(npc.id);
+        const model = new NpcModel(npc, mapId);
+        entityRegistry.add(model);
+        this.hiredStaffNpcIds.push(model.id);
+      }
+    }
+  }
+
+  private despawnHiredStaff() {
+    for (const id of this.hiredStaffNpcIds) {
+      if (entityRegistry.get(id)) entityRegistry.remove(id);
+    }
+    this.hiredStaffNpcIds = [];
+  }
+
+  private synthesizeStaffNpc(
+    businessId: string,
+    hire: HiredNpc,
+    tileX: number,
+    tileY: number,
+  ): import("../entities/npcTypes").NpcDef | null {
+    const hireableDef = getHireable(hire.hireableId);
+    if (!hireableDef) return null;
+    const source = spritePackSourceNpc(hireableDef.spritePack);
+    if (!source || !source.sprite) return null;
+    return {
+      id: `staff:${businessId}:${hire.hireableId}`,
+      name: hireableDef.name,
+      sprite: source.sprite,
+      spritePackId: source.id,
+      display: source.display,
+      map: { interior: this.launchData.interiorKey },
+      spawn: { tileX, tileY },
+      facing: "down",
+      movement: {
+        type: "wander",
+        radiusTiles: 1.2,
+        moveSpeed: 18,
+        pauseMs: 1500,
+        stepMs: 900,
+      },
+      dialogue: "",
+    };
+  }
+
+  private onStaffChanged = ({ businessId }: { businessId: string }) => {
+    const def = businessRegistry.tryGet(businessId);
+    if (!def) return;
+    if (def.interiorKey !== this.launchData.interiorKey) return;
+    this.despawnHiredStaff();
+    this.spawnHiredStaff();
+  };
 
   private bumpAutoIncrement(_id: string) {
     // No-op since edit-mode placement was removed; kept for call-site stability.
   }
 
   private addGroundItemSprite(it: InteriorEditorItem) {
-    const x = (it.tileX + 0.5) * TILE_SIZE;
-    const y = (it.tileY + 0.5) * TILE_SIZE;
-    const sprite = this.add
-      .image(x, y, itemIconTextureKey(it.itemId))
-      .setOrigin(0.5)
-      .setDepth(y);
-    sprite.setDisplaySize(10, 10);
-    this.tweens.add({
-      targets: sprite,
-      y: y - 3,
-      duration: 900,
-      ease: "Sine.easeInOut",
-      yoyo: true,
-      repeat: -1,
-    });
-    this.groundItems.set(it.id, {
+    this.spawnGroundItemSprite({
       uid: it.id,
       itemId: it.itemId,
       quantity: it.quantity,
-      x,
-      y,
-      sprite,
+      x: (it.tileX + 0.5) * TILE_SIZE,
+      y: (it.tileY + 0.5) * TILE_SIZE,
+      source: "static",
     });
   }
 
+  /** Drop the editor record so a re-spawn within this scene visit doesn't
+   *  re-create the picked-up item. (Interior pickups don't currently persist
+   *  across re-entry; the JSON file is reloaded each time.) */
+  protected onStaticPickedUp(uid: string): void {
+    this.editorItems.delete(uid);
+  }
+
+}
+
+function hashIndex(s: string, mod: number): number {
+  if (mod <= 1) return 0;
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) % mod;
 }

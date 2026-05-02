@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { selectHud, selectToasts, useUIStore } from "./store/uiStore";
 import { computeMaxHp, selectJobXp, useGameStore } from "../game/store/gameStore";
 import { Hotbar } from "./Hotbar";
+import { Clock } from "./Clock";
 import { useIsMobile, useIsPortrait } from "./mobile/useMobile";
 import { bus } from "../game/bus";
 import { JOBS, type JobId } from "../game/jobs/jobs";
@@ -74,6 +75,8 @@ export function Hud() {
       </button>
 
       <XpRing />
+
+      <Clock />
 
       <SailingIndicator />
 

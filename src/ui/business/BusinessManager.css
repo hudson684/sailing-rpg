@@ -1,0 +1,248 @@
+.biz-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.biz-panel {
+  position: relative;
+  width: min(720px, 92vw);
+  max-height: min(85vh, 720px);
+  display: flex;
+  flex-direction: column;
+}
+
+.biz-portfolio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 2px 8px;
+}
+
+.biz-portfolio-label {
+  font-size: 13px;
+  color: var(--pixel-ink-soft);
+}
+
+.biz-portfolio-select {
+  font: inherit;
+  background: var(--pixel-panel);
+  color: var(--pixel-ink);
+  border: 1px solid var(--pixel-ink);
+  padding: 2px 6px;
+}
+
+.biz-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.biz-tab.is-active {
+  outline: 2px solid var(--pixel-gold);
+}
+
+.biz-body {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 8px 4px;
+  min-height: 200px;
+}
+
+.biz-stub {
+  color: var(--pixel-ink-soft);
+  font-style: italic;
+  text-align: center;
+  padding: 32px 12px;
+}
+
+.biz-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ─── Overview tab ────────────────────────────────────────────────── */
+
+.biz-overview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.biz-card {
+  background: var(--pixel-panel);
+  border: 1px solid var(--pixel-ink);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.biz-card-label {
+  font-size: 12px;
+  color: var(--pixel-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.biz-card-value {
+  font-size: 22px;
+  color: var(--pixel-ink);
+  font-weight: 700;
+}
+
+.biz-card-value.is-coin {
+  color: var(--pixel-gold);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.biz-card-sub {
+  font-size: 11px;
+  color: var(--pixel-ink-soft);
+}
+
+.biz-chart {
+  grid-column: 1 / -1;
+  background: var(--pixel-panel);
+  border: 1px solid var(--pixel-ink);
+  padding: 10px 12px;
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pixel-ink-soft);
+  font-style: italic;
+}
+
+.biz-wallet {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--pixel-panel);
+  border: 1px solid var(--pixel-ink);
+  padding: 10px 12px;
+}
+
+.biz-wallet-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.biz-wallet-row label {
+  font-size: 12px;
+  color: var(--pixel-ink-soft);
+  min-width: 64px;
+}
+
+.biz-wallet-input {
+  font: inherit;
+  width: 110px;
+  background: var(--pixel-panel);
+  color: var(--pixel-ink);
+  border: 1px solid var(--pixel-ink);
+  padding: 2px 6px;
+}
+
+.biz-wallet-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ─── Staff tab ───────────────────────────────────────────────────── */
+
+.biz-staff {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.biz-staff-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--pixel-panel);
+  border: 1px solid var(--pixel-ink);
+  padding: 8px 12px;
+}
+
+.biz-staff-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.biz-staff-list,
+.biz-hire-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.biz-staff-row,
+.biz-hire-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--pixel-panel);
+  border: 1px solid var(--pixel-ink);
+  padding: 6px 10px;
+  flex-wrap: wrap;
+}
+
+.biz-staff-name {
+  flex: 1 1 140px;
+  font-weight: 700;
+}
+
+.biz-staff-role {
+  color: var(--pixel-ink-soft);
+  text-transform: capitalize;
+}
+
+.biz-staff-skill {
+  letter-spacing: 1px;
+  color: var(--pixel-gold);
+}
+
+.biz-staff-wage {
+  min-width: 70px;
+  text-align: right;
+}
+
+.biz-staff-unpaid {
+  color: #c1493c;
+  font-weight: 700;
+}
+
+.biz-staff-traits {
+  font-size: 11px;
+  color: var(--pixel-ink-soft);
+  font-style: italic;
+}
+
+.biz-hire-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.biz-hire-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}

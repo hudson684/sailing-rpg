@@ -176,6 +176,12 @@ export function SpawnEditor() {
   } as const;
   // Shops live in their own file; the NPC inspector edits them inline.
   const shopsFile = useJsonFile<ShopsFileShape>("src/game/data/shops.json");
+  // Interior-scoped instances (enemies/nodes/stations/items per interior key).
+  // The editor only edits the `enemies` arrays here for now; the rest is
+  // preserved untouched on save.
+  const interiorInstancesFile = useJsonFile<InteriorInstancesFileShape>(
+    "src/game/data/interiorInstances.json",
+  );
   // Items.json is read-only for the editor (we only place references to it).
   const itemsFile = useJsonFile<{ items?: Array<{ id: string; name?: string }> }>(
     "src/game/data/items.json",
@@ -199,8 +205,37 @@ export function SpawnEditor() {
         rawDefs,
       };
     }
+    // Merge interior enemies (stored in interiorInstances.json) into the
+    // enemy entity list, tagged with `interior` so isOnMap routes them to
+    // the right map. The defs themselves still come from enemies.json.
+    if (interiorInstancesFile.data && out.enemy) {
+      const extra: EditorEntity[] = [];
+      for (const [interiorKey, slot] of Object.entries(
+        interiorInstancesFile.data.interiors ?? {},
+      )) {
+        for (const inst of slot.enemies ?? []) {
+          const defId = String(inst.defId ?? "");
+          const defRow = out.enemy.defs.find((d) => d.id === defId);
+          extra.push({
+            kind: "enemy",
+            id: String(inst.id ?? ""),
+            tileX: Number(inst.tileX ?? 0),
+            tileY: Number(inst.tileY ?? 0),
+            interior: interiorKey,
+            defId,
+            label: defRow?.label ?? defId,
+            color: "#d04848",
+            underlying: inst as unknown as Record<string, unknown>,
+          });
+        }
+      }
+      out.enemy = {
+        ...out.enemy,
+        entities: [...out.enemy.entities, ...extra],
+      };
+    }
     return out;
-  }, [files.npc.data, files.enemy.data, files.node.data, files.decoration.data, files.station.data, files.ship.data, files.chest.data, files.item.data, files.spawn.data, itemsFile.data]);
+  }, [files.npc.data, files.enemy.data, files.node.data, files.decoration.data, files.station.data, files.ship.data, files.chest.data, files.item.data, files.spawn.data, itemsFile.data, interiorInstancesFile.data]);
 
   // Draft state — the working copy of instances per kind.
   const [draft, setDraft] = useState<DraftByKind | null>(null);
@@ -213,6 +248,9 @@ export function SpawnEditor() {
     if (draft) return;
     const complete = ENTITY_TYPES.every((t) => parsed[t.kind]);
     if (!complete) return;
+    // Wait for interiorInstances.json too, otherwise interior enemies are
+    // missing from the initial draft and a save would erase them.
+    if (!interiorInstancesFile.data) return;
     const next: DraftByKind = {
       npc: parsed.npc!.entities,
       enemy: parsed.enemy!.entities,
@@ -225,7 +263,7 @@ export function SpawnEditor() {
       spawn: parsed.spawn!.entities,
     };
     setDraft(next);
-  }, [parsed, draft]);
+  }, [parsed, draft, interiorInstancesFile.data]);
 
   // Shops draft, mirrored from disk on load and saved alongside other dirty
   // files. Inspector mutates this when the selected NPC has a `shopId`.
@@ -316,12 +354,51 @@ export function SpawnEditor() {
       if (tool.entity === "npc" && mapKind === "interior") {
         entity = { ...entity, interior: mapId, underlying: { ...entity.underlying, map: { interior: mapId } } };
       }
+      if (tool.entity === "enemy" && mapKind === "interior") {
+        entity = { ...entity, interior: mapId };
+      }
       pushUndo();
       setDraft({ ...draft, [tool.entity]: [...draft[tool.entity], entity] });
       setSelection({ kind: tool.entity, id: entity.id });
     },
     [draft, mapId, mapKind, tool, pushUndo],
   );
+
+  // Compute the candidate interiorInstances.json from the current draft.
+  // Only enemies are edited in the SpawnEditor; nodes/stations/items are
+  // preserved verbatim from the on-disk file.
+  const nextInteriorInstancesFile = useMemo<InteriorInstancesFileShape | null>(() => {
+    if (!draft || !interiorInstancesFile.data) return null;
+    const original = interiorInstancesFile.data;
+    const next: InteriorInstancesFileShape = { interiors: {} };
+    for (const [k, v] of Object.entries(original.interiors ?? {})) {
+      next.interiors[k] = { ...v, enemies: [] };
+    }
+    for (const e of draft.enemy) {
+      if (!e.interior) continue;
+      const slot =
+        next.interiors[e.interior] ??
+        (next.interiors[e.interior] = { enemies: [], nodes: [], stations: [], items: [] });
+      const row: Record<string, unknown> = {
+        id: e.id,
+        defId: e.defId,
+        tileX: e.tileX,
+        tileY: e.tileY,
+      };
+      const when = (e.underlying as Record<string, unknown>).when;
+      if (when !== undefined) row.when = when;
+      slot.enemies.push(row as unknown as InteriorEnemyRow);
+    }
+    return next;
+  }, [draft, interiorInstancesFile.data]);
+
+  const interiorInstancesDirty = useMemo(() => {
+    if (!nextInteriorInstancesFile || !interiorInstancesFile.data) return false;
+    return (
+      JSON.stringify(nextInteriorInstancesFile) !==
+      JSON.stringify(interiorInstancesFile.data)
+    );
+  }, [nextInteriorInstancesFile, interiorInstancesFile.data]);
 
   // Save --------------------------------------------------------------
   const dirtyKinds = useMemo(() => {
@@ -347,7 +424,20 @@ export function SpawnEditor() {
     if (shopsDirty && shopsDraft) {
       await shopsFile.save(shopsDraft);
     }
-  }, [draft, dirtyKinds, files, shopsDirty, shopsDraft, shopsFile]);
+    if (interiorInstancesDirty && nextInteriorInstancesFile) {
+      await interiorInstancesFile.save(nextInteriorInstancesFile);
+    }
+  }, [
+    draft,
+    dirtyKinds,
+    files,
+    shopsDirty,
+    shopsDraft,
+    shopsFile,
+    interiorInstancesDirty,
+    nextInteriorInstancesFile,
+    interiorInstancesFile,
+  ]);
 
   const onRevert = useCallback(() => {
     const next: DraftByKind = {
@@ -368,10 +458,21 @@ export function SpawnEditor() {
   }, [parsed, shopsFile.data]);
 
   const anyLoading =
-    !draft || mapLoading || ENTITY_TYPES.some((t) => files[t.kind].loading) || itemsFile.loading || shopsFile.loading;
-  const saving = ENTITY_TYPES.some((t) => files[t.kind].saving) || shopsFile.saving;
-  const saveError = ENTITY_TYPES.map((t) => files[t.kind].error).find((e) => e) ?? shopsFile.error;
-  const totalDirty = dirtyKinds.size + (shopsDirty ? 1 : 0);
+    !draft ||
+    mapLoading ||
+    ENTITY_TYPES.some((t) => files[t.kind].loading) ||
+    itemsFile.loading ||
+    shopsFile.loading ||
+    interiorInstancesFile.loading;
+  const saving =
+    ENTITY_TYPES.some((t) => files[t.kind].saving) ||
+    shopsFile.saving ||
+    interiorInstancesFile.saving;
+  const saveError =
+    ENTITY_TYPES.map((t) => files[t.kind].error).find((e) => e) ??
+    shopsFile.error ??
+    interiorInstancesFile.error;
+  const totalDirty = dirtyKinds.size + (shopsDirty ? 1 : 0) + (interiorInstancesDirty ? 1 : 0);
 
   // UI ---------------------------------------------------------------
   return (
@@ -524,7 +625,7 @@ function LeftRail(props: {
   const { mapKind, tool, setTool, parsed } = props;
   const kindsForMap: EntityKind[] =
     mapKind === "interior"
-      ? ["npc"]
+      ? ["npc", "enemy"]
       : mapKind === "ship"
       ? ["npc"]
       : ["npc", "enemy", "node", "decoration", "station", "ship", "chest", "item"];
@@ -1118,6 +1219,25 @@ interface ShopEntry {
 }
 interface ShopsFileShape {
   shops: ShopEntry[];
+}
+
+// Shape mirror of src/game/data/interiorInstancesLoader.ts. The editor only
+// touches the `enemies` array; the rest is round-tripped untouched.
+interface InteriorEnemyRow {
+  id: string;
+  defId: string;
+  tileX: number;
+  tileY: number;
+  when?: unknown;
+}
+interface InteriorInstancesSlot {
+  enemies: InteriorEnemyRow[];
+  nodes: unknown[];
+  stations: unknown[];
+  items: unknown[];
+}
+interface InteriorInstancesFileShape {
+  interiors: Record<string, InteriorInstancesSlot>;
 }
 
 function ShopEditor({

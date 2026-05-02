@@ -27,27 +27,23 @@
             "scale": 3,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 512,
+                "x": 523.1666666666666,
                 "y": 512.1666666666666
             }
         },
         "chunks/1_1.tmx": {
-            "expandedObjectLayers": [
-                12,
-                10
-            ],
             "scale": 3,
-            "selectedLayer": 13,
+            "selectedLayer": 19,
             "viewCenter": {
-                "x": 631.1666666666666,
-                "y": 351
+                "x": 853.1666666666666,
+                "y": 121.83333333333334
             }
         },
         "chunks/1_2.tmx": {
             "scale": 2,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 512.25,
+                "x": 512.5,
                 "y": 511.75
             }
         },
@@ -55,7 +51,7 @@
             "scale": 0.25,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 512,
+                "x": 1010,
                 "y": 510
             }
         },
@@ -78,6 +74,10 @@
                 "y": 549
             }
         },
+        "interiors/Crypt Objects.tsx": {
+            "scaleInDock": 1.5,
+            "scaleInEditor": 3
+        },
         "interiors/blacksmiths.tmx": {
             "expandedObjectLayers": [
                 6
@@ -85,21 +85,49 @@
             "scale": 5.5,
             "selectedLayer": 8,
             "viewCenter": {
-                "x": 95.18181818181817,
-                "y": 210.1818181818182
+                "x": 117.90909090909092,
+                "y": 210.2727272727273
             }
         },
-        "interiors/general_store.tmx": {
+        "interiors/first_dungeon.tmx": {
             "expandedObjectLayers": [
-                10,
-                5
+                12
             ],
             "scale": 3,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 104,
-                "y": 79.83333333333331
+                "x": 41.83333333333333,
+                "y": 311.8333333333333
             }
+        },
+        "interiors/general_store.tmx": {
+            "expandedObjectLayers": [
+                5,
+                10
+            ],
+            "scale": 3,
+            "selectedLayer": 9,
+            "viewCenter": {
+                "x": 115.16666666666666,
+                "y": 79.83333333333334
+            }
+        },
+        "interiors/tavern_rusty_anchor.tmx": {
+            "expandedObjectLayers": [
+                9
+            ],
+            "scale": 3,
+            "selectedLayer": 3,
+            "viewCenter": {
+                "x": 109.83333333333334,
+                "y": 126.5
+            }
+        },
+        "tilesets/Bch_Bldg_01.tsx": {
+            "scaleInDock": 1
+        },
+        "tilesets/Beach Buildings 2.tsx": {
+            "scaleInDock": 1
         },
         "tilesets/Beach_Objects_Normal.tsx": {
             "scaleInDock": 3,
@@ -128,6 +156,10 @@
         "tilesets/Blacksmith Weapons.tsx": {
             "scaleInDock": 1,
             "scaleInEditor": 3
+        },
+        "tilesets/Cave Tiles 1.0.tsx": {
+            "scaleInDock": 2,
+            "scaleInEditor": 1.5
         },
         "tilesets/Ext_A1.tsx": {
             "scaleInDock": 1,
@@ -171,17 +203,22 @@
         },
         "tilesets/Rural Village Interior Walls.tsx": {
             "scaleInDock": 3
+        },
+        "tilesets/grass_tropical.tsx": {
+            "scaleInDock": 1
         }
     },
     "last.externalTilesetPath": "C:/dev/sailing-rpg/maps/tilesets",
-    "last.imagePath": "/Users/joshua/dev/sailing-rpg/maps/tilesets",
+    "last.imagePath": "C:/dev/sailing-rpg/maps/themes/Crypt/Crypt Tiles",
     "last.worldFilePath": "/Users/joshua/dev/sailing-rpg/maps",
     "loadedWorlds": [
         "/Users/joshua/dev/sailing-rpg/maps/sailing-rpg.world"
     ],
+    "map.height": 64,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
+    "map.width": 64,
     "openFiles": [
         "chunks/1_2.tmx",
         "chunks/1_1.tmx",
@@ -195,6 +232,8 @@
     "project": "sailing-rgp.tiled-project",
     "property.type": "bool",
     "recentFiles": [
+        "interiors/Crypt Objects.tsx",
+        "tilesets/Cave Tiles 1.0.tsx",
         "tilesets/Exterior_Five.tsx",
         "chunks/1_2.tmx",
         "tilesets/Blacksmith Walls.tsx",
@@ -204,9 +243,7 @@
         "chunks/1_0.tmx",
         "chunks/1_1.tmx",
         "tilesets/Exterior Maps 5.tsx",
-        "tilesets/Blacksmith Weapons.tsx",
-        "tilesets/Blacksmith Furniture.tsx",
-        "tilesets/Blacksmith Floors.tsx"
+        "tilesets/Blacksmith Weapons.tsx"
     ],
     "resizeMap.removeObjects": false,
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",

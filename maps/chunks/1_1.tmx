@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="64" height="64" tilewidth="16" tileheight="16" infinite="0" nextlayerid="27" nextobjectid="51">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="64" height="64" tilewidth="16" tileheight="16" infinite="0" nextlayerid="27" nextobjectid="53">
  <tileset firstgid="1" source="../tilesets/Ext_A1.tsx"/>
  <tileset firstgid="1261" source="../tilesets/Ext_Terrain.tsx"/>
  <tileset firstgid="2413" source="../tilesets/Beach_Objects_Normal.tsx"/>
@@ -1328,6 +1328,31 @@
   </object>
   <object id="21" name="dock" type="dock" x="304.75" y="483.917" width="12.25" height="12.25"/>
   <object id="22" name="ship_spawn" type="ship_spawn" x="225.417" y="529.25" width="12" height="12"/>
+  <object id="51" name="first_dungeon_door" type="door" x="818" y="130.5" width="12.25" height="10.5">
+   <properties>
+    <property name="entryTx" type="int" value="3"/>
+    <property name="entryTy" type="int" value="3"/>
+    <property name="interiorKey" value="first_dungeon"/>
+    <property name="uid" value="80dd6f9c-3b5b-44cf-92fb-adbeca0a355f"/>
+   </properties>
+  </object>
+  <object id="52" name="tavern_rusty_anchor_door" type="door" x="961.667" y="65.6667" width="13" height="13.3333">
+   <properties>
+    <property name="entryTx" type="int" value="10"/>
+    <property name="entryTy" type="int" value="12"/>
+    <property name="interiorKey" value="tavern_rusty_anchor"/>
+    <property name="uid" value="4d727f5d-83b6-43a0-9049-bbddc4da2384"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="100" name="torches">
+  <object id="200" name="test_torch" type="torch" x="640" y="224" width="16" height="16">
+   <properties>
+    <property name="color" value="ffd166"/>
+    <property name="radiusTiles" type="float" value="3"/>
+    <property name="uid" value="a5203dce-07d6-4c32-967b-80fc5579b5f2"/>
+   </properties>
+  </object>
  </objectgroup>
  <layer id="16" name="hopeite_ore" width="64" height="64">
   <data encoding="csv">

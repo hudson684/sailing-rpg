@@ -1,0 +1,110 @@
+.hud-clock {
+  position: absolute;
+  top: calc(16px + 4px * var(--hud-scale, 3));
+  left: calc(
+    16px + 120px * var(--hud-scale, 3) + 8px
+    + 22px * var(--hud-scale, 3) + 12px
+  );
+  height: calc(22px * var(--hud-scale, 3));
+  display: flex;
+  align-items: center;
+  gap: calc(2px * var(--hud-scale));
+  pointer-events: auto;
+  font-family: var(--pixel-font);
+  padding: calc(2px * var(--hud-scale)) calc(4px * var(--hud-scale));
+  background: var(--pixel-tan, #d9b382);
+  border: 3px solid var(--pixel-ink, #2b1d12);
+  border-radius: 5px;
+  z-index: 12;
+}
+
+.hud-clock-icon {
+  font-size: calc(7px * var(--hud-scale));
+  line-height: 1;
+  color: var(--pixel-ink, #2b1d12);
+  width: calc(8px * var(--hud-scale));
+  text-align: center;
+}
+
+.hud-clock-day .hud-clock-icon {
+  color: #c08a1a;
+}
+
+.hud-clock-night .hud-clock-icon {
+  color: #2b3a6b;
+}
+
+.hud-clock-bar {
+  position: relative;
+  width: calc(36px * var(--hud-scale));
+  height: calc(4px * var(--hud-scale));
+  background: var(--pixel-parchment, #f3e3c2);
+  border: 2px solid var(--pixel-ink, #2b1d12);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.hud-clock-fill {
+  height: 100%;
+  background: var(--pixel-ink, #2b1d12);
+  transition: width 200ms linear;
+}
+
+.hud-clock-day .hud-clock-fill {
+  background: #c08a1a;
+}
+
+.hud-clock-night .hud-clock-fill {
+  background: #2b3a6b;
+}
+
+.hud-clock-tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: calc(2px * var(--hud-scale)) calc(4px * var(--hud-scale));
+  background: var(--pixel-ink, #2b1d12);
+  color: var(--pixel-parchment, #f3e3c2);
+  font-family: var(--pixel-font);
+  font-size: calc(5px * var(--hud-scale));
+  line-height: 1;
+  white-space: nowrap;
+  border-radius: 3px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 80ms ease-out;
+}
+
+.hud-clock:hover .hud-clock-tooltip {
+  opacity: 1;
+}
+
+.hud-clock-dev {
+  display: flex;
+  align-items: center;
+  gap: calc(2px * var(--hud-scale));
+  margin-left: calc(2px * var(--hud-scale));
+}
+
+.hud-clock-dev-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(10px * var(--hud-scale));
+  height: calc(10px * var(--hud-scale));
+  padding: 0;
+  background: var(--pixel-parchment, #f3e3c2);
+  color: var(--pixel-ink, #2b1d12);
+  border: 2px solid var(--pixel-ink, #2b1d12);
+  border-radius: 3px;
+  font-family: var(--pixel-font);
+  font-size: calc(7px * var(--hud-scale));
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.hud-clock-dev-btn:hover { filter: brightness(1.08); }
+.hud-clock-dev-btn:active { transform: translateY(1px); filter: brightness(0.92); }
