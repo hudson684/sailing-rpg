@@ -39,13 +39,35 @@
 
 .biz-tabs {
   display: flex;
-  gap: 4px;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
+  gap: 2px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--pixel-ink);
+  padding: 0 2px;
+}
+
+.biz-tab {
+  background: transparent;
+  border: 0;
+  font-family: var(--pixel-display-font);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pixel-ink-soft);
+  padding: 6px 10px 7px;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 80ms ease-out;
+}
+
+.biz-tab:hover {
+  color: var(--pixel-ink);
 }
 
 .biz-tab.is-active {
-  outline: 2px solid var(--pixel-gold);
+  color: var(--pixel-ink);
+  border-bottom-color: var(--pixel-gold);
 }
 
 .biz-body {
@@ -70,11 +92,12 @@
 /* ─── Overview tab ────────────────────────────────────────────────── */
 
 .biz-overview {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
+/* Kept for back-compat with Staff/other tabs that still use .biz-card. */
 .biz-card {
   background: var(--pixel-panel);
   border: 1px solid var(--pixel-ink);
@@ -83,79 +106,272 @@
   flex-direction: column;
   gap: 4px;
 }
-
 .biz-card-label {
   font-size: 12px;
   color: var(--pixel-ink-soft);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-
 .biz-card-value {
   font-size: 22px;
   color: var(--pixel-ink);
   font-weight: 700;
 }
-
 .biz-card-value.is-coin {
   color: var(--pixel-gold);
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
 }
-
 .biz-card-sub {
   font-size: 11px;
   color: var(--pixel-ink-soft);
 }
 
-.biz-chart {
-  grid-column: 1 / -1;
-  background: var(--pixel-panel);
+/* KPI strip ──────────────────────────────────────────────────────── */
+
+.biz-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.biz-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.05);
   border: 1px solid var(--pixel-ink);
+  min-width: 0;
+}
+
+.biz-kpi-label {
+  font-size: 10px;
+  color: var(--pixel-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.biz-kpi-value {
+  font-family: var(--pixel-display-font);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--pixel-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.biz-kpi-value.is-coin {
+  color: var(--pixel-gold);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+}
+.biz-kpi-value.is-pos { color: var(--pixel-accent-green); }
+.biz-kpi-value.is-neg { color: var(--pixel-accent-red); }
+
+/* Banking ────────────────────────────────────────────────────────── */
+
+.biz-bank {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   padding: 10px 12px;
-  min-height: 96px;
+  border: 1px solid var(--pixel-ink);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.biz-bank-flow {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--pixel-ink-soft);
-  font-style: italic;
+  gap: 14px;
+  padding: 2px 0 6px;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.25);
+  margin-bottom: 4px;
 }
 
-.biz-wallet {
-  grid-column: 1 / -1;
+.biz-bank-side {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: var(--pixel-panel);
-  border: 1px solid var(--pixel-ink);
-  padding: 10px 12px;
+  align-items: baseline;
+  gap: 6px;
 }
 
-.biz-wallet-row {
+.biz-bank-side-label {
+  font-size: 11px;
+  color: var(--pixel-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.biz-bank-side-val {
+  font-family: var(--pixel-display-font);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.biz-bank-side-val.is-coin {
+  color: var(--pixel-gold);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.biz-bank-arrow {
+  font-size: 16px;
+  color: var(--pixel-ink-soft);
+}
+
+.biz-bank-row {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.biz-wallet-row label {
-  font-size: 12px;
+.biz-bank-rowlabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   color: var(--pixel-ink-soft);
-  min-width: 64px;
+  min-width: 60px;
 }
 
-.biz-wallet-input {
+.biz-bank-input {
   font: inherit;
-  width: 110px;
-  background: var(--pixel-panel);
+  font-size: 14px;
+  width: 86px;
+  background: var(--pixel-parchment);
   color: var(--pixel-ink);
   border: 1px solid var(--pixel-ink);
-  padding: 2px 6px;
+  padding: 3px 6px;
+  text-align: right;
 }
 
-.biz-wallet-actions {
-  display: flex;
-  gap: 8px;
+.biz-bank-input:focus {
+  outline: 2px solid var(--pixel-gold);
+  outline-offset: -2px;
 }
+
+/* Hide spinner arrows for cleanliness */
+.biz-bank-input::-webkit-outer-spin-button,
+.biz-bank-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.biz-bank-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.biz-bank-chips {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+}
+
+.biz-chip {
+  font-family: var(--pixel-display-font);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pixel-ink);
+  background: var(--pixel-parchment);
+  border: 1px solid var(--pixel-ink);
+  padding: 2px 6px;
+  cursor: pointer;
+  min-width: 28px;
+  transition: filter 60ms ease-out;
+}
+.biz-chip:hover:not(:disabled) { filter: brightness(1.06); }
+.biz-chip:active:not(:disabled) { transform: translateY(1px); }
+.biz-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.biz-bank-action {
+  font-family: var(--pixel-display-font);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border: 1px solid var(--pixel-ink);
+  cursor: pointer;
+  min-width: 92px;
+  color: #f4fff0;
+  transition: filter 60ms ease-out;
+}
+.biz-bank-action.is-deposit { background: var(--pixel-accent-green); }
+.biz-bank-action.is-withdraw { background: var(--pixel-accent-orange); }
+.biz-bank-action:hover:not(:disabled) { filter: brightness(1.08); }
+.biz-bank-action:active:not(:disabled) { transform: translateY(1px); }
+.biz-bank-action:disabled {
+  filter: grayscale(0.5) brightness(0.85);
+  cursor: not-allowed;
+}
+
+.biz-bank-preview {
+  font-size: 11px;
+  color: var(--pixel-ink-soft);
+  min-height: 14px;
+  padding-left: 68px;
+  margin-top: -2px;
+}
+.biz-bank-preview.is-warn {
+  color: var(--pixel-accent-red);
+  font-weight: 700;
+}
+
+/* Sparkline ──────────────────────────────────────────────────────── */
+
+.biz-spark {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  border: 1px solid var(--pixel-ink);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.biz-spark-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.biz-spark-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--pixel-ink-soft);
+}
+
+.biz-spark-totals {
+  font-size: 12px;
+  color: var(--pixel-ink);
+}
+.biz-spark-totals .is-pos { color: var(--pixel-accent-green); }
+.biz-spark-totals .is-neg { color: var(--pixel-accent-red); }
+.biz-spark-sep {
+  margin: 0 5px;
+  color: var(--pixel-ink-soft);
+}
+
+.biz-spark-empty {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--pixel-ink-soft);
+}
+
+.biz-spark-svg {
+  width: 100%;
+  height: 36px;
+  color: var(--pixel-ink);
+}
+
+.biz-spark-bar.is-pos { fill: var(--pixel-accent-green); }
+.biz-spark-bar.is-neg { fill: var(--pixel-accent-red); }
 
 /* ─── Staff tab ───────────────────────────────────────────────────── */
 

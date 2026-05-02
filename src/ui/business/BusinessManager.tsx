@@ -113,7 +113,7 @@ export function BusinessManager() {
           {TABS.map((t) => (
             <button
               key={t.id}
-              className={`px-btn biz-tab ${tab === t.id ? "is-active" : ""}`}
+              className={`biz-tab ${tab === t.id ? "is-active" : ""}`}
               onClick={() => setTab(t.id)}
             >
               {t.label}
