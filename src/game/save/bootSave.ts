@@ -3,6 +3,7 @@ import { SaveController } from "./SaveController";
 import * as saveSystems from "./systems";
 import { ensureQuestSubsystem } from "../quests/activeQuestManager";
 import { initHireablesSubsystem } from "../business/hireables";
+import { initIdleSimSubsystem } from "../business/idleSim";
 import { getPrefetchedEnvelope } from "./storeHydrate";
 import { DroppedItemsState } from "../world/droppedItemsState";
 
@@ -57,6 +58,7 @@ export async function bootSaveController(
     q.quests,
   ]);
   initHireablesSubsystem();
+  initIdleSimSubsystem();
   await controller.refreshMenu();
 
   const env = getPrefetchedEnvelope(game);

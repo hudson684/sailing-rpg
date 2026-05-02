@@ -89,6 +89,21 @@ the business's stock map instead of a normal chest inventory.
 - **Idle:** when computing expected hourly revenue, scale each source's
   contribution by `min(1, currentStock / (qtyPerSale × salesPerHour))`.
 
+### Carry-over from step 7
+
+Step 7 shipped `idleSim.getHourlyExpectedRevenue` without a stock
+gate — every unlocked revenue source with staff is treated as fully
+stocked. Wire stock in here:
+
+- In `getHourlyExpectedRevenue`, for each eligible source compute its
+  per-source customer share (uniform across `eligible.length`), then
+  scale that share's revenue by `min(1, currentStock / (qtyPerSale ×
+  shareOfCustomers))`. Sources without `requiresStock` keep their
+  full share.
+- Have the live sim's PAY → `consumeStock` and the idle sim's hourly
+  application both decrement the same `BusinessState.stock` map so
+  the two paths stay symmetric.
+
 ## Open questions
 
 1. Where does `itemBuyPrice` come from? Reuse existing Shop pricing?

@@ -137,6 +137,9 @@ export interface BusinessStoreState {
   recordSale: (id: BusinessId, amount: number, dayCount: number) => void;
   /** Customer left without buying. Increments today's draft walkouts. */
   recordWalkout: (id: BusinessId, dayCount: number) => void;
+  /** Closed-form idle credit for one in-game hour: bumps coffers and today's
+   *  draft revenue. No reputation change — idle is passive book-keeping. */
+  applyIdleHour: (id: BusinessId, amount: number, dayCount: number) => void;
 
   // Save lifecycle
   serialize: () => Record<BusinessId, BusinessState>;
@@ -321,6 +324,16 @@ export const useBusinessStore = create<BusinessStoreState>()((set, get) => ({
     patch(set, id, (s) => {
       const draft = s.todaysDraft ?? blankDraft(dayCount);
       return { ...s, todaysDraft: { ...draft, walkouts: draft.walkouts + 1 } };
+    }),
+
+  applyIdleHour: (id, amount, dayCount) =>
+    patch(set, id, (s) => {
+      const draft = s.todaysDraft ?? blankDraft(dayCount);
+      return {
+        ...s,
+        coffers: s.coffers + amount,
+        todaysDraft: { ...draft, revenue: draft.revenue + amount },
+      };
     }),
 
   serialize: () => get().byId,
