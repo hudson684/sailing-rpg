@@ -7,6 +7,7 @@ import type { NpcAgent } from "../sim/npcAgent";
 import type {
   LiveCtxBindings,
   Pathfinder,
+  TileCostProbe,
   WalkableProbe,
 } from "../sim/activities/activity";
 import type { SceneKey } from "../sim/location";
@@ -32,7 +33,12 @@ export class SceneNpcBinder {
   private offEntered: (() => void) | null = null;
   private offLeft: (() => void) | null = null;
 
-  attach(scene: Phaser.Scene, sceneKey: SceneKey, walkable: WalkableProbe): void {
+  attach(
+    scene: Phaser.Scene,
+    sceneKey: SceneKey,
+    walkable: WalkableProbe,
+    tileCost?: TileCostProbe,
+  ): void {
     if (this.scene) {
       // eslint-disable-next-line no-console
       console.warn(`[SceneNpcBinder] already attached to '${this.sceneKey}'; detaching first`);
@@ -49,6 +55,7 @@ export class SceneNpcBinder {
         ...(q.allowNonWalkableGoal !== undefined
           ? { allowNonWalkableGoal: q.allowNonWalkableGoal }
           : {}),
+        ...(tileCost ? { tileCost } : {}),
       });
 
     for (const agent of npcRegistry.npcsAt(sceneKey)) this.spawnProxy(agent);

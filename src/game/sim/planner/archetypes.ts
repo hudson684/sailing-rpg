@@ -18,6 +18,7 @@ export type TemplateTarget =
 
 export type TemplateKind =
   | "browse"
+  | "standAround"
   | "patronTavern"
   | "wander"
   | "idle"
@@ -35,6 +36,10 @@ export interface ScheduleTemplate {
    *  (browse, wander, idle). Picked uniformly per arrival. */
   readonly duration?: readonly [number, number];
   readonly wanderRadiusTiles?: number;
+  /** Optional sub-zone id for `browse` / `standAround` templates. Defaults to
+   *  `"all"` at the activity layer. */
+  readonly standingGroupId?: string;
+  readonly browseGroupId?: string;
 }
 
 export interface ScheduleConstraints {

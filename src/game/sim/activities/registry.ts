@@ -6,6 +6,7 @@ import { deserializeGoTo } from "./goTo";
 import { deserializePatronTavern } from "./patronTavern";
 import { deserializeIdle } from "./idle";
 import { deserializeBrowse } from "./browse";
+import { deserializeStandAround } from "./standAround";
 import { deserializeWorkAt } from "./workAt";
 import { deserializeSleep } from "./sleep";
 
@@ -31,5 +32,6 @@ registerActivityKind("goTo", deserializeGoTo);
 registerActivityKind("patronTavern", deserializePatronTavern);
 registerActivityKind("idle", deserializeIdle);
 registerActivityKind("browse", deserializeBrowse);
+registerActivityKind("standAround", deserializeStandAround);
 registerActivityKind("workAt", deserializeWorkAt);
 registerActivityKind("sleep", deserializeSleep);

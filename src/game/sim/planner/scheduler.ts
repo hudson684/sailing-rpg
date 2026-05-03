@@ -6,8 +6,10 @@ import { GoToActivity } from "../activities/goTo";
 import { PatronTavernActivity } from "../activities/patronTavern";
 import { IdleActivity } from "../activities/idle";
 import { BrowseActivity } from "../activities/browse";
+import { StandAroundActivity } from "../activities/standAround";
 import { WanderActivity } from "../activities/wander";
 import { DEFAULT_BROWSE_GROUP_ID } from "./browseWaypoints";
+import { DEFAULT_STANDING_GROUP_ID } from "./standingSpots";
 import {
   businessArrivalAnchorKey,
   namedTileAnchorKey,
@@ -142,7 +144,8 @@ export function planDay(
     if (
       template.kind === "wander" ||
       template.kind === "idle" ||
-      template.kind === "browse"
+      template.kind === "browse" ||
+      template.kind === "standAround"
     ) {
       // Approach if not already at the target tile.
       const sameTile =
@@ -168,7 +171,18 @@ export function planDay(
         if (!businessId) { skippedTemplateIds.push(template.id); continue; }
         dwell = BrowseActivity.create({
           businessId,
-          browseGroupId: DEFAULT_BROWSE_GROUP_ID,
+          browseGroupId: template.browseGroupId ?? DEFAULT_BROWSE_GROUP_ID,
+          durationMinutes: minutes,
+        });
+      } else if (template.kind === "standAround") {
+        // Same shape as browse — only makes sense at a business arrival so it
+        // can resolve a standing-spot pool.
+        const businessId =
+          template.target.kind === "businessArrival" ? template.target.businessId : "";
+        if (!businessId) { skippedTemplateIds.push(template.id); continue; }
+        dwell = StandAroundActivity.create({
+          businessId,
+          standingGroupId: template.standingGroupId ?? DEFAULT_STANDING_GROUP_ID,
           durationMinutes: minutes,
         });
       } else if (template.kind === "wander") {

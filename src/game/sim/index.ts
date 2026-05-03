@@ -50,6 +50,10 @@ export {
   type BrowseConfig,
 } from "./activities/browse";
 export {
+  StandAroundActivity,
+  type StandAroundConfig,
+} from "./activities/standAround";
+export {
   WorkAtActivity,
   type WorkAtConfig,
   notifyShiftCompleteFromStaff,
@@ -64,6 +68,13 @@ export {
   browseWaypointKey,
   DEFAULT_BROWSE_GROUP_ID,
 } from "./planner/browseWaypoints";
+export {
+  standingSpots,
+  StandingSpotRegistry,
+  standingSpotKey,
+  DEFAULT_STANDING_GROUP_ID,
+  type StandingSpot,
+} from "./planner/standingSpots";
 export {
   residences,
   ResidenceRegistry,

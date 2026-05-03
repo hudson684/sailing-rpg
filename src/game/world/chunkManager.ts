@@ -644,6 +644,17 @@ export class ChunkManager {
     return this.chunkAtGlobalTile(gtx, gty);
   }
 
+  /** True if the given global tile has a tile painted on `layerName`. False
+   *  for tiles outside any loaded chunk, or if the layer doesn't exist. */
+  hasTileOnLayer(gtx: number, gty: number, layerName: string): boolean {
+    const chunk = this.chunkAtGlobalTile(gtx, gty);
+    if (!chunk) return false;
+    const s = this.manifest.chunkSize;
+    const lx = gtx - chunk.cx * s;
+    const ly = gty - chunk.cy * s;
+    return !!chunk.tilemap.getTileAt(lx, ly, false, layerName);
+  }
+
   private instantiateChunk(cx: number, cy: number): Chunk {
     const devStart = import.meta.env.DEV ? performance.now() : 0;
     const cacheKey = `${this.chunkKeyPrefix}${cx}_${cy}`;

@@ -225,6 +225,14 @@ type Events = {
     phase: "day" | "night";
     hourIndex: number;
   }) => void;
+  /** Fires 4× per hour (so 24× per phase). Use for sub-hour cadence work like
+   *  the spawn dispatcher; bookkeeping that thinks in whole hours should stay
+   *  on `time:hourTick`. `quarterIndex` is 0..(HOURS_PER_PHASE*4 - 1). */
+  "time:quarterHourTick": (payload: {
+    dayCount: number;
+    phase: "day" | "night";
+    quarterIndex: number;
+  }) => void;
   /** Fires exactly once per integer-day boundary (when dayCount increments
    *  forward through tick(); not re-emitted on backward devShiftHours).
    *  Schedules and daily resets should subscribe here. */

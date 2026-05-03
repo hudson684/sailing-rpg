@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="13" height="10" tilewidth="16" tileheight="16" infinite="0" nextlayerid="12" nextobjectid="17">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="13" height="10" tilewidth="16" tileheight="16" infinite="0" nextlayerid="12" nextobjectid="22">
  <tileset firstgid="1" source="../tilesets/Rural Village Interior Floors.tsx"/>
  <tileset firstgid="1185" source="../tilesets/Rural Village Interior Walls.tsx"/>
  <tileset firstgid="4905" source="../tilesets/Rural Village Interior Objects.tsx"/>
@@ -145,6 +145,31 @@
   <object id="2" name="entry" type="interior_entry" x="161.712" y="130.409" width="13.2727" height="10.4545">
    <properties>
     <property name="uid" value="ecbed65d-c1b9-4fc2-af7f-bc3dcebfa11b"/>
+   </properties>
+  </object>
+  <object id="17" name="stand_left_aisle" type="npcStandingSpot" x="35.3333" y="36.3333" width="10.6667" height="10.6667">
+   <properties>
+    <property name="uid" value="f61d13c1-f4a4-4b27-a4fd-3205a46b0316"/>
+   </properties>
+  </object>
+  <object id="18" name="stand_lower_aisle" type="npcStandingSpot" x="35" y="114.667" width="11.6667" height="10.6667">
+   <properties>
+    <property name="uid" value="c50e68bf-2ae3-4d22-a3a9-e60391e1d527"/>
+   </properties>
+  </object>
+  <object id="19" name="stand_center" type="npcStandingSpot" x="96.3333" y="95.6667" width="16" height="16">
+   <properties>
+    <property name="uid" value="e0b2be7d-4450-4394-8372-1229e0f50bbf"/>
+   </properties>
+  </object>
+  <object id="20" name="stand_counter" type="npcStandingSpot" x="162" y="67" width="11.6667" height="11.6667">
+   <properties>
+    <property name="uid" value="03e56896-50ec-45b1-9ed0-44663ff375cd"/>
+   </properties>
+  </object>
+  <object id="21" name="stand_back_carpet" type="npcStandingSpot" x="132" y="116" width="9" height="8.33333">
+   <properties>
+    <property name="uid" value="119e475d-e865-4a53-a35e-a6681e2eccdc"/>
    </properties>
   </object>
  </objectgroup>

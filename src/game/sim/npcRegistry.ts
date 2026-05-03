@@ -454,16 +454,18 @@ export function setRegisterPreEmitHook(fn: (agent: NpcAgent) => void): void {
 // ── Singleton, wired to the time bus ─────────────────────────────────
 //
 // Mirrors the bus pattern: import the module, get a global instance.
-// Subscribed to `time:hourTick` because that's the finest-grained tick
-// the time system currently emits. Each hour tick = 60 sim-minutes —
-// cheap by design (abstract, scene-agnostic).
+// Subscribed to `time:quarterHourTick` so the minute-level durations on
+// activities (browse 10–25 min, idle 5–15 min, etc.) actually finish at
+// :15/:30/:45 boundaries instead of getting rounded up to the next hour.
+// Cheap by design (abstract, scene-agnostic) — 4× the firing rate is a
+// rounding error compared to per-frame live ticks.
 
 export const npcRegistry = new NpcRegistry();
 
-const HOUR_SIM_MINUTES = 60;
+const QUARTER_SIM_MINUTES = 15;
 
-bus.onTyped("time:hourTick", () => {
-  npcRegistry.tickAbstract(HOUR_SIM_MINUTES);
+bus.onTyped("time:quarterHourTick", () => {
+  npcRegistry.tickAbstract(QUARTER_SIM_MINUTES);
 });
 
 /** Per-archetype day-plan re-roller. Registered by `staffAgentBootstrap`

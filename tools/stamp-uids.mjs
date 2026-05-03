@@ -25,6 +25,7 @@ export const SPAWN_LAYER_TYPES = [
   "repair_target",
   "npcSpawnPoint",
   "npcBrowseWaypoint",
+  "npcStandingSpot",
   "npcResidence",
 ];
 

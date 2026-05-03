@@ -33,6 +33,10 @@ import {
   browseWaypoints,
   browseWaypointKey,
 } from "../sim/planner/browseWaypoints";
+import {
+  standingSpots,
+  standingSpotKey,
+} from "../sim/planner/standingSpots";
 import type { WorldLocation } from "../sim/location";
 import { businessIdForInteriorKey } from "../business/registry";
 import type { DialogueDef, NpcData } from "../entities/npcTypes";
@@ -192,6 +196,7 @@ export class InteriorScene extends GameplayScene {
     // `businessArrival:`). Cleared on shutdown so re-entering an interior
     // re-seeds rather than accumulating duplicates.
     this.registerBrowseWaypoints();
+    this.registerStandingSpots();
 
     const npcData = npcDataRaw as NpcData;
     this.dialogues = npcData.dialogues ?? {};
@@ -857,6 +862,7 @@ export class InteriorScene extends GameplayScene {
     // Destroy the scene's Player view; the model lives on in the registry.
     this.player?.destroy();
     this.clearBrowseWaypoints();
+    this.clearStandingSpots();
     if (this.interior) destroyInteriorTilemap(this.interior);
     // Close any open dialogue so it doesn't bleed into World.
     if (this.activeDialogue) this.closeDialogue();
@@ -902,6 +908,53 @@ export class InteriorScene extends GameplayScene {
         (businessId && key.startsWith(`${businessId}:`))
       ) {
         browseWaypoints.clearKey(key);
+      }
+    }
+  }
+
+  /** Group authored `npcStandingSpot` objects by `standingGroupId` and seed
+   *  them into `standingSpots` under a single canonical key (businessId when
+   *  the interior is owned by a business, else the interiorKey).
+   *
+   *  Unlike `browseWaypoints`, standing spots carry mutable reservation state
+   *  (`claimedBy`), so registering under both interiorKey AND businessId would
+   *  split the reservation set in two and let two patrons claim the same
+   *  spot via different lookup keys. Activities always address the spot pool
+   *  by businessId — that's the canonical id. */
+  private registerStandingSpots(): void {
+    if (!this.interior) return;
+    const interiorKey = this.launchData.interiorKey;
+    const sceneKey = `interior:${interiorKey}` as const;
+    const grouped = new Map<
+      string,
+      Array<{ uid: string; location: WorldLocation }>
+    >();
+    for (const sp of this.interior.standingSpots) {
+      const arr = grouped.get(sp.standingGroupId) ?? [];
+      arr.push({
+        uid: sp.uid,
+        location: {
+          sceneKey,
+          tileX: sp.tileX,
+          tileY: sp.tileY,
+          facing: "down",
+        },
+      });
+      grouped.set(sp.standingGroupId, arr);
+    }
+    if (grouped.size === 0) return;
+    const ownerId = businessIdForInteriorKey(interiorKey) ?? interiorKey;
+    for (const [groupId, spots] of grouped) {
+      standingSpots.set(standingSpotKey(ownerId, groupId), spots);
+    }
+  }
+
+  private clearStandingSpots(): void {
+    const interiorKey = this.launchData.interiorKey;
+    const ownerId = businessIdForInteriorKey(interiorKey) ?? interiorKey;
+    for (const { key } of standingSpots.listKeys()) {
+      if (key.startsWith(`${ownerId}:`)) {
+        standingSpots.clearKey(key);
       }
     }
   }

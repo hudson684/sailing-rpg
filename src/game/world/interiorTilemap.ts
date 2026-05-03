@@ -8,6 +8,7 @@ import {
   type InteriorEntrySpawn,
   type InteriorExitSpawn,
   type NpcBrowseWaypointSpawn,
+  type NpcStandingSpotSpawn,
   type RepairTargetSpawn,
   type SeatSpawn,
   type WorkstationSpawn,
@@ -31,6 +32,7 @@ export interface InteriorTilemap {
   workstations: WorkstationSpawn[];
   seats: SeatSpawn[];
   browseWaypoints: NpcBrowseWaypointSpawn[];
+  standingSpots: NpcStandingSpotSpawn[];
   /** Per-tile images extracted from layers flagged with the `y-sort` custom
    *  property — each one gets its own depth so it sorts against the player
    *  (and other entities) by world y. */
@@ -262,6 +264,7 @@ export function buildInteriorTilemap(
     workstations,
     seats,
     browseWaypoints,
+    standingSpots,
   } = parseInteriorSpawns(tilemap);
 
   // ─── Visibility gating ──────────────────────────────────────────────────
@@ -327,6 +330,7 @@ export function buildInteriorTilemap(
     workstations,
     seats,
     browseWaypoints,
+    standingSpots,
     ySortImages,
     unsubscribe,
   };

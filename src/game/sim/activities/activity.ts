@@ -20,6 +20,10 @@ export interface PathfinderQuery {
   readonly allowNonWalkableGoal?: boolean;
 }
 
+/** Per-tile cost multiplier (≥1) applied on tile entry. Provided by the
+ *  scene adapter to bias search toward preferred terrain (e.g. roads). */
+export type TileCostProbe = (tx: number, ty: number) => number;
+
 /** Live-mode pathfinding probe. Provided by the adapter (binder) — wraps
  *  `pathfindPx` against the active scene's walkability oracle. Returns null
  *  when no path exists or the search budget is exceeded. */

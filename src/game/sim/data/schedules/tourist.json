@@ -6,8 +6,8 @@
   },
   "templates": [
     {
-      "id": "browse_general_store",
-      "kind": "browse",
+      "id": "stand_around_general_store",
+      "kind": "standAround",
       "target": { "kind": "businessArrival", "businessId": "general_store" },
       "weight": 1.0,
       "duration": [10, 25]

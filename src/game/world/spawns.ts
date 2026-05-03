@@ -165,6 +165,21 @@ export interface NpcBrowseWaypointSpawn {
   browseGroupId: string;
 }
 
+/** A `npcStandingSpot` Tiled object placed inside a shop interior. Patrons
+ *  running `StandAroundActivity` claim one of these (atomically reserving it),
+ *  walk there, dwell ~20s wallclock, release, and pick another. The
+ *  reservation prevents two patrons from selecting the same spot while one is
+ *  still walking to it. Multi-zone shops may tag spots with `standingGroupId`;
+ *  un-tagged spots default to `"all"`. */
+export interface NpcStandingSpotSpawn {
+  kind: "npc_standing_spot";
+  uid: string;
+  tileX: number;
+  tileY: number;
+  /** Optional sub-zone id; defaults to `"all"` when omitted in Tiled. */
+  standingGroupId: string;
+}
+
 /** Spawns parsed from a standalone interior map. */
 export interface InteriorParsedSpawns {
   exits: InteriorExitSpawn[];
@@ -174,6 +189,7 @@ export interface InteriorParsedSpawns {
   workstations: WorkstationSpawn[];
   seats: SeatSpawn[];
   browseWaypoints: NpcBrowseWaypointSpawn[];
+  standingSpots: NpcStandingSpotSpawn[];
 }
 
 export interface ParseSpawnsOptions {
@@ -349,6 +365,7 @@ export function parseInteriorSpawns(
   const workstations: WorkstationSpawn[] = [];
   const seats: SeatSpawn[] = [];
   const browseWaypoints: NpcBrowseWaypointSpawn[] = [];
+  const standingSpots: NpcStandingSpotSpawn[] = [];
   if (!layer)
     return {
       exits,
@@ -358,6 +375,7 @@ export function parseInteriorSpawns(
       workstations,
       seats,
       browseWaypoints,
+      standingSpots,
     };
 
   for (const raw of layer.objects) {
@@ -465,6 +483,21 @@ export function parseInteriorSpawns(
         tileY,
         browseGroupId,
       });
+    } else if (raw.type === "npcStandingSpot") {
+      const uid = String(props.uid ?? "");
+      if (!uid) {
+        throw new Error(
+          `npcStandingSpot at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+        );
+      }
+      const standingGroupId = String(props.standingGroupId ?? "all") || "all";
+      standingSpots.push({
+        kind: "npc_standing_spot",
+        uid,
+        tileX,
+        tileY,
+        standingGroupId,
+      });
     } else if (raw.type === "item_spawn") {
       const itemId = String(props.itemId ?? "") as ItemId;
       const quantity = Number(props.quantity ?? 1);
@@ -487,6 +520,7 @@ export function parseInteriorSpawns(
     workstations,
     seats,
     browseWaypoints,
+    standingSpots,
   };
 }
 

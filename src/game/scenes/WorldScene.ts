@@ -173,6 +173,12 @@ import { getPrefetchedEnvelope, getSavedPlayerSpawn } from "../save/storeHydrate
 
 const HELM_INTERACT_RADIUS = TILE_SIZE * 0.7;
 const SHOP_CLICK_RADIUS = TILE_SIZE * 1.5;
+/** Per-step cost multiplier the NPC pathfinder applies when entering a tile
+ *  that is *not* on the authored road network ("ground" tile layer). Road
+ *  tiles use the baseline cost of 1, so the heuristic stays admissible.
+ *  At 1.5, NPCs accept roughly a 50% detour to stay on roads but still cut
+ *  across off-road terrain when the detour would be longer than that. */
+const ROAD_OFFROAD_COST = 1.5;
 /** Time after last damage before player HP regen kicks in. */
 /** Tile where a new game drops the player. Authored in
  *  `src/game/data/playerSpawn.json` and movable via the spawn editor.
@@ -1881,7 +1887,20 @@ export class WorldScene extends GameplayScene {
     );
     worldTicker.registerWalkable(worldMap, (x, y) => this.isWalkablePx(x, y));
     this.npcBinder = new SceneNpcBinder();
-    this.npcBinder.attach(this, "chunk:world", (x, y) => this.isWalkablePx(x, y));
+    // Bias NPC pathfinding toward the authored road network on the "ground"
+    // tile layer: road tiles are baseline cost, off-road tiles cost more so
+    // detours that stay on roads are preferred over straight-line crossings
+    // through grass/sand. Off-road traversal is still allowed (never blocked)
+    // so NPCs can leave roads to reach destinations that aren't on them.
+    this.npcBinder.attach(
+      this,
+      "chunk:world",
+      (x, y) => this.isWalkablePx(x, y),
+      (tx, ty) =>
+        this.world.manager.hasTileOnLayer(tx, ty, "ground")
+          ? 1
+          : ROAD_OFFROAD_COST,
+    );
   }
 
   reloadNpcs(data: NpcData) {

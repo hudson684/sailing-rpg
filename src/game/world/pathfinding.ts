@@ -30,6 +30,16 @@ export interface PathfindOptions {
    *  detector. Set false when the agent must physically stand on the goal
    *  (e.g. seats). */
   allowNonWalkableGoal?: boolean;
+  /** Optional per-tile cost multiplier applied when *entering* a tile.
+   *  Used to bias the search toward preferred terrain (e.g. roads) while
+   *  still allowing detours across non-preferred terrain. Defaults to 1
+   *  for every tile.
+   *
+   *  Must return ≥1 to keep the octile heuristic admissible — the
+   *  heuristic assumes a minimum step cost of 1, so making preferred
+   *  tiles "free" (cost <1) would let A* overestimate and miss optimal
+   *  routes. Express the bias as preferred=1, others>1 instead. */
+  tileCost?: (tx: number, ty: number) => number;
 }
 
 /** Returns a walkable pixel inside the given tile, or null if no sample
@@ -187,6 +197,7 @@ export function pathfindPx(opts: PathfindOptions): Waypoint[] | null {
     toPx,
     maxNodes = 8192,
     allowNonWalkableGoal = true,
+    tileCost,
   } = opts;
 
   const startTx = Math.floor(fromPx.x / TILE_SIZE);
@@ -275,7 +286,8 @@ export function pathfindPx(opts: PathfindOptions): Waypoint[] | null {
       // sample is reachable in isolation.
       if (!lineWalkable(fromEntry, dstEntry, isWalkablePx)) continue;
 
-      const tentativeG = curG + stepCost;
+      const enterMul = tileCost ? tileCost(nx, ny) : 1;
+      const tentativeG = curG + stepCost * enterMul;
       const existingG = gScore.get(key);
       if (existingG !== undefined && tentativeG >= existingG) continue;
 
