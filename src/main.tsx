@@ -5,6 +5,10 @@ import "./index.css";
 
 if (import.meta.env.DEV) {
   void import("./game/dev/devConsole").then((m) => m.installDevConsole());
+  // Phase 6 dev-only: midnight plan reachability validator + stranded-agent
+  // watchdog. Side-effect imports auto-wire themselves on load.
+  void import("./game/dev/planReachabilityValidator");
+  void import("./game/dev/strandedAgentWatchdog");
 }
 
 if (import.meta.env.PROD && "serviceWorker" in navigator) {

@@ -1,38 +1,42 @@
 {
   "id": "tourist",
-  "constraints": {
-    "mustEndAt": "spawnPoint",
-    "totalActivitiesRange": [3, 6]
-  },
-  "templates": [
-    {
-      "id": "stand_around_general_store",
-      "kind": "standAround",
-      "target": { "kind": "businessArrival", "businessId": "general_store" },
-      "weight": 1.0,
-      "duration": [10, 25]
-    },
-    {
-      "id": "browse_blacksmith",
-      "kind": "browse",
-      "target": { "kind": "businessArrival", "businessId": "blacksmiths" },
-      "weight": 0.8,
-      "duration": [8, 20]
-    },
-    {
-      "id": "patron_tavern",
-      "kind": "patronTavern",
-      "target": { "kind": "businessArrival", "businessId": "rusty_anchor" },
-      "weight": 1.5,
-      "windowMinute": [600, 1320]
-    },
-    {
-      "id": "wander_town_square",
-      "kind": "wander",
-      "target": { "kind": "namedTile", "name": "town_square" },
-      "weight": 0.6,
-      "duration": [5, 15],
-      "wanderRadiusTiles": 4
+  "variants": {
+    "default": {
+      "constraints": {
+        "mustEndAt": "spawnPoint",
+        "totalActivitiesRange": [3, 6]
+      },
+      "templates": [
+        {
+          "id": "stand_around_general_store",
+          "kind": "standAround",
+          "target": { "kind": "businessArrival", "businessId": "general_store" },
+          "weight": 1.0,
+          "duration": [10, 25]
+        },
+        {
+          "id": "browse_blacksmith",
+          "kind": "browse",
+          "target": { "kind": "businessArrival", "businessId": "blacksmiths" },
+          "weight": 0.8,
+          "duration": [8, 20]
+        },
+        {
+          "id": "patron_tavern",
+          "kind": "patronTavern",
+          "target": { "kind": "businessArrival", "businessId": "rusty_anchor" },
+          "weight": 1.5,
+          "windowMinute": [600, 1320]
+        },
+        {
+          "id": "wander_town_square",
+          "kind": "wander",
+          "target": { "kind": "namedTile", "name": "town_square" },
+          "weight": 0.6,
+          "duration": [5, 15],
+          "wanderRadiusTiles": 4
+        }
+      ]
     }
-  ]
+  }
 }

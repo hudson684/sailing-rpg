@@ -107,13 +107,16 @@ export {
 } from "./planner/anchors";
 export {
   getArchetype,
-  getSchedule,
+  getScheduleBundle,
   getSpawnGroup,
   listArchetypeIds,
+  listScheduleBundleIds,
   listSpawnGroupIds,
   type ArchetypeDef,
+  type ScheduleBundle,
   type ScheduleDef,
   type ScheduleTemplate,
+  type ScheduleVariantBody,
   type SpawnGroupDef,
   type TemplateKind,
   type TemplateTarget,
@@ -122,7 +125,36 @@ export {
   planDay,
   planDayById,
   makePlanSeed,
+  getPlanLog,
+  clearPlanLog,
+  getPlanAnnotation,
+  clearPlanAnnotation,
   type PlannerCtx,
   type PlanResult,
+  type ResolvedScheduleDef,
 } from "./planner/scheduler";
+export {
+  resolveScheduleVariant,
+  resolveScheduleByArchetype,
+  evaluatePredicate,
+  explainResolver,
+  buildPriorityKeys,
+  type Predicate,
+  type PredicateInputs,
+  type ResolverExplanation,
+  type ScheduleResolverInputs,
+} from "./planner/scheduleResolver";
 export { spawnDispatcher } from "./planner/spawnDispatcher";
+
+// Phase 5: side-effect import wires the festival midnight replanner. The
+// module is otherwise lazy.
+import "./festivals/festivalReplanner";
+export {
+  loadFestivals,
+  getFestival,
+  festivalForDay,
+  forceFestival,
+  type FestivalDef,
+  type FestivalParticipantTemplate,
+  type SpecialAgentStep,
+} from "./festivals/festivalRegistry";

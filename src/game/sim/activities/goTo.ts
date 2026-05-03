@@ -20,6 +20,11 @@ export interface GoToConfig {
    *  slower than the live equivalent so abstract travel doesn't outpace
    *  what the player would see. */
   readonly abstractTilesPerMinute: number;
+  /** Phase 3: hard arrival deadline (sim-minute-of-day). When set, abstract
+   *  ticks that overshoot by more than the quarter-hour granularity teleport
+   *  the agent to the target. Live mode honours the player's view and just
+   *  arrives a bit late instead of teleporting. */
+  readonly mustArriveBy?: number;
 }
 
 interface GoToLeg {
@@ -163,6 +168,19 @@ export class GoToActivity extends BaseActivity {
 
   isComplete(): boolean { return this.runtime.done; }
 
+  /** Phase 3: total estimated abstract walk time (sim-minutes), summed
+   *  across every remaining leg + per-portal cost. Used by the planner's
+   *  hard-arrival anchor pass to know how long this leg will take. */
+  estimatedWalkMinutes(): number {
+    let total = 0;
+    for (let i = this.runtime.legIndex; i < this.runtime.legs.length; i++) {
+      const leg = this.runtime.legs[i];
+      total += legDistTiles(leg) / this.config.abstractTilesPerMinute;
+      if (leg.portalToSceneKey) total += PORTAL_COST_MINUTES;
+    }
+    return total;
+  }
+
   override enter(npc: NpcAgent, ctx: ActivityCtx): void {
     if (ctx.live && !this.handle) {
       this.handle = ctx.claimBody(npc, CLAIMANT);
@@ -191,6 +209,30 @@ export class GoToActivity extends BaseActivity {
         this.completeLeg(npc, ctx, leg);
       }
     }
+    // Phase 3: hard arrival deadline. If the abstract walk has overshot
+    // `mustArriveBy` by more than the quarter-hour tick granularity, snap
+    // to the final destination — the planner's expectation is that this
+    // leg ends at the deadline. Lifted from Stardew's "warp on the next
+    // 10-min tick" recovery. Player-visible (live) walks don't teleport.
+    if (
+      !this.runtime.done &&
+      this.config.mustArriveBy !== undefined &&
+      ctx.time.minuteOfDay > this.config.mustArriveBy + 15
+    ) {
+      const target = this.config.target;
+      ctx.registry.setLocation(npc.id, { ...target });
+      const px = (target.tileX + 0.5) * TILE_SIZE;
+      const py = (target.tileY + 0.5) * TILE_SIZE;
+      (npc as { body: NpcAgent["body"] }).body = {
+        ...npc.body,
+        px,
+        py,
+        anim: "idle",
+        facing: target.facing,
+      };
+      this.runtime.legIndex = this.runtime.legs.length;
+      this.runtime.done = true;
+    }
   }
 
   override tickLive(npc: NpcAgent, ctx: ActivityCtx, dtMs: number): void {
@@ -209,7 +251,7 @@ export class GoToActivity extends BaseActivity {
     if (npc.location.sceneKey !== leg.sceneKey) return;
 
     if (!this.runtime.livePath || this.runtime.livePathIdx >= this.runtime.livePath.length) {
-      this.computeLivePath(npc, leg, live.pathfinder);
+      this.computeLivePath(npc, leg, live.pathfinder, ctx);
       // No path available — fall back to abstract: instantly complete the
       // leg. Better than spinning forever inside a wall.
       if (!this.runtime.livePath) {
@@ -406,6 +448,7 @@ export class GoToActivity extends BaseActivity {
     npc: NpcAgent,
     leg: GoToLeg,
     pathfinder: Pathfinder | undefined,
+    ctx: ActivityCtx,
   ): void {
     this.runtime.livePathAgeMs = 0;
     this.runtime.livePathIdx = 0;
@@ -418,16 +461,63 @@ export class GoToActivity extends BaseActivity {
       ];
       return;
     }
+    const goalPx = {
+      x: (leg.endTile.x + 0.5) * TILE_SIZE,
+      y: (leg.endTile.y + 0.5) * TILE_SIZE,
+    };
     const result = pathfinder({
       fromPx: { x: npc.body.px, y: npc.body.py },
-      toPx: { x: (leg.endTile.x + 0.5) * TILE_SIZE, y: (leg.endTile.y + 0.5) * TILE_SIZE },
+      toPx: goalPx,
       allowNonWalkableGoal: true,
     });
-    if (!result || result.length === 0) {
-      this.runtime.livePath = null;
-    } else {
+    if (result && result.length > 0) {
       this.runtime.livePath = result;
+      return;
     }
+
+    // Phase 6 materialize-time fallback: A* failed, almost certainly because
+    // a player-placed object now sits on the precomputed leg path. Try to
+    // route to the nearest walkable tile adjacent to the goal using the
+    // live walkability oracle. If that fails too, snap-warp to the goal as
+    // a last resort and warn loudly. Critically — never break placeables.
+    const walkable = ctx.live?.walkable;
+    if (walkable) {
+      // Probe an 8-neighbor ring of the goal for a walkable tile. Pick the
+      // one with a real path back from the agent's current position.
+      const offsets = [
+        [0, 0], [1, 0], [-1, 0], [0, 1], [0, -1],
+        [1, 1], [1, -1], [-1, 1], [-1, -1],
+      ];
+      for (const [dx, dy] of offsets) {
+        const tx = leg.endTile.x + dx;
+        const ty = leg.endTile.y + dy;
+        const px = (tx + 0.5) * TILE_SIZE;
+        const py = (ty + 0.5) * TILE_SIZE;
+        if (!walkable(px, py)) continue;
+        const alt = pathfinder({
+          fromPx: { x: npc.body.px, y: npc.body.py },
+          toPx: { x: px, y: py },
+          allowNonWalkableGoal: false,
+        });
+        if (alt && alt.length > 0) {
+          this.runtime.livePath = alt;
+          // eslint-disable-next-line no-console
+          console.warn(
+            `[GoTo] ${npc.id}: original target tile blocked, routing to adjacent (${tx},${ty}) instead`,
+          );
+          return;
+        }
+      }
+    }
+
+    // Last resort: warp to the goal and complete the leg. This is the path
+    // the spec calls "loud" — when this fires the agent is sealed in or
+    // something is genuinely broken, and silent stall is worse than a warp.
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[GoTo] ${npc.id}: no path to (${leg.endTile.x},${leg.endTile.y}) and no walkable adjacent — warping`,
+    );
+    this.runtime.livePath = [{ x: goalPx.x, y: goalPx.y }];
   }
 }
 

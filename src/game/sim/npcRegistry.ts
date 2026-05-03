@@ -40,6 +40,22 @@ export class NpcRegistry implements BodyHandleRegistry {
   private readonly drivers = new Map<string, BodyHandle | null>();
   private readonly listeners = new Map<SceneEvent, Set<SceneEventHandler>>();
 
+  // ── Phase 2: friendship stub ───────────────────────────────────────
+  // Returns 0 for any npc id — placeholder until a real relationships
+  // system lands. The schedule resolver consumes this to evaluate
+  // `friendship` predicates; gating on friendship today never matches,
+  // which is the documented authoring escape hatch.
+  getFriendship(_npcId: string): number {
+    return 0;
+  }
+
+  /** Phase 2: world-flag provider for the schedule resolver. The registry
+   *  stays decoupled from `FlagStore`; the host wires a getter via
+   *  `setResolverWorldFlagsProvider`. Default returns an empty set. */
+  getWorldFlags(): ReadonlySet<string> {
+    return worldFlagsProvider();
+  }
+
   // ── Public surface ─────────────────────────────────────────────────
 
   register(agent: NpcAgent): void {
@@ -451,6 +467,14 @@ export function setRegisterPreEmitHook(fn: (agent: NpcAgent) => void): void {
   preEmitRegister = fn;
 }
 
+/** Phase 2: lazy world-flags provider. The host (which knows about
+ *  FlagStore) installs this; the registry only sees a function. */
+let worldFlagsProvider: () => ReadonlySet<string> = () => new Set<string>();
+
+export function setResolverWorldFlagsProvider(fn: () => ReadonlySet<string>): void {
+  worldFlagsProvider = fn;
+}
+
 // ── Singleton, wired to the time bus ─────────────────────────────────
 //
 // Mirrors the bus pattern: import the module, get a global instance.
@@ -508,16 +532,44 @@ function findReplanner(archetypeId: string): DayPlanReplanner | null {
 }
 
 bus.onTyped("time:midnight", ({ dayCount }) => {
+  // Phase 5: festival replanner runs first if installed. It returns the set
+  // of agent ids it has just replanned; per-archetype replan below skips
+  // those (the festival owns today).
+  const replannedByFestival = preReplanHook ? preReplanHook(dayCount) : new Set<string>();
   // Iterate registered persistent agents and rebuild their day plans. An
   // agent is "persistent" if it does NOT have `unregisterOnPlanExhaustion`
   // (tourists keep their dispatcher-built plan and exit when it ends).
   const agents = npcRegistry.allAgents();
   for (const agent of agents) {
     if (agent.flags.unregisterOnPlanExhaustion) continue;
+    if (replannedByFestival.has(agent.id)) continue;
     const fn = findReplanner(agent.archetypeId);
     if (!fn) continue;
     const next = fn(agent, dayCount);
     if (!next || next.length === 0) continue;
     npcRegistry.replaceDayPlan(agent.id, next);
   }
+  // Phase 6: post-replan validation hook. The portal-graph reachability
+  // check runs over every persistent agent's freshly-built plan and warns
+  // about cross-scene `GoTo` legs with no portal route. Cheap (graph
+  // traversal); doesn't rewrite plans, just surfaces author bugs early.
+  if (postReplanHook) postReplanHook();
 });
+
+/** Phase 6: post-replan validator hook. Decoupled so the registry doesn't
+ *  depend on the world layer. */
+let postReplanHook: (() => void) | null = null;
+
+export function setMidnightPostReplanHook(fn: () => void): void {
+  postReplanHook = fn;
+}
+
+/** Phase 5: festival module installs itself via this hook. The registry
+ *  doesn't depend on festivals; the festival module wires itself in by
+ *  calling `setMidnightPreReplanHook` from its bootstrap. Returning the
+ *  set of agents it replanned lets the per-archetype loop skip them. */
+let preReplanHook: ((dayCount: number) => ReadonlySet<string>) | null = null;
+
+export function setMidnightPreReplanHook(fn: (dayCount: number) => ReadonlySet<string>): void {
+  preReplanHook = fn;
+}
