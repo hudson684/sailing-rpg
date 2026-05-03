@@ -1,5 +1,6 @@
 import { QuestManager, validateCrossReferences } from "./QuestManager";
 import { FlagStore } from "../flags/FlagStore";
+import { setResolverWorldFlagsProvider } from "../sim/npcRegistry";
 import { DialogueDirector } from "../dialogue/DialogueDirector";
 import { RewardRunner } from "./rewards";
 import { useGameStore } from "../store/gameStore";
@@ -67,6 +68,18 @@ export function ensureQuestSubsystem(): QuestSubsystem {
 
   initialized = true;
   applyDevQueryParams(flags, quests);
+  // Phase 2: feed truthy world flags into the schedule resolver. Snapshot
+  // is rebuilt lazily on each call — a freshly-set flag is visible the next
+  // midnight replan without any subscriptions.
+  setResolverWorldFlagsProvider(() => {
+    const out = new Set<string>();
+    for (const [k, v] of flags!.entries()) {
+      if (v === true || (typeof v === "number" && v !== 0) || (typeof v === "string" && v.length > 0)) {
+        out.add(k);
+      }
+    }
+    return out;
+  });
   return { flags, quests, dialogues };
 }
 

@@ -9,6 +9,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { XMLParser } from "fast-xml-parser";
 import { stampUidsInDir } from "./stamp-uids.mjs";
 import { validateSpawnRefs } from "./validate-spawn-refs.mjs";
+import { validateScheduleBundles } from "./validate-schedule-bundles.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
@@ -417,6 +418,7 @@ export function validateWorld(manifest, summaries) {
   // against the just-emitted TMJs in public/maps/chunks/, so a stale Tiled
   // edit can't ship a dangling reference. Cheap; one JSON parse per chunk.
   for (const e of validateSpawnRefs()) errors.push(e);
+  for (const e of validateScheduleBundles()) errors.push(e);
   if (errors.length > 0) {
     throw new Error(`World validation failed:\n  - ${errors.join("\n  - ")}`);
   }

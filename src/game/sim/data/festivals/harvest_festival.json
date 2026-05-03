@@ -1,0 +1,22 @@
+{
+  "id": "harvest_festival",
+  "calendarDay": { "season": "autumn", "dayOfMonth": 16 },
+  "scene": "chunk:world",
+  "openHour": 9,
+  "closeHour": 22,
+  "arrivalAnchor": "town_square",
+  "participants": {
+    "townsfolk_default": {
+      "kind": "wander_anchor",
+      "anchor": "town_square",
+      "radius": 6
+    },
+    "tourist": {
+      "kind": "wander_anchor",
+      "anchor": "town_square",
+      "radius": 6
+    }
+  },
+  "specialAgents": {},
+  "afterClose": "default"
+}

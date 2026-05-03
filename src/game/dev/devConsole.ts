@@ -38,6 +38,10 @@ import {
 } from "../business/staff/staffAgentBootstrap";
 import { planDayById, makePlanSeed } from "../sim/planner/scheduler";
 import { getArchetype, getSpawnGroup, listSpawnGroupIds } from "../sim/planner/archetypes";
+import { explainResolver } from "../sim/planner/scheduleResolver";
+import { captureScheduleSnapshot } from "./scheduleSnapshot";
+import { forceFestival, loadFestivals } from "../sim/festivals/festivalRegistry";
+import { bus } from "../bus";
 
 /**
  * Dev-only console commands. Wired up from main.tsx behind
@@ -622,6 +626,50 @@ export function installDevConsole(): void {
   w.gold = giveGold;
   w.give = giveItem;
   w.listItems = listItems;
+  // Phase 4: dedicated NPC dev API. Stardew-style introspection helpers
+  // (schedule explain, plan dump, snapshot list) live behind `__npc`.
+  w.__npc = {
+    explain(archetypeId: string, dayCount?: number, weather?: string | null) {
+      const dc = dayCount ?? useTimeStore.getState().dayCount;
+      const cal = calendarContextFor(dc);
+      const archetype = getArchetype(archetypeId);
+      if (!archetype) {
+        return { error: `unknown archetype '${archetypeId}'` };
+      }
+      return explainResolver(archetype.scheduleId, cal, weather ?? null);
+    },
+    snapshot(activeSceneKey: string | null = null) {
+      return captureScheduleSnapshot(activeSceneKey);
+    },
+    list() {
+      return npcRegistry.allAgents().map((a) => ({
+        id: a.id,
+        archetype: a.archetypeId,
+        scene: a.location.sceneKey,
+        activity: a.currentActivity?.kind ?? "(none)",
+      }));
+    },
+    festivals() {
+      return loadFestivals().map((f) => ({
+        id: f.id,
+        season: f.calendarDay.season,
+        dayOfMonth: f.calendarDay.dayOfMonth,
+      }));
+    },
+    /** Phase 5: trigger a festival mid-game. Re-emits a midnight event so
+     *  the festival replanner runs against the forced festival id. Pass
+     *  `null` to clear the override. */
+    forceFestival(festivalId: string | null) {
+      forceFestival(festivalId);
+      const dc = useTimeStore.getState().dayCount;
+      bus.emitTyped("time:midnight", {
+        dayCount: dc,
+        calendar: calendarContextFor(dc),
+      });
+      // eslint-disable-next-line no-console
+      console.log(`[__npc] forceFestival(${festivalId ?? "null"}) — re-emitted midnight at dayCount ${dc}`);
+    },
+  };
   // eslint-disable-next-line no-console
-  console.log("[dev] console commands ready — type help() for a list.");
+  console.log("[dev] console commands ready — type help() for a list. NPC api: __npc.explain/list/snapshot");
 }

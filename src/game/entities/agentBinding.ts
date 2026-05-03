@@ -181,6 +181,11 @@ function buildTownsfolkDayPlan(
     calendar,
     { spawnPoint: home, npcId },
     makePlanSeed(npcId, dayCount),
+    {
+      weather: null,
+      worldFlags: npcRegistry.getWorldFlags(),
+      friendship: (id) => npcRegistry.getFriendship(id),
+    },
   );
   if (!result || result.activities.length === 0) return null;
   // Bookend the day with a sleep at the residence so non-aligned hours

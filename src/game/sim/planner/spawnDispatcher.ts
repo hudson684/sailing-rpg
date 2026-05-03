@@ -10,7 +10,9 @@ import { spawnPointAnchorKey, worldAnchors } from "./anchors";
 import { getArchetype, getSpawnGroup, listSpawnGroupIds, type SpawnGroupDef } from "./archetypes";
 import { hashSeed, mulberry32, randInt, randRange } from "./rng";
 import { planDay, makePlanSeed, type PlannerCtx } from "./scheduler";
-import { getSchedule } from "./archetypes";
+import { getScheduleBundle } from "./archetypes";
+import { resolveScheduleVariant } from "./scheduleResolver";
+import { festivalForDay, getForcedFestival } from "../festivals/festivalRegistry";
 
 /** Per-day, per-group state. Built at midnight (or when the first spawn point
  *  registers after midnight). Each `pendingArrivals` entry is a sim-minute-
@@ -65,12 +67,25 @@ class SpawnDispatcher {
     this.daySchedules.clear();
   }
 
-  /** Internal: ensure today has a plan for every group. Idempotent. */
+  /** Internal: ensure today has a plan for every group. Idempotent.
+   *
+   *  Phase 5: on festival days the festival's `touristSpawnGroupOverride`
+   *  (when set) replaces the named "tourist" group's config — the festival
+   *  group's arrival window/count drives the day, so the festival is always
+   *  populated. Other groups are untouched. */
   ensureDaySchedules(calendar: CalendarContext): void {
+    const festival = getForcedFestival() ?? festivalForDay(calendar);
+    const overrideGroupId = festival?.touristSpawnGroupOverride ?? null;
     for (const groupId of listSpawnGroupIds()) {
       const existing = this.daySchedules.get(groupId);
       if (existing && existing.dayCount === calendar.dayCount) continue;
-      const group = getSpawnGroup(groupId);
+      // If this group is the festival's override target, sample from its
+      // override config; otherwise sample normally.
+      const effectiveGroupId =
+        overrideGroupId && groupId === "tourist" && getSpawnGroup(overrideGroupId)
+          ? overrideGroupId
+          : groupId;
+      const group = getSpawnGroup(effectiveGroupId);
       if (!group) continue;
       const seed = hashSeed(`${groupId}|day`) ^ calendar.dayCount;
       const rng = mulberry32(seed);
@@ -153,14 +168,26 @@ class SpawnDispatcher {
       return null;
     }
     const ctx: PlannerCtx = { spawnPoint: { ...location }, npcId: id };
-    const schedule = getSchedule(archetype.scheduleId);
-    if (!schedule) {
+    const bundle = getScheduleBundle(archetype.scheduleId);
+    if (!bundle) {
       // eslint-disable-next-line no-console
       console.warn(`[spawnDispatcher] missing schedule '${archetype.scheduleId}' for archetype '${archetype.id}'`);
       return null;
     }
+    const variant = resolveScheduleVariant({
+      bundle,
+      calendar,
+      weather: null,
+      worldFlags: npcRegistry.getWorldFlags(),
+      friendship: (id) => npcRegistry.getFriendship(id),
+    });
+    if (!variant) {
+      // eslint-disable-next-line no-console
+      console.warn(`[spawnDispatcher] no resolvable variant in schedule '${archetype.scheduleId}'`);
+      return null;
+    }
     const seed = makePlanSeed(id, calendar.dayCount);
-    const plan = planDay(archetype, schedule, calendar, ctx, seed);
+    const plan = planDay(archetype, variant, calendar, ctx, seed);
 
     if (plan.activities.length === 0) {
       // Nothing to do — drop the agent before registering so the world stays

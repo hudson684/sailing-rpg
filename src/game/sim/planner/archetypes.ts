@@ -24,14 +24,26 @@ export type TemplateKind =
   | "idle"
   | "goTo";
 
+// Phase 2: a `when` predicate is a discriminated union over typed predicates.
+// Defined in scheduleResolver.ts to keep the schema in one place; archetypes
+// just types it as `unknown` at the JSON boundary and the resolver's parser
+// validates it.
+export type SchedulePredicate = unknown;
+
 export interface ScheduleTemplate {
   readonly id: string;
   readonly kind: TemplateKind;
   readonly target: TemplateTarget;
   readonly weight: number;
   /** Inclusive sim-minute window during which this activity is valid. When
-   *  omitted the activity is always valid. */
+   *  omitted the activity is always valid. Mutually exclusive with
+   *  `mustStartAt` (Phase 3). */
   readonly windowMinute?: readonly [number, number];
+  /** Phase 3: hard arrival time, in sim-minutes-of-day. The planner anchors
+   *  this template to start at exactly this minute, padding earlier
+   *  flexible activities or trimming as needed. Mutually exclusive with
+   *  `windowMinute`. */
+  readonly mustStartAt?: number;
   /** Sim-minute duration range for activities that have a wall-clock dwell
    *  (browse, wander, idle). Picked uniformly per arrival. */
   readonly duration?: readonly [number, number];
@@ -48,10 +60,30 @@ export interface ScheduleConstraints {
   readonly totalActivitiesRange?: readonly [number, number];
 }
 
+/** A resolved schedule definition. Variants in a `ScheduleBundle` are full
+ *  `ScheduleDef` bodies (or alias redirects); the resolver returns one of
+ *  these per (archetype, calendar, weather, ...) lookup. */
 export interface ScheduleDef {
   readonly id: string;
   readonly constraints: ScheduleConstraints;
   readonly templates: readonly ScheduleTemplate[];
+}
+
+/** Phase 1: a variant body. Either a full `ScheduleDef` body (constraints +
+ *  templates) or an alias redirecting to another variant key. May carry a
+ *  Phase 2 `when` predicate that gates the variant beyond key matching. */
+export interface ScheduleVariantBody {
+  readonly constraints?: ScheduleConstraints;
+  readonly templates?: readonly ScheduleTemplate[];
+  readonly alias?: string;
+  readonly when?: SchedulePredicate;
+}
+
+/** Phase 1: a bundle of named variants keyed by resolution priority. The
+ *  resolver picks one variant per day per agent. `default` is required. */
+export interface ScheduleBundle {
+  readonly id: string;
+  readonly variants: Readonly<Record<string, ScheduleVariantBody>>;
 }
 
 export interface SpawnGroupDef {
@@ -69,8 +101,8 @@ const ARCHETYPES: ReadonlyMap<string, ArchetypeDef> = new Map(
   ),
 );
 
-const SCHEDULES: ReadonlyMap<string, ScheduleDef> = new Map(
-  ([touristSchedule, townsfolkDefaultSchedule] as unknown as ScheduleDef[]).map(
+const SCHEDULE_BUNDLES: ReadonlyMap<string, ScheduleBundle> = new Map(
+  ([touristSchedule, townsfolkDefaultSchedule] as unknown as ScheduleBundle[]).map(
     (s) => [s.id, s],
   ),
 );
@@ -85,8 +117,10 @@ export function getArchetype(id: string): ArchetypeDef | null {
   return ARCHETYPES.get(id) ?? null;
 }
 
-export function getSchedule(id: string): ScheduleDef | null {
-  return SCHEDULES.get(id) ?? null;
+/** Phase 1: schedule lookup returns the full bundle. Use the resolver to
+ *  pick a variant for a given day. */
+export function getScheduleBundle(id: string): ScheduleBundle | null {
+  return SCHEDULE_BUNDLES.get(id) ?? null;
 }
 
 export function getSpawnGroup(id: string): SpawnGroupDef | null {
@@ -99,4 +133,8 @@ export function listSpawnGroupIds(): readonly string[] {
 
 export function listArchetypeIds(): readonly string[] {
   return [...ARCHETYPES.keys()];
+}
+
+export function listScheduleBundleIds(): readonly string[] {
+  return [...SCHEDULE_BUNDLES.keys()];
 }

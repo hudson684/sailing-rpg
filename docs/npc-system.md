@@ -309,3 +309,38 @@ the cleanup:
 When in doubt, check `plan/global-npc-state/decisions.md` — every
 non-obvious choice in the implementation is logged there with the
 reason.
+
+## Phase additions (post-Phase-9 enrichments)
+
+The plan in `plan/npc-schedule-enrichments/` layered the following
+extensions on top of the Phase 9 architecture without changing the
+registry / body-ownership model:
+
+- **Schedule key resolver** (Phase 1). `data/schedules/<id>.json` is
+  now a *bundle* of named variants keyed by day-of-week, season,
+  weather, world flags, etc. Resolved per agent per midnight; the
+  result is a normal `ScheduleDef` the planner consumes as before.
+  Pure, deterministic, save-safe.
+- **Conditional `when` clauses** (Phase 2). Variants can carry a
+  typed predicate (AND/OR/NOT over `flag`/`agentFlag`/`friendship`/
+  `season`/`weather`). Predicates evaluate at midnight only; mid-day
+  flag flips do NOT trigger replans (deterministic by design).
+- **Hard arrival times** (Phase 3). Templates can declare
+  `mustStartAt: <minute>`. The planner pads earlier flexible
+  activities with `Idle` to land on the anchor, or trims by up to
+  30m. The preceding `GoTo` gets `mustArriveBy` set; abstract
+  overshoot warps to the target. Live walks don't teleport — the
+  player sees the NPC arrive a little late instead.
+- **Festivals as replanner override** (Phase 5). A festival is just a
+  high-priority replanner that swaps every participant's day plan on
+  the festival day. No parallel system; reuses the Phase 9
+  `registerReplanner` machinery.
+- **Path robustness** (Phase 6). Materialize-time fallback when live
+  A* can't path through player-placed obstacles: try static-only
+  collision, then nearest walkable adjacent tile, then warp as last
+  resort. Never break placed objects.
+
+The dev schedule overlay (`F9` toggle, behind `import.meta.env.DEV`)
+is a fixed-position list of every registered agent — id, scene, mode,
+current activity, ETA. Right-click a row to dump the full agent state
+to console (resolved variant key, plan annotations, etc.).
