@@ -139,7 +139,7 @@ export interface BusinessStoreState {
   recordWalkout: (id: BusinessId, dayCount: number) => void;
   /** Closed-form idle credit for one in-game hour: bumps coffers and today's
    *  draft revenue. No reputation change — idle is passive book-keeping. */
-  applyIdleHour: (id: BusinessId, amount: number, dayCount: number) => void;
+  applyIdleTick: (id: BusinessId, amount: number, dayCount: number) => void;
 
   // Save lifecycle
   serialize: () => Record<BusinessId, BusinessState>;
@@ -326,7 +326,7 @@ export const useBusinessStore = create<BusinessStoreState>()((set, get) => ({
       return { ...s, todaysDraft: { ...draft, walkouts: draft.walkouts + 1 } };
     }),
 
-  applyIdleHour: (id, amount, dayCount) =>
+  applyIdleTick: (id, amount, dayCount) =>
     patch(set, id, (s) => {
       const draft = s.todaysDraft ?? blankDraft(dayCount);
       return {

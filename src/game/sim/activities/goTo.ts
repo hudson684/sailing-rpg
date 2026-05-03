@@ -1,4 +1,5 @@
 import { TILE_SIZE } from "../../constants";
+import { TICK_SIM_MINUTES } from "../../time/constants";
 import { BaseActivity } from "./activity";
 import type {
   Activity,
@@ -21,8 +22,8 @@ export interface GoToConfig {
    *  what the player would see. */
   readonly abstractTilesPerMinute: number;
   /** Phase 3: hard arrival deadline (sim-minute-of-day). When set, abstract
-   *  ticks that overshoot by more than the quarter-hour granularity teleport
-   *  the agent to the target. Live mode honours the player's view and just
+   *  ticks that overshoot by more than one sim-tick (10 min) teleport the
+   *  agent to the target. Live mode honours the player's view and just
    *  arrives a bit late instead of teleporting. */
   readonly mustArriveBy?: number;
 }
@@ -210,14 +211,14 @@ export class GoToActivity extends BaseActivity {
       }
     }
     // Phase 3: hard arrival deadline. If the abstract walk has overshot
-    // `mustArriveBy` by more than the quarter-hour tick granularity, snap
-    // to the final destination — the planner's expectation is that this
-    // leg ends at the deadline. Lifted from Stardew's "warp on the next
-    // 10-min tick" recovery. Player-visible (live) walks don't teleport.
+    // `mustArriveBy` by more than one sim-tick (10 in-game min), snap to
+    // the final destination — the planner's expectation is that this leg
+    // ends at the deadline. Lifted from Stardew's "warp on the next 10-min
+    // tick" recovery. Player-visible (live) walks don't teleport.
     if (
       !this.runtime.done &&
       this.config.mustArriveBy !== undefined &&
-      ctx.time.minuteOfDay > this.config.mustArriveBy + 15
+      ctx.time.minuteOfDay > this.config.mustArriveBy + TICK_SIM_MINUTES
     ) {
       const target = this.config.target;
       ctx.registry.setLocation(npc.id, { ...target });

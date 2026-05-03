@@ -30,7 +30,7 @@ Two ticks run in parallel:
 
 | Tick | When | Cost | Drives |
 |---|---|---|---|
-| **Abstract** | every `time:hourTick` (60 sim-min) | cheap, every agent in the world | bookkeeping (timers, day-plan progress) |
+| **Abstract** | every `time:simTick` (10 sim-min) | cheap, every agent in the world | bookkeeping (timers, day-plan progress) |
 | **Live** | every frame, only the player's scene | full pathfinding + animation | the agent's `NpcModel` you actually see |
 
 When the player walks into a scene, the binder calls `materialize` on

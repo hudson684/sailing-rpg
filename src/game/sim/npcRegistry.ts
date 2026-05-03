@@ -1,7 +1,7 @@
 import { bus } from "../bus";
 import { calendarContextFor } from "./calendar/calendar";
 import { useTimeStore } from "../time/timeStore";
-import { minuteOfDay } from "../time/constants";
+import { minuteOfDay, TICK_SIM_MINUTES } from "../time/constants";
 import {
   BodyHandle,
   createBodyHandle,
@@ -478,18 +478,15 @@ export function setResolverWorldFlagsProvider(fn: () => ReadonlySet<string>): vo
 // ── Singleton, wired to the time bus ─────────────────────────────────
 //
 // Mirrors the bus pattern: import the module, get a global instance.
-// Subscribed to `time:quarterHourTick` so the minute-level durations on
-// activities (browse 10–25 min, idle 5–15 min, etc.) actually finish at
-// :15/:30/:45 boundaries instead of getting rounded up to the next hour.
-// Cheap by design (abstract, scene-agnostic) — 4× the firing rate is a
-// rounding error compared to per-frame live ticks.
+// Subscribed to `time:simTick` so the minute-level durations on activities
+// (browse 10–25 min, idle 5–15 min, etc.) finish at :10/:20/:30/:40/:50
+// boundaries instead of getting rounded up to the next hour. Cheap by
+// design (abstract, scene-agnostic).
 
 export const npcRegistry = new NpcRegistry();
 
-const QUARTER_SIM_MINUTES = 15;
-
-bus.onTyped("time:quarterHourTick", () => {
-  npcRegistry.tickAbstract(QUARTER_SIM_MINUTES);
+bus.onTyped("time:simTick", () => {
+  npcRegistry.tickAbstract(TICK_SIM_MINUTES);
 });
 
 /** Per-archetype day-plan re-roller. Registered by `staffAgentBootstrap`

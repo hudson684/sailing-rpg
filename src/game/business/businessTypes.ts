@@ -106,7 +106,8 @@ export interface DailyEntry {
 export interface LastTickRef {
   dayCount: number;
   phase: "day" | "night";
-  hourIndex: number;
+  /** Index of the sim tick (0-based, 10 in-game min apart). */
+  tickIndex: number;
 }
 
 export interface BusinessState {

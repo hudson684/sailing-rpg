@@ -1,20 +1,21 @@
 /**
- * Closed-form idle simulation. Each `time:hourTick` (6× per phase) every
- * owned business that the player isn't currently sitting in earns one
- * in-game hour's worth of expected revenue, computed to match what live
- * mode would produce on average.
+ * Closed-form idle simulation. Each `time:simTick` (every 10 in-game min,
+ * 36× per phase) every owned business that the player isn't currently
+ * sitting in earns one tick's worth of expected revenue, computed to match
+ * what live mode would produce on average.
  */
 
 import { bus } from "../bus";
 import {
-  hourDurationMs,
   minuteOfDay,
   MINUTES_PER_DAY,
+  TICK_SIM_MINUTES,
+  tickDurationMs,
   type Phase,
 } from "../time/constants";
 import { useBusinessStore } from "./businessStore";
 import { businesses, businessKinds } from "./registry";
-import { acceptanceFractionForHour } from "./schedule";
+import { acceptanceFractionForWindow } from "./schedule";
 import {
   getEffectiveStats,
   spawnRatePerSecond,
@@ -29,17 +30,18 @@ import type {
 let currentInteriorKey: string | null = null;
 let initialized = false;
 
-/** Expected revenue for one in-game hour of `phase` for a single business.
- *  Mirrors the live spawn-and-serve loop: spawn rate × in-game hour duration,
- *  capped by staff throughput, times the average price across eligible
- *  revenue sources. Returns 0 if the business can't make a sale (no unlocked
- *  menu has staff). Shared with the Overview projection chart. */
-export function getHourlyExpectedRevenue(
+/** Expected revenue for a window of `windowMs` real-ms during one tick for
+ *  a single business. Mirrors the live spawn-and-serve loop: spawn rate ×
+ *  window duration, capped by staff throughput, times the average price
+ *  across eligible revenue sources. Returns 0 if the business can't make a
+ *  sale (no unlocked menu has staff). */
+export function getExpectedRevenueForWindow(
   state: BusinessState,
   kind: BusinessKindDef,
-  phase: Phase,
+  windowMs: number,
 ): number {
   if (!state.owned) return 0;
+  if (windowMs <= 0) return 0;
   const stats = getEffectiveStats(state, kind);
   const byRole = staffByRole(state);
 
@@ -52,8 +54,7 @@ export function getHourlyExpectedRevenue(
   const baseRate = spawnRatePerSecond(state, kind);
   if (baseRate <= 0) return 0;
 
-  const hourMs = hourDurationMs(phase);
-  const customersFromSpawn = baseRate * (hourMs / 1000);
+  const customersFromSpawn = baseRate * (windowMs / 1000);
 
   let staffCount = 0;
   let weightedService = 0;
@@ -64,7 +65,7 @@ export function getHourlyExpectedRevenue(
   }
   const avgServiceMs = staffCount > 0 ? weightedService / staffCount : 0;
   const throughputCap =
-    avgServiceMs > 0 ? staffCount * (hourMs / avgServiceMs) : Infinity;
+    avgServiceMs > 0 ? staffCount * (windowMs / avgServiceMs) : Infinity;
 
   const customers = Math.min(customersFromSpawn, throughputCap);
 
@@ -75,17 +76,17 @@ export function getHourlyExpectedRevenue(
   return customers * avgPrice;
 }
 
-function applyHourTo(
+function applyTickTo(
   businessId: BusinessId,
   phase: Phase,
   dayCount: number,
-  hourIndex: number,
+  tickIndex: number,
 ): void {
   const def = businesses.tryGet(businessId);
   if (!def) return;
 
   const store = useBusinessStore.getState();
-  store.setLastTick(businessId, { dayCount, phase, hourIndex });
+  store.setLastTick(businessId, { dayCount, phase, tickIndex });
 
   // Skip if the player is currently inside this interior — live sim is
   // already spawning customers there. (Plan §07 option A.)
@@ -96,22 +97,26 @@ function applyHourTo(
   const state = store.get(businessId);
   if (!state || !state.owned) return;
 
-  // Prorate by the share of the hour the business is accepting customers.
-  // hourIndex is the index of the hour that just elapsed; its in-game start
-  // is hourIndex hours into the current phase. acceptanceFractionForHour
-  // samples the 60-minute window at 10-min granularity, matching the
-  // open/close buffer resolution.
-  const hourStartMs = hourIndex * hourDurationMs(phase);
-  const hourStartMinute = minuteOfDay(phase, hourStartMs) % MINUTES_PER_DAY;
-  const acceptanceFrac = acceptanceFractionForHour(def.schedule, hourStartMinute);
+  // Prorate by the share of this 10-min window the business is accepting
+  // customers. acceptanceFractionForWindow samples at 10-min granularity
+  // (matching the open/close buffer resolution), so for a one-tick window
+  // this collapses to a single midpoint check.
+  const tickMs = tickDurationMs(phase);
+  const tickStartMs = tickIndex * tickMs;
+  const tickStartMinute = minuteOfDay(phase, tickStartMs) % MINUTES_PER_DAY;
+  const acceptanceFrac = acceptanceFractionForWindow(
+    def.schedule,
+    tickStartMinute,
+    TICK_SIM_MINUTES,
+  );
   if (acceptanceFrac <= 0) return;
 
-  const revenue = getHourlyExpectedRevenue(state, kind, phase) * acceptanceFrac;
+  const revenue = getExpectedRevenueForWindow(state, kind, tickMs) * acceptanceFrac;
   const rounded = Math.round(revenue);
-  if (rounded > 0) store.applyIdleHour(businessId, rounded, dayCount);
+  if (rounded > 0) store.applyIdleTick(businessId, rounded, dayCount);
 }
 
-/** Wire idle revenue to `time:hourTick`. Idempotent so HMR doesn't double-
+/** Wire idle revenue to `time:simTick`. Idempotent so HMR doesn't double-
  *  subscribe. Also tracks the active map id so we can avoid double-counting
  *  the interior the player is currently inside. */
 export function initIdleSimSubsystem(): void {
@@ -124,8 +129,8 @@ export function initIdleSimSubsystem(): void {
       : null;
   });
 
-  bus.onTyped("time:hourTick", ({ phase, dayCount, hourIndex }) => {
+  bus.onTyped("time:simTick", ({ phase, dayCount, tickIndex }) => {
     const ids = useBusinessStore.getState().ownedIds();
-    for (const id of ids) applyHourTo(id, phase, dayCount, hourIndex);
+    for (const id of ids) applyTickTo(id, phase, dayCount, tickIndex);
   });
 }

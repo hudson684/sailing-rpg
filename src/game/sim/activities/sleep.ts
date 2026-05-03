@@ -66,8 +66,8 @@ export class SleepActivity extends BaseActivity {
       this.handle = ctx.claimBody(npc, CLAIMANT);
       this.parkAtHome(npc);
     }
-    // Duration drains in the abstract tick (every in-game hour); live tick
-    // just pins the agent at home with the idle anim.
+    // Duration drains in the abstract sim tick (every 10 in-game min); live
+    // tick just pins the agent at home with the idle anim.
     this.handle.setAnim("idle");
   }
 

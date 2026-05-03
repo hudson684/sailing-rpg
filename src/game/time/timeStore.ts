@@ -3,10 +3,15 @@ import { bus } from "../bus";
 import { calendarContextFor } from "../sim/calendar/calendar";
 import {
   HOURS_PER_PHASE,
+  TICKS_PER_HOUR,
   hourDurationMs,
   phaseDurationMs,
+  tickDurationMs,
   type Phase,
 } from "./constants";
+
+const TICKS_PER_PHASE = HOURS_PER_PHASE * TICKS_PER_HOUR;
+
 
 export interface TimeState {
   dayCount: number;
@@ -14,12 +19,10 @@ export interface TimeState {
   /** Real ms elapsed in the current phase. Persisted (not wallclock) so
    *  save/load resumes mid-phase without skipping ahead. */
   elapsedInPhaseMs: number;
-  /** Hours already emitted this phase, 0..HOURS_PER_PHASE. Tracked to
-   *  guarantee exactly HOURS_PER_PHASE hourTicks per phase regardless of
-   *  frame jitter. */
-  hoursEmittedThisPhase: number;
-  /** Quarter-hours already emitted this phase, 0..(HOURS_PER_PHASE*4). */
-  quartersEmittedThisPhase: number;
+  /** Sub-hour ticks already emitted this phase, 0..(HOURS_PER_PHASE*TICKS_PER_HOUR).
+   *  Tracked to guarantee exactly that many `time:simTick` events per phase
+   *  regardless of frame jitter. */
+  ticksEmittedThisPhase: number;
 
   tick: (deltaMs: number) => void;
   /** Dev-only: skip forward (positive) or back (negative) by N in-game hours
@@ -36,17 +39,19 @@ export interface TimeSnapshot {
   dayCount: number;
   phase: Phase;
   elapsedInPhaseMs: number;
-  hoursEmittedThisPhase: number;
   /** Optional: older saves predate this; `hydrate` recomputes from elapsed. */
+  ticksEmittedThisPhase?: number;
+  /** Legacy: older saves tracked hour-granularity emission. Ignored on load. */
+  hoursEmittedThisPhase?: number;
+  /** Legacy: replaced by `ticksEmittedThisPhase` (now 6/hour, was 4/hour). */
   quartersEmittedThisPhase?: number;
 }
 
-const INITIAL: Required<TimeSnapshot> = {
+const INITIAL: Required<Pick<TimeSnapshot, "dayCount" | "phase" | "elapsedInPhaseMs" | "ticksEmittedThisPhase">> = {
   dayCount: 1,
   phase: "day",
   elapsedInPhaseMs: 0,
-  hoursEmittedThisPhase: 0,
-  quartersEmittedThisPhase: 0,
+  ticksEmittedThisPhase: 0,
 };
 
 export const useTimeStore = create<TimeState & { paused: boolean }>(
@@ -58,13 +63,12 @@ export const useTimeStore = create<TimeState & { paused: boolean }>(
       if (deltaMs <= 0) return;
       if (get().paused) return;
 
-      let { dayCount, phase, elapsedInPhaseMs, hoursEmittedThisPhase, quartersEmittedThisPhase } = get();
+      let { dayCount, phase, elapsedInPhaseMs, ticksEmittedThisPhase } = get();
       let remaining = deltaMs;
 
       while (remaining > 0) {
         const phaseLen = phaseDurationMs(phase);
-        const hourLen = hourDurationMs(phase);
-        const quarterLen = hourLen / 4;
+        const tickLen = tickDurationMs(phase);
         const room = phaseLen - elapsedInPhaseMs;
 
         if (remaining < room) {
@@ -75,32 +79,17 @@ export const useTimeStore = create<TimeState & { paused: boolean }>(
           remaining -= room;
         }
 
-        // Emit any hour boundaries we've crossed within this phase.
-        const hoursDue = Math.min(
-          HOURS_PER_PHASE,
-          Math.floor(elapsedInPhaseMs / hourLen),
+        // Emit any sub-hour tick boundaries we've crossed within this phase.
+        const ticksDue = Math.min(
+          TICKS_PER_PHASE,
+          Math.floor(elapsedInPhaseMs / tickLen),
         );
-        while (hoursEmittedThisPhase < hoursDue) {
-          const hourIndex = hoursEmittedThisPhase;
-          hoursEmittedThisPhase += 1;
+        while (ticksEmittedThisPhase < ticksDue) {
+          const tickIndex = ticksEmittedThisPhase;
+          ticksEmittedThisPhase += 1;
           // Persist progress before emit so listeners see consistent state.
-          set({ dayCount, phase, elapsedInPhaseMs, hoursEmittedThisPhase, quartersEmittedThisPhase });
-          bus.emitTyped("time:hourTick", { dayCount, phase, hourIndex });
-        }
-
-        // Emit any quarter-hour boundaries we've crossed within this phase.
-        // Fired after hour ticks so subscribers that want true sub-hour cadence
-        // see exactly one quarter event per quarter; hour-aligned subscribers
-        // can keep using `time:hourTick` and ignore these.
-        const quartersDue = Math.min(
-          HOURS_PER_PHASE * 4,
-          Math.floor(elapsedInPhaseMs / quarterLen),
-        );
-        while (quartersEmittedThisPhase < quartersDue) {
-          const quarterIndex = quartersEmittedThisPhase;
-          quartersEmittedThisPhase += 1;
-          set({ dayCount, phase, elapsedInPhaseMs, hoursEmittedThisPhase, quartersEmittedThisPhase });
-          bus.emitTyped("time:quarterHourTick", { dayCount, phase, quarterIndex });
+          set({ dayCount, phase, elapsedInPhaseMs, ticksEmittedThisPhase });
+          bus.emitTyped("time:simTick", { dayCount, phase, tickIndex });
         }
 
         // Phase rollover.
@@ -110,9 +99,8 @@ export const useTimeStore = create<TimeState & { paused: boolean }>(
           if (crossedDayBoundary) dayCount += 1;
           phase = nextPhase;
           elapsedInPhaseMs = 0;
-          hoursEmittedThisPhase = 0;
-          quartersEmittedThisPhase = 0;
-          set({ dayCount, phase, elapsedInPhaseMs, hoursEmittedThisPhase, quartersEmittedThisPhase });
+          ticksEmittedThisPhase = 0;
+          set({ dayCount, phase, elapsedInPhaseMs, ticksEmittedThisPhase });
           if (crossedDayBoundary) {
             // Fires once per day boundary, before phaseChange so listeners
             // that reset daily counters do so before "new phase" handlers run.
@@ -125,7 +113,7 @@ export const useTimeStore = create<TimeState & { paused: boolean }>(
         }
       }
 
-      set({ dayCount, phase, elapsedInPhaseMs, hoursEmittedThisPhase, quartersEmittedThisPhase });
+      set({ dayCount, phase, elapsedInPhaseMs, ticksEmittedThisPhase });
     },
 
     devShiftHours: (hours) => {
@@ -148,16 +136,11 @@ export const useTimeStore = create<TimeState & { paused: boolean }>(
           elapsedInPhaseMs = phaseDurationMs(phase);
         }
       }
-      const hourLen = hourDurationMs(phase);
-      const hoursEmittedThisPhase = Math.min(
-        HOURS_PER_PHASE,
-        Math.floor(elapsedInPhaseMs / hourLen),
+      const ticksEmittedThisPhase = Math.min(
+        TICKS_PER_PHASE,
+        Math.floor(elapsedInPhaseMs / tickDurationMs(phase)),
       );
-      const quartersEmittedThisPhase = Math.min(
-        HOURS_PER_PHASE * 4,
-        Math.floor(elapsedInPhaseMs / (hourLen / 4)),
-      );
-      set({ dayCount, phase, elapsedInPhaseMs, hoursEmittedThisPhase, quartersEmittedThisPhase });
+      set({ dayCount, phase, elapsedInPhaseMs, ticksEmittedThisPhase });
     },
 
     setPaused: (paused) => set({ paused }),
@@ -165,37 +148,23 @@ export const useTimeStore = create<TimeState & { paused: boolean }>(
     reset: () => set({ ...INITIAL }),
 
     hydrate: (data) =>
+      // The saved tick count is recomputed from `elapsedInPhaseMs` so the
+      // 4-ticks/hour → 6-ticks/hour cadence change rehydrates cleanly. Older
+      // `hoursEmittedThisPhase` / `quartersEmittedThisPhase` fields are
+      // accepted in the snapshot type but ignored here.
       set({
         dayCount: data.dayCount,
         phase: data.phase,
         elapsedInPhaseMs: data.elapsedInPhaseMs,
-        hoursEmittedThisPhase: data.hoursEmittedThisPhase,
-        // Older saves predate quarter-hour tracking; recompute from elapsed.
-        quartersEmittedThisPhase:
-          data.quartersEmittedThisPhase ??
-          Math.min(
-            HOURS_PER_PHASE * 4,
-            Math.floor(
-              data.elapsedInPhaseMs / (hourDurationMs(data.phase) / 4),
-            ),
-          ),
+        ticksEmittedThisPhase: Math.min(
+          TICKS_PER_PHASE,
+          Math.floor(data.elapsedInPhaseMs / tickDurationMs(data.phase)),
+        ),
       }),
 
     serialize: () => {
-      const {
-        dayCount,
-        phase,
-        elapsedInPhaseMs,
-        hoursEmittedThisPhase,
-        quartersEmittedThisPhase,
-      } = get();
-      return {
-        dayCount,
-        phase,
-        elapsedInPhaseMs,
-        hoursEmittedThisPhase,
-        quartersEmittedThisPhase,
-      };
+      const { dayCount, phase, elapsedInPhaseMs, ticksEmittedThisPhase } = get();
+      return { dayCount, phase, elapsedInPhaseMs, ticksEmittedThisPhase };
     },
   }),
 );

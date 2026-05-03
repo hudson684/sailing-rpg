@@ -251,10 +251,10 @@ class SpawnDispatcher {
       this.ensureDaySchedules(calendar);
       this.flushPending(calendar);
     });
-    // Quarter-hour cadence so arrivals land at :00/:15/:30/:45 instead of
-     // bunching on the hour. The arrival window already picks random minutes;
-     // the finer flush just lets them spawn closer to the picked minute.
-    bus.onTyped("time:quarterHourTick", ({ dayCount }) => {
+    // 10-min cadence so arrivals land at :00/:10/:20/:30/:40/:50 instead of
+    // bunching on the hour. The arrival window already picks random minutes;
+    // the finer flush just lets them spawn closer to the picked minute.
+    bus.onTyped("time:simTick", ({ dayCount }) => {
       this.flushPending(calendarContextFor(dayCount));
     });
   }

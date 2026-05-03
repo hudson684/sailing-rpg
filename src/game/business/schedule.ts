@@ -76,21 +76,24 @@ export function statusForPhase(
   return getScheduleStatus(schedule, minuteOfDay(phase, elapsedInPhaseMs));
 }
 
-/** Fraction of a one-in-game-hour window starting at `minute` during which
- *  the business is accepting customers. Used by the idle simulation to
- *  proration hourly revenue across partial open windows.
+/** Fraction of an in-game window starting at `startMinute` and lasting
+ *  `windowMinutes` during which the business is accepting customers. Used
+ *  by the idle simulation to prorate revenue across partial open windows.
  *
- *  Sampled at 6 sub-intervals (10 in-game min each) which is the same
- *  resolution as the spawn-cutoff buffer, so transitions land cleanly. */
-export function acceptanceFractionForHour(
+ *  Sampled at the schedule's natural 10-min resolution (same as the
+ *  spawn-cutoff buffer) so transitions land cleanly. For windows of 10 min
+ *  or less, this is effectively a single midpoint check (binary). */
+export function acceptanceFractionForWindow(
   schedule: BusinessSchedule | undefined,
   startMinute: number,
+  windowMinutes: number,
 ): number {
   if (!schedule) return 1;
-  const samples = 6;
+  if (windowMinutes <= 0) return 0;
+  const samples = Math.max(1, Math.round(windowMinutes / 10));
   let inWindow = 0;
   for (let i = 0; i < samples; i++) {
-    const m = startMinute + (i + 0.5) * (60 / samples);
+    const m = startMinute + (i + 0.5) * (windowMinutes / samples);
     if (getScheduleStatus(schedule, m).acceptingCustomers) inWindow += 1;
   }
   return inWindow / samples;

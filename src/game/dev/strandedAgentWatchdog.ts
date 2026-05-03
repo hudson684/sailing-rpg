@@ -1,7 +1,7 @@
 // Phase 6: dev-only stranded-agent watchdog. Tracks each agent's body
-// position over consecutive quarter-hour ticks; if an agent is mid-`GoTo`
-// and hasn't moved over N ticks, log once. Catches silent stalls the live
-// pathfinder warnings miss. No-op in production builds (file gated).
+// position over consecutive sim ticks (10 in-game min); if an agent is
+// mid-`GoTo` and hasn't moved over N ticks, log once. Catches silent stalls
+// the live pathfinder warnings miss. No-op in production builds (file gated).
 
 import { bus } from "../bus";
 import { npcRegistry } from "../sim/npcRegistry";
@@ -20,7 +20,7 @@ let wired = false;
 export function wireStrandedAgentWatchdog(): void {
   if (wired) return;
   wired = true;
-  bus.onTyped("time:quarterHourTick", () => check());
+  bus.onTyped("time:simTick", () => check());
 }
 
 function check(): void {
@@ -55,7 +55,7 @@ function check(): void {
     ) {
       // eslint-disable-next-line no-console
       console.warn(
-        `[stranded] ${agent.id} stuck mid-goTo at tile (${tile.x},${tile.y}) for ${t.unchangedTicks} quarter-hours`,
+        `[stranded] ${agent.id} stuck mid-goTo at tile (${tile.x},${tile.y}) for ${t.unchangedTicks} sim ticks`,
       );
       t.warned = true;
     }

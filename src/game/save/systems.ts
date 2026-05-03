@@ -295,11 +295,17 @@ export function appearanceSaveable(): Saveable<z.infer<typeof AppearanceDataSche
 
 // ─── Time of day ──────────────────────────────────────────────────────────
 
+// Older saves persisted `hoursEmittedThisPhase` (and later
+// `quartersEmittedThisPhase`); the time store now emits a single sub-hour
+// `simTick` (10 in-game min) and re-derives the count from
+// `elapsedInPhaseMs` on load, so legacy fields are accepted but unused.
 const TimeDataSchema = z.object({
   dayCount: z.number().int().positive(),
   phase: z.enum(["day", "night"]),
   elapsedInPhaseMs: z.number().nonnegative(),
-  hoursEmittedThisPhase: z.number().int().nonnegative(),
+  ticksEmittedThisPhase: z.number().int().nonnegative().optional(),
+  hoursEmittedThisPhase: z.number().int().nonnegative().optional(),
+  quartersEmittedThisPhase: z.number().int().nonnegative().optional(),
 });
 
 export function timeSaveable(): Saveable<z.infer<typeof TimeDataSchema>> {
@@ -333,7 +339,7 @@ const DailyEntrySchema = z.object({
 const LastTickRefSchema = z.object({
   dayCount: z.number().int().nonnegative(),
   phase: z.enum(["day", "night"]),
-  hourIndex: z.number().int().nonnegative(),
+  tickIndex: z.number().int().nonnegative(),
 });
 
 const BusinessStateSchema = z.object({
@@ -354,7 +360,7 @@ const BusinessesDataSchema = z.record(z.string().min(1), BusinessStateSchema);
 export function businessSaveable(): Saveable<z.infer<typeof BusinessesDataSchema>> {
   return {
     id: "businesses",
-    version: 1,
+    version: 2,
     schema: BusinessesDataSchema,
     serialize: () =>
       useBusinessStore.getState().serialize() as z.infer<
@@ -364,5 +370,39 @@ export function businessSaveable(): Saveable<z.infer<typeof BusinessesDataSchema
       useBusinessStore
         .getState()
         .hydrate(data as Record<string, BusinessState>),
+    migrations: {
+      // v1 → v2: sim cadence moved from `hourTick` (60 sim-min) to `simTick`
+      // (10 sim-min). Each business's `lastTick.hourIndex` becomes
+      // `tickIndex` scaled by TICKS_PER_HOUR (6) so the next tick after load
+      // lands at roughly the same wall-time as the saved hour boundary.
+      1: (data: unknown) => {
+        if (!data || typeof data !== "object") return data;
+        const out: Record<string, unknown> = {};
+        for (const [id, raw] of Object.entries(data as Record<string, unknown>)) {
+          if (!raw || typeof raw !== "object") {
+            out[id] = raw;
+            continue;
+          }
+          const b = raw as Record<string, unknown>;
+          const lt = b.lastTick as
+            | { dayCount: number; phase: string; hourIndex?: number; tickIndex?: number }
+            | null
+            | undefined;
+          if (lt && lt.tickIndex === undefined && typeof lt.hourIndex === "number") {
+            out[id] = {
+              ...b,
+              lastTick: {
+                dayCount: lt.dayCount,
+                phase: lt.phase,
+                tickIndex: lt.hourIndex * 6,
+              },
+            };
+          } else {
+            out[id] = b;
+          }
+        }
+        return out;
+      },
+    },
   };
 }

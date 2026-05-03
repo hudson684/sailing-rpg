@@ -213,25 +213,19 @@ type Events = {
   "quest:unlocked": (payload: { questId: string }) => void;
 
   // ── Time-of-day ──────────────────────────────────────────────────
-  // Emitted by timeStore.tick(). `hourTick` fires HOURS_PER_PHASE times
-  // per phase (currently 6 day-hours + 6 night-hours per cycle); idle
-  // simulations should subscribe here instead of polling deltas.
+  // Emitted by timeStore.tick(). `simTick` fires every 10 in-game minutes
+  // (TICKS_PER_HOUR × HOURS_PER_PHASE = 36 ticks per phase). All sim
+  // bookkeeping — NPC registry, spawn dispatcher, business idle sim —
+  // subscribes here instead of polling deltas.
   "time:phaseChange": (payload: {
     phase: "day" | "night";
     dayCount: number;
   }) => void;
-  "time:hourTick": (payload: {
+  /** Canonical sub-hour sim tick. `tickIndex` is 0..(HOURS_PER_PHASE*TICKS_PER_HOUR - 1). */
+  "time:simTick": (payload: {
     dayCount: number;
     phase: "day" | "night";
-    hourIndex: number;
-  }) => void;
-  /** Fires 4× per hour (so 24× per phase). Use for sub-hour cadence work like
-   *  the spawn dispatcher; bookkeeping that thinks in whole hours should stay
-   *  on `time:hourTick`. `quarterIndex` is 0..(HOURS_PER_PHASE*4 - 1). */
-  "time:quarterHourTick": (payload: {
-    dayCount: number;
-    phase: "day" | "night";
-    quarterIndex: number;
+    tickIndex: number;
   }) => void;
   /** Fires exactly once per integer-day boundary (when dayCount increments
    *  forward through tick(); not re-emitted on backward devShiftHours).

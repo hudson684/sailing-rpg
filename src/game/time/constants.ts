@@ -3,6 +3,12 @@ export const NIGHT_MS = 7.5 * 60 * 1000;
 
 export const HOURS_PER_PHASE = 6;
 
+/** Sub-hour cadence for the canonical sim tick. 6 ticks/hour = 10 in-game
+ *  minutes per tick. The NPC registry, business idle sim, and spawn
+ *  dispatcher all run on this. */
+export const TICKS_PER_HOUR = 6;
+export const TICK_SIM_MINUTES = 60 / TICKS_PER_HOUR;
+
 export const HOUR_MS_DAY = DAY_MS / HOURS_PER_PHASE;
 export const HOUR_MS_NIGHT = NIGHT_MS / HOURS_PER_PHASE;
 
@@ -14,6 +20,10 @@ export function phaseDurationMs(phase: Phase): number {
 
 export function hourDurationMs(phase: Phase): number {
   return phase === "day" ? HOUR_MS_DAY : HOUR_MS_NIGHT;
+}
+
+export function tickDurationMs(phase: Phase): number {
+  return hourDurationMs(phase) / TICKS_PER_HOUR;
 }
 
 /** Minutes per in-game day (used for schedule math). */
