@@ -1,5 +1,9 @@
 import { useTimeStore } from "../game/time/timeStore";
 import { phaseDurationMs } from "../game/time/constants";
+import {
+  calendarContextFor,
+  formatCalendarLine,
+} from "../game/sim/calendar/calendar";
 import "./Clock.css";
 
 // In-game day starts at 06:00 and night at 18:00. Each phase covers 12
@@ -25,7 +29,10 @@ export function Clock() {
   const total = phaseDurationMs(phase);
   const pct = total > 0 ? Math.max(0, Math.min(1, elapsed / total)) : 0;
   const time = formatClock(phase, pct);
-  const label = `Day ${dayCount} · ${time}`;
+  const calendar = calendarContextFor(dayCount);
+  const label = import.meta.env.DEV
+    ? `${formatCalendarLine(calendar)} · ${time}`
+    : `Day ${dayCount} · ${time}`;
 
   return (
     <div

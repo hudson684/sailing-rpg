@@ -7,6 +7,7 @@ import {
   parseInteriorSpawns,
   type InteriorEntrySpawn,
   type InteriorExitSpawn,
+  type NpcBrowseWaypointSpawn,
   type RepairTargetSpawn,
   type SeatSpawn,
   type WorkstationSpawn,
@@ -29,6 +30,7 @@ export interface InteriorTilemap {
   repairTargets: RepairTargetSpawn[];
   workstations: WorkstationSpawn[];
   seats: SeatSpawn[];
+  browseWaypoints: NpcBrowseWaypointSpawn[];
   /** Per-tile images extracted from layers flagged with the `y-sort` custom
    *  property — each one gets its own depth so it sorts against the player
    *  (and other entities) by world y. */
@@ -181,16 +183,20 @@ export function buildInteriorTilemap(
    *  carry visibility instead, so we abstract over both via setVisible. */
   type Toggleable = { setVisible: (v: boolean) => unknown };
 
-  /** Additive gates (`@tier:`): targets show when their nodeId is unlocked. */
-  const tierTargets = new Map<string, Toggleable[]>();
+  /** A gated entry pairs the visibility-toggle targets (the tile layer or the
+   *  per-tile y-sort images that replaced it) with the underlying TilemapLayer
+   *  so per-tile collision can be gated alongside rendering. */
+  type GateEntry = { targets: Toggleable[]; layer: Phaser.Tilemaps.TilemapLayer };
+  /** Additive gates (`@tier:`): entries show when their nodeId is unlocked. */
+  const tierTargets = new Map<string, GateEntry[]>();
   /** Slot gates: a slot has an optional base (shown when no variant is
    *  active) and zero-or-more variants in author order. The latest unlocked
    *  variant wins. */
   const slots = new Map<
     string,
     {
-      base: Toggleable[];
-      variants: Array<{ nodeId: string; targets: Toggleable[] }>;
+      base: GateEntry[];
+      variants: Array<{ nodeId: string; entries: GateEntry[] }>;
     }
   >();
   const ensureSlot = (slotId: string) => {
@@ -220,22 +226,23 @@ export function buildInteriorTilemap(
       targets = imgs;
     }
 
+    const entry: GateEntry = { targets, layer };
     switch (gate.kind) {
       case "none":
         break;
       case "tier": {
         const arr = tierTargets.get(gate.nodeId) ?? [];
-        arr.push(...targets);
+        arr.push(entry);
         tierTargets.set(gate.nodeId, arr);
         break;
       }
       case "slot-base":
-        ensureSlot(gate.slotId).base.push(...targets);
+        ensureSlot(gate.slotId).base.push(entry);
         break;
       case "slot-variant":
         ensureSlot(gate.slotId).variants.push({
           nodeId: gate.nodeId,
-          targets,
+          entries: [entry],
         });
         break;
     }
@@ -248,17 +255,31 @@ export function buildInteriorTilemap(
     rawTmj: cached?.data,
     renderScale,
   });
-  const { exits, entries, repairTargets, workstations, seats } = parseInteriorSpawns(tilemap);
+  const {
+    exits,
+    entries,
+    repairTargets,
+    workstations,
+    seats,
+    browseWaypoints,
+  } = parseInteriorSpawns(tilemap);
 
   // ─── Visibility gating ──────────────────────────────────────────────────
   // Look up the business that "owns" this interior. If none, every gated
   // layer stays hidden — no business → no unlocks possible.
   const ownerId = businessIdForInteriorKey(key);
 
+  const applyEntry = (entry: GateEntry, visible: boolean) => {
+    for (const t of entry.targets) t.setVisible(visible);
+    // Gate per-tile collision shapes alongside rendering. ShapeCollider reads
+    // this flag and skips layers where it's false.
+    entry.layer.setData("gateActive", visible);
+  };
+
   const applyVisibility = (unlocked: ReadonlySet<string>) => {
-    for (const [nodeId, targets] of tierTargets) {
+    for (const [nodeId, entries] of tierTargets) {
       const visible = unlocked.has(nodeId);
-      for (const t of targets) t.setVisible(visible);
+      for (const e of entries) applyEntry(e, visible);
     }
     for (const slot of slots.values()) {
       // Latest variant in author order wins. This makes both linear tiers
@@ -269,10 +290,10 @@ export function buildInteriorTilemap(
         if (unlocked.has(slot.variants[i].nodeId)) activeIdx = i;
       }
       const baseVisible = activeIdx === -1;
-      for (const t of slot.base) t.setVisible(baseVisible);
+      for (const e of slot.base) applyEntry(e, baseVisible);
       for (let i = 0; i < slot.variants.length; i++) {
         const visible = i === activeIdx;
-        for (const t of slot.variants[i].targets) t.setVisible(visible);
+        for (const e of slot.variants[i].entries) applyEntry(e, visible);
       }
     }
   };
@@ -305,6 +326,7 @@ export function buildInteriorTilemap(
     repairTargets,
     workstations,
     seats,
+    browseWaypoints,
     ySortImages,
     unsubscribe,
   };

@@ -4,6 +4,8 @@ import * as saveSystems from "./systems";
 import { ensureQuestSubsystem } from "../quests/activeQuestManager";
 import { initHireablesSubsystem } from "../business/hireables";
 import { initIdleSimSubsystem } from "../business/idleSim";
+import { initStaffAgentBootstrap } from "../business/staff/staffAgentBootstrap";
+import { npcRegistrySaveable } from "./npcRegistrySaveable";
 import { getPrefetchedEnvelope } from "./storeHydrate";
 import { DroppedItemsState } from "../world/droppedItemsState";
 
@@ -56,9 +58,13 @@ export async function bootSaveController(
     // order, and QuestManager.hydrate reads flags to reconcile cursors.
     q.flags,
     q.quests,
+    // NPC registry hydrates last so businesses/flags are settled when
+    // activities reattach (e.g. PatronTavern looking up the patron service).
+    npcRegistrySaveable(),
   ]);
   initHireablesSubsystem();
   initIdleSimSubsystem();
+  initStaffAgentBootstrap();
   await controller.refreshMenu();
 
   const env = getPrefetchedEnvelope(game);

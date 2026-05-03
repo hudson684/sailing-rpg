@@ -23,6 +23,9 @@ export const SPAWN_LAYER_TYPES = [
   "interior_entry",
   "torch",
   "repair_target",
+  "npcSpawnPoint",
+  "npcBrowseWaypoint",
+  "npcResidence",
 ];
 
 const parser = new XMLParser({

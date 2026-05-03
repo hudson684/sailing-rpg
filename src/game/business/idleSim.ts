@@ -6,9 +6,15 @@
  */
 
 import { bus } from "../bus";
-import { hourDurationMs, type Phase } from "../time/constants";
+import {
+  hourDurationMs,
+  minuteOfDay,
+  MINUTES_PER_DAY,
+  type Phase,
+} from "../time/constants";
 import { useBusinessStore } from "./businessStore";
 import { businesses, businessKinds } from "./registry";
+import { acceptanceFractionForHour } from "./schedule";
 import {
   getEffectiveStats,
   spawnRatePerSecond,
@@ -90,7 +96,17 @@ function applyHourTo(
   const state = store.get(businessId);
   if (!state || !state.owned) return;
 
-  const revenue = getHourlyExpectedRevenue(state, kind, phase);
+  // Prorate by the share of the hour the business is accepting customers.
+  // hourIndex is the index of the hour that just elapsed; its in-game start
+  // is hourIndex hours into the current phase. acceptanceFractionForHour
+  // samples the 60-minute window at 10-min granularity, matching the
+  // open/close buffer resolution.
+  const hourStartMs = hourIndex * hourDurationMs(phase);
+  const hourStartMinute = minuteOfDay(phase, hourStartMs) % MINUTES_PER_DAY;
+  const acceptanceFrac = acceptanceFractionForHour(def.schedule, hourStartMinute);
+  if (acceptanceFrac <= 0) return;
+
+  const revenue = getHourlyExpectedRevenue(state, kind, phase) * acceptanceFrac;
   const rounded = Math.round(revenue);
   if (rounded > 0) store.applyIdleHour(businessId, rounded, dayCount);
 }

@@ -15,3 +15,21 @@ export function phaseDurationMs(phase: Phase): number {
 export function hourDurationMs(phase: Phase): number {
   return phase === "day" ? HOUR_MS_DAY : HOUR_MS_NIGHT;
 }
+
+/** Minutes per in-game day (used for schedule math). */
+export const MINUTES_PER_DAY = 24 * 60;
+
+/** In-game minute-of-day in [0, 1440). Day phase covers 06:00→18:00; night
+ *  covers 18:00→06:00. Mirrors the Clock UI's mapping so schedule windows
+ *  read the same as the tooltip the player sees. */
+export function minuteOfDay(phase: Phase, elapsedInPhaseMs: number): number {
+  const total = phase === "day" ? DAY_MS : NIGHT_MS;
+  const progress = total > 0 ? Math.max(0, Math.min(1, elapsedInPhaseMs / total)) : 0;
+  const base = phase === "day" ? 6 * 60 : 18 * 60;
+  return (base + progress * 12 * 60) % MINUTES_PER_DAY;
+}
+
+/** Real-ms duration of N in-game minutes during `phase`. */
+export function inGameMinutesToMs(minutes: number, phase: Phase): number {
+  return (minutes / 60) * hourDurationMs(phase);
+}

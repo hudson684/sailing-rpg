@@ -66,6 +66,15 @@ export interface BusinessKindDef {
   upgradeTree: UpgradeNodeDef[];
 }
 
+/** Optional opening-hours window for a business. Both fields are minute-of-
+ *  day in [0, 1440); when `closeMinute < openMinute` the window wraps past
+ *  midnight (e.g. 600/120 = 10:00 → 02:00 next day). Omit the schedule
+ *  entirely for a 24/7 business. */
+export interface BusinessSchedule {
+  openMinute: number;
+  closeMinute: number;
+}
+
 export interface BusinessDef {
   id: BusinessId;
   kindId: BusinessKindId;
@@ -73,6 +82,7 @@ export interface BusinessDef {
   interiorKey: string;
   signObjectId: string;
   purchasePrice: number;
+  schedule?: BusinessSchedule;
 }
 
 // ─── Runtime state (per save) ─────────────────────────────────────────────

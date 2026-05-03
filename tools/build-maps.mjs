@@ -8,6 +8,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { XMLParser } from "fast-xml-parser";
 import { stampUidsInDir } from "./stamp-uids.mjs";
+import { validateSpawnRefs } from "./validate-spawn-refs.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
@@ -198,6 +199,55 @@ function listShipKeys() {
   return listTmxKeys(shipsDir);
 }
 
+/** Extract the interior's player-entry tile from a built TMJ. Mirrors the
+ *  runtime fallback chain in InteriorScene.create:
+ *    1. `interior_entry` Tiled object (preferred)
+ *    2. `interior_exit` Tiled object, one tile north (legacy fallback)
+ *    3. null when neither exists — the door's `entryTx/entryTy` field is
+ *       the launch fallback in that case (only used by the player)
+ *
+ *  Entry tile is in interior-local tile coords. Tiled object x/y are in
+ *  pixels; we floor-divide by tilewidth/tileheight to recover the tile.
+ *  Returns { tileX, tileY, facing? } or null. */
+function extractInteriorEntryFromTmj(tmjPath) {
+  if (!existsSync(tmjPath)) return null;
+  let tmj;
+  try {
+    tmj = JSON.parse(readFileSync(tmjPath, "utf8"));
+  } catch {
+    return null;
+  }
+  const tileW = Number(tmj.tilewidth) || 16;
+  const tileH = Number(tmj.tileheight) || 16;
+  let entryObj = null;
+  let exitObj = null;
+  for (const layer of tmj.layers ?? []) {
+    if (layer.type !== "objectgroup") continue;
+    for (const obj of layer.objects ?? []) {
+      if (obj.type === "interior_entry" && !entryObj) entryObj = obj;
+      else if (obj.type === "interior_exit" && !exitObj) exitObj = obj;
+    }
+  }
+  const toTile = (obj) => ({
+    tileX: Math.floor(Number(obj.x) / tileW),
+    tileY: Math.floor(Number(obj.y) / tileH),
+  });
+  if (entryObj) {
+    const t = toTile(entryObj);
+    // Optional `facing` custom property; harmless if absent.
+    let facing;
+    for (const p of entryObj.properties ?? []) {
+      if (p.name === "facing" && typeof p.value === "string") facing = p.value;
+    }
+    return facing ? { ...t, facing } : t;
+  }
+  if (exitObj) {
+    const t = toTile(exitObj);
+    return { tileX: t.tileX, tileY: t.tileY - 1 };
+  }
+  return null;
+}
+
 function listTmxKeys(dir) {
   try {
     return readdirSync(dir)
@@ -246,6 +296,13 @@ export function buildAll() {
     const summary = buildMap(path.join("interiors", `${key}.tmx`), tmjRel);
     for (const img of summary.tilesetImages) tilesetImages.add(img);
     interiors[key] = { path: `interiors/${key}.tmj` };
+    // Stamp the player-entry tile into the manifest so the runtime can
+    // refine world→interior portal links at world-load time, before any
+    // interior scene has been visited live this session. Without this,
+    // tourists' GoTo legs would bake the door's stale `entryTx/entryTy`
+    // into their plans and land outside the interior tilemap.
+    const entry = extractInteriorEntryFromTmj(path.join(publicMapsDir, tmjRel));
+    if (entry) interiors[key].entry = entry;
   }
 
   const shipKeys = listShipKeys();
@@ -297,6 +354,8 @@ export function refreshManifestImages() {
     const tmj = JSON.parse(readFileSync(tmjPath, "utf8"));
     for (const ts of tmj.tilesets ?? []) if (ts.image) tilesetImages.add(ts.image);
     interiors[key] = { path: `interiors/${key}.tmj` };
+    const entry = extractInteriorEntryFromTmj(tmjPath);
+    if (entry) interiors[key].entry = entry;
   }
   const ships = {};
   for (const key of listShipKeys()) {
@@ -353,6 +412,11 @@ export function validateWorld(manifest, summaries) {
       errors.push(`startChunk ${startKey} is not in authoredChunks.`);
     }
   }
+  // npcSpawnPoint.spawnGroupId references — every Tiled object class must
+  // resolve to an entry in src/game/sim/data/spawnGroups.json. Validates
+  // against the just-emitted TMJs in public/maps/chunks/, so a stale Tiled
+  // edit can't ship a dangling reference. Cheap; one JSON parse per chunk.
+  for (const e of validateSpawnRefs()) errors.push(e);
   if (errors.length > 0) {
     throw new Error(`World validation failed:\n  - ${errors.join("\n  - ")}`);
   }
@@ -494,6 +558,7 @@ export function buildMap(tmxRelPath, outRelPath, opts = {}) {
   const shipSpawns = [];
   const dockSpawns = [];
   const itemSpawns = [];
+  const npcSpawnPoints = [];
   for (const l of layers) {
     if (l.type !== "objectgroup") continue;
     for (const obj of l.objects) {
@@ -510,10 +575,17 @@ export function buildMap(tmxRelPath, outRelPath, opts = {}) {
           itemId: String(props.itemId ?? ""),
           quantity: Number(props.quantity ?? 1),
         });
+      } else if (obj.type === "npcSpawnPoint") {
+        npcSpawnPoints.push({
+          tx,
+          ty,
+          uid: String(props.uid ?? ""),
+          spawnGroupId: String(props.spawnGroupId ?? ""),
+        });
       }
     }
   }
-  return { tilesetImages, hasAnyTileLayer, shipSpawns, dockSpawns, itemSpawns };
+  return { tilesetImages, hasAnyTileLayer, shipSpawns, dockSpawns, itemSpawns, npcSpawnPoints };
 }
 
 function loadExternalTsx(tsxPath) {

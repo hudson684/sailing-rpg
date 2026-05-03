@@ -1,0 +1,128 @@
+import * as Phaser from "phaser";
+import { entityRegistry } from "../entities/registry";
+import { NpcModel } from "../entities/NpcModel";
+import { NpcProxy } from "../entities/npcProxy";
+import { npcRegistry } from "../sim/npcRegistry";
+import type { NpcAgent } from "../sim/npcAgent";
+import type {
+  LiveCtxBindings,
+  Pathfinder,
+  WalkableProbe,
+} from "../sim/activities/activity";
+import type { SceneKey } from "../sim/location";
+import { pathfindPx } from "./pathfinding";
+
+/** Per-scene scene↔registry bridge.
+ *
+ *  Lifecycle:
+ *  - `attach(scene, sceneKey, walkable)` on scene `create`. Subscribes to
+ *    registry enter/leave events, materializes proxies for everyone already
+ *    in the scene.
+ *  - `update(dtMs)` from the scene's Phaser update loop — drives the
+ *    registry's per-frame tick for this scene, then mirrors body→model.
+ *  - `detach()` on scene `shutdown`. Dematerializes all proxies and
+ *    unsubscribes. */
+export class SceneNpcBinder {
+  private scene: Phaser.Scene | null = null;
+  private sceneKey: SceneKey | null = null;
+  private walkable: WalkableProbe | null = null;
+  private pathfinder: Pathfinder | null = null;
+
+  private readonly proxies = new Map<string, NpcProxy>();
+  private offEntered: (() => void) | null = null;
+  private offLeft: (() => void) | null = null;
+
+  attach(scene: Phaser.Scene, sceneKey: SceneKey, walkable: WalkableProbe): void {
+    if (this.scene) {
+      // eslint-disable-next-line no-console
+      console.warn(`[SceneNpcBinder] already attached to '${this.sceneKey}'; detaching first`);
+      this.detach();
+    }
+    this.scene = scene;
+    this.sceneKey = sceneKey;
+    this.walkable = walkable;
+    this.pathfinder = (q) =>
+      pathfindPx({
+        isWalkablePx: walkable,
+        fromPx: q.fromPx,
+        toPx: q.toPx,
+        ...(q.allowNonWalkableGoal !== undefined
+          ? { allowNonWalkableGoal: q.allowNonWalkableGoal }
+          : {}),
+      });
+
+    for (const agent of npcRegistry.npcsAt(sceneKey)) this.spawnProxy(agent);
+    this.offEntered = npcRegistry.on("npcEnteredScene", (key, npc) => {
+      if (key !== sceneKey) return;
+      // Materialize first so the body is snapped to the entry tile before
+      // the proxy mirror reads it. Otherwise the proxy would briefly draw
+      // the model at the source-scene pixel.
+      npcRegistry.materializeNpc(npc.id, this.live());
+      this.spawnProxy(npc);
+      const proxy = this.proxies.get(npc.id);
+      proxy?.sync();
+    });
+    this.offLeft = npcRegistry.on("npcLeftScene", (key, npc) => {
+      if (key !== sceneKey) return;
+      // Hold the visual a frame at the source-scene's last position, then
+      // dematerialize so the activity collapses pixel→tile state.
+      npcRegistry.dematerializeNpc(npc.id, this.live());
+      this.despawnProxy(npc.id);
+    });
+
+    npcRegistry.materializeScene(sceneKey, this.live());
+    // Sync once after materialize so models are at correct positions for the
+    // next render frame (avoids a 1-frame visible snap).
+    for (const proxy of this.proxies.values()) proxy.sync();
+  }
+
+  detach(): void {
+    if (!this.sceneKey) return;
+    npcRegistry.dematerializeScene(this.sceneKey, this.live());
+    this.offEntered?.(); this.offEntered = null;
+    this.offLeft?.(); this.offLeft = null;
+    this.proxies.clear();
+    this.scene = null;
+    this.sceneKey = null;
+    this.walkable = null;
+    this.pathfinder = null;
+  }
+
+  update(dtMs: number): void {
+    if (!this.sceneKey) return;
+    npcRegistry.tickLive(this.sceneKey, dtMs, this.live(), {
+      // Skip activity ticks for NPCs whose model is being driven externally
+      // (cutscenes, customerSim, staff service). The proxy will mirror
+      // model→body so the activity resumes cleanly when scripting ends.
+      skip: (a) => this.proxies.get(a.id)?.model.scripted === true,
+    });
+    for (const proxy of this.proxies.values()) proxy.sync();
+  }
+
+  private live(): LiveCtxBindings | undefined {
+    if (!this.scene || !this.walkable) return undefined;
+    const bindings: LiveCtxBindings = {
+      scene: this.scene,
+      walkable: this.walkable,
+      ...(this.pathfinder ? { pathfinder: this.pathfinder } : {}),
+    };
+    return bindings;
+  }
+
+  private spawnProxy(agent: NpcAgent): void {
+    if (this.proxies.has(agent.id)) return;
+    // Pair agent ↔ existing NpcModel by deterministic id. `npcBootstrap` /
+    // `synthesizeStaffNpc` register agents with id `npc:<defId>`, matching
+    // the NpcModel id, so this lookup always succeeds for legacy NPCs. For
+    // future agent-only NPCs (Phase 6 tourists, etc.) the lookup will miss
+    // and the binder will skip — they'll be added once a layered-sprite
+    // proxy GameObject is wired up in a later phase.
+    const model = entityRegistry.get(agent.id);
+    if (!model || model.kind !== "npc") return;
+    this.proxies.set(agent.id, new NpcProxy(agent, model as NpcModel));
+  }
+
+  private despawnProxy(npcId: string): void {
+    this.proxies.delete(npcId);
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "week": {
+    "days": ["Lunaday", "Forgeday", "Tideday", "Windsday", "Emberday", "Stormday", "Sunday"]
+  },
+  "months": [
+    { "name": "Frostmoon",  "days": 28, "season": "winter" },
+    { "name": "Thawmoon",   "days": 28, "season": "spring" },
+    { "name": "Bloomtide",  "days": 28, "season": "spring" },
+    { "name": "Sunmoon",    "days": 28, "season": "summer" },
+    { "name": "Hightide",   "days": 28, "season": "summer" },
+    { "name": "Embermoon",  "days": 28, "season": "autumn" },
+    { "name": "Stormtide",  "days": 28, "season": "autumn" },
+    { "name": "Longnight",  "days": 28, "season": "winter" }
+  ]
+}

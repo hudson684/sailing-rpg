@@ -25,16 +25,19 @@
 }
 
 .biz-portfolio-label {
-  font-size: 13px;
+  font-family: var(--pixel-body-font);
+  font-size: 12px;
+  font-weight: 600;
   color: var(--pixel-ink-soft);
 }
 
 .biz-portfolio-select {
-  font: inherit;
-  background: var(--pixel-panel);
+  font-family: var(--pixel-body-font);
+  font-size: 13px;
+  background: #fff;
   color: var(--pixel-ink);
   border: 1px solid var(--pixel-ink);
-  padding: 2px 6px;
+  padding: 3px 6px;
 }
 
 .biz-tabs {
@@ -48,13 +51,13 @@
 .biz-tab {
   background: transparent;
   border: 0;
-  font-family: var(--pixel-display-font);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-family: var(--pixel-body-font);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--pixel-ink-soft);
-  padding: 6px 10px 7px;
+  padding: 7px 12px 8px;
   margin-bottom: -1px;
   border-bottom: 2px solid transparent;
   cursor: pointer;
@@ -118,8 +121,7 @@
   font-weight: 700;
 }
 .biz-card-value.is-coin {
-  color: var(--pixel-gold);
-  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+  color: var(--pixel-coin);
 }
 .biz-card-sub {
   font-size: 11px;
@@ -134,26 +136,50 @@
   gap: 8px;
 }
 
+/* Pixel-art card frame: 2px ink border with chipped 3px corners.
+ * Achieved via border + clip-path; the clip removes the four corner
+ * pixels so the rectangle reads as pixel-art rather than CSS-square,
+ * while the border runs along the chipped outline. */
+.biz-kpi,
+.biz-bank,
+.biz-spark,
+.biz-empty,
+.biz-hire,
+.biz-roster {
+  background: var(--pixel-parchment);
+  border: 2px solid var(--pixel-ink);
+  clip-path: polygon(
+    3px 0,
+    calc(100% - 3px) 0,
+    100% 3px,
+    100% calc(100% - 3px),
+    calc(100% - 3px) 100%,
+    3px 100%,
+    0 calc(100% - 3px),
+    0 3px
+  );
+}
+
 .biz-kpi {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 6px 10px;
-  background: rgba(0, 0, 0, 0.05);
-  border: 1px solid var(--pixel-ink);
+  gap: 3px;
+  padding: 7px 10px;
   min-width: 0;
 }
 
 .biz-kpi-label {
-  font-size: 10px;
+  font-family: var(--pixel-body-font);
+  font-size: 11px;
+  font-weight: 600;
   color: var(--pixel-ink-soft);
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.06em;
 }
 
 .biz-kpi-value {
   font-family: var(--pixel-display-font);
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--pixel-ink);
   white-space: nowrap;
@@ -162,8 +188,7 @@
 }
 
 .biz-kpi-value.is-coin {
-  color: var(--pixel-gold);
-  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+  color: var(--pixel-coin);
 }
 .biz-kpi-value.is-pos { color: var(--pixel-accent-green); }
 .biz-kpi-value.is-neg { color: var(--pixel-accent-red); }
@@ -175,8 +200,6 @@
   flex-direction: column;
   gap: 6px;
   padding: 10px 12px;
-  border: 1px solid var(--pixel-ink);
-  background: rgba(0, 0, 0, 0.04);
 }
 
 .biz-bank-flow {
@@ -196,21 +219,22 @@
 }
 
 .biz-bank-side-label {
+  font-family: var(--pixel-body-font);
   font-size: 11px;
+  font-weight: 600;
   color: var(--pixel-ink-soft);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.06em;
 }
 
 .biz-bank-side-val {
   font-family: var(--pixel-display-font);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
 }
 
 .biz-bank-side-val.is-coin {
-  color: var(--pixel-gold);
-  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+  color: var(--pixel-coin);
 }
 
 .biz-bank-arrow {
@@ -226,21 +250,24 @@
 }
 
 .biz-bank-rowlabel {
-  font-size: 11px;
+  font-family: var(--pixel-body-font);
+  font-size: 12px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.06em;
   color: var(--pixel-ink-soft);
-  min-width: 60px;
+  min-width: 64px;
 }
 
 .biz-bank-input {
-  font: inherit;
+  font-family: var(--pixel-body-font);
   font-size: 14px;
-  width: 86px;
-  background: var(--pixel-parchment);
+  font-weight: 600;
+  width: 92px;
+  background: #fff;
   color: var(--pixel-ink);
   border: 1px solid var(--pixel-ink);
-  padding: 3px 6px;
+  padding: 4px 6px;
   text-align: right;
 }
 
@@ -267,17 +294,17 @@
 }
 
 .biz-chip {
-  font-family: var(--pixel-display-font);
+  font-family: var(--pixel-body-font);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--pixel-ink);
-  background: var(--pixel-parchment);
+  background: #fff;
   border: 1px solid var(--pixel-ink);
-  padding: 2px 6px;
+  padding: 3px 7px;
   cursor: pointer;
-  min-width: 28px;
+  min-width: 32px;
   transition: filter 60ms ease-out;
 }
 .biz-chip:hover:not(:disabled) { filter: brightness(1.06); }
@@ -288,16 +315,16 @@
 }
 
 .biz-bank-action {
-  font-family: var(--pixel-display-font);
-  font-size: 13px;
+  font-family: var(--pixel-body-font);
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 5px 12px;
+  padding: 6px 14px;
   border: 1px solid var(--pixel-ink);
   cursor: pointer;
-  min-width: 92px;
-  color: #f4fff0;
+  min-width: 96px;
+  color: #fff;
   transition: filter 60ms ease-out;
 }
 .biz-bank-action.is-deposit { background: var(--pixel-accent-green); }
@@ -310,9 +337,10 @@
 }
 
 .biz-bank-preview {
-  font-size: 11px;
+  font-family: var(--pixel-body-font);
+  font-size: 12px;
   color: var(--pixel-ink-soft);
-  min-height: 14px;
+  min-height: 16px;
   padding-left: 68px;
   margin-top: -2px;
 }
@@ -328,8 +356,6 @@
   flex-direction: column;
   gap: 4px;
   padding: 8px 12px;
-  border: 1px solid var(--pixel-ink);
-  background: rgba(0, 0, 0, 0.04);
 }
 
 .biz-spark-head {
@@ -341,13 +367,16 @@
 }
 
 .biz-spark-title {
+  font-family: var(--pixel-body-font);
   font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.06em;
   color: var(--pixel-ink-soft);
 }
 
 .biz-spark-totals {
+  font-family: var(--pixel-body-font);
   font-size: 12px;
   color: var(--pixel-ink);
 }
@@ -359,6 +388,7 @@
 }
 
 .biz-spark-empty {
+  font-family: var(--pixel-body-font);
   font-size: 12px;
   font-style: italic;
   color: var(--pixel-ink-soft);
@@ -378,87 +408,219 @@
 .biz-staff {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-.biz-staff-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  background: var(--pixel-panel);
-  border: 1px solid var(--pixel-ink);
-  padding: 8px 12px;
+.biz-staff-kpis {
+  grid-template-columns: repeat(3, 1fr) auto;
+  align-items: stretch;
 }
 
-.biz-staff-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.biz-staff-hire-toggle {
+  align-self: stretch;
+  min-width: 96px;
 }
 
-.biz-staff-list,
-.biz-hire-list {
+.biz-empty {
+  font-family: var(--pixel-body-font);
+  font-size: 13px;
+  color: var(--pixel-ink-soft);
+  font-style: italic;
+  text-align: center;
+  padding: 14px 12px;
+}
+
+.biz-roster {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
 }
 
-.biz-staff-row,
-.biz-hire-row {
+/* When the roster lives inside the hire panel (already framed), drop the
+ * inner frame so we don't double-frame. */
+.biz-hire .biz-roster {
+  border: 0;
+  background: transparent;
+  clip-path: none;
+}
+
+.biz-roster-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--pixel-panel);
-  border: 1px solid var(--pixel-ink);
-  padding: 6px 10px;
-  flex-wrap: wrap;
+  padding: 6px 8px;
+  border: 0;
+  border-top: 1px dashed rgba(0, 0, 0, 0.18);
+  background: transparent;
+  font-family: var(--pixel-body-font);
+  font-size: 13px;
 }
 
-.biz-staff-name {
-  flex: 1 1 140px;
+.biz-roster-row:first-child {
+  border-top: 0;
+}
+
+.biz-roster-row.is-candidate {
+  background: rgba(255, 209, 102, 0.14);
+}
+
+.biz-roster-row:nth-child(even) {
+  background: rgba(0, 0, 0, 0.05);
+}
+.biz-roster-row.is-candidate:nth-child(even) {
+  background: rgba(255, 209, 102, 0.22);
+}
+
+.biz-roster-name {
+  flex: 1 1 120px;
+  font-family: var(--pixel-body-font);
   font-weight: 700;
+  font-size: 14px;
+  color: var(--pixel-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.biz-staff-role {
-  color: var(--pixel-ink-soft);
-  text-transform: capitalize;
+.biz-pill {
+  font-family: var(--pixel-body-font);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pixel-parchment);
+  background: var(--pixel-ink-soft);
+  padding: 3px 7px;
+  border-radius: 2px;
+  white-space: nowrap;
 }
 
-.biz-staff-skill {
-  letter-spacing: 1px;
-  color: var(--pixel-gold);
+.biz-stars {
+  display: inline-flex;
+  gap: 1px;
+  letter-spacing: 0;
+  font-size: 12px;
+  line-height: 1;
 }
+.biz-star.is-on { color: var(--pixel-gold); }
+.biz-star.is-off { color: rgba(0, 0, 0, 0.18); }
 
-.biz-staff-wage {
-  min-width: 70px;
+.biz-roster-wage {
+  min-width: 72px;
   text-align: right;
-}
-
-.biz-staff-unpaid {
-  color: #c1493c;
+  font-family: var(--pixel-body-font);
   font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.biz-roster-wage.is-coin {
+  color: var(--pixel-coin);
+}
+.biz-roster-wage-unit {
+  font-family: var(--pixel-body-font);
+  font-size: 10px;
+  color: var(--pixel-ink-soft);
+  margin-left: 1px;
+  font-weight: 500;
 }
 
-.biz-staff-traits {
+.biz-roster-unpaid {
+  font-family: var(--pixel-body-font);
   font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--pixel-accent-red);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.biz-roster-traits {
+  font-family: var(--pixel-body-font);
+  font-size: 12px;
   color: var(--pixel-ink-soft);
   font-style: italic;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.biz-hire-panel {
+.biz-role-select {
+  font-family: var(--pixel-body-font);
+  font-size: 12px;
+  background: #fff;
+  color: var(--pixel-ink);
+  border: 1px solid var(--pixel-ink);
+  padding: 2px 4px;
+}
+
+.biz-mini-btn {
+  font-family: var(--pixel-body-font);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--pixel-ink);
+  background: #fff;
+  color: var(--pixel-ink);
+  cursor: pointer;
+  min-width: 60px;
+  transition: filter 60ms ease-out;
+}
+.biz-mini-btn.is-primary {
+  background: var(--pixel-accent-green);
+  color: #f4fff0;
+}
+.biz-mini-btn.is-danger {
+  background: var(--pixel-accent-red);
+  color: #fff0e8;
+}
+.biz-mini-btn:hover:not(:disabled) { filter: brightness(1.08); }
+.biz-mini-btn:active:not(:disabled) { transform: translateY(1px); }
+.biz-mini-btn:disabled {
+  filter: grayscale(0.5) brightness(0.85);
+  cursor: not-allowed;
+}
+
+.biz-hire {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+  padding: 8px 10px 10px;
+  background: #fff8e6;
 }
 
-.biz-hire-header {
+.biz-hire-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
   flex-wrap: wrap;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.25);
+  margin-bottom: 4px;
+}
+
+.biz-hire-title {
+  font-family: var(--pixel-body-font);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--pixel-ink-soft);
+  font-weight: 700;
+}
+
+.biz-hire-refresh {
+  font-family: var(--pixel-body-font);
+  font-size: 12px;
+  color: var(--pixel-ink);
+}
+
+.biz-hire-refresh-hint {
+  color: var(--pixel-ink-soft);
+  font-size: 11px;
 }

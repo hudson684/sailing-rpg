@@ -8,9 +8,12 @@ type Phase = "pausing" | "moving";
 
 export type WalkableProbe = (px: number, py: number) => boolean;
 
-/** Pure-data NPC. Holds position, facing, animation state, and movement
- *  phase. Its `tick` mutates model state only — no Phaser calls. Sprites
- *  read from this each frame. */
+/** Pure-data NPC. Holds position, facing, animation state, and (legacy)
+ *  movement phase. With Phase 3, every authored wander/patrol NPC also has
+ *  a sim-layer `NpcAgent` that drives motion through the SceneNpcBinder;
+ *  `WorldTicker.tick` is gated on agent presence so it only runs the
+ *  legacy AI for NPCs that *don't* have an agent yet (customerSim-spawned
+ *  customers today; Phase 5 migrates those too). */
 export class NpcModel implements EntityModel {
   readonly id: string;
   readonly kind = "npc" as const;
@@ -22,7 +25,9 @@ export class NpcModel implements EntityModel {
   facing: NpcFacing;
   animState: NpcAnimState = "idle";
   /** When true, autonomous movement (`tick`) is suppressed so a cutscene
-   *  director can drive position/facing/anim without the AI fighting it. */
+   *  director or customerSim/staffService can drive position/facing/anim
+   *  without the AI fighting it. The SceneNpcBinder also reads this and
+   *  skips the activity tick for an agent whose model is scripted. */
   scripted = false;
 
   private phase: Phase = "pausing";
@@ -157,8 +162,6 @@ export class NpcModel implements EntityModel {
         this.facing = dx < 0 ? "left" : "right";
       }
     }
-    // Layered NPCs always have a walk animation if the model ships one;
-    // legacy NPCs only have one when their sprite.walk sheet is present.
     const hasWalk = this.def.layered !== undefined || this.def.sprite?.walk !== undefined;
     this.animState = hasWalk ? "walk" : "idle";
   }

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { bus } from "../bus";
+import { calendarContextFor } from "../sim/calendar/calendar";
 import {
   HOURS_PER_PHASE,
   hourDurationMs,
@@ -84,11 +85,20 @@ export const useTimeStore = create<TimeState & { paused: boolean }>(
         // Phase rollover.
         if (elapsedInPhaseMs >= phaseLen) {
           const nextPhase: Phase = phase === "day" ? "night" : "day";
-          if (phase === "night") dayCount += 1;
+          const crossedDayBoundary = phase === "night";
+          if (crossedDayBoundary) dayCount += 1;
           phase = nextPhase;
           elapsedInPhaseMs = 0;
           hoursEmittedThisPhase = 0;
           set({ dayCount, phase, elapsedInPhaseMs, hoursEmittedThisPhase });
+          if (crossedDayBoundary) {
+            // Fires once per day boundary, before phaseChange so listeners
+            // that reset daily counters do so before "new phase" handlers run.
+            bus.emitTyped("time:midnight", {
+              dayCount,
+              calendar: calendarContextFor(dayCount),
+            });
+          }
           bus.emitTyped("time:phaseChange", { phase, dayCount });
         }
       }

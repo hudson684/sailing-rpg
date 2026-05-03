@@ -17,8 +17,26 @@
         {
           "id": "e_skeleton_1",
           "defId": "skeleton",
-          "tileX": 3,
-          "tileY": 13
+          "tileX": 16,
+          "tileY": 41
+        },
+        {
+          "id": "e_skeleton_2",
+          "defId": "skeleton",
+          "tileX": 13,
+          "tileY": 40
+        },
+        {
+          "id": "e_skeleton_3",
+          "defId": "skeleton",
+          "tileX": 13,
+          "tileY": 47
+        },
+        {
+          "id": "e_skeleton_swordsman_1",
+          "defId": "skeleton_swordsman",
+          "tileX": 13,
+          "tileY": 30
         }
       ],
       "nodes": [],

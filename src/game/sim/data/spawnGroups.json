@@ -1,0 +1,16 @@
+{
+  "town_tourists": {
+    "archetype": "tourist",
+    "arrivalsPerDay": 30,
+    "arrivalWindow": { "earliestMinute": 480, "latestMinute": 900 },
+    "dayWeights": {
+      "Lunaday": 1.0,
+      "Forgeday": 1.0,
+      "Tideday": 1.0,
+      "Windsday": 1.0,
+      "Emberday": 1.0,
+      "Stormday": 2.0,
+      "Sunday": 2.0
+    }
+  }
+}

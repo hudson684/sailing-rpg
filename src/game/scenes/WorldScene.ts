@@ -48,6 +48,15 @@ import {
   type ItemSpawn,
   type TorchSpawn,
 } from "../world/spawns";
+import { portalRegistry } from "../sim/portals";
+import { spawnDispatcher } from "../sim/planner/spawnDispatcher";
+import { residences } from "../sim/planner/residences";
+import { reconcileAllStaffAgents } from "../business/staff/staffAgentBootstrap";
+import {
+  businessArrivalAnchorKey,
+  worldAnchors,
+} from "../sim/planner/anchors";
+import { businessIdForInteriorKey } from "../business/registry";
 import { type WorldManifest } from "../world/chunkManager";
 import { BeachFootprintController, BEACH_WALK_ENABLED } from "../world/beachFootprints";
 import type { InteriorReturnData } from "./InteriorScene";
@@ -64,6 +73,7 @@ import { SpriteReconciler } from "../entities/SpriteReconciler";
 import { entityRegistry } from "../entities/registry";
 import type { MapId } from "../entities/mapId";
 import { worldTicker } from "../entities/WorldTicker";
+import { SceneNpcBinder } from "../world/sceneNpcBinder";
 import { clearNpcs, bootstrapNpcs } from "../entities/npcBootstrap";
 import { SKIN_PALETTES, bakePlayerSkin, type SkinPaletteId } from "../entities/playerSkin";
 import {
@@ -242,6 +252,10 @@ export class WorldScene extends GameplayScene {
   /** Owns scene-local sprites for world-mapped NPC models. Interior NPC
    *  sprites are owned by InteriorScene's own reconciler. */
   private npcReconciler!: SpriteReconciler<NpcSprite | CharacterSprite>;
+  /** Bridge between the global NpcRegistry and this scene. Drives Wander/
+   *  Patrol activities live and mirrors agent body state onto NpcModels
+   *  for the reconciler to render. */
+  private npcBinder!: SceneNpcBinder;
   /** Cached NPC data used for edit-mode templates and export. The registry
    *  is source-of-truth for runtime state; this stays for authoring flows. */
   private npcData: NpcData = npcDataRaw as NpcData;
@@ -398,6 +412,13 @@ export class WorldScene extends GameplayScene {
     // new authored item into the world as its own sprite.
     this.doors = [];
     this.authoredItems = [];
+    // Portals + sim-layer spawn anchors are rebuilt from spawn data on every
+    // world load — clear any stale entries (e.g. from a prior session in the
+    // same tab) so the chunk-ready callbacks below re-register a clean set.
+    portalRegistry.clear();
+    worldAnchors.clear();
+    spawnDispatcher.clearSpawnPoints();
+    residences.clear();
     phase("loadWorld (eager chunks)", () => {
       this.world = loadWorld({
         scene: this,
@@ -406,6 +427,55 @@ export class WorldScene extends GameplayScene {
         onChunkReady: (_chunk, spawns) => {
           this.doors.push(...spawns.doors);
           this.authoredItems.push(...spawns.items);
+          for (const door of spawns.doors) {
+            // Prefer the manifest's authoritative entry (extracted at build
+            // time from the interior's `interior_entry` Tiled object); fall
+            // back to the door's stale `entryTx/entryTy` only when absent.
+            // Without this, tourists' GoTo legs were landing on the door's
+            // legacy field — which can be off the interior tilemap entirely.
+            const meta = manifest.interiors?.[door.interiorKey];
+            const entryTx = meta?.entry?.tileX ?? door.entryTx;
+            const entryTy = meta?.entry?.tileY ?? door.entryTy;
+            portalRegistry.registerDoor({
+              worldSceneKey: "chunk:world",
+              worldTile: { x: door.tileX, y: door.tileY },
+              interiorKey: door.interiorKey,
+              entryTile: { x: entryTx, y: entryTy },
+            });
+            // Sim-layer anchor for schedule templates that target this
+            // interior. Registered under the interior key and (when the door
+            // belongs to an authored business) the business id, so schedules
+            // can address either name interchangeably.
+            const arrival = {
+              sceneKey: `interior:${door.interiorKey}` as const,
+              tileX: entryTx,
+              tileY: entryTy,
+              facing: "down" as const,
+            };
+            worldAnchors.set(businessArrivalAnchorKey(door.interiorKey), arrival);
+            const bizId = businessIdForInteriorKey(door.interiorKey);
+            if (bizId) worldAnchors.set(businessArrivalAnchorKey(bizId), arrival);
+          }
+          for (const sp of spawns.npcSpawnPoints) {
+            spawnDispatcher.registerSpawnPoint(sp.spawnGroupId, {
+              sceneKey: "chunk:world",
+              tileX: sp.tileX,
+              tileY: sp.tileY,
+              facing: "down",
+            });
+          }
+          for (const r of spawns.npcResidences) {
+            residences.set(r.hireableId, {
+              sceneKey: "chunk:world",
+              tileX: r.tileX,
+              tileY: r.tileY,
+              facing: "down",
+            });
+          }
+          // Phase 8: re-reconcile staff agents now that this chunk's
+          // residences + business arrival anchors are registered. No-op when
+          // the registry-staff flag is off.
+          reconcileAllStaffAgents();
           if (this.initialGroundItemsBuilt) {
             for (const s of spawns.items) this.addGroundItemSprite(s, "authored");
           }
@@ -719,6 +789,7 @@ export class WorldScene extends GameplayScene {
       this.bowReticle?.destroy();
       this.bowReticle = undefined;
       worldTicker.unregisterWalkable({ kind: "world" });
+      this.npcBinder?.detach();
       this.npcReconciler?.shutdown();
       // Destroy the scene-local sprite; the PlayerModel persists in the
       // registry and rebinds to whichever scene wakes next.
@@ -796,7 +867,10 @@ export class WorldScene extends GameplayScene {
       this.droppedExpiryAccum = 0;
       this.expireDroppedItems();
     }
-    // Pull NPC sprites forward to match models mutated by the global ticker.
+    // Activities (registry) → NpcModel via the binder, then NpcModel →
+    // sprite via the reconciler. Order matters: binder.update writes into
+    // the models; reconciler.syncAll then pushes them to Phaser.
+    this.npcBinder?.update(dtMs);
     this.npcReconciler?.syncAll();
     this.zoom.update(dtMs);
     this.emitHud();
@@ -1806,6 +1880,8 @@ export class WorldScene extends GameplayScene {
       },
     );
     worldTicker.registerWalkable(worldMap, (x, y) => this.isWalkablePx(x, y));
+    this.npcBinder = new SceneNpcBinder();
+    this.npcBinder.attach(this, "chunk:world", (x, y) => this.isWalkablePx(x, y));
   }
 
   reloadNpcs(data: NpcData) {

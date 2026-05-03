@@ -30,19 +30,19 @@
             "scale": 2,
             "selectedLayer": 8,
             "viewCenter": {
-                "x": 910.5,
-                "y": 1076.5
+                "x": 1035.5,
+                "y": 1176.5
             }
         },
         "chunks/1_1.tmx": {
             "expandedObjectLayers": [
                 12
             ],
-            "scale": 2.3933,
-            "selectedLayer": 15,
+            "scale": 11,
+            "selectedLayer": 19,
             "viewCenter": {
-                "x": 589.9803618434797,
-                "y": 242.34320812267583
+                "x": 321.0909090909091,
+                "y": 503.54545454545456
             }
         },
         "chunks/1_1.tmx#Houses_One": {
@@ -52,24 +52,27 @@
             "scale": 2,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 512,
-                "y": 509
+                "x": 512.25,
+                "y": 511.75
             }
         },
         "chunks/1_3.tmx": {
             "scale": 0.25,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 512,
+                "x": 510,
                 "y": 512
             }
         },
         "chunks/2_1.tmx": {
-            "scale": 0.75,
-            "selectedLayer": 1,
+            "expandedObjectLayers": [
+                12
+            ],
+            "scale": 4,
+            "selectedLayer": 8,
             "viewCenter": {
-                "x": 663.3333333333333,
-                "y": 1548
+                "x": 29.75,
+                "y": 188.75
             }
         },
         "chunks/2_2.tmx": {
@@ -83,6 +86,17 @@
                 "y": 549
             }
         },
+        "chunks/3_1.tmx": {
+            "scale": 0.75,
+            "selectedLayer": 4,
+            "viewCenter": {
+                "x": -259.33333333333326,
+                "y": 632
+            }
+        },
+        "interiors/Crypt Objects.tsx": {
+            "scaleInDock": 1
+        },
         "interiors/blacksmiths.tmx": {
             "expandedObjectLayers": [
                 6
@@ -90,28 +104,40 @@
             "scale": 3,
             "selectedLayer": 8,
             "viewCenter": {
-                "x": 240,
+                "x": 240.16666666666666,
                 "y": 160
+            }
+        },
+        "interiors/first_dungeon.tmx": {
+            "scale": 8,
+            "selectedLayer": 9,
+            "viewCenter": {
+                "x": 249.6875,
+                "y": 847.125
             }
         },
         "interiors/general_store.tmx": {
             "expandedObjectLayers": [
-                5,
-                10
+                10,
+                5
             ],
             "scale": 3,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 104,
+                "x": 103.83333333333334,
                 "y": 80
             }
         },
         "interiors/tavern_rusty_anchor.tmx": {
-            "scale": 2.4083,
-            "selectedLayer": 14,
+            "expandedObjectLayers": [
+                9,
+                10
+            ],
+            "scale": 4,
+            "selectedLayer": 15,
             "viewCenter": {
-                "x": 445.95772951874767,
-                "y": 626.1678362330274
+                "x": 436.375,
+                "y": 649.5
             }
         },
         "tilesets/Bch_Bldg_01.tsx": {
@@ -148,6 +174,15 @@
             "scaleInDock": 1,
             "scaleInEditor": 3
         },
+        "tilesets/Cave Tiles 1.0.tsx": {
+            "scaleInDock": 1.5
+        },
+        "tilesets/Crypt Floors.tsx": {
+            "scaleInDock": 1
+        },
+        "tilesets/Crypt Walls.tsx": {
+            "scaleInDock": 1
+        },
         "tilesets/Ext_A1.tsx": {
             "scaleInDock": 1,
             "scaleInEditor": 2
@@ -178,7 +213,7 @@
             "scaleInDock": 2
         },
         "tilesets/Houses_Six.tsx": {
-            "scaleInDock": 4,
+            "scaleInDock": 2,
             "scaleInEditor": 1.5
         },
         "tilesets/Houses_Two.tsx": {
@@ -197,13 +232,17 @@
         },
         "tilesets/Rural Village Interior Walls.tsx": {
             "scaleInDock": 3
+        },
+        "tilesets/grass_tropical.tsx": {
+            "scaleInDock": 1
         }
     },
     "last.externalTilesetPath": "C:/dev/sailing-rpg/maps/tilesets",
     "last.imagePath": "C:/dev/sailing-rpg/maps/themes/Crypt/Crypt Tiles",
-    "last.worldFilePath": "/Users/joshua/dev/sailing-rpg/maps",
+    "last.shortcutSettingsFilePath": "C:/dev/sailing-rpg/maps/interiors/keyboardschema.kms",
+    "last.worldFilePath": "C:/dev/sailing-rpg/maps",
     "loadedWorlds": [
-        "/Users/joshua/dev/sailing-rpg/maps/sailing-rpg.world"
+        "C:/dev/sailing-rpg/maps/sailing-rpg.world"
     ],
     "map.height": 64,
     "map.lastUsedFormat": "tmx",

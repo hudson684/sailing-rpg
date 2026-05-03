@@ -13,8 +13,20 @@ import {
 import { useTimeStore } from "../../../game/time/timeStore";
 import { showToast } from "../../store/ui";
 
-function stars(n: number): string {
-  return "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
+function Stars({ n }: { n: number }) {
+  return (
+    <span className="biz-stars" title={`Skill ${n}/5`}>
+      {Array.from({ length: 5 }, (_, i) => (
+        <span
+          key={i}
+          className={`biz-star ${i < n ? "is-on" : "is-off"}`}
+          aria-hidden
+        >
+          ★
+        </span>
+      ))}
+    </span>
+  );
 }
 
 interface StaffProps {
@@ -40,51 +52,71 @@ export function Staff({ businessId }: StaffProps) {
     const def = getHireable(h.hireableId);
     return acc + (def?.wagePerDay ?? 0);
   }, 0);
+  const unpaidCount = state.staff.reduce(
+    (a, h) => a + (h.unpaidDays > 0 ? 1 : 0),
+    0,
+  );
 
   const refreshIn = daysUntilSlateRefresh(dayCount);
 
   return (
     <div className="biz-staff">
-      <div className="biz-staff-header">
-        <div className="biz-staff-summary">
-          <span className="biz-card-label">Roster</span>
-          <span className="biz-card-value">{state.staff.length}</span>
+      <div className="biz-kpi-row biz-staff-kpis">
+        <div className="biz-kpi" title="Total people on payroll">
+          <span className="biz-kpi-label">Roster</span>
+          <span className="biz-kpi-value">{state.staff.length}</span>
         </div>
-        <div className="biz-staff-summary">
-          <span className="biz-card-label">Daily wages</span>
-          <span className="biz-card-value is-coin">{totalWages}g</span>
+        <div className="biz-kpi" title="Wages owed per day">
+          <span className="biz-kpi-label">Wages / day</span>
+          <span className="biz-kpi-value is-coin">{totalWages}g</span>
+        </div>
+        <div
+          className="biz-kpi"
+          title="Number of staff with unpaid wages"
+        >
+          <span className="biz-kpi-label">Unpaid</span>
+          <span
+            className={`biz-kpi-value ${unpaidCount > 0 ? "is-neg" : ""}`}
+          >
+            {unpaidCount}
+          </span>
         </div>
         <button
-          className="px-btn"
+          type="button"
+          className={`biz-bank-action ${hireOpen ? "is-withdraw" : "is-deposit"} biz-staff-hire-toggle`}
           onClick={() => setHireOpen((v) => !v)}
         >
-          {hireOpen ? "Hide candidates" : "Hire…"}
+          {hireOpen ? "Hide" : "Hire…"}
         </button>
       </div>
 
       {state.staff.length === 0 ? (
-        <div className="biz-stub">No one on the payroll yet.</div>
+        <div className="biz-empty">No one on the payroll yet.</div>
       ) : (
-        <ul className="biz-staff-list">
+        <ul className="biz-roster">
           {state.staff.map((hire) => {
             const def = getHireable(hire.hireableId);
             if (!def) return null;
             const role = kind.roles.find((r) => r.id === hire.roleId);
             return (
-              <li key={hire.hireableId} className="biz-staff-row">
-                <span className="biz-staff-name">{def.name}</span>
-                <span className="biz-staff-role">{role?.id ?? hire.roleId}</span>
-                <span className="biz-staff-skill" title={`Skill ${def.skill}/5`}>
-                  {stars(def.skill)}
+              <li key={hire.hireableId} className="biz-roster-row">
+                <span className="biz-roster-name">{def.name}</span>
+                <span className="biz-pill">{role?.id ?? hire.roleId}</span>
+                <Stars n={def.skill} />
+                <span className="biz-roster-wage is-coin">
+                  {def.wagePerDay}g<span className="biz-roster-wage-unit">/day</span>
                 </span>
-                <span className="biz-staff-wage is-coin">{def.wagePerDay}g/day</span>
                 {hire.unpaidDays > 0 && (
-                  <span className="biz-staff-unpaid" title="Unpaid days">
+                  <span
+                    className="biz-roster-unpaid"
+                    title={`Unpaid for ${hire.unpaidDays} day${hire.unpaidDays === 1 ? "" : "s"}`}
+                  >
                     !{hire.unpaidDays}
                   </span>
                 )}
                 <button
-                  className="px-btn"
+                  type="button"
+                  className="biz-mini-btn is-danger"
                   onClick={() => {
                     fire(businessId, hire.hireableId);
                     showToast(`${def.name} let go.`, 1500);
@@ -99,21 +131,22 @@ export function Staff({ businessId }: StaffProps) {
       )}
 
       {hireOpen && (
-        <div className="biz-hire-panel">
-          <div className="biz-hire-header">
-            <span className="biz-card-label">Today's candidates</span>
-            <span className="biz-card-sub">
+        <div className="biz-hire">
+          <div className="biz-hire-head">
+            <span className="biz-hire-title">Today's candidates</span>
+            <span className="biz-hire-refresh">
               {refreshIn === 0
                 ? "Fresh slate today."
-                : `Next refresh in ${refreshIn} day${refreshIn === 1 ? "" : "s"}.`}
-              {" "}
-              (every {SLATE_REFRESH_DAYS} days)
+                : `Refresh in ${refreshIn}d`}{" "}
+              <span className="biz-hire-refresh-hint">
+                (every {SLATE_REFRESH_DAYS}d)
+              </span>
             </span>
           </div>
           {slate.length === 0 ? (
-            <div className="biz-stub">No candidates available.</div>
+            <div className="biz-empty">No candidates available.</div>
           ) : (
-            <ul className="biz-hire-list">
+            <ul className="biz-roster">
               {slate.map((cand) => (
                 <CandidateCard
                   key={cand.id}
@@ -122,7 +155,11 @@ export function Staff({ businessId }: StaffProps) {
                   onHire={(roleId) => {
                     const res = tryHire(businessId, cand.id, roleId, dayCount);
                     if (res.ok) {
-                      showToast(`${cand.name} hired as ${roleId}.`, 1500, "success");
+                      showToast(
+                        `${cand.name} hired as ${roleId}.`,
+                        1500,
+                        "success",
+                      );
                     } else {
                       const msg: Record<string, string> = {
                         unknownBusiness: "Unknown business.",
@@ -155,28 +192,35 @@ function CandidateCard({ cand, kindRoles, onHire }: CandidateCardProps) {
   const [picked, setPicked] = useState<string>(eligibleRoles[0] ?? "");
   if (eligibleRoles.length === 0) return null;
   return (
-    <li className="biz-hire-row">
-      <span className="biz-staff-name">{cand.name}</span>
-      <span className="biz-staff-skill" title={`Skill ${cand.skill}/5`}>
-        {stars(cand.skill)}
+    <li className="biz-roster-row is-candidate">
+      <span className="biz-roster-name">{cand.name}</span>
+      <Stars n={cand.skill} />
+      <span className="biz-roster-wage is-coin">
+        {cand.wagePerDay}g<span className="biz-roster-wage-unit">/day</span>
       </span>
-      <span className="biz-staff-wage is-coin">{cand.wagePerDay}g/day</span>
       {cand.traits.length > 0 && (
-        <span className="biz-staff-traits">{cand.traits.join(", ")}</span>
+        <span className="biz-roster-traits" title={cand.traits.join(", ")}>
+          {cand.traits.join(" · ")}
+        </span>
       )}
-      <select
-        className="biz-portfolio-select"
-        value={picked}
-        onChange={(e) => setPicked(e.target.value)}
-      >
-        {eligibleRoles.map((r) => (
-          <option key={r} value={r}>
-            {r}
-          </option>
-        ))}
-      </select>
+      {eligibleRoles.length > 1 ? (
+        <select
+          className="biz-role-select"
+          value={picked}
+          onChange={(e) => setPicked(e.target.value)}
+        >
+          {eligibleRoles.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <span className="biz-pill">{picked}</span>
+      )}
       <button
-        className="px-btn"
+        type="button"
+        className="biz-mini-btn is-primary"
         disabled={!picked}
         onClick={() => onHire(picked)}
       >

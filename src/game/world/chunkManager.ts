@@ -28,10 +28,20 @@ export interface WorldManifest {
    *  instances spawn inside that chunk, derived from src/game/data/*.json
    *  at build time. Chunks with no entity refs are absent from the map. */
   chunkSpawnRefs?: Record<string, { npcs: string[]; enemies: string[]; nodes: string[] }>;
-  /** Map of interior keys → TMJ path (relative to public/maps/). Populated by
-   *  the map build pipeline from maps/interiors/*.tmx. Optional: a world
-   *  without any interior buildings will simply omit this. */
-  interiors?: Record<string, { path: string }>;
+  /** Map of interior keys → TMJ path (relative to public/maps/) plus the
+   *  authored player-entry tile in interior-local coords. Populated by the
+   *  map build pipeline from maps/interiors/*.tmx. The `entry` mirrors the
+   *  runtime fallback chain in InteriorScene.create (`interior_entry` →
+   *  `interior_exit - 1` → null), and is consumed at chunk-ready to refine
+   *  world→interior portal links so cross-scene `GoTo` plans land on the
+   *  same tile the player would. */
+  interiors?: Record<
+    string,
+    {
+      path: string;
+      entry?: { tileX: number; tileY: number; facing?: string };
+    }
+  >;
   /** Map of ship keys (e.g. `galleon-n`) → TMJ path. Populated by the build
    *  pipeline from ships/*.tmx. One tmj per (ship def × heading). */
   ships?: Record<string, { path: string }>;

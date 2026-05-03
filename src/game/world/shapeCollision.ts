@@ -192,6 +192,10 @@ export class ShapeCollider {
       const localX = ax - tx * ts;
       const localY = ay - ty * ts;
       for (const layer of this.tileLayers) {
+        // Skip layers gated off by the @tier/@slot system. y-sort layers force
+        // .visible=false permanently, so we can't read .visible — interiors
+        // tag the underlying TilemapLayer with `gateActive` instead.
+        if (layer.getData("gateActive") === false) continue;
         const tile = layer.getTileAt(tx, ty);
         if (!tile) continue;
         const shapes = this.tileShapes.get(tile.index);

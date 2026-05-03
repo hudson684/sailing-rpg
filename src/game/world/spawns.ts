@@ -68,17 +68,48 @@ export interface TorchSpawn {
   tintStrength: number;
 }
 
+/** A `npcResidence` Tiled object — pins a hired staff member's home tile to
+ *  a world location. Phase 8's WorkAt+Sleep schedule walks the staffer here
+ *  outside their shift. The `hireableId` property links to the
+ *  `hireables.json` candidate id that was hired into a business; one
+ *  residence per hireable. */
+export interface NpcResidenceSpawn {
+  kind: "npc_residence";
+  uid: string;
+  tileX: number;
+  tileY: number;
+  /** Resolves to a `HireableDef.id` in `hireables.json`. */
+  hireableId: string;
+}
+
+/** A `npcSpawnPoint` Tiled object — anchors a sim-layer spawn group at a world
+ *  tile. The dispatcher (sim/planner/spawnDispatcher.ts) consumes these on
+ *  chunk-ready and turns scheduled arrivals into NPC agents at this tile. */
+export interface NpcSpawnPointSpawn {
+  kind: "npc_spawn_point";
+  uid: string;
+  tileX: number;
+  tileY: number;
+  /** Resolves to an entry in `src/game/sim/data/spawnGroups.json`. Validated
+   *  at build time by `tools/validate-spawn-refs.mjs`. */
+  spawnGroupId: string;
+}
+
 export type Spawn =
   | ItemSpawn
   | DoorSpawn
   | InteriorExitSpawn
   | InteriorEntrySpawn
-  | TorchSpawn;
+  | TorchSpawn
+  | NpcSpawnPointSpawn
+  | NpcResidenceSpawn;
 
 export interface ParsedSpawns {
   items: ItemSpawn[];
   doors: DoorSpawn[];
   torches: TorchSpawn[];
+  npcSpawnPoints: NpcSpawnPointSpawn[];
+  npcResidences: NpcResidenceSpawn[];
 }
 
 /** A `repair_target` object placed inside an interior map. Stands in for a
@@ -121,6 +152,19 @@ export interface WorkstationSpawn {
   tag: string;
 }
 
+/** A `npcBrowseWaypoint` Tiled object placed inside a shop interior. The
+ *  `BrowseActivity` samples one of these per visit and pathfinds to it,
+ *  giving NPCs visible variation while loitering. Multi-zone shops may tag
+ *  waypoints with `browseGroupId`; un-tagged waypoints default to `"all"`. */
+export interface NpcBrowseWaypointSpawn {
+  kind: "npc_browse_waypoint";
+  uid: string;
+  tileX: number;
+  tileY: number;
+  /** Optional sub-zone id; defaults to `"all"` when omitted in Tiled. */
+  browseGroupId: string;
+}
+
 /** Spawns parsed from a standalone interior map. */
 export interface InteriorParsedSpawns {
   exits: InteriorExitSpawn[];
@@ -129,6 +173,7 @@ export interface InteriorParsedSpawns {
   repairTargets: RepairTargetSpawn[];
   workstations: WorkstationSpawn[];
   seats: SeatSpawn[];
+  browseWaypoints: NpcBrowseWaypointSpawn[];
 }
 
 export interface ParseSpawnsOptions {
@@ -154,6 +199,8 @@ function collectSpawns(
   const items: ItemSpawn[] = [];
   const doors: DoorSpawn[] = [];
   const torches: TorchSpawn[] = [];
+  const npcSpawnPoints: NpcSpawnPointSpawn[] = [];
+  const npcResidences: NpcResidenceSpawn[] = [];
 
   for (const raw of objects) {
     const props = propMap(raw.properties);
@@ -197,6 +244,38 @@ function collectSpawns(
         });
         break;
       }
+      case "npcSpawnPoint": {
+        const uid = String(props.uid ?? "");
+        if (!uid) {
+          throw new Error(
+            `npcSpawnPoint at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+          );
+        }
+        const spawnGroupId = String(props.spawnGroupId ?? "");
+        if (!spawnGroupId) {
+          throw new Error(
+            `npcSpawnPoint at (${tileX},${tileY}) missing spawnGroupId property.`,
+          );
+        }
+        npcSpawnPoints.push({ kind: "npc_spawn_point", uid, tileX, tileY, spawnGroupId });
+        break;
+      }
+      case "npcResidence": {
+        const uid = String(props.uid ?? "");
+        if (!uid) {
+          throw new Error(
+            `npcResidence at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+          );
+        }
+        const hireableId = String(props.hireableId ?? "");
+        if (!hireableId) {
+          throw new Error(
+            `npcResidence at (${tileX},${tileY}) missing hireableId property.`,
+          );
+        }
+        npcResidences.push({ kind: "npc_residence", uid, tileX, tileY, hireableId });
+        break;
+      }
       case "torch": {
         const uid = String(props.uid ?? "");
         if (!uid) {
@@ -221,7 +300,7 @@ function collectSpawns(
     }
   }
 
-  return { items, doors, torches };
+  return { items, doors, torches, npcSpawnPoints, npcResidences };
 }
 
 function parseHexColor(value: unknown, fallback: number): number {
@@ -269,7 +348,17 @@ export function parseInteriorSpawns(
   const repairTargets: RepairTargetSpawn[] = [];
   const workstations: WorkstationSpawn[] = [];
   const seats: SeatSpawn[] = [];
-  if (!layer) return { exits, entries, items, repairTargets, workstations, seats };
+  const browseWaypoints: NpcBrowseWaypointSpawn[] = [];
+  if (!layer)
+    return {
+      exits,
+      entries,
+      items,
+      repairTargets,
+      workstations,
+      seats,
+      browseWaypoints,
+    };
 
   for (const raw of layer.objects) {
     const props = propMap(raw.properties as TiledProperty[] | undefined);
@@ -361,6 +450,21 @@ export function parseInteriorSpawns(
         tileY,
         tag,
       });
+    } else if (raw.type === "npcBrowseWaypoint") {
+      const uid = String(props.uid ?? "");
+      if (!uid) {
+        throw new Error(
+          `npcBrowseWaypoint at (${tileX},${tileY}) missing uid — run \`npm run maps\` to stamp.`,
+        );
+      }
+      const browseGroupId = String(props.browseGroupId ?? "all") || "all";
+      browseWaypoints.push({
+        kind: "npc_browse_waypoint",
+        uid,
+        tileX,
+        tileY,
+        browseGroupId,
+      });
     } else if (raw.type === "item_spawn") {
       const itemId = String(props.itemId ?? "") as ItemId;
       const quantity = Number(props.quantity ?? 1);
@@ -375,7 +479,15 @@ export function parseInteriorSpawns(
     }
   }
 
-  return { exits, entries, items, repairTargets, workstations, seats };
+  return {
+    exits,
+    entries,
+    items,
+    repairTargets,
+    workstations,
+    seats,
+    browseWaypoints,
+  };
 }
 
 interface TiledProperty {

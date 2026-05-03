@@ -26,6 +26,15 @@ import { SpriteReconciler } from "../entities/SpriteReconciler";
 import { entityRegistry } from "../entities/registry";
 import type { MapId } from "../entities/mapId";
 import { worldTicker } from "../entities/WorldTicker";
+import { SceneNpcBinder } from "../world/sceneNpcBinder";
+import { registerAgentForNpcDef, unregisterAgentForNpcDefId } from "../entities/agentBinding";
+import { portalRegistry } from "../sim/portals";
+import {
+  browseWaypoints,
+  browseWaypointKey,
+} from "../sim/planner/browseWaypoints";
+import type { WorldLocation } from "../sim/location";
+import { businessIdForInteriorKey } from "../business/registry";
 import type { DialogueDef, NpcData } from "../entities/npcTypes";
 import npcDataRaw from "../data/npcs.json";
 import { Enemy, registerEnemyAnimations } from "../entities/Enemy";
@@ -85,6 +94,7 @@ export class InteriorScene extends GameplayScene {
   private launchData!: InteriorLaunchData;
   private interior!: InteriorTilemap;
   private npcReconciler!: SpriteReconciler<NpcSprite | CharacterSprite>;
+  private npcBinder!: SceneNpcBinder;
   private lastExitTile: { x: number; y: number } | null = null;
   private dialogues: Record<string, DialogueDef> = {};
   private activeDialogue: {
@@ -148,6 +158,41 @@ export class InteriorScene extends GameplayScene {
     }
     this.interior = built;
 
+    // Refine the placeholder reverse portal (registered by the door's
+    // chunk-ready) with the real `interior_exit` tiles parsed from this
+    // tilemap. After this, an NPC walking out of the interior abstractly
+    // will leave from the authored exit tile rather than the entry+1 fallback.
+    portalRegistry.registerInteriorExit(
+      this.launchData.interiorKey,
+      this.interior.exits,
+      "chunk:world",
+      { x: this.launchData.returnWorldTx, y: this.launchData.returnWorldTy },
+    );
+
+    // Refine the world → interior portals' `toTile` to the real entry the
+    // player uses. The door's `entryTx/entryTy` is a legacy authoring field
+    // that's easy to drift out of sync with the interior's `interior_entry`
+    // object; the player path always falls through to that object first.
+    // Match the player's resolution exactly so tourists land where the
+    // player would.
+    {
+      const entry = this.interior.entries[0];
+      const exit = this.interior.exits[0];
+      const realEntryTx = entry ? entry.tileX : exit ? exit.tileX : this.launchData.entryTx;
+      const realEntryTy = entry ? entry.tileY : exit ? exit.tileY - 1 : this.launchData.entryTy;
+      portalRegistry.refineEntry(this.launchData.interiorKey, {
+        x: realEntryTx,
+        y: realEntryTy,
+      });
+    }
+
+    // Surface authored `npcBrowseWaypoint` objects into the sim-layer
+    // registry. `BrowseActivity` reads these by interiorKey AND by
+    // businessId (the same dual-key convention `worldAnchors` uses for
+    // `businessArrival:`). Cleared on shutdown so re-entering an interior
+    // re-seeds rather than accumulating duplicates.
+    this.registerBrowseWaypoints();
+
     const npcData = npcDataRaw as NpcData;
     this.dialogues = npcData.dialogues ?? {};
 
@@ -205,6 +250,10 @@ export class InteriorScene extends GameplayScene {
       },
     );
     worldTicker.registerWalkable(mapId, (x, y) => this.isWalkablePx(x, y));
+    this.npcBinder = new SceneNpcBinder();
+    this.npcBinder.attach(this, `interior:${this.launchData.interiorKey}`, (x, y) =>
+      this.isWalkablePx(x, y),
+    );
 
     // Input.
     this.keys = {
@@ -298,6 +347,7 @@ export class InteriorScene extends GameplayScene {
     // Enemies, projectiles, and bow reticle are owned by the GameplayScene base.
     this.tickCombat(dtMs);
     this.tickCustomerSims(dtMs);
+    this.npcBinder?.update(dtMs);
     this.npcReconciler.syncAll();
     this.zoom.update(dtMs);
     this.emitHud();
@@ -795,6 +845,7 @@ export class InteriorScene extends GameplayScene {
     this.unsubPlayerVisuals = null;
     const mapId: MapId = { kind: "interior", key: this.launchData.interiorKey };
     worldTicker.unregisterWalkable(mapId);
+    this.npcBinder?.detach();
     this.npcReconciler?.shutdown();
     this.teardownCombat();
     for (const n of this.nodes) n.destroy();
@@ -805,9 +856,54 @@ export class InteriorScene extends GameplayScene {
     this.groundItems.clear();
     // Destroy the scene's Player view; the model lives on in the registry.
     this.player?.destroy();
+    this.clearBrowseWaypoints();
     if (this.interior) destroyInteriorTilemap(this.interior);
     // Close any open dialogue so it doesn't bleed into World.
     if (this.activeDialogue) this.closeDialogue();
+  }
+
+  /** Group authored `npcBrowseWaypoint` objects by `browseGroupId` and seed
+   *  them into `browseWaypoints` under both interiorKey and businessId, so
+   *  schedule templates can address either form. */
+  private registerBrowseWaypoints(): void {
+    if (!this.interior) return;
+    const interiorKey = this.launchData.interiorKey;
+    const sceneKey = `interior:${interiorKey}` as const;
+    const grouped = new Map<string, WorldLocation[]>();
+    for (const wp of this.interior.browseWaypoints) {
+      const arr = grouped.get(wp.browseGroupId) ?? [];
+      arr.push({
+        sceneKey,
+        tileX: wp.tileX,
+        tileY: wp.tileY,
+        facing: "down",
+      });
+      grouped.set(wp.browseGroupId, arr);
+    }
+    if (grouped.size === 0) return;
+    const businessId = businessIdForInteriorKey(interiorKey);
+    for (const [groupId, locs] of grouped) {
+      browseWaypoints.set(browseWaypointKey(interiorKey, groupId), locs);
+      if (businessId) {
+        browseWaypoints.set(browseWaypointKey(businessId, groupId), locs);
+      }
+    }
+  }
+
+  private clearBrowseWaypoints(): void {
+    const interiorKey = this.launchData.interiorKey;
+    const businessId = businessIdForInteriorKey(interiorKey);
+    // Clear every group keyed off this interior — we don't track which
+    // groups we registered, but `BrowseWaypointRegistry.list()` keys are
+    // namespaced by `<id>:<group>` so we just iterate everything.
+    for (const { key } of browseWaypoints.list()) {
+      if (
+        key.startsWith(`${interiorKey}:`) ||
+        (businessId && key.startsWith(`${businessId}:`))
+      ) {
+        browseWaypoints.clearKey(key);
+      }
+    }
   }
 
   // ── Interior entity spawning ─────────────────────────────────────
@@ -860,6 +956,9 @@ export class InteriorScene extends GameplayScene {
         interiorKey: this.launchData.interiorKey,
         interior: this.interior,
         isWalkablePx: (px, py) => this.isWalkablePx(px, py),
+        spawnStaffNpc: (hire, tx, ty) =>
+          this.spawnScheduledStaffNpc(def.id, hire, tx, ty),
+        despawnStaffNpc: (npcId) => this.despawnScheduledStaffNpc(npcId),
       });
       sim.start();
       this.customerSims.push(sim);
@@ -896,6 +995,9 @@ export class InteriorScene extends GameplayScene {
     const mapId: MapId = { kind: "interior", key: interiorKey };
     for (const bizDef of businessRegistry.all()) {
       if (bizDef.interiorKey !== interiorKey) continue;
+      // Schedule-driven businesses (taverns etc. with opening hours) are
+      // managed entirely by their CustomerSim — skip the static seed.
+      if (bizDef.schedule) continue;
       const state = useBusinessStore.getState().get(bizDef.id);
       if (!state || !state.owned) continue;
       const kind = businessKinds.tryGet(bizDef.kindId);
@@ -915,6 +1017,7 @@ export class InteriorScene extends GameplayScene {
         if (entityRegistry.get(npc.id)) entityRegistry.remove(npc.id);
         const model = new NpcModel(npc, mapId);
         entityRegistry.add(model);
+        registerAgentForNpcDef(npc, mapId);
         this.hiredStaffNpcIds.push(model.id);
       }
     }
@@ -922,9 +1025,42 @@ export class InteriorScene extends GameplayScene {
 
   private despawnHiredStaff() {
     for (const id of this.hiredStaffNpcIds) {
+      // `id` is `npc:<defId>` — agent shares the id by construction.
+      const defId = id.startsWith("npc:") ? id.slice(4) : id;
+      unregisterAgentForNpcDefId(defId);
       if (entityRegistry.get(id)) entityRegistry.remove(id);
     }
     this.hiredStaffNpcIds = [];
+  }
+
+  /** Spawn helper for schedule-driven CustomerSim use. Synthesizes the NPC
+   *  at the requested tile, registers it, tracks the id so scene teardown
+   *  cleans it up. Returns the registry id (`npc:staff:...`) on success. */
+  spawnScheduledStaffNpc(
+    businessId: string,
+    hire: HiredNpc,
+    tileX: number,
+    tileY: number,
+  ): string | null {
+    const npc = this.synthesizeStaffNpc(businessId, hire, tileX, tileY);
+    if (!npc) return null;
+    const fullId = `npc:${npc.id}`;
+    if (entityRegistry.get(fullId)) entityRegistry.remove(fullId);
+    const mapId: MapId = { kind: "interior", key: this.launchData.interiorKey };
+    const model = new NpcModel(npc, mapId);
+    entityRegistry.add(model);
+    registerAgentForNpcDef(npc, mapId);
+    this.hiredStaffNpcIds.push(model.id);
+    return model.id;
+  }
+
+  /** Despawn counterpart for `spawnScheduledStaffNpc`. */
+  despawnScheduledStaffNpc(npcId: string): void {
+    const defId = npcId.startsWith("npc:") ? npcId.slice(4) : npcId;
+    unregisterAgentForNpcDefId(defId);
+    if (entityRegistry.get(npcId)) entityRegistry.remove(npcId);
+    const i = this.hiredStaffNpcIds.indexOf(npcId);
+    if (i >= 0) this.hiredStaffNpcIds.splice(i, 1);
   }
 
   private synthesizeStaffNpc(
@@ -961,6 +1097,9 @@ export class InteriorScene extends GameplayScene {
     const def = businessRegistry.tryGet(businessId);
     if (!def) return;
     if (def.interiorKey !== this.launchData.interiorKey) return;
+    // Schedule-driven staff are reconciled by CustomerSim's tick — don't
+    // tear them down here, that would race the arrival/departure walks.
+    if (def.schedule) return;
     this.despawnHiredStaff();
     this.spawnHiredStaff();
   };

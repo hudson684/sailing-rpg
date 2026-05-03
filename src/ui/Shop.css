@@ -33,8 +33,7 @@
   color: var(--pixel-ink);
 }
 .shop-gold strong {
-  color: var(--pixel-gold);
-  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+  color: var(--pixel-coin);
   font-weight: 700;
   margin-left: 4px;
 }

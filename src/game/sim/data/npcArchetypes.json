@@ -1,0 +1,14 @@
+{
+  "tourist": {
+    "name": "Tourist",
+    "spriteSet": "townsfolk_random",
+    "scheduleId": "tourist",
+    "defaultTraits": { "wanderlust": 0.6 }
+  },
+  "townsfolk_default": {
+    "name": "Townsfolk",
+    "spriteSet": "townsfolk_random",
+    "scheduleId": "townsfolk_default",
+    "defaultTraits": {}
+  }
+}

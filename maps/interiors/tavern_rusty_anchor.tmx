@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="64" height="64" tilewidth="16" tileheight="16" infinite="0" nextlayerid="18" nextobjectid="38">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="64" height="64" tilewidth="16" tileheight="16" infinite="0" nextlayerid="18" nextobjectid="44">
  <tileset firstgid="1" source="../tilesets/Rural Village Interior Floors.tsx"/>
  <tileset firstgid="1185" source="../tilesets/Rural Village Interior Walls.tsx"/>
  <tileset firstgid="4905" source="../tilesets/Rural Village Interior Objects.tsx"/>
@@ -732,7 +732,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,5407,7794,4967,7794,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,5407,7794,4967,7794,0,5007,5009,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7879,7880,7881,7882,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -874,7 +874,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,5317,0,0,0,0,4917,4919,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,5362,0,4922,7753,0,4962,4964,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5007,5009,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -1066,14 +1066,14 @@
     <property name="uid" value="9b3a48f5-7c1e-4e22-8e34-2a16f4e1c901"/>
    </properties>
   </object>
-  <object id="17" name="broken_floor" type="repair_target" x="387.667" y="626.5" width="213.568" height="43.6667">
+  <object id="17" name="broken_floor" type="repair_target" x="372.312" y="626.969" width="82.6321" height="40.8855">
    <properties>
     <property name="businessId" value="rusty_anchor"/>
     <property name="nodeId" value="repair_floor"/>
     <property name="uid" value="2f7c19e4-4a83-4d0b-b6fa-83e1a9c5a121"/>
    </properties>
   </object>
-  <object id="18" name="ws_floor" type="workstation" x="387.333" y="625.5" width="214.574" height="45">
+  <object id="18" name="ws_floor" type="workstation" x="375.666" y="601.699" width="200.907" height="42.1339">
    <properties>
     <property name="tag" value="floor"/>
     <property name="uid" value="6e0c7a2d-7f8e-49a4-9f5a-3b4c2d1e0a82"/>
@@ -1112,6 +1112,39 @@
     <property name="uid" value="f1d8a4c7-6e93-4b5a-92cf-7b3e9d6c2f04"/>
    </properties>
   </object>
+  <object id="35" name="ws_bar_order" type="workstation" x="403.583" y="577.5" width="9.75" height="8.5">
+   <properties>
+    <property name="tag" value="bar_order"/>
+    <property name="uid" value="3e8b1d2a-4f6c-4a7d-9b53-1c8e7d4f2a05"/>
+   </properties>
+  </object>
+  <object id="36" name="ws_kitchen_stove" type="workstation" x="262.333" y="552.833" width="16" height="16">
+   <properties>
+    <property name="tag" value="kitchen_stove"/>
+    <property name="uid" value="b71a92cf-3d68-4e58-a4c3-7f9b2e6d1a06"/>
+   </properties>
+  </object>
+  <object id="37" name="ws_kitchen_pickup" type="workstation" x="291.258" y="548.606" width="8.25" height="9.31818">
+   <properties>
+    <property name="tag" value="kitchen_pickup"/>
+    <property name="uid" value="8c5d4e21-7a93-4b2f-95ce-3d8f1a2b9c07"/>
+   </properties>
+  </object>
+  <object id="41" name="seat_7" type="seat" x="417.465" y="624.947" width="12.0702" height="12.6061">
+   <properties>
+    <property name="uid" value="7e1c2f3d-9b54-4a8e-94c1-1f3a5b8d2c01"/>
+   </properties>
+  </object>
+  <object id="42" name="seat_6" type="seat" x="369.715" y="624.197" width="12.0702" height="12.6061">
+   <properties>
+    <property name="uid" value="7e1c2f3d-9b54-4a8e-94c1-1f3a5b8d2c01"/>
+   </properties>
+  </object>
+  <object id="43" name="seat_5" type="seat" x="369.965" y="640.197" width="12.0702" height="12.6061">
+   <properties>
+    <property name="uid" value="7e1c2f3d-9b54-4a8e-94c1-1f3a5b8d2c01"/>
+   </properties>
+  </object>
  </objectgroup>
  <objectgroup id="10" name="COLLISION">
   <object id="4" x="385" y="565.5" width="46" height="8.66667"/>
@@ -1125,14 +1158,14 @@
   <object id="13" x="471.333" y="702.166" width="35.6667" height="12.3333"/>
   <object id="14" x="501.333" y="688.833" width="113.287" height="19.6667"/>
   <object id="15" x="609.67" y="555.809" width="30.6667" height="144"/>
-  <object id="21" x="354" y="437.167" width="14.6667" height="108.333"/>
+  <object id="21" x="354" y="437.167" width="14.6667" height="116.458"/>
   <object id="22" x="364.667" y="816.666" width="117.333" height="19"/>
   <object id="24" x="355.333" y="689.167" width="117.333" height="19"/>
   <object id="25" x="208.333" y="514.167" width="14.6667" height="108.333"/>
-  <object id="26" x="217.167" y="503.5" width="137.666" height="39"/>
+  <object id="26" x="224.076" y="502.955" width="137.666" height="40.2727"/>
   <object id="27" x="305.667" y="527.333" width="28.6667" height="24"/>
   <object id="28" x="222.667" y="526.667" width="64.3334" height="24"/>
   <object id="29" x="239.833" y="571" width="64.3334" height="11"/>
-  <object id="30" x="288.833" y="518.5" width="18.0001" height="63.6667"/>
+  <object id="30" x="290.651" y="529.114" width="9.36374" height="48.2576"/>
  </objectgroup>
 </map>

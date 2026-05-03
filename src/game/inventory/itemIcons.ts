@@ -45,6 +45,9 @@ import iconJellyfish from "../../ui/icons/inventory/item_jellyfish.png";
 import iconSharkTooth from "../../ui/icons/inventory/item_shark_tooth.png";
 import iconPearlBlack from "../../ui/icons/inventory/item_pearl_black.png";
 import iconLargeBone from "../../ui/icons/inventory/item_large_bone.png";
+import iconFriedEggs from "../../ui/icons/inventory/item_fried_eggs.png";
+import iconSoup from "../../ui/icons/inventory/item_soup.png";
+import iconCookedFish from "../../ui/icons/inventory/item_cooked_fish.png";
 
 function emojiIcon(glyph: string): string {
   const svg =
@@ -108,6 +111,9 @@ export const ITEM_ICONS: Record<string, string> = {
   shark_tooth: iconSharkTooth,
   pearl_black: iconPearlBlack,
   large_bone: iconLargeBone,
+  fried_eggs: iconFriedEggs,
+  soup: iconSoup,
+  cooked_fish: iconCookedFish,
 };
 
 export function iconForItem(id: string): string {

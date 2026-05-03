@@ -4,6 +4,7 @@ import type { MapId } from "./mapId";
 import type { NpcData, NpcDef, NpcMap } from "./npcTypes";
 import { SpawnGateRegistry } from "../world/spawnGating";
 import type { PredicateContext } from "../quests/predicates";
+import { registerAgentForNpcDef, unregisterAgentForNpcDefId } from "./agentBinding";
 
 /** Convert the NPC data file's `map` field into a global `MapId`. */
 export function npcMapToMapId(map: NpcMap | undefined): MapId {
@@ -35,18 +36,25 @@ export function bootstrapNpcs(data: NpcData, ctx?: PredicateContext) {
       factory: (def) => {
         const id = modelIdFor(def);
         if (entityRegistry.get(id)) entityRegistry.remove(id);
-        const model = new NpcModel(def, npcMapToMapId(def.map));
+        const mapId = npcMapToMapId(def.map);
+        const model = new NpcModel(def, mapId);
         entityRegistry.add(model);
+        registerAgentForNpcDef(def, mapId);
         return model;
       },
-      teardown: (model) => entityRegistry.remove(model.id),
+      teardown: (model) => {
+        unregisterAgentForNpcDefId(model.def.id);
+        entityRegistry.remove(model.id);
+      },
     });
     gateRegistry.register(data.npcs);
   } else {
     for (const def of data.npcs) {
       const id = modelIdFor(def);
       if (entityRegistry.get(id)) entityRegistry.remove(id);
-      entityRegistry.add(new NpcModel(def, npcMapToMapId(def.map)));
+      const mapId = npcMapToMapId(def.map);
+      entityRegistry.add(new NpcModel(def, mapId));
+      registerAgentForNpcDef(def, mapId);
     }
   }
 }
@@ -61,16 +69,23 @@ export function clearNpcs() {
   for (const model of entityRegistry.all()) {
     if (model.kind === "npc") ids.push(model.id);
   }
-  for (const id of ids) entityRegistry.remove(id);
+  for (const id of ids) {
+    // `id` is `npc:<defId>`; the agent shares it.
+    const defId = id.startsWith("npc:") ? id.slice(4) : id;
+    unregisterAgentForNpcDefId(defId);
+    entityRegistry.remove(id);
+  }
 }
 
 export function addNpc(def: NpcDef, mapId: MapId = { kind: "world" }): NpcModel {
   const model = new NpcModel(def, mapId);
   if (entityRegistry.get(model.id)) entityRegistry.remove(model.id);
   entityRegistry.add(model);
+  registerAgentForNpcDef(def, mapId);
   return model;
 }
 
 export function removeNpcById(npcDefId: string) {
+  unregisterAgentForNpcDefId(npcDefId);
   entityRegistry.remove(`npc:${npcDefId}`);
 }

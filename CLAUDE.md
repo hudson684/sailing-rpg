@@ -27,6 +27,25 @@ Verify changes with:
 If a change really needs a live browser to validate, ask the user to
 reload their dev server and tell you what they see — don't spin one up.
 
+## NPC system
+
+Before touching anything that creates, ticks, or drives NPCs — the
+global registry, activities, the customer/staff borrowed-body paths,
+`NpcProxy` / `WorldTicker` / `agentBinding`, schedules, or save/load
+of NPC state — read **`docs/npc-system.md`**. It covers the mental
+model, body-ownership rules, day plans, the spawn pipeline, save/load
+ordering, and the transitional warts that survived Phase 9.
+
+`plan/global-npc-state/decisions.md` is the implementation log for the
+nine phases that built the system; reach for it when "why is it like
+this?" doesn't have an obvious answer in the code.
+
+Quick index:
+
+- Authoring a new activity: `src/game/sim/README.md`
+- Authoring archetypes / schedules / spawn groups:
+  `src/game/sim/data/README.md`
+
 ## Prefer Phaser 4 solutions
 
 This project is built on Phaser 4. Always consider a Phaser 4 native

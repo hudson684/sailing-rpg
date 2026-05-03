@@ -19,6 +19,12 @@
   --pixel-scale: 2;
   --pixel-font: "Pixelify Sans", "Courier New", monospace;
   --pixel-display-font: "Pixelify Sans", "Courier New", monospace;
+  /* Readable body font for labels, prices, names, and other small text
+   * inside pixel panels. Pixelify Sans is a display face — at 11–13px on
+   * tan it's hard to read. Use --pixel-body-font for any text users
+   * actually parse word-by-word; keep --pixel-display-font for titles,
+   * big numeric values, and button labels. */
+  --pixel-body-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* Warm pixel palette pulled from the asset pack */
   --pixel-tan: #e1a878;
@@ -27,6 +33,10 @@
   --pixel-ink: #2a1b17;
   --pixel-ink-soft: #6a4a3a;
   --pixel-gold: #ffd166;
+  /* Readable amber for coin/value text on tan/parchment backgrounds.
+   * --pixel-gold is bright and works for accents (stars, outlines,
+   * highlights) but fails contrast as body text — use this for numbers. */
+  --pixel-coin: #5e3608;
   --pixel-accent-green: #4c9a5c;
   --pixel-accent-red: #c94e4e;
   --pixel-accent-blue: #3d7fb8;
@@ -215,7 +225,8 @@
 
 .px-footer {
   margin-top: 10px;
-  font-size: 13px;
+  font-family: var(--pixel-body-font);
+  font-size: 12px;
   color: var(--pixel-ink-soft);
   text-align: center;
   letter-spacing: 0.05em;

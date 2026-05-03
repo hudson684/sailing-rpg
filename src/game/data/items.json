@@ -543,6 +543,28 @@
       "value": 80
     },
     {
+      "id": "fried_eggs",
+      "name": "Fried Eggs",
+      "color": "#f0c84a",
+      "stackable": true,
+      "maxStack": 20,
+      "description": "Two sunny-side-up eggs, crisp at the edges. Tavern fare.",
+      "type": "consumable",
+      "consumable": { "regenHp": 12 },
+      "value": 10
+    },
+    {
+      "id": "soup",
+      "name": "Soup",
+      "color": "#c97a3a",
+      "stackable": true,
+      "maxStack": 20,
+      "description": "A hearty bowl of stew. Warms the belly.",
+      "type": "consumable",
+      "consumable": { "regenHp": 18 },
+      "value": 14
+    },
+    {
       "id": "large_bone",
       "name": "Large Bone",
       "color": "#c9bfa8",

@@ -1,6 +1,7 @@
 import type { SaveEnvelope, SlotId } from "./save";
 import type { CraftOutcomeTier } from "./crafting/types";
 import type { JobId } from "./jobs/jobs";
+import type { CalendarContext } from "./sim/calendar/calendar";
 
 export type PlayerMode = "OnFoot" | "Boarding" | "OnDeck" | "AtHelm" | "Anchoring";
 
@@ -223,6 +224,13 @@ type Events = {
     dayCount: number;
     phase: "day" | "night";
     hourIndex: number;
+  }) => void;
+  /** Fires exactly once per integer-day boundary (when dayCount increments
+   *  forward through tick(); not re-emitted on backward devShiftHours).
+   *  Schedules and daily resets should subscribe here. */
+  "time:midnight": (payload: {
+    dayCount: number;
+    calendar: CalendarContext;
   }) => void;
 
   // ── Cutscene → scene: forced map change ──────────────────────────

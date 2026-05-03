@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE KeyboardMappingScheme>
+<!-- Written by Tiled 1.12.1, 2026-05-03T13:32:42. -->
+<mapping>
+ <shortcut id="About"/>
+ <shortcut id="AboutQt"/>
+ <shortcut id="AddAnotherMap">
+  <key value="Shift+A"/>
+ </shortcut>
+ <shortcut id="AddAutomappingRulesTileset"/>
+ <shortcut id="AddExternalTileset"/>
+ <shortcut id="AddFolderToProject"/>
+ <shortcut id="AddGroupLayer"/>
+ <shortcut id="AddImageLayer"/>
+ <shortcut id="AddMap">
+  <key value="Shift+A"/>
+ </shortcut>
+ <shortcut id="AddObjectLayer"/>
+ <shortcut id="AddStampVariation"/>
+ <shortcut id="AddTileLayer"/>
+ <shortcut id="AddTiles"/>
+ <shortcut id="AutoDetectMask"/>
+ <shortcut id="AutoMap">
+  <key value="Ctrl+M"/>
+ </shortcut>
+ <shortcut id="AutoMapWhileDrawing"/>
+ <shortcut id="Autocrop"/>
+ <shortcut id="BucketFillTool">
+  <key value="F"/>
+ </shortcut>
+ <shortcut id="ClearRecentFiles"/>
+ <shortcut id="ClearRecentProjects"/>
+ <shortcut id="ClearView">
+  <key value="Tab"/>
+ </shortcut>
+ <shortcut id="Close">
+  <key value="Ctrl+F4"/>
+  <key value="Ctrl+W"/>
+  <key value="Close"/>
+ </shortcut>
+ <shortcut id="CloseAll">
+  <key value="Ctrl+Shift+W"/>
+ </shortcut>
+ <shortcut id="CloseProject"/>
+ <shortcut id="Copy">
+  <key value="Ctrl+C"/>
+  <key value="Ctrl+Ins"/>
+  <key value="Copy"/>
+ </shortcut>
+ <shortcut id="CreateCapsuleObjectTool">
+  <key value="Shift+C"/>
+ </shortcut>
+ <shortcut id="CreateEllipseObjectTool">
+  <key value="C"/>
+ </shortcut>
+ <shortcut id="CreatePointObjectTool">
+  <key value="I"/>
+ </shortcut>
+ <shortcut id="CreatePolygonObjectTool">
+  <key value="P"/>
+ </shortcut>
+ <shortcut id="CreateRectangleObjectTool">
+  <key value="R"/>
+ </shortcut>
+ <shortcut id="CreateTemplateTool">
+  <key value="V"/>
+ </shortcut>
+ <shortcut id="CreateTextObjectTool">
+  <key value="E"/>
+ </shortcut>
+ <shortcut id="CreateTileObjectTool">
+  <key value="T"/>
+ </shortcut>
+ <shortcut id="CropToSelection"/>
+ <shortcut id="CustomTypesEditor"/>
+ <shortcut id="Cut">
+  <key value="Ctrl+X"/>
+  <key value="Shift+Del"/>
+  <key value="Cut"/>
+ </shortcut>
+ <shortcut id="Delete">
+  <key value="Del"/>
+ </shortcut>
+ <shortcut id="Documentation"/>
+ <shortcut id="Donate"/>
+ <shortcut id="DuplicateLayers">
+  <key value="Ctrl+Shift+D"/>
+ </shortcut>
+ <shortcut id="DuplicateObjects"/>
+ <shortcut id="DynamicWrappingToggle"/>
+ <shortcut id="EditCollision">
+  <key value="Ctrl+Shift+O"/>
+ </shortcut>
+ <shortcut id="EditCommands"/>
+ <shortcut id="EditPolygonTool">
+  <key value="O"/>
+ </shortcut>
+ <shortcut id="EditTileset"/>
+ <shortcut id="EditTilesetParameters"/>
+ <shortcut id="EditWang"/>
+ <shortcut id="EnableParallax"/>
+ <shortcut id="EnableWorlds"/>
+ <shortcut id="EraserTool">
+  <key value="E"/>
+ </shortcut>
+ <shortcut id="Export">
+  <key value="Ctrl+E"/>
+ </shortcut>
+ <shortcut id="ExportAs">
+  <key value="Ctrl+Shift+E"/>
+ </shortcut>
+ <shortcut id="ExportAsImage"/>
+ <shortcut id="FitInView">
+  <key value="Ctrl+/"/>
+ </shortcut>
+ <shortcut id="FlipHorizontal">
+  <key value="X"/>
+ </shortcut>
+ <shortcut id="FlipVertical">
+  <key value="Y"/>
+ </shortcut>
+ <shortcut id="FullScreen">
+  <key value="F11"/>
+ </shortcut>
+ <shortcut id="GoToTile">
+  <key value="Ctrl+Shift+G"/>
+ </shortcut>
+ <shortcut id="GroupLayers"/>
+ <shortcut id="HighlightCurrentLayer">
+  <key value="H"/>
+ </shortcut>
+ <shortcut id="HighlightHoveredObject"/>
+ <shortcut id="LabelForHoveredObject"/>
+ <shortcut id="LabelsForAllObjects"/>
+ <shortcut id="LabelsForSelectedObjects"/>
+ <shortcut id="LayerOffsetTool">
+  <key value="M"/>
+ </shortcut>
+ <shortcut id="LayerProperties"/>
+ <shortcut id="LayerViaCopy">
+  <key value="Ctrl+J"/>
+ </shortcut>
+ <shortcut id="LayerViaCut">
+  <key value="Ctrl+Shift+J"/>
+ </shortcut>
+ <shortcut id="LoadWorld"/>
+ <shortcut id="LockLayout"/>
+ <shortcut id="MagicWandTool">
+  <key value="W"/>
+ </shortcut>
+ <shortcut id="MapProperties"/>
+ <shortcut id="MergeLayersDown"/>
+ <shortcut id="MoveLayersDown">
+  <key value="Ctrl+Shift+Down"/>
+ </shortcut>
+ <shortcut id="MoveLayersUp">
+  <key value="Ctrl+Shift+Up"/>
+ </shortcut>
+ <shortcut id="MoveObjectsDown"/>
+ <shortcut id="MoveObjectsUp"/>
+ <shortcut id="NewMap">
+  <key value="Ctrl+N"/>
+  <key value="New"/>
+ </shortcut>
+ <shortcut id="NewProject">
+  <key value="Ctrl+Shift+N"/>
+ </shortcut>
+ <shortcut id="NewStamp"/>
+ <shortcut id="NewTileset"/>
+ <shortcut id="NewWorld"/>
+ <shortcut id="NoLabels"/>
+ <shortcut id="ObjectSelectionTool">
+  <key value="S"/>
+ </shortcut>
+ <shortcut id="OffsetMap"/>
+ <shortcut id="Open">
+  <key value="Ctrl+O"/>
+  <key value="Open"/>
+ </shortcut>
+ <shortcut id="OpenFileInProject">
+  <key value="Ctrl+P"/>
+ </shortcut>
+ <shortcut id="Paste">
+  <key value="Ctrl+V"/>
+  <key value="Shift+Ins"/>
+  <key value="Paste"/>
+ </shortcut>
+ <shortcut id="PasteInPlace">
+  <key value="Ctrl+Shift+V"/>
+ </shortcut>
+ <shortcut id="Preferences"/>
+ <shortcut id="ProjectProperties"/>
+ <shortcut id="Quit">
+  <key value="Ctrl+Q"/>
+ </shortcut>
+ <shortcut id="RandomMode">
+  <key value="D"/>
+ </shortcut>
+ <shortcut id="Redo">
+  <key value="Ctrl+Y"/>
+  <key value="Alt+Shift+Backspace"/>
+  <key value="Ctrl+Shift+Z"/>
+  <key value="Redo"/>
+ </shortcut>
+ <shortcut id="RefreshProjectFolders"/>
+ <shortcut id="Reload">
+  <key value="Ctrl+R"/>
+ </shortcut>
+ <shortcut id="RelocateTiles"/>
+ <shortcut id="RemoveLayers"/>
+ <shortcut id="RemoveMap">
+  <key value="Shift+D"/>
+ </shortcut>
+ <shortcut id="RemoveObjects"/>
+ <shortcut id="RemoveTiles">
+  <key value="Del"/>
+ </shortcut>
+ <shortcut id="RenameProperty">
+  <key value="F2"/>
+ </shortcut>
+ <shortcut id="ReopenClosedFile">
+  <key value="Ctrl+Shift+T"/>
+ </shortcut>
+ <shortcut id="ResetToDefaultLayout"/>
+ <shortcut id="ResizeMap"/>
+ <shortcut id="RotateLeft">
+  <key value="Shift+Z"/>
+ </shortcut>
+ <shortcut id="RotateRight">
+  <key value="Z"/>
+ </shortcut>
+ <shortcut id="Save">
+  <key value="Ctrl+S"/>
+  <key value="Save"/>
+ </shortcut>
+ <shortcut id="SaveAll"/>
+ <shortcut id="SaveAs">
+  <key value="Ctrl+Shift+S"/>
+ </shortcut>
+ <shortcut id="SearchActions">
+  <key value="Ctrl+Shift+P"/>
+ </shortcut>
+ <shortcut id="SelectAll">
+  <key value="Ctrl+A"/>
+ </shortcut>
+ <shortcut id="SelectAllLayers">
+  <key value="Ctrl+Alt+A"/>
+ </shortcut>
+ <shortcut id="SelectInverse">
+  <key value="Ctrl+I"/>
+ </shortcut>
+ <shortcut id="SelectNextLayer">
+  <key value="Ctrl+PgUp"/>
+ </shortcut>
+ <shortcut id="SelectNextTileset">
+  <key value="]"/>
+ </shortcut>
+ <shortcut id="SelectNone">
+  <key value="Ctrl+Shift+A"/>
+ </shortcut>
+ <shortcut id="SelectPreviousLayer">
+  <key value="Ctrl+PgDown"/>
+ </shortcut>
+ <shortcut id="SelectPreviousTileset">
+  <key value="["/>
+ </shortcut>
+ <shortcut id="SelectSameTileTool">
+  <key value="S"/>
+ </shortcut>
+ <shortcut id="ShapeFillTool">
+  <key value="P"/>
+ </shortcut>
+ <shortcut id="ShapeFillTool.CircleFill"/>
+ <shortcut id="ShapeFillTool.RectangleFill"/>
+ <shortcut id="ShowAnimationEditor"/>
+ <shortcut id="ShowGrid">
+  <key value="Ctrl+G"/>
+ </shortcut>
+ <shortcut id="ShowObjectReferences"/>
+ <shortcut id="ShowTileAnimations"/>
+ <shortcut id="ShowTileCollisionShapes"/>
+ <shortcut id="ShowTileObjectOutlines"/>
+ <shortcut id="SnapNothing"/>
+ <shortcut id="SnapToFineGrid"/>
+ <shortcut id="SnapToGrid"/>
+ <shortcut id="SnapToPixels"/>
+ <shortcut id="StampTool">
+  <key value="B"/>
+ </shortcut>
+ <shortcut id="TileSelectionTool">
+  <key value="R"/>
+ </shortcut>
+ <shortcut id="TilesetProperties"/>
+ <shortcut id="ToggleFillFullTiles"/>
+ <shortcut id="ToggleLockOtherLayers">
+  <key value="Ctrl+Shift+L"/>
+ </shortcut>
+ <shortcut id="ToggleLockSelectedLayers">
+  <key value="Ctrl+L"/>
+ </shortcut>
+ <shortcut id="ToggleOtherLayers">
+  <key value="Ctrl+Shift+H"/>
+ </shortcut>
+ <shortcut id="ToggleSelectedLayers">
+  <key value="Ctrl+H"/>
+ </shortcut>
+ <shortcut id="Undo">
+  <key value="Ctrl+Z"/>
+  <key value="Alt+Backspace"/>
+  <key value="Undo"/>
+ </shortcut>
+ <shortcut id="UngroupLayers"/>
+ <shortcut id="UnloadAllWorlds"/>
+ <shortcut id="WangFillMode"/>
+ <shortcut id="WangTool">
+  <key value="T"/>
+ </shortcut>
+ <shortcut id="WorldMoveMapTool">
+  <key value="N"/>
+ </shortcut>
+ <shortcut id="WorldProperties"/>
+ <shortcut id="ZoomIn">
+  <key value="Ctrl++"/>
+  <key value="Zoom In"/>
+  <key value="Ctrl+="/>
+  <key value="+"/>
+ </shortcut>
+ <shortcut id="ZoomNormal">
+  <key value="Ctrl+0"/>
+ </shortcut>
+ <shortcut id="ZoomOut">
+  <key value="Ctrl+-"/>
+  <key value="Zoom Out"/>
+  <key value="-"/>
+ </shortcut>
+</mapping>
