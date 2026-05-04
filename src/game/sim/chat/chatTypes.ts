@@ -1,6 +1,8 @@
-// Chat data shape for ambient NPC chats. Phase 2 only formalizes the
-// schema and loader; predicate evaluation (`requires`) is opaque here
-// and consumed by phase 3.
+// Chat data shape for ambient NPC chats. Predicate vocabulary lives
+// in `chatPredicates.ts`; this module just re-exports the shape so
+// data files don't import the evaluator.
+
+import type { ChatPredicate } from "./chatPredicates";
 
 export type ParticipantMatch =
   | { npcId: string }
@@ -8,9 +10,8 @@ export type ParticipantMatch =
 
 export interface ParticipantSpec {
   match: ParticipantMatch;
-  /** Predicate object. Phase 3 defines the full vocabulary; phase 2
-   *  treats it as opaque and stores it on the def for later. */
-  requires?: Record<string, unknown>;
+  /** AND-combined predicate list. Empty/undefined = always satisfied. */
+  requires?: ChatPredicate[];
 }
 
 export interface ChatLine {

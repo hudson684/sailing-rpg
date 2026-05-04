@@ -4,6 +4,7 @@ import type {
   IndexEntry,
   ParticipantMatch,
 } from "./chatTypes";
+import { validateChatPredicate } from "./chatPredicates";
 
 // Eager Vite glob — every JSON in `data/chats/` is bundled at build time.
 // Each file's default export is the parsed JSON; we validate shape on
@@ -43,8 +44,16 @@ function validate(path: string, raw: unknown): ChatDef {
     const ps = p as Record<string, unknown>;
     if (!isParticipantMatch(ps.match))
       fail(path, `participants.${slot}.match must be { npcId } or { archetype }`);
-    if (ps.requires !== undefined && (typeof ps.requires !== "object" || ps.requires === null))
-      fail(path, `participants.${slot}.requires must be an object if present`);
+    if (ps.requires !== undefined) {
+      if (!Array.isArray(ps.requires))
+        fail(path, `participants.${slot}.requires must be an array if present`);
+      for (let i = 0; i < ps.requires.length; i++) {
+        validateChatPredicate(
+          ps.requires[i],
+          `${path} participants.${slot}.requires[${i}]`,
+        );
+      }
+    }
   }
 
   if (o.where !== undefined) {

@@ -3,11 +3,11 @@
   "participants": {
     "shopkeeper": {
       "match": { "npcId": "blacksmith_brom" },
-      "requires": { "activity": "tend_shop" }
+      "requires": [{ "activity": "tend_shop" }]
     },
     "customer": {
       "match": { "archetype": "tourist" },
-      "requires": { "activity": "browse" }
+      "requires": [{ "activity": "browse" }]
     }
   },
   "where": { "scene": "interior:blacksmiths" },
