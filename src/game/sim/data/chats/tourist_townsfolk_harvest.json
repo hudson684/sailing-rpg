@@ -1,0 +1,26 @@
+{
+  "id": "tourist_townsfolk_harvest",
+  "participants": {
+    "tourist": {
+      "match": { "archetype": "tourist" },
+      "requires": [
+        { "activity": ["wander", "standAround"] },
+        { "calendar": { "festival": "harvest_festival" } }
+      ]
+    },
+    "local": {
+      "match": { "archetype": "townsfolk_default" },
+      "requires": [
+        { "calendar": { "festival": "harvest_festival" } }
+      ]
+    }
+  },
+  "proximityTiles": 5,
+  "cooldownDays": 30,
+  "weight": 2,
+  "lines": [
+    { "by": "tourist", "text": "I didn't realise we'd land in the middle of the harvest festival!" },
+    { "by": "local",   "text": "Lucky timing! Try the cider stand before it runs dry." },
+    { "by": "tourist", "text": "On my way." }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "tourist_townsfolk_greeting",
+  "participants": {
+    "tourist": {
+      "match": { "archetype": "tourist" },
+      "requires": [
+        { "activity": ["wander", "standAround", "browse"] },
+        { "time": { "phase": "day" } }
+      ]
+    },
+    "local": {
+      "match": { "archetype": "townsfolk_default" },
+      "requires": [
+        { "activity": ["wander", "idle", "standAround"] }
+      ]
+    }
+  },
+  "proximityTiles": 4,
+  "cooldownDays": 4,
+  "weight": 1,
+  "lines": [
+    { "by": "local",   "text": "Welcome to the islands! Mind the wind on the headland." },
+    { "by": "tourist", "text": "Thanks. Anything I shouldn't miss while I'm here?" },
+    { "by": "local",   "text": "Wait for the harvest festival. The whole town turns out." }
+  ]
+}

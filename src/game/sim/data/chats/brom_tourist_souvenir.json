@@ -1,5 +1,5 @@
 {
-  "id": "brom_tourist_umbrella",
+  "id": "brom_tourist_souvenir",
   "participants": {
     "shopkeeper": {
       "match": { "npcId": "npc:brom_blacksmith" },
@@ -17,12 +17,11 @@
   },
   "where": { "scene": "interior:blacksmiths" },
   "proximityTiles": 5,
-  "cooldownDays": 7,
+  "cooldownDays": 5,
   "weight": 1,
   "lines": [
-    { "by": "shopkeeper", "text": "Welcome to the store!" },
-    { "by": "customer",   "text": "Thank you, I'm looking for a sturdy metal frame for my umbrella." },
-    { "by": "customer",   "text": "My old one keeps blowing away." },
-    { "by": "shopkeeper", "text": "That's an unusual request, but I can get it done for you." }
+    { "by": "customer",   "text": "Do you make trinkets travelers can carry home?" },
+    { "by": "shopkeeper", "text": "Iron's heavy luggage, friend. I do hammered pendants — light enough for a pocket." },
+    { "by": "customer",   "text": "Perfect. I'll take a look." }
   ]
 }

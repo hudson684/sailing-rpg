@@ -1,0 +1,25 @@
+{
+  "id": "tourist_pair_smalltalk",
+  "participants": {
+    "first": {
+      "match": { "archetype": "tourist" },
+      "requires": [
+        { "activity": ["wander", "standAround"] }
+      ]
+    },
+    "second": {
+      "match": { "archetype": "tourist" },
+      "requires": [
+        { "activity": ["wander", "standAround"] }
+      ]
+    }
+  },
+  "proximityTiles": 4,
+  "cooldownDays": 3,
+  "weight": 1,
+  "lines": [
+    { "by": "first",  "text": "First time on the islands?" },
+    { "by": "second", "text": "Yes! The harbor view from the cliffs is something else." },
+    { "by": "first",  "text": "Wait until you see it at sunset." }
+  ]
+}

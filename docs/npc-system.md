@@ -344,3 +344,20 @@ The dev schedule overlay (`F9` toggle, behind `import.meta.env.DEV`)
 is a fixed-position list of every registered agent — id, scene, mode,
 current activity, ETA. Right-click a row to dump the full agent state
 to console (resolved variant key, plan annotations, etc.).
+
+## Ambient chats
+
+Two-NPC speech-bubble vignettes that fire when the player is nearby.
+Runtime in `src/game/sim/chat/` (director, playback, cooldown store,
+predicate evaluator); content in `src/game/sim/data/chats/*.json`.
+The director ticks at ~1 Hz from `SceneNpcBinder.update`, narrows
+proxies to a ~10-tile radius around the player, walks pairs against
+a compile-time index, and hands a winner off to playback. Playback
+locks both participants via `model.scripted` (the same flag
+cutscenes use), faces them at each other, paces lines through the
+typed `npc:speak` / `player:speak` bus events, and aborts on
+participant departure / proximity break / `npc:interacted`.
+
+Cooldowns are global per chat-id, persisted alongside other sim
+state, and pruned at midnight. See `src/game/sim/data/chats/README.md`
+for the data format and authoring guide.

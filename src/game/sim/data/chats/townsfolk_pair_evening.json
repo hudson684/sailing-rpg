@@ -1,0 +1,27 @@
+{
+  "id": "townsfolk_pair_evening",
+  "participants": {
+    "first": {
+      "match": { "archetype": "townsfolk_default" },
+      "requires": [
+        { "activity": ["wander", "patronTavern", "standAround"] },
+        { "time": { "phase": "night" } }
+      ]
+    },
+    "second": {
+      "match": { "archetype": "townsfolk_default" },
+      "requires": [
+        { "activity": ["wander", "patronTavern", "standAround"] },
+        { "time": { "phase": "night" } }
+      ]
+    }
+  },
+  "proximityTiles": 4,
+  "cooldownDays": 5,
+  "weight": 1,
+  "lines": [
+    { "by": "first",  "text": "Wind's up tonight." },
+    { "by": "second", "text": "Skipper said three boats are riding it out behind the breakwater." },
+    { "by": "first",  "text": "They'll be alright. The pier held last storm." }
+  ]
+}
