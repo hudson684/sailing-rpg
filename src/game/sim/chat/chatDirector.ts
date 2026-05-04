@@ -12,6 +12,7 @@ import {
   type ChatPredicateContext,
 } from "./chatPredicates";
 import { chatPlayback } from "./chatPlayback";
+import { chatCooldownStore } from "./chatStore";
 
 /** Hard cap on the radius we'll consider before per-pair filtering. Must be
  *  ≥ the largest authored `proximityTiles` (currently 5). */
@@ -32,17 +33,8 @@ interface Eligible {
   weight: number;
 }
 
-// Phase-6 will swap this for a persisted store.
-const inMemoryCooldown = new Set<string>();
-
 function isAlreadyChatting(proxy: NpcProxy): boolean {
   return chatPlayback.isChatting(proxy.agent.id);
-}
-function isOnCooldown(chatId: string): boolean {
-  return inMemoryCooldown.has(chatId);
-}
-function markPlayed(chatId: string, _currentDay: number): void {
-  inMemoryCooldown.add(chatId);
 }
 
 function chebyshevTiles(
@@ -98,7 +90,7 @@ function start(
 ): void {
   // Stamp cooldown at start (not on completion) so an interrupted chat
   // still respects its window. Decision in plan/phase-5.
-  markPlayed(winner.def.id, currentDay);
+  chatCooldownStore.markPlayed(winner.def.id, currentDay);
   chatPlayback.start({
     def: winner.def,
     sceneKey,
@@ -164,7 +156,7 @@ export const chatDirector = {
           const [partnerKey, partnerSpec] = partnerSlot(entry.def, entry.matchedSlot);
           if (!matchesParticipant(B, partnerSpec)) continue;
 
-          if (isOnCooldown(entry.def.id)) continue;
+          if (chatCooldownStore.isOnCooldown(entry.def.id, tDay)) continue;
 
           const matchedSpec = entry.def.participants[entry.matchedSlot];
           if (!evaluateAll(matchedSpec.requires, buildCtx(A))) continue;
@@ -188,6 +180,5 @@ export const chatDirector = {
 
 /** Test-only: drop director state. */
 export function __resetChatDirectorForTests(): void {
-  inMemoryCooldown.clear();
   accumulatorMs = 0;
 }

@@ -6,6 +6,7 @@ import { initHireablesSubsystem } from "../business/hireables";
 import { initIdleSimSubsystem } from "../business/idleSim";
 import { initStaffAgentBootstrap } from "../business/staff/staffAgentBootstrap";
 import { npcRegistrySaveable } from "./npcRegistrySaveable";
+import { chatCooldownsSaveable, ensureChatCooldownPruneSub } from "../sim/chat/chatStore";
 import { getPrefetchedEnvelope } from "./storeHydrate";
 import { DroppedItemsState } from "../world/droppedItemsState";
 
@@ -61,7 +62,9 @@ export async function bootSaveController(
     // NPC registry hydrates last so businesses/flags are settled when
     // activities reattach (e.g. PatronTavern looking up the patron service).
     npcRegistrySaveable(),
+    chatCooldownsSaveable(),
   ]);
+  ensureChatCooldownPruneSub();
   initHireablesSubsystem();
   initIdleSimSubsystem();
   initStaffAgentBootstrap();
