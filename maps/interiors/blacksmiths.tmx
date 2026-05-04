@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="34">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="36">
  <tileset firstgid="1" source="../tilesets/Blacksmith Floors.tsx"/>
  <tileset firstgid="1185" source="../tilesets/Blacksmith Walls.tsx"/>
  <tileset firstgid="3249" source="../tilesets/Blacksmith Furniture.tsx"/>
@@ -78,6 +78,9 @@
 </data>
  </layer>
  <layer id="4" name="props_low" width="30" height="20">
+  <properties>
+   <property name="y-sort" type="bool" value="false"/>
+  </properties>
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,6318,6319,0,7325,7326,7327,0,0,0,7940,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -93,7 +96,7 @@
 0,0,3779,3779,3777,0,0,0,0,3939,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,3669,3670,3671,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,3708,3709,3710,3796,0,0,0,0,0,0,3786,3787,0,3746,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,3709,3710,3796,0,0,0,0,0,0,3786,3787,0,3746,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -102,6 +105,9 @@
 </data>
  </layer>
  <layer id="9" name="countertop" width="30" height="20">
+  <properties>
+   <property name="y-sort" type="bool" value="true"/>
+  </properties>
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -116,8 +122,8 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,3672,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,3716,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,3668,3669,3754,3756,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,3708,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,3669,3754,3756,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -126,6 +132,9 @@
 </data>
  </layer>
  <layer id="7" name="props_mid" width="30" height="20">
+  <properties>
+   <property name="y-sort" type="bool" value="true"/>
+  </properties>
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,3428,3429,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -158,9 +167,9 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,2065,2022,2066,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,2057,2057,2057,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,1748,1748,1748,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,1705,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,2046,2046,2046,2046,2046,2046,2046,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,1748,1748,1748,1748,1748,1748,1748,1748,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,1704,1705,1706,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,1830,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,1876,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,1967,1876,1966,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -187,61 +196,61 @@
   <object id="22" name="blacksmith_bed" type="npcStandingSpot" x="48.75" y="81.75" width="13.5" height="12">
    <properties>
     <property name="standingGroupId" value="bed"/>
-       <property name="uid" value="711cb032-7b5b-4c73-bb03-3dc5e2bb8a86"/>
+    <property name="uid" value="711cb032-7b5b-4c73-bb03-3dc5e2bb8a86"/>
    </properties>
   </object>
   <object id="24" name="blacksmith_lounge" type="npcStandingSpot" x="178.125" y="65.75" width="12.375" height="12.375">
    <properties>
     <property name="standingGroupId" value="lounge"/>
-       <property name="uid" value="8f891bc5-42d8-426b-b87d-26080d42dd3f"/>
+    <property name="uid" value="8f891bc5-42d8-426b-b87d-26080d42dd3f"/>
    </properties>
   </object>
   <object id="25" name="blacksmith_anvil" type="npcStandingSpot" x="243" y="210.455" width="11.0909" height="11.6364">
    <properties>
     <property name="standingGroupId" value="anvil"/>
-       <property name="uid" value="501432f8-2447-442d-a12f-3d0d28e57c0c"/>
+    <property name="uid" value="501432f8-2447-442d-a12f-3d0d28e57c0c"/>
    </properties>
   </object>
   <object id="26" name="blacksmith_quencher" type="npcStandingSpot" x="210.727" y="211.182" width="11" height="10.9091">
    <properties>
     <property name="standingGroupId" value="quencher"/>
-       <property name="uid" value="04d1da40-28e2-438e-aa17-36b85fcd79e4"/>
+    <property name="uid" value="04d1da40-28e2-438e-aa17-36b85fcd79e4"/>
    </properties>
   </object>
   <object id="27" name="blacksmith_store" type="npcStandingSpot" x="65.125" y="209.5" width="14" height="10.125">
    <properties>
     <property name="standingGroupId" value="store"/>
-       <property name="uid" value="82a72408-10c4-4473-810e-0def7497d6a9"/>
+    <property name="uid" value="82a72408-10c4-4473-810e-0def7497d6a9"/>
    </properties>
   </object>
   <object id="29" name="blacksmith_idle_four" type="npcStandingSpot" x="98.75" y="178" width="11.5" height="10.5">
    <properties>
     <property name="standingGroupId" value="tourist_idle"/>
-       <property name="uid" value="26dd540b-8a80-4693-ba95-2f7429c94069"/>
+    <property name="uid" value="26dd540b-8a80-4693-ba95-2f7429c94069"/>
    </properties>
   </object>
   <object id="30" name="blacksmith_idle_one" type="npcStandingSpot" x="130" y="193" width="11.5" height="10.5">
    <properties>
     <property name="standingGroupId" value="tourist_idle"/>
-       <property name="uid" value="44fbc959-831b-47a2-b55e-7f551d20b5fb"/>
+    <property name="uid" value="44fbc959-831b-47a2-b55e-7f551d20b5fb"/>
    </properties>
   </object>
   <object id="31" name="blacksmith_idle_two" type="npcStandingSpot" x="116.25" y="208.75" width="11.5" height="10.5">
    <properties>
     <property name="standingGroupId" value="tourist_idle"/>
-       <property name="uid" value="8a8d9ee2-d877-4778-adcd-5ba0fbca6325"/>
+    <property name="uid" value="8a8d9ee2-d877-4778-adcd-5ba0fbca6325"/>
    </properties>
   </object>
   <object id="32" name="blacksmith_idle_three" type="npcStandingSpot" x="49.25" y="241" width="11.5" height="10.5">
    <properties>
     <property name="standingGroupId" value="tourist_idle"/>
-       <property name="uid" value="c2be2a45-5945-48b8-94c1-868c89aed51f"/>
+    <property name="uid" value="c2be2a45-5945-48b8-94c1-868c89aed51f"/>
    </properties>
   </object>
   <object id="33" name="blacksmith_forge" type="npcStandingSpot" x="227.636" y="195.636" width="9.45455" height="9.81818">
    <properties>
     <property name="standingGroupId" value="forge"/>
-       <property name="uid" value="5ea334c3-df08-4f77-a446-daf27a2ae9a5"/>
+    <property name="uid" value="5ea334c3-df08-4f77-a446-daf27a2ae9a5"/>
    </properties>
   </object>
  </objectgroup>
@@ -262,8 +271,10 @@
   <object id="16" x="13.6667" y="26.3333" width="17" height="92.3333"/>
   <object id="17" x="175.875" y="229.875" width="5.75" height="3.375"/>
   <object id="18" x="154.75" y="229.5" width="6.875" height="4"/>
-  <object id="19" x="85.8182" y="182.545" width="14.3636" height="48.9091"/>
+  <object id="19" x="85.8182" y="169.454" width="14" height="63.6364"/>
   <object id="20" x="48.7955" y="220.909" width="38.6591" height="12.3636"/>
   <object id="21" x="48.7273" y="222" width="14.7273" height="15.6364"/>
+  <object id="34" x="17.375" y="156.958" width="13.25" height="110.75"/>
+  <object id="35" x="29.0909" y="171.636" width="52.1818" height="16.9091"/>
  </objectgroup>
 </map>

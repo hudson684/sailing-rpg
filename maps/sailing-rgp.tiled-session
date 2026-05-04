@@ -38,11 +38,11 @@
             "expandedObjectLayers": [
                 12
             ],
-            "scale": 1.5,
-            "selectedLayer": 19,
+            "scale": 1,
+            "selectedLayer": 23,
             "viewCenter": {
-                "x": 694.3333333333333,
-                "y": 318.6666666666667
+                "x": 1142.5,
+                "y": 407
             }
         },
         "chunks/1_1.tmx#Houses_One": {
