@@ -61,7 +61,10 @@ export function showSpeechBubble(
   if (prev) prev();
 
   const container = scene.add.container(target.x, target.y - offsetY);
-  container.setDepth(200000);
+  // Above any tile layer (overhead/roof layers sit at 1_000_000+ in
+  // chunkManager) but still inside the world camera so non-world UI
+  // (HUD, dialogue, pause menu) renders on top.
+  container.setDepth(2_000_000);
 
   const label = scene.add
     .text(0, 0, text, {
