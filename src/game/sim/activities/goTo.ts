@@ -194,6 +194,11 @@ export class GoToActivity extends BaseActivity {
 
   override tickAbstract(npc: NpcAgent, ctx: ActivityCtx, simMinutes: number): void {
     if (this.runtime.done || simMinutes <= 0) return;
+    // Live-scene drain: the per-frame `tickLive` owns body movement and leg
+    // progression. Don't run the abstract leg-time accumulator or the
+    // `mustArriveBy` warp here — both write to the body and would teleport
+    // the agent out from under the visible walk.
+    if (ctx.live) return;
     let remaining = simMinutes;
     let safety = 8;
     while (remaining > 0 && !this.runtime.done && safety-- > 0) {

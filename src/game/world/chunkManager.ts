@@ -6,6 +6,10 @@ import {
   type ParsedSpawns,
 } from "./spawns";
 import { ShapeCollider } from "./shapeCollision";
+import {
+  applyBuildingStateLayers,
+  applyBuildingOverlays,
+} from "./buildingExterior";
 import { emitLoaderEvent } from "../assets/loaderBus";
 
 export interface WorldManifest {
@@ -726,6 +730,11 @@ export class ChunkManager {
       rawTmj: cached?.data,
       renderScale,
     });
+    // Wire state-driven exterior layer visibility (e.g. rundown vs upgraded
+    // tavern) and overlay sprites for upgrade-gated cosmetics. Both subscribe
+    // to useBusinessStore; the subscriptions live as long as the chunk.
+    applyBuildingStateLayers(layers);
+    applyBuildingOverlays(this.scene, tilemap, chunkPxX, chunkPxY);
     const chunk: Chunk = {
       cx,
       cy,

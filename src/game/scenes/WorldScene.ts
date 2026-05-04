@@ -75,6 +75,7 @@ import type { MapId } from "../entities/mapId";
 import { worldTicker } from "../entities/WorldTicker";
 import { SceneNpcBinder } from "../world/sceneNpcBinder";
 import { clearNpcs, bootstrapNpcs } from "../entities/npcBootstrap";
+import { reapplyScheduledAgentsFromDefs } from "../entities/agentBinding";
 import { SKIN_PALETTES, bakePlayerSkin, type SkinPaletteId } from "../entities/playerSkin";
 import {
   type NpcData,
@@ -827,6 +828,12 @@ export class WorldScene extends GameplayScene {
     });
 
     phase("initSceneSave (rehydrate + applyAfterLoad)", () => this.initSceneSave());
+    // Save rehydrate above re-runs `npcRegistry.hydrate` against the saved
+    // envelope, clobbering the fresh agents `bootstrapNpcs` registered with
+    // current authored data (e.g. `scheduleArchetype`). Re-apply authored
+    // defs here so saves taken before a schedule was added don't trap an NPC
+    // in stale wander state.
+    phase("reapplyScheduledAgents", () => reapplyScheduledAgentsFromDefs());
 
     if (import.meta.env.DEV) {
       const total = performance.now() - createStart;

@@ -52,13 +52,6 @@ export function Clock() {
           <button
             type="button"
             className="hud-clock-dev-btn"
-            aria-label="Rewind one hour (dev)"
-            title="-1h"
-            onClick={() => useTimeStore.getState().devShiftHours(-1)}
-          >−</button>
-          <button
-            type="button"
-            className="hud-clock-dev-btn"
             aria-label="Skip forward one hour (dev)"
             title="+1h"
             onClick={() => useTimeStore.getState().devShiftHours(1)}

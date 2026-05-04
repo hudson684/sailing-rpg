@@ -25,9 +25,8 @@ export interface TimeState {
   ticksEmittedThisPhase: number;
 
   tick: (deltaMs: number) => void;
-  /** Dev-only: skip forward (positive) or back (negative) by N in-game hours
-   *  of the current phase. Forward goes through tick() so listeners fire;
-   *  backward silently rewinds state without re-emitting past hour ticks. */
+  /** Dev-only: skip forward by N in-game hours of the current phase via
+   *  tick() so listeners fire normally. */
   devShiftHours: (hours: number) => void;
   setPaused: (paused: boolean) => void;
   reset: () => void;
@@ -117,30 +116,8 @@ export const useTimeStore = create<TimeState & { paused: boolean }>(
     },
 
     devShiftHours: (hours) => {
-      if (hours === 0) return;
-      if (hours > 0) {
-        get().tick(hourDurationMs(get().phase) * hours);
-        return;
-      }
-      let { dayCount, phase, elapsedInPhaseMs } = get();
-      let remainingMs = -hours * hourDurationMs(phase);
-      while (remainingMs > 0) {
-        if (elapsedInPhaseMs >= remainingMs) {
-          elapsedInPhaseMs -= remainingMs;
-          remainingMs = 0;
-        } else {
-          remainingMs -= elapsedInPhaseMs;
-          const prevPhase: Phase = phase === "day" ? "night" : "day";
-          if (phase === "day") dayCount = Math.max(1, dayCount - 1);
-          phase = prevPhase;
-          elapsedInPhaseMs = phaseDurationMs(phase);
-        }
-      }
-      const ticksEmittedThisPhase = Math.min(
-        TICKS_PER_PHASE,
-        Math.floor(elapsedInPhaseMs / tickDurationMs(phase)),
-      );
-      set({ dayCount, phase, elapsedInPhaseMs, ticksEmittedThisPhase });
+      if (hours <= 0) return;
+      get().tick(hourDurationMs(get().phase) * hours);
     },
 
     setPaused: (paused) => set({ paused }),

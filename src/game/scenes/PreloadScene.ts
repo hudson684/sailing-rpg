@@ -6,6 +6,27 @@ import { IDBSaveStore, pickLatestEnvelope } from "../save";
  *  by WorldScene's save init. See `PreloadScene` / `WorldScene.initSave`. */
 export const PREFETCHED_SAVE_REGISTRY_KEY = "prefetchedSave";
 
+/** Safety net: if the IDB read deadlocks (e.g. a devtools-issued
+ *  `indexedDB.deleteDatabase` blocked by a still-open connection), give up
+ *  and continue with no save rather than wedging the loading screen. */
+const SAVE_PREFETCH_TIMEOUT_MS = 5000;
+
+function withTimeout<T>(p: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    p.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
 /**
  * Loads every asset the game needs to start: world manifest + chunk TMJs +
  * starting-chunk tilesets, player default outfit + tool sheets, item icons,
@@ -43,7 +64,11 @@ export class PreloadScene extends Phaser.Scene {
 
   private async prefetchSave(): Promise<void> {
     try {
-      const env = await pickLatestEnvelope(new IDBSaveStore());
+      const env = await withTimeout(
+        pickLatestEnvelope(new IDBSaveStore()),
+        SAVE_PREFETCH_TIMEOUT_MS,
+        "save prefetch timed out",
+      );
       this.game.registry.set(PREFETCHED_SAVE_REGISTRY_KEY, env);
     } catch (err) {
       // Same fallback as a cold start: no save, fresh world.

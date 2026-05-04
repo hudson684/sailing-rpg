@@ -42,6 +42,33 @@
           "restockQuantity": 5
         }
       ]
+    },
+    {
+      "id": "blacksmith_store",
+      "name": "Brom's Forge",
+      "greeting": "Mind the sparks. What're you after?",
+      "stock": [
+        {
+          "itemId": "sword",
+          "restockQuantity": 1
+        },
+        {
+          "itemId": "axe",
+          "restockQuantity": 1
+        },
+        {
+          "itemId": "pickaxe",
+          "restockQuantity": 1
+        },
+        {
+          "itemId": "arrow",
+          "restockQuantity": 240
+        },
+        {
+          "itemId": "smithing_hammer",
+          "restockQuantity": 1
+        }
+      ]
     }
   ]
 }

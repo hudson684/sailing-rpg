@@ -10,5 +10,11 @@
     "spriteSet": "townsfolk_random",
     "scheduleId": "townsfolk_default",
     "defaultTraits": {}
+  },
+  "blacksmith_brom": {
+    "name": "Brom the Blacksmith",
+    "spriteSet": "townsfolk_random",
+    "scheduleId": "blacksmith_brom",
+    "defaultTraits": {}
   }
 }

@@ -46,6 +46,16 @@ Quick index:
 - Authoring archetypes / schedules / spawn groups:
   `src/game/sim/data/README.md`
 
+## Building exteriors
+
+Buildings on the world map can swap visuals based on state (rundown
+vs. repaired vs. upgraded) and toggle small cosmetic overlays (a new
+sign, fresh paint) on top. Before authoring building art in Tiled or
+adding registry entries for overlays, read **`docs/building-exteriors.md`**.
+It covers the layer naming convention (`building@id:<bid>:state:<sid>`),
+the overlay object layer contract, the `(building, slot)` registry,
+and the runtime resolution rules.
+
 ## Prefer Phaser 4 solutions
 
 This project is built on Phaser 4. Always consider a Phaser 4 native

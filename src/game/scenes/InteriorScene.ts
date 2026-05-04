@@ -28,6 +28,8 @@ import type { MapId } from "../entities/mapId";
 import { worldTicker } from "../entities/WorldTicker";
 import { SceneNpcBinder } from "../world/sceneNpcBinder";
 import { registerAgentForNpcDef, unregisterAgentForNpcDefId } from "../entities/agentBinding";
+import { npcRegistry } from "../sim/npcRegistry";
+import { IdleActivity } from "../sim/activities/idle";
 import { portalRegistry } from "../sim/portals";
 import {
   browseWaypoints,
@@ -622,8 +624,36 @@ export class InteriorScene extends GameplayScene {
       showToast(`Step closer to ${npc.def.name} to trade.`, 1500);
       return;
     }
-    useShopStore.getState().openShop(npc.def.shopId);
-    bus.emitTyped("shop:open", { shopId: npc.def.shopId });
+    const shopId = this.activeShopIdFor(npc);
+    if (!shopId) {
+      showToast(`${npc.def.name} isn't tending the counter right now.`, 1500);
+      return;
+    }
+    useShopStore.getState().openShop(shopId);
+    bus.emitTyped("shop:open", { shopId });
+  }
+
+  /** Resolve an NPC's currently-open shop. Returns `undefined` when the NPC
+   *  has no shop, or when its `shopCounter` gate is configured and the agent
+   *  isn't parked at that tile (e.g. blacksmith away at the forge). */
+  private activeShopIdFor(npc: NpcModel): string | undefined {
+    const def = npc.def;
+    if (!def.shopId) return undefined;
+    if (!def.shopCounter) return def.shopId;
+    const agent = npcRegistry.get(`npc:${def.id}`);
+    const activity = agent?.currentActivity;
+    const expectedScene = `interior:${this.launchData.interiorKey}`;
+    if (activity instanceof IdleActivity) {
+      const area = activity.config.area;
+      if (
+        area.sceneKey === expectedScene &&
+        area.tileX === def.shopCounter.tileX &&
+        area.tileY === def.shopCounter.tileY
+      ) {
+        return def.shopId;
+      }
+    }
+    return undefined;
   }
 
   private npcAtWorldPoint(x: number, y: number): NpcModel | null {
@@ -719,7 +749,7 @@ export class InteriorScene extends GameplayScene {
       speaker: dialogue.speaker || npc.def.name,
       pages: dialogue.pages.slice(),
       page: 0,
-      shopId: npc.def.shopId,
+      shopId: this.activeShopIdFor(npc),
     };
     this.emitDialogue();
   }

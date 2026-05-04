@@ -1,0 +1,95 @@
+{
+  "id": "blacksmith_brom",
+  "variants": {
+    "default": {
+      "constraints": {
+        "mode": "fixed"
+      },
+      "templates": [
+        {
+          "id": "sleep_morning",
+          "kind": "idle",
+          "target": { "kind": "interiorTile", "interiorKey": "blacksmiths", "tileX": 3, "tileY": 5, "facing": "down" },
+          "weight": 1.0,
+          "mustStartAt": 0,
+          "duration": [360, 360]
+        },
+        {
+          "id": "lounge_morning",
+          "kind": "idle",
+          "target": { "kind": "interiorTile", "interiorKey": "blacksmiths", "tileX": 11, "tileY": 4, "facing": "down" },
+          "weight": 1.0,
+          "mustStartAt": 360,
+          "duration": [120, 120]
+        },
+        {
+          "id": "store_open",
+          "kind": "idle",
+          "target": { "kind": "interiorTile", "interiorKey": "blacksmiths", "tileX": 4, "tileY": 13, "facing": "down" },
+          "weight": 1.0,
+          "mustStartAt": 480,
+          "duration": [120, 120],
+          "paceRadiusTiles": 0
+        },
+        {
+          "id": "work_anvil",
+          "kind": "idle",
+          "target": { "kind": "interiorTile", "interiorKey": "blacksmiths", "tileX": 15, "tileY": 13, "facing": "left" },
+          "weight": 1.0,
+          "mustStartAt": 600,
+          "duration": [60, 60]
+        },
+        {
+          "id": "store_late_morning",
+          "kind": "idle",
+          "target": { "kind": "interiorTile", "interiorKey": "blacksmiths", "tileX": 4, "tileY": 13, "facing": "down" },
+          "weight": 1.0,
+          "mustStartAt": 660,
+          "duration": [120, 120],
+          "paceRadiusTiles": 0
+        },
+        {
+          "id": "work_quencher",
+          "kind": "idle",
+          "target": { "kind": "interiorTile", "interiorKey": "blacksmiths", "tileX": 13, "tileY": 13, "facing": "down" },
+          "weight": 1.0,
+          "mustStartAt": 780,
+          "duration": [60, 60]
+        },
+        {
+          "id": "store_afternoon",
+          "kind": "idle",
+          "target": { "kind": "interiorTile", "interiorKey": "blacksmiths", "tileX": 4, "tileY": 13, "facing": "down" },
+          "weight": 1.0,
+          "mustStartAt": 840,
+          "duration": [120, 120],
+          "paceRadiusTiles": 0
+        },
+        {
+          "id": "work_forge",
+          "kind": "idle",
+          "target": { "kind": "interiorTile", "interiorKey": "blacksmiths", "tileX": 14, "tileY": 12, "facing": "up" },
+          "weight": 1.0,
+          "mustStartAt": 960,
+          "duration": [60, 60]
+        },
+        {
+          "id": "lounge_evening",
+          "kind": "idle",
+          "target": { "kind": "interiorTile", "interiorKey": "blacksmiths", "tileX": 11, "tileY": 4, "facing": "down" },
+          "weight": 1.0,
+          "mustStartAt": 1020,
+          "duration": [300, 300]
+        },
+        {
+          "id": "sleep_night",
+          "kind": "idle",
+          "target": { "kind": "interiorTile", "interiorKey": "blacksmiths", "tileX": 3, "tileY": 5, "facing": "down" },
+          "weight": 1.0,
+          "mustStartAt": 1320,
+          "duration": [120, 120]
+        }
+      ]
+    }
+  }
+}

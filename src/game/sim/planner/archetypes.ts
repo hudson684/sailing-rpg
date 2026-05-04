@@ -1,6 +1,7 @@
 import npcArchetypesJson from "../data/npcArchetypes.json";
 import touristSchedule from "../data/schedules/tourist.json";
 import townsfolkDefaultSchedule from "../data/schedules/townsfolk_default.json";
+import blacksmithBromSchedule from "../data/schedules/blacksmith_brom.json";
 import spawnGroupsJson from "../data/spawnGroups.json";
 
 export interface ArchetypeDef {
@@ -14,7 +15,14 @@ export interface ArchetypeDef {
 export type TemplateTarget =
   | { readonly kind: "spawnPoint" }
   | { readonly kind: "businessArrival"; readonly businessId: string }
-  | { readonly kind: "namedTile"; readonly name: string };
+  | { readonly kind: "namedTile"; readonly name: string }
+  | {
+      readonly kind: "interiorTile";
+      readonly interiorKey: string;
+      readonly tileX: number;
+      readonly tileY: number;
+      readonly facing?: "up" | "down" | "left" | "right";
+    };
 
 export type TemplateKind =
   | "browse"
@@ -48,6 +56,9 @@ export interface ScheduleTemplate {
    *  (browse, wander, idle). Picked uniformly per arrival. */
   readonly duration?: readonly [number, number];
   readonly wanderRadiusTiles?: number;
+  /** Optional override for `idle` templates. `0` keeps the agent fixed on
+   *  the target tile (no pacing). Defaults to `IdleActivity`'s default. */
+  readonly paceRadiusTiles?: number;
   /** Optional sub-zone id for `browse` / `standAround` templates. Defaults to
    *  `"all"` at the activity layer. */
   readonly standingGroupId?: string;
@@ -58,6 +69,11 @@ export interface ScheduleConstraints {
   readonly mustStartAt?: string;
   readonly mustEndAt?: string;
   readonly totalActivitiesRange?: readonly [number, number];
+  /** When `"fixed"`, the planner emits every template once in declaration
+   *  order (no weighted random selection, `totalActivitiesRange` ignored).
+   *  Combine with `mustStartAt` on each template to author a strict
+   *  Stardew-style timed day. Default is `"weighted"`. */
+  readonly mode?: "weighted" | "fixed";
 }
 
 /** A resolved schedule definition. Variants in a `ScheduleBundle` are full
@@ -102,9 +118,13 @@ const ARCHETYPES: ReadonlyMap<string, ArchetypeDef> = new Map(
 );
 
 const SCHEDULE_BUNDLES: ReadonlyMap<string, ScheduleBundle> = new Map(
-  ([touristSchedule, townsfolkDefaultSchedule] as unknown as ScheduleBundle[]).map(
-    (s) => [s.id, s],
-  ),
+  (
+    [
+      touristSchedule,
+      townsfolkDefaultSchedule,
+      blacksmithBromSchedule,
+    ] as unknown as ScheduleBundle[]
+  ).map((s) => [s.id, s]),
 );
 
 const SPAWN_GROUPS: ReadonlyMap<string, SpawnGroupDef> = new Map(

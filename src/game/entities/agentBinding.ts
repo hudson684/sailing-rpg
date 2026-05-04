@@ -9,11 +9,25 @@ import type { SceneKey, WorldLocation } from "../sim/location";
 import { WanderActivity } from "../sim/activities/wander";
 import { PatrolActivity } from "../sim/activities/patrol";
 import { SleepActivity } from "../sim/activities/sleep";
+import { GoToActivity } from "../sim/activities/goTo";
+import { IdleActivity } from "../sim/activities/idle";
 import type { Activity } from "../sim/activities/activity";
 import { residences } from "../sim/planner/residences";
 import { planDayById, makePlanSeed } from "../sim/planner/scheduler";
+import {
+  getArchetype,
+  getScheduleBundle,
+  type TemplateTarget,
+} from "../sim/planner/archetypes";
+import { resolveScheduleVariant } from "../sim/planner/scheduleResolver";
+import {
+  worldAnchors,
+  businessArrivalAnchorKey,
+  namedTileAnchorKey,
+} from "../sim/planner/anchors";
 import { calendarContextFor } from "../sim/calendar/calendar";
 import { useTimeStore } from "../time/timeStore";
+import { minuteOfDay } from "../time/constants";
 import type { MapId } from "./mapId";
 import { entityRegistry } from "./registry";
 import { NpcModel } from "./NpcModel";
@@ -197,6 +211,135 @@ function buildTownsfolkDayPlan(
   return plan;
 }
 
+function resolveTemplateTarget(
+  target: TemplateTarget,
+  spawnPoint: WorldLocation,
+): WorldLocation | null {
+  switch (target.kind) {
+    case "spawnPoint":
+      return { ...spawnPoint };
+    case "businessArrival":
+      return worldAnchors.get(businessArrivalAnchorKey(target.businessId));
+    case "namedTile":
+      return worldAnchors.get(namedTileAnchorKey(target.name));
+    case "interiorTile":
+      return {
+        sceneKey: `interior:${target.interiorKey}`,
+        tileX: target.tileX,
+        tileY: target.tileY,
+        facing: target.facing ?? "down",
+      };
+  }
+}
+
+function planningSurrogate(npcId: string, loc: WorldLocation): NpcAgent {
+  return {
+    id: npcId,
+    archetypeId: "",
+    body: { px: 0, py: 0, facing: loc.facing, anim: "idle", spriteKey: "" },
+    location: loc,
+    dayPlan: [],
+    currentActivityIndex: 0,
+    currentActivity: null,
+    traits: {},
+    flags: {},
+    inventory: [],
+  } as NpcAgent;
+}
+
+function currentMinuteOfDay(): number {
+  const ts = useTimeStore.getState();
+  return minuteOfDay(ts.phase, ts.elapsedInPhaseMs);
+}
+
+/** Build a day plan from a named schedule archetype, using the NPC's spawn
+ *  tile as the planner's `spawnPoint` anchor. No bookend-sleep wrapping —
+ *  the schedule itself is expected to author its own dwell periods at the
+ *  start/end of day (see `blacksmith_brom.json`).
+ *
+ *  Fixed-mode schedules (`constraints.mode === "fixed"`) are built directly
+ *  here so the plan can be elapsed-aware: templates whose `mustStartAt +
+ *  duration` is already past at registration time are dropped (advancing the
+ *  cursor), and the currently-active template's idle is trimmed to whatever
+ *  remains. Without this, an NPC registered mid-day would sit in the first
+ *  template's full duration before catching up.
+ *
+ *  Weighted-mode schedules go through `planDayById` unchanged. */
+function buildScheduledDayPlan(
+  def: NpcDef,
+  spawnPoint: WorldLocation,
+  archetypeId: string,
+): Activity[] | null {
+  const npcId = `npc:${def.id}`;
+  const dayCount = useTimeStore.getState().dayCount;
+  const calendar = calendarContextFor(dayCount);
+  const archetype = getArchetype(archetypeId);
+  const bundle = archetype ? getScheduleBundle(archetype.scheduleId) : null;
+  const variant = bundle
+    ? resolveScheduleVariant({
+        bundle,
+        calendar,
+        weather: null,
+        worldFlags: npcRegistry.getWorldFlags(),
+        friendship: (id) => npcRegistry.getFriendship(id),
+      })
+    : null;
+
+  if (variant && variant.constraints.mode === "fixed") {
+    const nowMin = currentMinuteOfDay();
+    const activities: Activity[] = [];
+    let cursor: WorldLocation = { ...spawnPoint };
+    for (const tpl of variant.templates) {
+      const target = resolveTemplateTarget(tpl.target, spawnPoint);
+      if (!target) continue;
+      const start = tpl.mustStartAt ?? 0;
+      const dur = tpl.duration ? tpl.duration[0] : 60;
+      const end = start + dur;
+      if (end <= nowMin) {
+        // Fully elapsed — skip but advance cursor so subsequent GoTo legs
+        // are computed from the right place.
+        cursor = target;
+        continue;
+      }
+      const sameTile =
+        cursor.sceneKey === target.sceneKey &&
+        cursor.tileX === target.tileX &&
+        cursor.tileY === target.tileY;
+      if (!sameTile) {
+        const goTo = GoToActivity.plan(planningSurrogate(npcId, cursor), target);
+        if (goTo) activities.push(goTo);
+      }
+      const remaining = start >= nowMin ? dur : end - nowMin;
+      activities.push(
+        IdleActivity.create({
+          area: { ...target },
+          durationMinutes: Math.max(1, Math.ceil(remaining)),
+          ...(tpl.paceRadiusTiles !== undefined
+            ? { paceRadiusTiles: tpl.paceRadiusTiles }
+            : {}),
+        }),
+      );
+      cursor = target;
+    }
+    if (activities.length === 0) return null;
+    return activities;
+  }
+
+  const result = planDayById(
+    archetypeId,
+    calendar,
+    { spawnPoint, npcId },
+    makePlanSeed(npcId, dayCount),
+    {
+      weather: null,
+      worldFlags: npcRegistry.getWorldFlags(),
+      friendship: (id) => npcRegistry.getFriendship(id),
+    },
+  );
+  if (!result || result.activities.length === 0) return null;
+  return [...result.activities];
+}
+
 function buildActivity(def: NpcDef, sceneKey: SceneKey): Activity | null {
   const m = def.movement;
   if (m.type === "wander") {
@@ -234,10 +377,28 @@ export function registerAgentForNpcDef(def: NpcDef, mapId: MapId): NpcAgent | nu
   // mark them for midnight re-planning. Without a residence, fall back to
   // the legacy single-activity wander/patrol behavior so authored NPCs
   // still come to life until residences are added.
+  //
+  // A `scheduleArchetype` on the def overrides both: the planner runs with
+  // that archetype's bundle, using the def's spawn tile as the spawnPoint
+  // anchor. This is the data-driven path for NPCs whose day is fully
+  // expressed in `schedules/<archetype>.json` (e.g. Brom).
   const home = residences.get(def.id);
   let archetypeId = def.id;
   let dayPlan: Activity[] | null = null;
-  if (home && home.sceneKey === sceneKey) {
+  if (def.scheduleArchetype) {
+    const spawnPoint: WorldLocation = {
+      sceneKey,
+      tileX: def.spawn.tileX,
+      tileY: def.spawn.tileY,
+      facing: def.facing,
+    };
+    dayPlan = buildScheduledDayPlan(def, spawnPoint, def.scheduleArchetype);
+    if (dayPlan) {
+      archetypeId = def.scheduleArchetype;
+      ensureScheduledReplanner(def.scheduleArchetype);
+    }
+  }
+  if (!dayPlan && home && home.sceneKey === sceneKey) {
     dayPlan = buildTownsfolkDayPlan(def, home);
     if (dayPlan) archetypeId = TOWNSFOLK_ARCHETYPE_ID;
   }
@@ -273,6 +434,20 @@ export function unregisterAgentForNpcDefId(defId: string): void {
   if (npcRegistry.get(id)) npcRegistry.unregister(id);
 }
 
+/** Re-register agents for every NPC model whose def carries a
+ *  `scheduleArchetype`, overwriting any hydrated state. Called after a save
+ *  rehydrate so authored schedules win over stale serialized agents from a
+ *  pre-schedule save. While the game is in flux, this keeps authored data
+ *  authoritative even when an old envelope is loaded. */
+export function reapplyScheduledAgentsFromDefs(): void {
+  for (const model of entityRegistry.all()) {
+    if (model.kind !== "npc") continue;
+    const npc = model as NpcModel;
+    if (!npc.def.scheduleArchetype) continue;
+    registerAgentForNpcDef(npc.def, npc.mapId);
+  }
+}
+
 // ── Townsfolk midnight replanner ────────────────────────────────────────
 // Persistent townsfolk (those with an authored residence) re-roll their day
 // plan at every midnight. The registry's midnight loop calls this; we use
@@ -288,3 +463,29 @@ registerReplanner(TOWNSFOLK_ARCHETYPE_ID, (agent, dayCount) => {
   void dayCount;
   return buildTownsfolkDayPlan(def, home);
 });
+
+// ── Scheduled-archetype midnight replanner ──────────────────────────────
+// Registered lazily per unique `scheduleArchetype` id encountered in
+// `registerAgentForNpcDef`. The replanner re-runs `buildScheduledDayPlan`
+// using the def's spawn tile as the spawnPoint anchor, mirroring the
+// initial registration path so the plan stays internally consistent.
+const scheduledReplannersRegistered = new Set<string>();
+
+function ensureScheduledReplanner(archetypeId: string): void {
+  if (scheduledReplannersRegistered.has(archetypeId)) return;
+  scheduledReplannersRegistered.add(archetypeId);
+  registerReplanner(archetypeId, (agent, _dayCount) => {
+    const model = entityRegistry.get(agent.id);
+    if (!(model instanceof NpcModel)) return null;
+    const def = model.def;
+    if (!def.scheduleArchetype) return null;
+    const sceneKey = sceneKeyForMapId(model.mapId);
+    const spawnPoint: WorldLocation = {
+      sceneKey,
+      tileX: def.spawn.tileX,
+      tileY: def.spawn.tileY,
+      facing: def.facing,
+    };
+    return buildScheduledDayPlan(def, spawnPoint, def.scheduleArchetype);
+  });
+}

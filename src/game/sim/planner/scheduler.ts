@@ -60,6 +60,13 @@ function resolveTarget(
       return worldAnchors.get(businessArrivalAnchorKey(target.businessId));
     case "namedTile":
       return worldAnchors.get(namedTileAnchorKey(target.name));
+    case "interiorTile":
+      return {
+        sceneKey: `interior:${target.interiorKey}`,
+        tileX: target.tileX,
+        tileY: target.tileY,
+        facing: target.facing ?? "down",
+      };
   }
 }
 
@@ -118,8 +125,11 @@ export function planDay(
 ): PlanResult {
   void archetype;
   const rng = mulberry32(seed);
+  const fixedMode = schedule.constraints.mode === "fixed";
   const [minN, maxN] = schedule.constraints.totalActivitiesRange ?? [3, 5];
-  const targetCount = randInt(rng, Math.max(1, minN), Math.max(minN, maxN));
+  const targetCount = fixedMode
+    ? schedule.templates.length
+    : randInt(rng, Math.max(1, minN), Math.max(minN, maxN));
 
   const eligibleTemplates = schedule.templates.filter((t) => inWindow(t, calendar));
 
@@ -150,7 +160,9 @@ export function planDay(
     }) as NpcAgent;
 
   for (let i = 0; i < targetCount; i++) {
-    const template = pickWeighted(rng, eligibleTemplates, (t) => Math.max(0, t.weight));
+    const template = fixedMode
+      ? eligibleTemplates[i] ?? null
+      : pickWeighted(rng, eligibleTemplates, (t) => Math.max(0, t.weight));
     if (!template) break;
 
     const target = resolveTarget(template.target, ctx.spawnPoint);
@@ -259,6 +271,9 @@ export function planDay(
         dwell = IdleActivity.create({
           area: { ...target },
           durationMinutes: minutes,
+          ...(template.paceRadiusTiles !== undefined
+            ? { paceRadiusTiles: template.paceRadiusTiles }
+            : {}),
         });
       }
       const dwellIndex = activities.length;

@@ -98,11 +98,15 @@ export class WanderActivity extends BaseActivity {
     return this.runtime.remainingMinutes != null && this.runtime.remainingMinutes <= 0;
   }
 
-  override tickAbstract(npc: NpcAgent, _ctx: ActivityCtx, simMinutes: number): void {
+  override tickAbstract(npc: NpcAgent, ctx: ActivityCtx, simMinutes: number): void {
     if (simMinutes <= 0) return;
     if (this.runtime.remainingMinutes != null) {
       this.runtime.remainingMinutes = Math.max(0, this.runtime.remainingMinutes - simMinutes);
     }
+    // Live-scene drain: per-frame `tickLive` owns the body. Skip the
+    // abstract nudges so we don't warp the wandering NPC out from under
+    // the visible walk. The duration timer above still counts down.
+    if (ctx.live) return;
     // One nudge per sim-minute, capped — abstract movement is impressionistic,
     // not a step-by-step simulation. Nudges respect the radius bound; the
     // real walkability check happens on materialize / live tick.

@@ -24,11 +24,12 @@
       "display": {
         "originY": 0.506
       },
+      "map": { "interior": "blacksmiths" },
       "spawn": {
-        "tileX": 103,
-        "tileY": 81
+        "tileX": 3,
+        "tileY": 5
       },
-      "facing": "right",
+      "facing": "down",
       "movement": {
         "type": "wander",
         "radiusTiles": 2,
@@ -36,7 +37,11 @@
         "pauseMs": 1500,
         "stepMs": 1200
       },
-      "dialogue": "brom_blacksmith"
+      "scheduleArchetype": "blacksmith_brom",
+      "dialogue": "brom_blacksmith",
+      "shopId": "blacksmith_store",
+      "shopCounter": { "tileX": 4, "tileY": 13 },
+      "interactRadiusTiles": 2.5
     },
     {
       "id": "mera_vendor",
@@ -416,7 +421,7 @@
       "speaker": "Brom",
       "pages": [
         "Mind the sparks, sailor. The forge runs hot today.",
-        "Bring me iron and I'll bring you steel. Fair trade."
+        "Catch me at the counter and I'll sell you steel. Otherwise I'm at the anvil."
       ]
     },
     "mera_vendor": {

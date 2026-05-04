@@ -72,8 +72,12 @@ export class PatrolActivity extends BaseActivity {
 
   isComplete(): boolean { return false; }
 
-  override tickAbstract(npc: NpcAgent, _ctx: ActivityCtx, simMinutes: number): void {
+  override tickAbstract(npc: NpcAgent, ctx: ActivityCtx, simMinutes: number): void {
     if (simMinutes <= 0 || this.config.waypoints.length === 0) return;
+    // Live-scene drain: per-frame `tickLive` owns body and waypoint walk.
+    // Skip the abstract waypoint snap so we don't teleport the patrol
+    // ahead of where the player can see it.
+    if (ctx.live) return;
     // Each minute: advance one waypoint. Cheap; gives an off-screen patrol a
     // believable position when the player returns.
     let idx = this.runtime.waypointIndex;

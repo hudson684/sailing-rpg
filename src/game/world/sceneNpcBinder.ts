@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { bus } from "../bus";
 import { entityRegistry } from "../entities/registry";
 import { NpcModel } from "../entities/NpcModel";
 import { NpcProxy } from "../entities/npcProxy";
@@ -11,7 +12,9 @@ import type {
   WalkableProbe,
 } from "../sim/activities/activity";
 import type { SceneKey } from "../sim/location";
+import { TICK_SIM_MINUTES } from "../time/constants";
 import { pathfindPx } from "./pathfinding";
+import { showSpeechBubble } from "../fx/speechBubble";
 
 /** Per-scene scene↔registry bridge.
  *
@@ -32,6 +35,8 @@ export class SceneNpcBinder {
   private readonly proxies = new Map<string, NpcProxy>();
   private offEntered: (() => void) | null = null;
   private offLeft: (() => void) | null = null;
+  private offSimTick: (() => void) | null = null;
+  private offSpeak: (() => void) | null = null;
 
   attach(
     scene: Phaser.Scene,
@@ -58,6 +63,27 @@ export class SceneNpcBinder {
         ...(tileCost ? { tileCost } : {}),
       });
 
+    npcRegistry.setSceneLive(sceneKey, true);
+    // The registry-wide `time:simTick` handler skips agents in this scene
+    // (they're live-driven now). Subscribe locally so duration-based
+    // activities (Sleep, Idle, Browse, Noop, StandAround) still drain on
+    // the same 10-min boundary as their off-screen counterparts.
+    const onSimTick = () => {
+      if (!this.sceneKey) return;
+      npcRegistry.tickAbstractForScene(this.sceneKey, TICK_SIM_MINUTES, this.live());
+    };
+    bus.onTyped("time:simTick", onSimTick);
+    this.offSimTick = () => { bus.offTyped("time:simTick", onSimTick); };
+    // npc:speak — resolve npcId to a live proxy in this scene and render a
+    // speech bubble over the model. Drops events for NPCs in other scenes.
+    const onSpeak = (payload: { npcId: string; text: string; durationMs?: number }) => {
+      const proxy = this.proxies.get(payload.npcId);
+      if (!proxy || !this.scene) return;
+      const opts = payload.durationMs !== undefined ? { duration: payload.durationMs } : {};
+      showSpeechBubble(this.scene, proxy.model, payload.text, opts);
+    };
+    bus.onTyped("npc:speak", onSpeak);
+    this.offSpeak = () => { bus.offTyped("npc:speak", onSpeak); };
     for (const agent of npcRegistry.npcsAt(sceneKey)) this.spawnProxy(agent);
     this.offEntered = npcRegistry.on("npcEnteredScene", (key, npc) => {
       if (key !== sceneKey) return;
@@ -86,8 +112,11 @@ export class SceneNpcBinder {
   detach(): void {
     if (!this.sceneKey) return;
     npcRegistry.dematerializeScene(this.sceneKey, this.live());
+    npcRegistry.setSceneLive(this.sceneKey, false);
     this.offEntered?.(); this.offEntered = null;
     this.offLeft?.(); this.offLeft = null;
+    this.offSimTick?.(); this.offSimTick = null;
+    this.offSpeak?.(); this.offSpeak = null;
     this.proxies.clear();
     this.scene = null;
     this.sceneKey = null;

@@ -6,6 +6,7 @@ import { useShopStore } from "../store/shopStore";
 import { showToast } from "../../ui/store/ui";
 import { Player, type Facing } from "../entities/Player";
 import { showSpeechBubble } from "../fx/speechBubble";
+import { bus } from "../bus";
 import { spawnFloatingNumber } from "../fx/floatingText";
 import { Enemy } from "../entities/Enemy";
 import { Projectile, rayBlocked } from "../entities/Projectile";
@@ -90,6 +91,8 @@ export abstract class GameplayScene extends Phaser.Scene {
   protected attackKey?: Phaser.Input.Keyboard.Key;
   protected hotbarKeys: Phaser.Input.Keyboard.Key[] = [];
 
+  private offPlayerSpeak: (() => void) | null = null;
+
   // ─── Lifecycle helpers (subclasses call these from their create/update) ──
 
   /** Wire the universal combat input + load the drop-table registry. Call
@@ -117,6 +120,13 @@ export abstract class GameplayScene extends Phaser.Scene {
       return key;
     });
     this.hotbarKeys.forEach((key, i) => key.on("down", () => this.onHotbarKey(i)));
+
+    const onPlayerSpeak = (payload: { text: string; durationMs?: number }) => {
+      const opts = payload.durationMs !== undefined ? { duration: payload.durationMs } : {};
+      showSpeechBubble(this, this.player, payload.text, opts);
+    };
+    bus.onTyped("player:speak", onPlayerSpeak);
+    this.offPlayerSpeak = () => { bus.offTyped("player:speak", onPlayerSpeak); };
   }
 
   /** Tick enemies + projectiles + the bow reticle. Subclasses call this
@@ -152,6 +162,8 @@ export abstract class GameplayScene extends Phaser.Scene {
     this.projectiles = [];
     this.bowReticle?.destroy();
     this.bowReticle = undefined;
+    this.offPlayerSpeak?.();
+    this.offPlayerSpeak = null;
   }
 
   // ─── Enemy registry ──────────────────────────────────────────────────────
@@ -464,7 +476,7 @@ export abstract class GameplayScene extends Phaser.Scene {
         showToast(`+${def.consumable.regenHp} HP regen`, 1200, "success");
       }
       if (res.ok && itemId === "crab_cake") {
-        showSpeechBubble(this, this.player, "Just like Mum used to make!");
+        bus.emitTyped("player:speak", { text: "Just like Mum used to make!" });
       }
       return;
     }

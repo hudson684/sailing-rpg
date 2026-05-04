@@ -227,12 +227,26 @@ type Events = {
     phase: "day" | "night";
     tickIndex: number;
   }) => void;
-  /** Fires exactly once per integer-day boundary (when dayCount increments
-   *  forward through tick(); not re-emitted on backward devShiftHours).
-   *  Schedules and daily resets should subscribe here. */
+  /** Fires exactly once per integer-day boundary when dayCount increments
+   *  through tick(). Schedules and daily resets should subscribe here. */
   "time:midnight": (payload: {
     dayCount: number;
     calendar: CalendarContext;
+  }) => void;
+
+  // ── Speech bubbles ───────────────────────────────────────────────
+  // Generic "make X say a line" events. Listeners live in the scene
+  // that owns the target sprite — `SceneNpcBinder` resolves `npcId`
+  // to a proxy and calls `showSpeechBubble`; `GameplayScene` owns the
+  // player listener. Cross-scene events are silently dropped.
+  "npc:speak": (payload: {
+    npcId: string;
+    text: string;
+    durationMs?: number;
+  }) => void;
+  "player:speak": (payload: {
+    text: string;
+    durationMs?: number;
   }) => void;
 
   // ── Cutscene → scene: forced map change ──────────────────────────

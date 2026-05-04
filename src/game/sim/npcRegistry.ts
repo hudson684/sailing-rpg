@@ -39,6 +39,13 @@ export class NpcRegistry implements BodyHandleRegistry {
   /** npcId → currently-valid handle (or null when nothing has claimed it). */
   private readonly drivers = new Map<string, BodyHandle | null>();
   private readonly listeners = new Map<SceneEvent, Set<SceneEventHandler>>();
+  /** Scenes currently driven by a `SceneNpcBinder`. Agents in these scenes
+   *  are skipped by the global `tickAbstract` — the binder owns their
+   *  per-frame `tickLive` plus a per-`time:simTick` scene-scoped abstract
+   *  drain so a given agent gets either live OR abstract on any tick, never
+   *  both. Without this gate, abstract leg-completion in `GoTo`/`Wander`/
+   *  `Patrol` would fight the live driver and warp the body mid-walk. */
+  private readonly activeScenes = new Set<SceneKey>();
 
   // ── Phase 2: friendship stub ───────────────────────────────────────
   // Returns 0 for any npc id — placeholder until a real relationships
@@ -184,8 +191,42 @@ export class NpcRegistry implements BodyHandleRegistry {
     for (const id of [...this.agents.keys()]) {
       const agent = this.agents.get(id);
       if (!agent) continue;
+      // Skip agents in a scene the player is currently in — the binder runs
+      // a live tick for them and a live-aware abstract drain via
+      // `tickAbstractForScene`. Letting both fire here would double-advance
+      // GoTo/Wander/Patrol and warp the body mid-walk.
+      if (this.activeScenes.has(agent.location.sceneKey)) continue;
       this.advanceAgent(agent, ctx, simMinutes, /*live*/ false, 0);
     }
+  }
+
+  /** Per-`time:simTick` abstract drain for agents in the active scene. The
+   *  binder calls this so duration-based activities (Sleep, Idle, Browse,
+   *  Noop, StandAround) finish on the same boundary as their off-screen
+   *  counterparts. Activities that mutate the body in `tickAbstract`
+   *  (GoTo, Wander, Patrol) detect the live ctx and skip those writes —
+   *  the per-frame `tickLive` already owns position. */
+  tickAbstractForScene(
+    sceneKey: SceneKey,
+    simMinutes: number,
+    live?: ActivityCtx["live"],
+  ): void {
+    if (simMinutes <= 0) return;
+    const set = this.bySceneKey.get(sceneKey);
+    if (!set || set.size === 0) return;
+    const ctx = this.makeCtx(live);
+    for (const id of [...set]) {
+      const agent = this.agents.get(id);
+      if (!agent || agent.location.sceneKey !== sceneKey) continue;
+      this.advanceAgent(agent, ctx, simMinutes, /*live*/ true, 0);
+    }
+  }
+
+  /** Mark `sceneKey` as live-driven (a SceneNpcBinder is attached). Toggles
+   *  the gate read by `tickAbstract`. Idempotent. */
+  setSceneLive(sceneKey: SceneKey, live: boolean): void {
+    if (live) this.activeScenes.add(sceneKey);
+    else this.activeScenes.delete(sceneKey);
   }
 
   tickLive(

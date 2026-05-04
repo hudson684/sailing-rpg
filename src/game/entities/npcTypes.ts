@@ -104,9 +104,19 @@ export interface NpcDef {
   dialogue: string;
   /** If set, right-clicking this NPC opens the referenced shop. */
   shopId?: string;
+  /** When set, the NPC's `shopId` is only available while the agent's
+   *  current activity is parked at this tile (in the NPC's home scene).
+   *  Used for shopkeepers whose schedule has them away from the counter
+   *  for parts of the day. Omit for always-open shops. */
+  shopCounter?: { tileX: number; tileY: number };
   /** Per-NPC override of the dialogue interact radius, in tiles. Defaults
    *  to the global NPC_INTERACT_RADIUS when omitted. */
   interactRadiusTiles?: number;
+  /** When set, agentBinding routes this NPC through the data-driven schedule
+   *  planner using the named archetype (looked up in `npcArchetypes.json`)
+   *  instead of the legacy `movement.type` wander/patrol path. The NPC's
+   *  `spawn` tile is used as the planner's `spawnPoint` anchor. */
+  scheduleArchetype?: string;
 }
 
 /** True if `def` belongs to the currently active map (either "world" or the
