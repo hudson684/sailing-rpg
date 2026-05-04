@@ -18,6 +18,10 @@ import { chatCooldownStore } from "./chatStore";
  *  ≥ the largest authored `proximityTiles` (currently 5). */
 const PLAYER_GATE_TILES = 10;
 const TICK_INTERVAL_MS = 1000;
+/** Real-time gap enforced between the end of one chat and the start of the
+ *  next, so vignettes don't bleed into each other. Independent of the
+ *  per-chat `cooldownDays` which lives on the in-game clock. */
+const MIN_GAP_AFTER_CHAT_MS = 10_000;
 
 export interface DirectorTickInput {
   dtMs: number;
@@ -112,6 +116,12 @@ export const chatDirector = {
     chatPlayback.tick({ sceneKey: input.sceneKey, proxies: input.proxies });
 
     if (!input.player) return;
+
+    // Enforce a real-time gap after the last chat ends so consecutive
+    // vignettes don't trigger back-to-back. `chatPlayback.msSinceLastEnded`
+    // returns Infinity until the first chat completes, so this gates
+    // nothing on a fresh world.
+    if (chatPlayback.msSinceLastEnded() < MIN_GAP_AFTER_CHAT_MS) return;
 
     // Early-out: no chats at all touch this scene (incl. the "any-scene"
     // bucket).

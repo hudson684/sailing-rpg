@@ -39,6 +39,7 @@ interface ActiveChat {
 const active = new Map<ChatDef, ActiveChat>();
 const chattingNpcIds = new Set<string>();
 let interactedSubInstalled = false;
+let lastEndedAtMs = -Infinity;
 
 function lineDurationMs(text: string): number {
   const raw = READ_BASE_MS + READ_PER_CHAR_MS * text.length;
@@ -62,6 +63,7 @@ function endChat(chat: ActiveChat): void {
     chattingNpcIds.delete(proxy.agent.id);
   }
   active.delete(chat.def);
+  lastEndedAtMs = performance.now();
 }
 
 function ensureInteractedSub(): void {
@@ -160,6 +162,12 @@ export const chatPlayback = {
     return chattingNpcIds.has(npcId);
   },
 
+  /** Real-time ms since the last chat ended (Infinity if none yet). Used
+   *  by the director to space chats out so they don't play back-to-back. */
+  msSinceLastEnded(): number {
+    return performance.now() - lastEndedAtMs;
+  },
+
   activeChats(): readonly ChatRunHandle[] {
     const out: ChatRunHandle[] = [];
     for (const chat of active.values()) out.push(makeHandle(chat));
@@ -205,4 +213,5 @@ export function __resetChatPlaybackForTests(): void {
   }
   active.clear();
   chattingNpcIds.clear();
+  lastEndedAtMs = -Infinity;
 }
