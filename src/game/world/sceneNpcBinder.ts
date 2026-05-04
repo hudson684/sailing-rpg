@@ -16,6 +16,7 @@ import { TICK_SIM_MINUTES } from "../time/constants";
 import { pathfindPx } from "./pathfinding";
 import { showSpeechBubble } from "../fx/speechBubble";
 import { chatDirector } from "../sim/chat/chatDirector";
+import { chatPlayback } from "../sim/chat/chatPlayback";
 
 /** Per-scene scene↔registry bridge.
  *
@@ -112,6 +113,10 @@ export class SceneNpcBinder {
 
   detach(): void {
     if (!this.sceneKey) return;
+    // Clear scripted-locks on participants before models get
+    // dematerialized — otherwise the agent body would snapshot a
+    // chat-locked frame and resume from it next time the scene loads.
+    chatPlayback.abortAllInScene(this.sceneKey);
     npcRegistry.dematerializeScene(this.sceneKey, this.live());
     npcRegistry.setSceneLive(this.sceneKey, false);
     this.offEntered?.(); this.offEntered = null;
@@ -134,12 +139,15 @@ export class SceneNpcBinder {
       skip: (a) => this.proxies.get(a.id)?.model.scripted === true,
     });
     for (const proxy of this.proxies.values()) proxy.sync();
-    chatDirector.tick({
-      dtMs,
-      sceneKey: this.sceneKey,
-      player,
-      proxies: this.proxies,
-    });
+    if (this.scene) {
+      chatDirector.tick({
+        dtMs,
+        sceneKey: this.sceneKey,
+        scene: this.scene,
+        player,
+        proxies: this.proxies,
+      });
+    }
   }
 
   private live(): LiveCtxBindings | undefined {

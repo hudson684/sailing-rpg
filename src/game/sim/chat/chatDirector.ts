@@ -1,5 +1,5 @@
+import * as Phaser from "phaser";
 import { TILE_SIZE } from "../../constants";
-import { bus } from "../../bus";
 import { getFlagStore } from "../../quests/activeQuestManager";
 import { useTimeStore } from "../../time/timeStore";
 import { minuteOfDay } from "../../time/constants";
@@ -11,6 +11,7 @@ import {
   evaluateAll,
   type ChatPredicateContext,
 } from "./chatPredicates";
+import { chatPlayback } from "./chatPlayback";
 
 /** Hard cap on the radius we'll consider before per-pair filtering. Must be
  *  ≥ the largest authored `proximityTiles` (currently 5). */
@@ -20,6 +21,7 @@ const TICK_INTERVAL_MS = 1000;
 export interface DirectorTickInput {
   dtMs: number;
   sceneKey: string;
+  scene: Phaser.Scene;
   player: { x: number; y: number } | null;
   proxies: ReadonlyMap<string, NpcProxy>;
 }
@@ -30,18 +32,17 @@ interface Eligible {
   weight: number;
 }
 
-// Phase-4 stub state. Phase 5 swaps both for real implementations.
-const stubChattingNpcIds = new Set<string>();
-const stubCooldown = new Set<string>();
+// Phase-6 will swap this for a persisted store.
+const inMemoryCooldown = new Set<string>();
 
 function isAlreadyChatting(proxy: NpcProxy): boolean {
-  return stubChattingNpcIds.has(proxy.agent.id);
+  return chatPlayback.isChatting(proxy.agent.id);
 }
 function isOnCooldown(chatId: string): boolean {
-  return stubCooldown.has(chatId);
+  return inMemoryCooldown.has(chatId);
 }
 function markPlayed(chatId: string, _currentDay: number): void {
-  stubCooldown.add(chatId);
+  inMemoryCooldown.add(chatId);
 }
 
 function chebyshevTiles(
@@ -89,21 +90,21 @@ function pickWeighted(eligibles: Eligible[]): Eligible {
   return eligibles[eligibles.length - 1];
 }
 
-function startStub(winner: Eligible, currentDay: number): void {
-  // Phase-4 stub: stamp cooldown + lock participants + emit the first
-  // line so we can verify selection. Phase 5 replaces this with real
-  // playback (line walker, scripted lock, interrupt watchdog, etc.).
+function start(
+  winner: Eligible,
+  currentDay: number,
+  scene: Phaser.Scene,
+  sceneKey: string,
+): void {
+  // Stamp cooldown at start (not on completion) so an interrupted chat
+  // still respects its window. Decision in plan/phase-5.
   markPlayed(winner.def.id, currentDay);
-  for (const proxy of Object.values(winner.slotMap)) {
-    stubChattingNpcIds.add(proxy.agent.id);
-  }
-  const first = winner.def.lines[0];
-  const speaker = winner.slotMap[first.by];
-  if (speaker) {
-    bus.emitTyped("npc:speak", { npcId: speaker.agent.id, text: first.text });
-  }
-  // eslint-disable-next-line no-console
-  console.log(`[chatDirector] stub-start '${winner.def.id}' (${first.by}: ${first.text})`);
+  chatPlayback.start({
+    def: winner.def,
+    sceneKey,
+    slotMap: winner.slotMap,
+    scene,
+  });
 }
 
 let accumulatorMs = 0;
@@ -113,6 +114,10 @@ export const chatDirector = {
     accumulatorMs += input.dtMs;
     if (accumulatorMs < TICK_INTERVAL_MS) return;
     accumulatorMs = 0;
+
+    // Watchdog runs first so interrupts free up participants before
+    // this tick's selection considers them.
+    chatPlayback.tick({ sceneKey: input.sceneKey, proxies: input.proxies });
 
     if (!input.player) return;
 
@@ -177,14 +182,12 @@ export const chatDirector = {
 
     if (eligibles.length === 0) return;
     const winner = pickWeighted(eligibles);
-    startStub(winner, tDay);
+    start(winner, tDay, input.scene, input.sceneKey);
   },
 };
 
-/** Test-only: drop stub state. Lets unit tests / dev hooks reset between
- *  runs without reloading. */
+/** Test-only: drop director state. */
 export function __resetChatDirectorForTests(): void {
-  stubChattingNpcIds.clear();
-  stubCooldown.clear();
+  inMemoryCooldown.clear();
   accumulatorMs = 0;
 }
