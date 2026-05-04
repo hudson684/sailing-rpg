@@ -354,7 +354,10 @@ export class InteriorScene extends GameplayScene {
     // Enemies, projectiles, and bow reticle are owned by the GameplayScene base.
     this.tickCombat(dtMs);
     this.tickCustomerSims(dtMs);
-    this.npcBinder?.update(dtMs);
+    this.npcBinder?.update(
+      dtMs,
+      this.isOnFoot() ? { x: this.player.x, y: this.player.y } : null,
+    );
     this.npcReconciler.syncAll();
     this.zoom.update(dtMs);
     this.emitHud();

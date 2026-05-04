@@ -883,7 +883,10 @@ export class WorldScene extends GameplayScene {
     // Activities (registry) → NpcModel via the binder, then NpcModel →
     // sprite via the reconciler. Order matters: binder.update writes into
     // the models; reconciler.syncAll then pushes them to Phaser.
-    this.npcBinder?.update(dtMs);
+    this.npcBinder?.update(
+      dtMs,
+      this.isOnFoot() ? { x: this.player.x, y: this.player.y } : null,
+    );
     this.npcReconciler?.syncAll();
     this.zoom.update(dtMs);
     this.emitHud();

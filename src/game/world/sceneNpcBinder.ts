@@ -15,6 +15,7 @@ import type { SceneKey } from "../sim/location";
 import { TICK_SIM_MINUTES } from "../time/constants";
 import { pathfindPx } from "./pathfinding";
 import { showSpeechBubble } from "../fx/speechBubble";
+import { chatDirector } from "../sim/chat/chatDirector";
 
 /** Per-scene scene↔registry bridge.
  *
@@ -124,7 +125,7 @@ export class SceneNpcBinder {
     this.pathfinder = null;
   }
 
-  update(dtMs: number): void {
+  update(dtMs: number, player: { x: number; y: number } | null = null): void {
     if (!this.sceneKey) return;
     npcRegistry.tickLive(this.sceneKey, dtMs, this.live(), {
       // Skip activity ticks for NPCs whose model is being driven externally
@@ -133,6 +134,12 @@ export class SceneNpcBinder {
       skip: (a) => this.proxies.get(a.id)?.model.scripted === true,
     });
     for (const proxy of this.proxies.values()) proxy.sync();
+    chatDirector.tick({
+      dtMs,
+      sceneKey: this.sceneKey,
+      player,
+      proxies: this.proxies,
+    });
   }
 
   private live(): LiveCtxBindings | undefined {
