@@ -1,0 +1,23 @@
+{
+  "id": "brom_tourist_umbrella",
+  "participants": {
+    "shopkeeper": {
+      "match": { "npcId": "blacksmith_brom" },
+      "requires": { "activity": "tend_shop" }
+    },
+    "customer": {
+      "match": { "archetype": "tourist" },
+      "requires": { "activity": "browse" }
+    }
+  },
+  "where": { "scene": "interior:blacksmiths" },
+  "proximityTiles": 5,
+  "cooldownDays": 7,
+  "weight": 1,
+  "lines": [
+    { "by": "shopkeeper", "text": "Welcome to the store!" },
+    { "by": "customer",   "text": "Thank you, I'm looking for a sturdy metal frame for my umbrella." },
+    { "by": "customer",   "text": "My old one keeps blowing away." },
+    { "by": "shopkeeper", "text": "That's an unusual request, but I can get it done for you." }
+  ]
+}
